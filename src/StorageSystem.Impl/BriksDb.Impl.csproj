@@ -1,0 +1,318 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{1A78E244-B4B2-419E-B247-8532B3AFDA87}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Qoollo.Impl</RootNamespace>
+    <AssemblyName>Qoollo.Impl</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+    <CodeContractsAssemblyMode>0</CodeContractsAssemblyMode>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeContractsEnableRuntimeChecking>False</CodeContractsEnableRuntimeChecking>
+    <CodeContractsRuntimeOnlyPublicSurface>False</CodeContractsRuntimeOnlyPublicSurface>
+    <CodeContractsRuntimeThrowOnFailure>True</CodeContractsRuntimeThrowOnFailure>
+    <CodeContractsRuntimeCallSiteRequires>False</CodeContractsRuntimeCallSiteRequires>
+    <CodeContractsRuntimeSkipQuantifiers>False</CodeContractsRuntimeSkipQuantifiers>
+    <CodeContractsRunCodeAnalysis>False</CodeContractsRunCodeAnalysis>
+    <CodeContractsNonNullObligations>True</CodeContractsNonNullObligations>
+    <CodeContractsBoundsObligations>True</CodeContractsBoundsObligations>
+    <CodeContractsArithmeticObligations>False</CodeContractsArithmeticObligations>
+    <CodeContractsEnumObligations>False</CodeContractsEnumObligations>
+    <CodeContractsRedundantAssumptions>False</CodeContractsRedundantAssumptions>
+    <CodeContractsMissingPublicRequiresAsWarnings>True</CodeContractsMissingPublicRequiresAsWarnings>
+    <CodeContractsInferRequires>True</CodeContractsInferRequires>
+    <CodeContractsInferEnsures>False</CodeContractsInferEnsures>
+    <CodeContractsInferObjectInvariants>False</CodeContractsInferObjectInvariants>
+    <CodeContractsSuggestAssumptions>False</CodeContractsSuggestAssumptions>
+    <CodeContractsSuggestRequires>True</CodeContractsSuggestRequires>
+    <CodeContractsSuggestObjectInvariants>False</CodeContractsSuggestObjectInvariants>
+    <CodeContractsRunInBackground>True</CodeContractsRunInBackground>
+    <CodeContractsShowSquigglies>True</CodeContractsShowSquigglies>
+    <CodeContractsUseBaseLine>False</CodeContractsUseBaseLine>
+    <CodeContractsEmitXMLDocs>False</CodeContractsEmitXMLDocs>
+    <CodeContractsCustomRewriterAssembly />
+    <CodeContractsCustomRewriterClass />
+    <CodeContractsLibPaths />
+    <CodeContractsExtraRewriteOptions />
+    <CodeContractsExtraAnalysisOptions />
+    <CodeContractsSQLServerOption />
+    <CodeContractsBaseLineFile />
+    <CodeContractsCacheAnalysisResults>True</CodeContractsCacheAnalysisResults>
+    <CodeContractsFailBuildOnWarnings>False</CodeContractsFailBuildOnWarnings>
+    <CodeContractsRuntimeCheckingLevel>Full</CodeContractsRuntimeCheckingLevel>
+    <CodeContractsReferenceAssembly>%28none%29</CodeContractsReferenceAssembly>
+    <CodeContractsAnalysisWarningLevel>0</CodeContractsAnalysisWarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Core.ServiceClasses, Version=1.0.5364.33572, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\libs\Core.ServiceClasses.1.0.5364.33572\Core.ServiceClasses.dll</HintPath>
+    </Reference>
+    <Reference Include="Libs.Logger, Version=1.1.5248.35807, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\libs\Libs.Logger.1.1.5248.35807\Libs.Logger.dll</HintPath>
+    </Reference>
+    <Reference Include="Libs.PerformanceCounters, Version=2.0.5373.35647, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\libs\Libs.PerformanceCounters.2.0.5373.35647\Libs.PerformanceCounters.dll</HintPath>
+    </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>..\libs\protobuf-net.2.0.0.668\protobuf-net.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Collector\Background\BackgroundModule.cs" />
+    <Compile Include="Collector\CollectorNet\CollectorNetModule.cs" />
+    <Compile Include="Collector\CollectorNet\SingleConnectionToController.cs" />
+    <Compile Include="Collector\CollectorNet\SingleConnectionToDistributor.cs" />
+    <Compile Include="Collector\Comparer\DateTimeComparer.cs" />
+    <Compile Include="Collector\Comparer\Int64Comparer.cs" />
+    <Compile Include="Collector\Comparer\IntComparer.cs" />
+    <Compile Include="Collector\Load\DataLoader.cs" />
+    <Compile Include="Collector\Distributor\DistributorModule.cs" />
+    <Compile Include="Collector\Load\IDataLoader.cs" />
+    <Compile Include="Collector\Comparer\DataComparer.cs" />
+    <Compile Include="Collector\Merge\MergeBase.cs" />
+    <Compile Include="Collector\Merge\OrderMerge.cs" />
+    <Compile Include="Collector\Model\CollectorModel.cs" />
+    <Compile Include="Collector\Parser\IUserCommandsHandler.cs" />
+    <Compile Include="Collector\Parser\FieldDescription.cs" />
+    <Compile Include="Collector\Parser\ScriptParser.cs" />
+    <Compile Include="Collector\Parser\SelectDescription.cs" />
+    <Compile Include="Collector\Parser\UserCommandsHandler.cs" />
+    <Compile Include="Collector\SearchTaskCommonModule.cs" />
+    <Compile Include="Collector\SearchTaskModule.cs" />
+    <Compile Include="Collector\SelectReader.cs" />
+    <Compile Include="Collector\Tasks\OrderSelectTask.cs" />
+    <Compile Include="Collector\Tasks\SearchTask.cs" />
+    <Compile Include="Collector\Tasks\SingleServerSearchTask.cs" />
+    <Compile Include="Common\Data\DataTypes\InnerData.cs" />
+    <Compile Include="Common\Data\DataTypes\MetaData.cs" />
+    <Compile Include="Common\Data\DataTypes\SearchData.cs" />
+    <Compile Include="Common\Data\Support\OperationName.cs" />
+    <Compile Include="Common\Data\Support\OperationType.cs" />
+    <Compile Include="Common\Data\Support\ScriptType.cs" />
+    <Compile Include="Common\Data\Support\SystemSearchStateInner.cs" />
+    <Compile Include="Common\Data\TransactionTypes\SystemTransaction.cs" />
+    <Compile Include="Common\Data\TransactionTypes\Transaction.cs" />
+    <Compile Include="Common\Data\Support\TransactionState.cs" />
+    <Compile Include="Common\Data\TransactionTypes\UserTransaction.cs" />
+    <Compile Include="Common\Exceptions\InitializationException.cs" />
+    <Compile Include="Common\HashFile\HashFileType.cs" />
+    <Compile Include="Common\HashHelp\HashConvertor.cs" />
+    <Compile Include="Common\HashHelp\IHashCalculater.cs" />
+    <Compile Include="Common\IStorageInner.cs" />
+    <Compile Include="Common\Support\AggregateResultHelper.cs" />
+    <Compile Include="Common\NetResults\Event\HashMapResult.cs" />
+    <Compile Include="Common\NetResults\System\Collector\GetHashMapCommand.cs" />
+    <Compile Include="Common\Server\DistributorDescription.cs" />
+    <Compile Include="Common\Server\ServerId.cs" />
+    <Compile Include="Common\Commands\AddDistributorCommand.cs" />
+    <Compile Include="Common\Commands\ServerNotAvailableCommand.cs" />
+    <Compile Include="Common\Support\delegate.cs" />
+    <Compile Include="Components\CollectorSystem.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Support\AsyncDbHolder.cs" />
+    <Compile Include="DbController\DbControllerNet\NetDbControllerReceiverForCollector.cs" />
+    <Compile Include="DbController\DbControllerNet\NetDbControllerReceiverForWrite.cs" />
+    <Compile Include="DbController\Db\Commands\UserCommandCreatorBase.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Support\RestoreState.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Support\RestoreStateHelper.cs" />
+    <Compile Include="DbController\Db\DbModuleCollection.cs" />
+    <Compile Include="DbController\Db\SelectDescriptionForGeneric.cs" />
+    <Compile Include="Modules\Net\NetLogHelper.cs" />
+    <Compile Include="NetInterfaces\DbController\ICommonNetReceiverDbControllerForCollector.cs" />
+    <Compile Include="NetInterfaces\DbController\ISearchNet.cs" />
+    <Compile Include="NetInterfaces\Data\SelectSearchResult.cs" />
+    <Compile Include="Proxy\Input\ProxyInputModuleCommon.cs" />
+    <Compile Include="TestSupport\GlobalLock.cs" />
+    <Compile Include="Components\DbControllerSystem.cs" />
+    <Compile Include="Components\DistributorSystem.cs" />
+    <Compile Include="Components\ProxySystem.cs" />
+    <Compile Include="Configurations\ConnectionTimeoutConfiguration.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Restore\RestoreReader.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Restore\RestoreReaderFull.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Timeout\TimeoutReader.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Timeout\TimeoutReaderFull.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Timeout\TimeoutModule.cs" />
+    <Compile Include="Modules\Db\Exceptions\ReaderIsFailException.cs" />
+    <Compile Include="Modules\Db\Impl\DbConnectionParams.cs" />
+    <Compile Include="Modules\Db\Impl\DbImplModuleWithPool.cs" />
+    <Compile Include="DbController\Db\Commands\IMetaDataCommandCreator.cs" />
+    <Compile Include="Modules\Db\Impl\DbReader.cs" />
+    <Compile Include="Configurations\ConnectionConfiguration.cs" />
+    <Compile Include="Configurations\QueueConfiguration.cs" />
+    <Compile Include="Modules\ControlModule.cs" />
+    <Compile Include="Modules\ParallelWork\ParallelWorkModule.cs" />
+    <Compile Include="Modules\ParallelWork\SingleParallelWorkBase.cs" />
+    <Compile Include="Modules\Queue\GlobalQueue.cs" />
+    <Compile Include="Modules\Net\NetReceiveModule.cs" />
+    <Compile Include="Modules\Net\SingleConnection.cs" />
+    <Compile Include="Modules\Db\Impl\DbImplModule.cs" />
+    <Compile Include="DbController\Db\Commands\IUserCommandCreator.cs" />
+    <Compile Include="DbController\Db\DbLogicModule.cs" />
+    <Compile Include="Common\NetResults\InnerFailResult.cs" />
+    <Compile Include="Common\NetResults\Inner\InnerServerError.cs" />
+    <Compile Include="Modules\Async\AsyncData.cs" />
+    <Compile Include="Modules\Async\AsyncDataPeriod.cs" />
+    <Compile Include="Modules\Async\AsyncTaskModule.cs" />
+    <Compile Include="Modules\Cache\CacheModule.cs" />
+    <Compile Include="Modules\Pools\BalancedPool\ConcurrentConnection.cs" />
+    <Compile Include="Modules\Pools\BalancedPool\StableConcurrentConnection.cs" />
+    <Compile Include="Modules\Pools\BalancedPool\StableElementsConnectionPool.cs" />
+    <Compile Include="Modules\Pools\CommonPool.cs" />
+    <Compile Include="Modules\Queue\QueueWithParam.cs" />
+    <Compile Include="Modules\Queue\SingleQueue.cs" />
+    <Compile Include="NetInterfaces\ISingleConnection.cs" />
+    <Compile Include="Modules\Net\NetModule.cs" />
+    <Compile Include="Common\NetCommand.cs" />
+    <Compile Include="Common\Support\enums.cs" />
+    <Compile Include="Common\NetResults\Data\AddDistributorResult.cs" />
+    <Compile Include="Common\NetResults\System\Distributor\IsRestoredResult.cs" />
+    <Compile Include="Common\NetResults\Data\SystemInfoResult.cs" />
+    <Compile Include="Common\NetResults\Event\InitiatorNotAvailableResult.cs" />
+    <Compile Include="Common\RemoteResult.cs" />
+    <Compile Include="Common\NetResults\SuccessResult.cs" />
+    <Compile Include="Modules\ModuleSystemBase.cs" />
+    <Compile Include="Configurations\AsyncTasksConfiguration.cs" />
+    <Compile Include="Configurations\DistributorCacheConfiguration.cs" />
+    <Compile Include="Configurations\DistributorHashConfiguration.cs" />
+    <Compile Include="Configurations\HashMapConfiguration.cs" />
+    <Compile Include="Configurations\NetReceiverConfiguration.cs" />
+    <Compile Include="Configurations\ProxyCacheConfiguration.cs" />
+    <Compile Include="Configurations\RestoreModuleConfiguration.cs" />
+    <Compile Include="Configurations\TransactionConfiguration.cs" />
+    <Compile Include="Common\NetResults\System\DbController\RestoreCommand.cs" />
+    <Compile Include="Common\NetResults\System\DbController\RestoreCommandWithData.cs" />
+    <Compile Include="Common\NetResults\System\DbController\RestoreCompleteCommand.cs" />
+    <Compile Include="Common\NetResults\System\DbController\RestoreInProcessCommand.cs" />
+    <Compile Include="DbController\DbControllerNet\SingleConnectionToController.cs" />
+    <Compile Include="NetInterfaces\DbController\ICommonNetReceiverDbControllerForWrite.cs" />
+    <Compile Include="DbController\DbControllerNet\DbControllerNetModule.cs" />
+    <Compile Include="DbController\Db\DbModule.cs" />
+    <Compile Include="DbController\MainLogicModule.cs" />
+    <Compile Include="DbController\Model\ControllerModel.cs" />
+    <Compile Include="DbController\PerfCounters\PerfCounters.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Restore\InitiatorRestoreModule.cs" />
+    <Compile Include="DbController\AsyncDbWorks\CommonAsyncWorkModule.cs" />
+    <Compile Include="DbController\AsyncDbWorks\AsyncDbWorkModule.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Readers\SingleReaderBase.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Readers\ReaderFullBase.cs" />
+    <Compile Include="DbController\AsyncDbWorks\Restore\TransferRestoreModule.cs" />
+    <Compile Include="Common\NetResults\System\Distributor\AddDistributorFromDistributorCommand.cs" />
+    <Compile Include="Common\NetResults\System\Distributor\IsRestoredCommand.cs" />
+    <Compile Include="Common\NetResults\System\Distributor\OperationCompleteCommand.cs" />
+    <Compile Include="Common\NetResults\System\Distributor\ReadOperationCompleteCommand.cs" />
+    <Compile Include="Common\NetResults\System\Distributor\TakeInfoCommand.cs" />
+    <Compile Include="DbController\DbControllerNet\SingleConnectionToDistributor.cs" />
+    <Compile Include="NetInterfaces\Distributor\ICommonNetReceiverForDb.cs" />
+    <Compile Include="DistributorModules\DistributorNet\NetDistributorReceiverForDb.cs" />
+    <Compile Include="DistributorModules\DistributorNet\NetDistributorReceiverForProxy.cs" />
+    <Compile Include="DistributorModules\DistributorNet\SingleConnectionToDistributor.cs" />
+    <Compile Include="DistributorModules\DistributorNet\SingleConnectionToProxy.cs" />
+    <Compile Include="DbController\DbControllerNet\Interfaces\INetModule.cs" />
+    <Compile Include="DbController\DbControllerNet\NetDbControllerReceiver.cs" />
+    <Compile Include="DbController\InputModule.cs" />
+    <Compile Include="DbController\Distributor\DistributorModule.cs" />
+    <Compile Include="DistributorModules\Caches\DistributorCache.cs" />
+    <Compile Include="NetInterfaces\Distributor\ICommonNetReceiverForProxy.cs" />
+    <Compile Include="DistributorModules\DistributorNet\Interfaces\INetModule.cs" />
+    <Compile Include="DistributorModules\Caches\DistributorTimeoutCache.cs" />
+    <Compile Include="DistributorModules\ParallelWork\IInputModule.cs" />
+    <Compile Include="DistributorModules\ParallelWork\InputModuleWithParallel.cs" />
+    <Compile Include="DistributorModules\ParallelWork\OneThreadProcess.cs" />
+    <Compile Include="DistributorModules\PerfCounters\PerfCounters.cs" />
+    <Compile Include="NetInterfaces\Data\NetConnector.cs" />
+    <Compile Include="NetInterfaces\Distributor\ITransactionAnswer.cs" />
+    <Compile Include="NetInterfaces\DbController\IRemoteNet.cs" />
+    <Compile Include="DistributorModules\DistributorModule.cs" />
+    <Compile Include="DistributorModules\MainLogicModule.cs" />
+    <Compile Include="DistributorModules\DistributorNet\NetDistributorReceiver.cs" />
+    <Compile Include="DistributorModules\DistributorNet\DistributorNetModule.cs" />
+    <Compile Include="Common\NetResults\Event\ConnectionErrorResult.cs" />
+    <Compile Include="Common\NetResults\FailNetResult.cs" />
+    <Compile Include="Common\NetResults\Event\ServerNotAvailable.cs" />
+    <Compile Include="Common\NetResults\Event\ServerNotFoundResult.cs" />
+    <Compile Include="DistributorModules\DistributorNet\SingleConnectionToDbController.cs" />
+    <Compile Include="Common\Server\ControllerDescription.cs" />
+    <Compile Include="DistributorModules\Model\ControllerSystemModel.cs" />
+    <Compile Include="DistributorModules\Model\DistributorSystemModel.cs" />
+    <Compile Include="DistributorModules\Transaction\TransactionPool.cs" />
+    <Compile Include="Logger\Logger.cs" />
+    <Compile Include="NetInterfaces\ICommonCommunicationNet.cs" />
+    <Compile Include="NetInterfaces\Data\DistributorDataContainer.cs" />
+    <Compile Include="Proxy\Caches\AsyncProxyCache.cs" />
+    <Compile Include="Proxy\PerfCounters\PerfCounters.cs" />
+    <Compile Include="Proxy\Model\DistributorSystemModel.cs" />
+    <Compile Include="Proxy\ProxyDistributorModule.cs" />
+    <Compile Include="Proxy\Caches\ProxyCache.cs" />
+    <Compile Include="NetInterfaces\Proxy\ICommonProxyNetReceiver.cs" />
+    <Compile Include="Proxy\ProxyNet\IProxyNetModule.cs" />
+    <Compile Include="NetInterfaces\Distributor\IProxyRemoteNet.cs" />
+    <Compile Include="Proxy\ProxyNet\ProxyNetModule.cs" />
+    <Compile Include="Proxy\ProxyNet\ProxyNetReceiver.cs" />
+    <Compile Include="Proxy\ProxyNet\SingleConnectionToDistributor.cs" />
+    <Compile Include="DistributorModules\Transaction\TransactionExecutor.cs" />
+    <Compile Include="DistributorModules\Transaction\TransactionModule.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Proxy\Input\ProxyInputModule.cs" />
+    <Compile Include="Proxy\ProxyMainLogicModule.cs" />
+    <Compile Include="Common\HashFile\HashMap.cs" />
+    <Compile Include="Common\HashFile\HashMapCreationMode.cs" />
+    <Compile Include="Common\HashFile\HashMapRecord.cs" />
+    <Compile Include="Common\HashHelp\HashComparer.cs" />
+    <Compile Include="Common\Server\SavedServerId.cs" />
+    <Compile Include="Common\HashFile\HashWriter.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="NetInterfaces\Collector\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
+  </Target>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

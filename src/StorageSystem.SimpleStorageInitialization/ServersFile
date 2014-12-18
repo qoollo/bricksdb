@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<ArrayOfHashMapRecord xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <HashMapRecord Begin="000000000000000000000000" End="7fffffffffffffffffffffff">
+    <Save Localhost="localhost" PortForDistributor="22186" PortForCollector="157" />
+  </HashMapRecord>
+  <HashMapRecord Begin="7fffffffffffffffffffffff" End="ffffffffffffffffffffffff">
+    <Save Localhost="localhost" PortForDistributor="22187" PortForCollector="157" />
+  </HashMapRecord>
+</ArrayOfHashMapRecord>

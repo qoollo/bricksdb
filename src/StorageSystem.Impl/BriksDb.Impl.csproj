@@ -71,18 +71,17 @@
   <ItemGroup>
     <Reference Include="Core.ServiceClasses, Version=1.0.5364.33572, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\Core.ServiceClasses.1.0.5364.33572\Core.ServiceClasses.dll</HintPath>
+      <HintPath>..\..\..\briksdb\src\libs\Core.ServiceClasses.1.0.5364.33572\Core.ServiceClasses.dll</HintPath>
     </Reference>
-    <Reference Include="Libs.Logger, Version=1.1.5248.35807, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="protobuf-net, Version=2.0.0.668, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\Libs.Logger.1.1.5248.35807\Libs.Logger.dll</HintPath>
+      <HintPath>..\..\..\briksdb\src\libs\protobuf-net.2.0.0.668\protobuf-net.dll</HintPath>
     </Reference>
-    <Reference Include="Libs.PerformanceCounters, Version=2.0.5373.35647, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\Libs.PerformanceCounters.2.0.5373.35647\Libs.PerformanceCounters.dll</HintPath>
+    <Reference Include="Qoollo.Logger">
+      <HintPath>..\packages\Qoollo.Logger.2.1.11\lib\net45\Qoollo.Logger.dll</HintPath>
     </Reference>
-    <Reference Include="protobuf-net">
-      <HintPath>..\libs\protobuf-net.2.0.0.668\protobuf-net.dll</HintPath>
+    <Reference Include="Qoollo.PerformanceCounters">
+      <HintPath>..\packages\Qoollo.PerformanceCounters.2.0.0\lib\net45\Qoollo.PerformanceCounters.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -299,6 +298,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="NetInterfaces\Collector\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />

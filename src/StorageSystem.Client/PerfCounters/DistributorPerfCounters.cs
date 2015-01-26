@@ -1,4 +1,4 @@
-﻿using Libs.PerformanceCounters;
+﻿using Qoollo.PerformanceCounters;
 using Qoollo.Impl.DistributorModules.PerfCounters;
 
 namespace Qoollo.Client.PerfCounters

@@ -2,7 +2,7 @@
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Threading.Tasks;
-using Libs.PerformanceCounters;
+using Qoollo.PerformanceCounters;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Server;

@@ -82,10 +82,10 @@ namespace Qoollo.Client.StorageGate
             }
         }
 
-        [Libs.Logger.LoggerWrapperInitializationMethod]
-        public static void Init(Libs.Logger.ILogger innerLogger)
+        [Qoollo.Logger.LoggerWrapperInitializationMethod]
+        public static void Init(Qoollo.Logger.ILogger innerLogger)
         {
-            Libs.Logger.Logger.InitializeLoggerInAssembly(Libs.Logger.Logger.ConsoleLogger,
+            Qoollo.Logger.Initialization.Initializer.InitializeLoggerInAssembly(Qoollo.Logger.LoggerDefault.ConsoleLogger,
                 typeof (DbControllerSystem).Assembly);
         }
 

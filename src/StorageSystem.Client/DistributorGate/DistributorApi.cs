@@ -73,10 +73,10 @@ namespace Qoollo.Client.DistributorGate
             }
         }
 
-        [Libs.Logger.LoggerWrapperInitializationMethod]
-        public static void Init(Libs.Logger.ILogger innerLogger)
+        [Qoollo.Logger.LoggerWrapperInitializationMethod]
+        public static void Init(Qoollo.Logger.ILogger innerLogger)
         {
-            Libs.Logger.Logger.InitializeLoggerInAssembly(Libs.Logger.Logger.ConsoleLogger, typeof(DistributorSystem).Assembly);
+            Qoollo.Logger.Initialization.Initializer.InitializeLoggerInAssembly(Qoollo.Logger.LoggerDefault.ConsoleLogger, typeof(DistributorSystem).Assembly);
         }
 
         public void Build()

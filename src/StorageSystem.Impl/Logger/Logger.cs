@@ -3,22 +3,22 @@
     /// <summary>
     /// Local logger
     /// </summary>
-    public class Logger : Libs.Logger.Logger
+    public class Logger : Qoollo.Logger.Logger
     {
-        private static Logger _instance = new Logger(Libs.Logger.LogLevel.FullLog, EmptyLogger);
+        private static Logger _instance = new Logger(Qoollo.Logger.LogLevel.FullLog, Qoollo.Logger.LoggerDefault.EmptyLogger);
         
         public static Logger Instance
         {
             get { return _instance; }
         }
-        
-        [Libs.Logger.LoggerWrapperInitializationMethod]
-        public static void Init(Libs.Logger.ILogger innerLogger)
+
+        [Qoollo.Logger.LoggerWrapperInitializationMethod]
+        public static void Init(Qoollo.Logger.ILogger innerLogger)
         {
             _instance = new Logger(innerLogger.Level, innerLogger);
         }
 
-        private Logger(Libs.Logger.LogLevel logLevel, Libs.Logger.ILogger innerLogger)
+        private Logger(Qoollo.Logger.LogLevel logLevel, Qoollo.Logger.ILogger innerLogger)
             : base(logLevel, "StorageSystemLogger.Impl", innerLogger)
         {
         }

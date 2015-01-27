@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Threading;
-using Core.ServiceClasses.Pool;
 using Qoollo.Impl.Common.Support;
+using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.Modules.Pools
 {
-    internal class CommonPool<T>:UnifiedDynamicSizePoolManager<T> where T : class
+    internal class CommonPool<T> : DynamicPoolManager<T> where T : class
     {
         private CreateElementDelegate<T> _createElementDelegate;
         private Func<T, bool> _isValidElementFunc;
@@ -14,7 +14,7 @@ namespace Qoollo.Impl.Modules.Pools
 
         public CommonPool(CreateElementDelegate<T> createElementDelegate, Func<T, bool> isValidElemetFunc,
             Action<T> destroyElementAction, int maxElemCount, int trimPeriod, string name)
-            : base(maxElemCount, trimPeriod, name)
+            : base(1, maxElemCount, name, trimPeriod)
         {
             Contract.Requires(createElementDelegate != null);
             Contract.Requires(isValidElemetFunc != null);

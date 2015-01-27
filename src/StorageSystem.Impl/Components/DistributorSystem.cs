@@ -110,7 +110,8 @@ namespace Qoollo.Impl.Components
             AddModuleDispose(cache);
             AddModuleDispose(main);
             AddModuleDispose(distributor);
-            AddModuleDispose(net);
+            AddModuleDispose(transaction);
+            AddModuleDispose(net);            
         }
     }
 }

@@ -68,10 +68,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="protobuf-net, Version=2.0.0.668, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\protobuf-net.2.0.0.668\protobuf-net.dll</HintPath>
-    </Reference>
     <Reference Include="Qoollo.Logger">
       <HintPath>..\packages\Qoollo.Logger.2.1.11\lib\net45\Qoollo.Logger.dll</HintPath>
     </Reference>

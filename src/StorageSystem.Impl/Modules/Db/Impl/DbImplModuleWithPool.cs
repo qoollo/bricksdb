@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Threading;
-using Core.ServiceClasses.Pool;
 using Qoollo.Impl.Modules.Pools;
+using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.Modules.Db.Impl
 {
@@ -18,8 +18,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
 
             _connectionParam = connectionParam;
             _pool = new CommonPool<TConnection>(CreateElementInner, IsValidElement, DestroyElement, maxCountElementInPool,
-                trimPeriod,
-                "DbPool");
+                trimPeriod, "DbPool");
         }
 
         public override void Start()
@@ -27,7 +26,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
             _pool.FillPoolUpTo(_pool.MaxElementCount);
         }
 
-        protected UnifiedPoolElement<TConnection> RentConnection()
+        protected RentedElementMonitor<TConnection> RentConnection()
         {
             return _pool.Rent();
         }

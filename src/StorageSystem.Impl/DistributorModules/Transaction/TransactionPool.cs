@@ -1,12 +1,12 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Threading;
-using Core.ServiceClasses.Pool;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.DistributorNet.Interfaces;
+using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.DistributorModules.Transaction
 {
-    internal class TransactionPool : UnifiedDynamicSizePoolManager<TransactionExecutor>
+    internal class TransactionPool : DynamicPoolManager<TransactionExecutor>
     {
         private INetModule _net;
         private int _countReplics;

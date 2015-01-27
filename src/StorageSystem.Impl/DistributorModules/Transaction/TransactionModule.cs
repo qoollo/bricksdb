@@ -9,6 +9,7 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.DistributorNet.Interfaces;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.DistributorModules.Transaction
 {
@@ -62,9 +63,9 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             executor.Commit(data);
         }
 
-        public TransactionExecutor Rent()
+        public RentedElementMonitor<TransactionExecutor> Rent()
         {
-            return _transactionPool.Rent().Element;
+            return _transactionPool.Rent();
         }
 
         #endregion

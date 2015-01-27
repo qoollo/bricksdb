@@ -33,20 +33,16 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Core.ServiceClasses, Version=1.0.5364.33572, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\Core.ServiceClasses.1.0.5364.33572\Core.ServiceClasses.dll</HintPath>
-    </Reference>
-    <Reference Include="protobuf-net, Version=2.0.0.668, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\protobuf-net.2.0.0.668\protobuf-net.dll</HintPath>
-    </Reference>
     <Reference Include="Qoollo.Logger">
       <HintPath>..\packages\Qoollo.Logger.2.1.11\lib\net45\Qoollo.Logger.dll</HintPath>
     </Reference>
     <Reference Include="Qoollo.PerformanceCounters, Version=2.0.5472.32643, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Qoollo.PerformanceCounters.2.0.0\lib\net45\Qoollo.PerformanceCounters.dll</HintPath>
+    </Reference>
+    <Reference Include="Qoollo.Turbo, Version=2.1.5476.37234, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Qoollo.Turbo.2.1.1\lib\net45\Qoollo.Turbo.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

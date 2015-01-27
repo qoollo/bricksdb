@@ -1,5 +1,5 @@
 ﻿using System;
-using Core.ServiceClasses.QueueProcessing;
+using Qoollo.Turbo.Threading.QueueProcessing;
 
 namespace Qoollo.Impl.Modules.Queue
 {
@@ -30,7 +30,7 @@ namespace Qoollo.Impl.Modules.Queue
             {
                 if (_queue != null)
                     _queue.Dispose();
-                _queue = new DeleageQueueAsyncProcessor<T>(_countProcessors, _elementCounts, _action);
+                _queue = new DeleageQueueAsyncProcessor<T>(_countProcessors, _elementCounts, "", (obj, token) => _action(obj));
                 _queue.Start();
             }            
         }       

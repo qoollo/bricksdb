@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Core.ServiceClasses.ThreadPools;
 using Qoollo.Impl.Configurations;
+using Qoollo.Turbo.Threading.ThreadPools;
 
 namespace Qoollo.Impl.Modules.Async
 {
@@ -20,7 +20,7 @@ namespace Qoollo.Impl.Modules.Async
         public AsyncTaskModule(QueueConfiguration configuration)
         {            
             _tasks = new List<AsyncData>();
-            _threadPool = new DynamicThreadPool(configuration.ProcessotCount, configuration.MaxSizeQueue,  "AsyncTaskModule");
+            _threadPool = new DynamicThreadPool(1, configuration.ProcessotCount, configuration.MaxSizeQueue, "AsyncTaskModule");
             _lock = new ReaderWriterLockSlim();
             _event = new AutoResetEvent(false);
             _token = new CancellationTokenSource();
@@ -109,7 +109,7 @@ namespace Qoollo.Impl.Modules.Async
                 {
                     task.IncreaseCount();
 
-                    _threadPool.RunWithState(task.Action, task);
+                    _threadPool.Run(task.Action, task);
 
                     RemoveOldTasks();
                     task.GenerateNextTime(false);

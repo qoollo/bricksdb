@@ -150,7 +150,12 @@ namespace Qoollo.Impl.Modules.Net
         {
             _lock.EnterWriteLock();
 
+            var s = FindServerNoLock(server);
+
             _servers.Remove(server);
+
+            if (s != null)
+                s.Dispose();
 
             _lock.ExitWriteLock();
         }

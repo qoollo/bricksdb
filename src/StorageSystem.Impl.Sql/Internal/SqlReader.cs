@@ -1,16 +1,16 @@
 ﻿using System.Data.SqlClient;
-using Core.ServiceClasses.Pool;
 using Qoollo.Impl.Modules.Db.Impl;
+using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.Sql.Internal
 {
     internal class SqlReader:DbReader<SqlDataReader>
     {
         private SqlCommand _command;
-        private readonly UnifiedPoolElement<SqlConnection> _connection;
+        private readonly RentedElementMonitor<SqlConnection> _connection;
         private SqlDataReader _reader;
 
-        public SqlReader(SqlCommand command, UnifiedPoolElement<SqlConnection> connection )
+        public SqlReader(SqlCommand command, RentedElementMonitor<SqlConnection> connection)
         {
             _command = command;
             _connection = connection;

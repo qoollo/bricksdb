@@ -1,10 +1,10 @@
 ﻿using System;
 using System.ServiceModel;
-using Core.ServiceClasses;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Pools.BalancedPool;
 using Qoollo.Impl.NetInterfaces.Data;
+using Qoollo.Turbo;
 
 namespace Qoollo.Impl.Modules.Net
 {

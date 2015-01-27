@@ -1,5 +1,5 @@
-﻿using Core.ServiceClasses.Pool;
-using Qoollo.Impl.Common;
+﻿using Qoollo.Impl.Common;
+using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.Modules.Db.Impl
 {
@@ -9,6 +9,6 @@ namespace Qoollo.Impl.Modules.Db.Impl
 
         public abstract DbReader<TReader> CreateReader(TCommand command);
 
-        public abstract UnifiedPoolElement<TConnection> RentConnectionInner();
+        public abstract RentedElementMonitor<TConnection> RentConnectionInner();
     }
 }

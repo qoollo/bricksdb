@@ -3,10 +3,10 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Threading;
-using Core.ServiceClasses.Pool;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Modules.Db.Impl;
+using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.Sql.Internal
 {
@@ -19,30 +19,31 @@ namespace Qoollo.Impl.Sql.Internal
 
         public override RemoteResult ExecuteNonQuery(SqlCommand command)
         {
-            var element = RentConnection();
             RemoteResult ret = null;
-            command.Connection = element.Element;
-            try
+            using (var element = RentConnection())
             {
-                command.ExecuteNonQuery();
-                ret = new SuccessResult();
+                command.Connection = element.Element;
+                try
+                {
+                    command.ExecuteNonQuery();
+                    ret = new SuccessResult();
+                }
+                catch (SqlException e)
+                {
+                    Logger.Logger.Instance.Error(e, "");
+                    ret = new FailNetResult(e.Message);
+                }
+                catch (IOException e)
+                {
+                    Logger.Logger.Instance.Error(e, "");
+                    ret = new FailNetResult(e.Message);
+                }
+                catch (InvalidOperationException e)
+                {
+                    Logger.Logger.Instance.Error(e, "");
+                    ret = new FailNetResult(e.Message);
+                }
             }
-            catch (SqlException e)
-            {
-                Logger.Logger.Instance.Error(e, "");
-                ret = new FailNetResult(e.Message);
-            }
-            catch (IOException e)
-            {
-                Logger.Logger.Instance.Error(e, "");
-                ret = new FailNetResult(e.Message);
-            }
-            catch (InvalidOperationException e)
-            {
-                Logger.Logger.Instance.Error(e, "");
-                ret = new FailNetResult(e.Message);
-            }
-            element.Dispose();
 
             return ret;
         }
@@ -52,7 +53,7 @@ namespace Qoollo.Impl.Sql.Internal
             return new SqlReader(command, RentConnection());
         }
 
-        public override UnifiedPoolElement<SqlConnection> RentConnectionInner()
+        public override RentedElementMonitor<SqlConnection> RentConnectionInner()
         {
             return RentConnection();
         }

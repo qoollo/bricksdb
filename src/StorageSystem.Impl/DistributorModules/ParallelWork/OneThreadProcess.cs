@@ -2,13 +2,14 @@
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules.ParallelWork;
+using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.DistributorModules.ParallelWork
 {
     internal class OneThreadProcess:SingleParallelWorkBase<InnerData>
     {
         private readonly MainLogicModule _main;
-        private readonly TransactionExecutor _transaction;
+        private RentedElementMonitor<TransactionExecutor> _transaction;
 
         public OneThreadProcess(MainLogicModule main, TransactionModule transactionModule)
         {
@@ -22,7 +23,7 @@ namespace Qoollo.Impl.DistributorModules.ParallelWork
         public override void Process(InnerData data)
         {
             PerfCounters.DistributorCounters.Instance.TransactionCount.Increment();
-            _main.ProcessWithData(data, _transaction);
+            _main.ProcessWithData(data, _transaction.Element);
         }
 
         protected override void Dispose(bool isUserCall)

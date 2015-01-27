@@ -1,22 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Core.ServiceClasses.ThreadPools;
 using Qoollo.Impl.Collector.Tasks;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
+using Qoollo.Turbo.Threading.ThreadPools;
 
 namespace Qoollo.Impl.Collector.Background
 {
     internal class BackgroundModule:ControlModule
     {
         private readonly DynamicThreadPool _threadPool;
-        private readonly List<SearchTask> _tasks; 
+        private readonly List<SearchTask> _tasks;
 
         public BackgroundModule(QueueConfiguration queueConfiguration)
         {
             _tasks = new List<SearchTask>();
-            _threadPool = new DynamicThreadPool(queueConfiguration.ProcessotCount, queueConfiguration.MaxSizeQueue, "BackgroundModule");
+            _threadPool = new DynamicThreadPool(1, queueConfiguration.ProcessotCount, queueConfiguration.MaxSizeQueue,
+                "BackgroundModule");
         }
 
         public void Run(SearchTask sTask, Action action)

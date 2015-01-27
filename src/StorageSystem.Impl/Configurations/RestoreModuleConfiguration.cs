@@ -12,7 +12,6 @@ namespace Qoollo.Impl.Configurations
 
         public RestoreModuleConfiguration(int countRetry, TimeSpan periodRetry)
         {
-            Contract.Requires(countRetry>0);
             Contract.Requires(periodRetry!=null);
             CountRetry = countRetry;
             PeriodRetry = periodRetry;
@@ -29,7 +28,6 @@ namespace Qoollo.Impl.Configurations
         public RestoreModuleConfiguration(int countRetry, TimeSpan periodRetry, bool isForceStart,
             TimeSpan deleteTimeout)
         {
-            Contract.Requires(countRetry > 0);
             Contract.Requires(periodRetry != null);
             Contract.Requires(deleteTimeout != null);
             CountRetry = countRetry;

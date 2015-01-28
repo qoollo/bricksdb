@@ -1,0 +1,740 @@
+﻿using System;
+using System.Globalization;
+using System.Linq;
+using System.Text;
+using System.Collections.Generic;
+using System.Threading;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Qoollo.Client.Support;
+using Qoollo.Impl.Common.Data.DataTypes;
+using Qoollo.Impl.Common.Data.Support;
+using Qoollo.Impl.Common.Data.TransactionTypes;
+using Qoollo.Impl.Common.HashFile;
+using Qoollo.Impl.Common.HashHelp;
+using Qoollo.Impl.Common.NetResults;
+using Qoollo.Impl.Common.NetResults.Event;
+using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Configurations;
+using Qoollo.Impl.DistributorModules;
+using Qoollo.Impl.DistributorModules.Caches;
+using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Model;
+using Qoollo.Impl.DistributorModules.ParallelWork;
+using Qoollo.Impl.DistributorModules.Transaction;
+using Qoollo.Impl.Modules.Queue;
+using Qoollo.Tests.Support;
+using Qoollo.Tests.TestModules;
+using Consts = Qoollo.Impl.Common.Support.Consts;
+
+namespace Qoollo.Tests
+{
+
+    [TestClass]
+    public class TestDistributorModules
+    {
+        [TestMethod]
+        public void ControllerSystemModel_GetUnavailableServers_CheckAvailableAndUnAvailableServers()
+        {
+            var server1 = new ServerId("local", 11010);
+            var server2 = new ServerId("local", 11011);
+            var server3 = new ServerId("local", 11012);
+
+            var config = new DistributorHashConfiguration(1);
+
+            var writer =
+                new HashWriter(new HashMapConfiguration("TestDbModelGetUnavalibaleServers",
+                                                        HashMapCreationMode.CreateNew, 6, 3, HashFileType.Collector));
+            writer.CreateMap();
+            writer.SetServer(0, server1.RemoteHost, server1.Port, 157);
+            writer.SetServer(1, server2.RemoteHost, server2.Port, 157);
+            writer.SetServer(2, server3.RemoteHost, server3.Port, 157);
+            writer.SetServer(3, server1.RemoteHost, server1.Port, 157);
+            writer.SetServer(4, server2.RemoteHost, server2.Port, 157);
+            writer.SetServer(5, server3.RemoteHost, server3.Port, 157);
+            writer.Save();
+
+            var model = new ControllerSystemModel(config,
+                                                  new HashMapConfiguration("TestDbModelGetUnavalibaleServers",
+                                                                           HashMapCreationMode.ReadFromFile, 1,
+                                                                           1, HashFileType.Controller));
+            model.Start();
+
+            model.ServerNotAvailable(server1);
+            Assert.AreEqual(1, model.GetUnavailableServers().Count);
+            model.ServerNotAvailable(server1);
+            Assert.AreEqual(1, model.GetUnavailableServers().Count);
+            model.ServerNotAvailable(server2);
+            Assert.AreEqual(2, model.GetUnavailableServers().Count);
+            model.ServerNotAvailable(server3);
+            Assert.AreEqual(3, model.GetUnavailableServers().Count);
+            model.ServerAvailable(server1);
+            Assert.AreEqual(2, model.GetUnavailableServers().Count);
+            model.ServerAvailable(server1);
+            Assert.AreEqual(2, model.GetUnavailableServers().Count);
+            model.ServerAvailable(server2);
+            Assert.AreEqual(1, model.GetUnavailableServers().Count);
+            model.ServerAvailable(server3);
+            Assert.AreEqual(0, model.GetUnavailableServers().Count);
+        }
+
+        [TestMethod]
+        public void MainLogicModule_TransactionAnswerResult_ReceiveAnswersFromWriter()
+        {
+            const int distrServer1 = 22168;
+            const int distrServer2 = 23168;
+
+            #region hell
+
+            var connectionConf = new ConnectionConfiguration("testService", 10);
+
+            var distrconfig = new DistributorHashConfiguration(1);
+            var queueconfig = new QueueConfiguration(1, 100);
+            var dnet = new DistributorNetModule(connectionConf,
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
+                queueconfig, dnet,
+                new ServerId("localhost", distrServer1),
+                new ServerId("localhost", distrServer2),
+                new HashMapConfiguration("TestDistributorReceiveAndDbSendAsync",
+                    HashMapCreationMode.ReadFromFile,
+                    1, 1, HashFileType.Distributor));
+            dnet.SetDistributor(ddistributor);
+
+            var tranc = new TransactionModule(new QueueConfiguration(1, 1000), dnet, new TransactionConfiguration(4),
+                                              distrconfig);
+            var cache = new DistributorTimeoutCache(TimeSpan.FromMilliseconds(2000), TimeSpan.FromMilliseconds(200000));
+            var main = new MainLogicModule(cache, ddistributor, tranc);
+            cache.SetMainLogicModule(main);
+
+            var netReceive4 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
+            var netReceive42 = new NetReceiverConfiguration(distrServer2, "localhost", "testService");
+            var input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), main, tranc);
+            var receiver4 = new NetDistributorReceiver(main, input,
+                                                       ddistributor, netReceive4, netReceive42);
+
+            ddistributor.Start();
+            receiver4.Start();
+
+            #endregion
+
+            var t = 0;
+            GlobalQueue.Queue.TransactionQueue.Registrate(data => Interlocked.Increment(ref t));
+            GlobalQueue.Queue.Start();
+
+            var connection = new Impl.DbController.DbControllerNet.SingleConnectionToDistributor(
+                    new ServerId("localhost", distrServer1), new ConnectionConfiguration("testService", 10),
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            connection.Connect();
+
+            connection.TransactionAnswerResult(new Transaction("123", "123"));
+            Thread.Sleep(TimeSpan.FromMilliseconds(100));
+            connection.TransactionAnswerResult(new Transaction("1243", "1423"));
+            Thread.Sleep(TimeSpan.FromMilliseconds(100));
+            Assert.AreEqual(2, t);
+
+            connection.Dispose();
+            receiver4.Dispose();
+        }
+
+        [TestMethod]
+        public void TransactionModule_ProcessSyncWithExecutor_NoServersToSendData()
+        {
+            var s1 = new TestServerDescription(1);
+            var s2 = new TestServerDescription(2);
+
+            var net = new NetModuleTest(new Dictionary<ServerId, bool> { { s1, false }, { s2, true } });
+            var trm = new TransactionModule(new QueueConfiguration(1, 1000), net, new TransactionConfiguration(1),
+                                            new DistributorHashConfiguration(2));
+
+            trm.Start();
+            var ev = new InnerData(new Transaction("", ""))
+            {
+                Transaction = { Destination = new List<ServerId> { s1, s2 } }
+            };
+
+            using (var trans = trm.Rent())
+            {
+                trm.ProcessSyncWithExecutor(ev, trans.Element);
+            }
+            Assert.IsTrue(ev.Transaction.IsError);
+            trm.Dispose();
+        }
+
+        [TestMethod]
+        public void TransactionModule_ProcessSyncWithExecutor_SuccessSendDataToServers()
+        {
+            var server1 = new ServerId("localhost", 21131);
+            var server2 = new ServerId("localhost", 21132);
+
+            var netconfig = new ConnectionConfiguration("testService", 10);
+            var queueconfig = new QueueConfiguration(1, 100);
+            var distrconfig = new DistributorHashConfiguration(2);
+            var distributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
+                queueconfig, null, new ServerId("localhost", 1),
+                new ServerId("localhost", 1),
+                new HashMapConfiguration("TestTransactionModule",
+                    HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
+
+            var net = new DistributorNetModule(netconfig,
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            net.SetDistributor(distributor);
+            distributor.Start();
+            net.Start();
+
+            var s1 = TestHelper.OpenControllerHost(server1, netconfig);
+            var s2 = TestHelper.OpenControllerHost(server2, netconfig);
+
+            net.ConnectToDbController(server1);
+            net.ConnectToDbController(server2);
+            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+            var ev = new InnerData(new Transaction("", ""))
+            {
+                Transaction = { Destination = new List<ServerId> { server1, server2 } }
+            };
+
+            var trm = new TransactionModule(new QueueConfiguration(1, 1000), net, new TransactionConfiguration(1),
+                                            new DistributorHashConfiguration(2));
+            trm.Start();
+
+            using (var trans = trm.Rent())
+            {
+                trm.ProcessSyncWithExecutor(ev, trans.Element);
+            }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(100));
+
+            Assert.AreEqual(1, s1.Value);
+            Assert.AreEqual(1, s2.Value);
+            Assert.IsFalse(ev.Transaction.IsError);
+
+            net.Dispose();
+            distributor.Dispose();
+            trm.Dispose();
+        }
+
+        [TestMethod]
+        public void TransactionModule_ProcessSyncWithExecutor_RollbackNoEnoughServers()
+        {
+            var server1 = new ServerId("localhost", 21141);
+            var server2 = new ServerId("localhost", 21142);
+            var server3 = new ServerId("localhost", 21143);
+
+            var netconfig = new ConnectionConfiguration("testService", 10);
+            var queueconfig = new QueueConfiguration(1, 100);
+            var distrconfig = new DistributorHashConfiguration(2);
+            var distributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
+                queueconfig, null, new ServerId("localhost", 1),
+                new ServerId("localhost", 1),
+                new HashMapConfiguration("test10", HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
+
+            var net = new DistributorNetModule(netconfig,
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            net.SetDistributor(distributor);
+            distributor.Start();
+            net.Start();
+            GlobalQueue.Queue.Start();
+
+            var s1 = TestHelper.OpenControllerHost(server1, netconfig);
+            var s2 = TestHelper.OpenControllerHost(server2, netconfig);
+
+            net.ConnectToDbController(server1);
+            net.ConnectToDbController(server2);
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+
+            var ev = new InnerData(new Transaction("", ""))
+            {
+                Transaction = { Destination = new List<ServerId> { server1, server2, server3 } }
+            };
+
+            var trm = new TransactionModule(new QueueConfiguration(1, 1000), net, new TransactionConfiguration(1),
+                                            new DistributorHashConfiguration(3));
+            trm.Start();
+
+            using (var trans = trm.Rent())
+            {
+                trm.ProcessSyncWithExecutor(ev, trans.Element);
+            }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(100));
+
+            Assert.IsTrue(s1.Value <= 0);
+            Assert.IsTrue(s2.Value <= 0);
+            Assert.IsTrue(ev.Transaction.IsError);
+
+            net.Dispose();   
+            trm.Dispose();
+        }
+
+        [TestMethod]
+        public void NetModule_Process_SendDatatoAvaliableAndUnavalilableServers()
+        {
+            var server1 = new ServerId("localhost", 21121);
+            var server2 = new ServerId("localhost", 21122);
+            var server3 = new ServerId("localhost", 21123);
+            var netconfig = new ConnectionConfiguration("testService", 10);
+            var queueconfig = new QueueConfiguration(1, 100);
+            var distrconfig = new DistributorHashConfiguration(2);
+
+            var s1 = TestHelper.OpenControllerHost(server1, netconfig);
+            var s2 = TestHelper.OpenControllerHost(server2, netconfig);
+
+            var net = new DistributorNetModule(netconfig,
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            var distributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
+                queueconfig, net, new ServerId("localhost", 1),
+                new ServerId("localhost", 1),
+                new HashMapConfiguration("test12", HashMapCreationMode.CreateNew, 1,
+                    1, HashFileType.Distributor));
+            net.SetDistributor(distributor);
+            distributor.Start();
+            net.Start();
+            GlobalQueue.Queue.Start();
+
+            net.ConnectToDbController(server1);
+            net.ConnectToDbController(server2);
+
+            var ev = new InnerData(new Transaction("", ""))
+            {
+                Transaction = { Destination = new List<ServerId> { server1 } }
+            };
+
+            var ret1 = net.Process(server1, ev);
+            var ret2 = net.Process(server2, ev);
+            var ret3 = net.Process(server3, ev);
+            Assert.AreEqual(1, s1.Value);
+            Assert.AreEqual(1, s2.Value);
+            Assert.AreEqual(typeof(SuccessResult), ret1.GetType());
+            Assert.AreEqual(typeof(SuccessResult), ret2.GetType());
+            Assert.AreEqual(typeof(ServerNotFoundResult), ret3.GetType());
+
+            GlobalQueue.Queue.Dispose();
+            net.Dispose();
+        }
+
+        [TestMethod]
+        public void DistributorTimeoutCache_GetUpdate()
+        {
+            var cache = new DistributorTimeoutCache(TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(500));
+
+            var ev = new InnerData(new Transaction("123", "")) { Transaction = { Destination = new List<ServerId>() } };
+
+            cache.AddToCache("123", ev.Transaction);
+            var ret = cache.Get("123");
+            Assert.AreEqual(ev.Transaction, ret);
+            ev.Transaction.Complete();
+            cache.Update("123", ev.Transaction);
+            ret = cache.Get("123");
+            Assert.AreEqual(ev.Transaction, ret);
+            Thread.Sleep(200);
+            ret = cache.Get("123");
+            Assert.AreEqual(ev.Transaction, ret);
+            Assert.AreEqual(TransactionState.Complete, ev.Transaction.State);
+            Thread.Sleep(500);
+            ret = cache.Get("123");
+            Assert.AreEqual(null, ret);
+        }
+
+        [TestMethod]
+        public void DistributorTimeoutCache_TimeoutData_SendToMainLogicModuleObsoleteData()
+        {
+            var cache = new DistributorTimeoutCache(TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(500));
+
+            var net = new DistributorNetModule(new ConnectionConfiguration("", 1),
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            var distributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                new DistributorHashConfiguration(1), new QueueConfiguration(1, 1),
+                net, new ServerId("", -1), new ServerId("", -1),
+                new HashMapConfiguration("", HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
+            var trans = new TransactionModule(new QueueConfiguration(1, 1000), net, new TransactionConfiguration(1),
+                                              new DistributorHashConfiguration(1));
+            var main = new MainLogicModule(cache, distributor, trans);
+
+            cache.SetMainLogicModule(main);
+
+            var ev = new InnerData(new Transaction("123", "") { OperationName = OperationName.Create })
+            {
+                Transaction = { Destination = new List<ServerId>() }
+            };
+
+            ev.Transaction.Complete();
+            cache.AddToCache(ev.Transaction.CacheKey, ev.Transaction);
+            var ret = cache.Get(ev.Transaction.CacheKey);
+            Assert.AreEqual(ev.Transaction, ret);
+            Thread.Sleep(200);
+            cache.Get(ev.Transaction.CacheKey);
+            Assert.AreEqual(TransactionState.Complete, ev.Transaction.State);
+            Thread.Sleep(200);
+            cache.Get(ev.Transaction.CacheKey);
+            Assert.AreEqual(TransactionState.Complete, ev.Transaction.State);
+            Thread.Sleep(500);
+            ret = cache.Get(ev.Transaction.CacheKey);
+            Assert.AreEqual(null, ret);
+
+            ev = new InnerData(new Transaction("1231", "") { OperationName = OperationName.Create })
+            {
+                Transaction = { Destination = new List<ServerId>() }
+            };
+
+            ev.Transaction.StartTransaction();
+            cache.AddToCache(ev.Transaction.CacheKey, ev.Transaction);
+            ret = cache.Get(ev.Transaction.CacheKey);
+            Assert.AreEqual(ev.Transaction, ret);
+            Thread.Sleep(200);
+            cache.Get(ev.Transaction.CacheKey);
+            Assert.AreEqual(TransactionState.Error, ev.Transaction.State);
+            Thread.Sleep(200);
+            cache.Get(ev.Transaction.CacheKey);
+            Assert.AreEqual(TransactionState.Error, ev.Transaction.State);
+            Thread.Sleep(500);
+            ret = cache.Get(ev.Transaction.CacheKey);
+            Assert.AreEqual(null, ret);
+        }
+
+        [TestMethod]
+        public void ControllerSystemModel_GetDestination_ChechAvailableServers()
+        {
+            var config = new DistributorHashConfiguration(1);
+
+            var writer = new HashWriter(new HashMapConfiguration("test", HashMapCreationMode.CreateNew, 6, 3, HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "local", 11010, 157);
+            writer.SetServer(1, "local", 11011, 157);
+            writer.SetServer(2, "local", 11012, 157);
+            writer.SetServer(3, "local", 11010, 157);
+            writer.SetServer(4, "local", 11011, 157);
+            writer.SetServer(5, "local", 11012, 157);
+            writer.Save();
+
+            var model = new ControllerSystemModel(config,
+                                                  new HashMapConfiguration("test", HashMapCreationMode.ReadFromFile, 1,
+                                                                           1, HashFileType.Distributor));
+            model.Start();
+
+            var ev = new InnerData(new Transaction("123", ""))
+            {
+                Transaction = new Transaction(HashConvertor.GetString("1"), "")
+            };
+            ev.Transaction.Destination = new List<ServerId>();
+
+            var ret = model.GetDestination(ev);
+            Assert.IsTrue(ret.Count == 1);
+            model.ServerNotAvailable(ret.First());
+            var ret2 = model.GetDestination(ev);
+            Assert.IsTrue(ret2.Count == 1);
+            Assert.AreNotEqual(ret.First(), ret2.First());
+            model.ServerNotAvailable(ret2.First());
+            var ret3 = model.GetDestination(ev);
+            Assert.IsTrue(ret3.Count == 1);
+            Assert.AreNotEqual(ret.First(), ret3.First());
+            Assert.AreNotEqual(ret3.First(), ret2.First());
+            model.ServerNotAvailable(ret3.First());
+            var ret4 = model.GetDestination(ev);
+            Assert.IsTrue(ret4.Count == 0);
+        }
+
+        [TestMethod]
+        public void MainLogic_ProcessWithData_NotEnougnServersForWrite()
+        {
+            var writer = new HashWriter(new HashMapConfiguration("test9", HashMapCreationMode.CreateNew, 3, 3, HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "localhost", 21151, 157);
+            writer.SetServer(1, "localhost", 21152, 157);
+            writer.SetServer(2, "localhost", 21153, 157);
+            writer.Save();
+
+            var cache = new DistributorTimeoutCache(TimeSpan.FromMilliseconds(400), TimeSpan.FromMilliseconds(1000));
+            var distrconfig = new DistributorHashConfiguration(3);
+            var queueconfig = new QueueConfiguration(1, 100);
+            var netconfig = new ConnectionConfiguration("testService", 10);
+            var net = new DistributorNetModule(netconfig,
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            var distributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
+                queueconfig, null, new ServerId("localhost", 1),
+                new ServerId("localhost", 1),
+                new HashMapConfiguration("test9", HashMapCreationMode.ReadFromFile, 1, 3, HashFileType.Distributor));
+
+            net.SetDistributor(distributor);
+            var transaction = new TransactionModule(new QueueConfiguration(1, 1000), net, new TransactionConfiguration(1),
+                                                distrconfig);
+            var main = new MainLogicModule(cache, distributor, transaction);
+
+            cache.SetMainLogicModule(main);
+            var server1 = new ServerId("localhost", 21151);
+            var server2 = new ServerId("localhost", 21152);
+
+            var s1 = TestHelper.OpenControllerHost(server1, netconfig);
+            var s2 = TestHelper.OpenControllerHost(server2, netconfig);
+
+            cache.Start();
+            distributor.Start();
+            net.Start();
+            transaction.Start();
+            main.Start();
+
+            GlobalQueue.Queue.Start();
+
+            net.ConnectToDbController(server1);
+            net.ConnectToDbController(server2);                        
+
+            var ev = new InnerData(new Transaction("123", ""))
+            {
+                Transaction =
+                    new Transaction(HashConvertor.GetString("1"), "")
+                    {
+                        OperationName = OperationName.Create,
+                        OperationType = OperationType.Async
+                    }
+            };
+            ev.Transaction.Destination = new List<ServerId>();
+
+            s1.Value = 0;
+            s2.Value = 0;
+            using (var trans = transaction.Rent())
+            {
+                main.ProcessWithData(ev, trans.Element);
+            }
+            Thread.Sleep(TimeSpan.FromMilliseconds(300));
+
+            var data = main.GetTransactionState(ev.Transaction.UserTransaction);
+            Assert.AreEqual(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.Error);
+            Assert.IsTrue(s1.Value <= 0);
+            Assert.IsTrue(s2.Value <= 0);
+            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+            Assert.AreEqual(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.DontExist);
+            Assert.AreEqual(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.DontExist);
+
+            net.Dispose();
+            distributor.Dispose();
+            transaction.Dispose();
+        }
+
+        [TestMethod]
+        public void MainLogic_ProcessWithData_SendAllReplicsThenObsoleteDataInCache()
+        {
+            var writer = new HashWriter(new HashMapConfiguration("test9", HashMapCreationMode.CreateNew, 2, 3, HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "localhost", 21151, 157);
+            writer.SetServer(1, "localhost", 21152, 157);
+            writer.Save();
+
+            var cache = new DistributorTimeoutCache(TimeSpan.FromMilliseconds(400), TimeSpan.FromMilliseconds(1000));
+            var distrconfig = new DistributorHashConfiguration(2);
+            var queueconfig = new QueueConfiguration(1, 100);
+            var netconfig = new ConnectionConfiguration("testService", 10);
+            var net = new DistributorNetModule(netconfig,
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            var distributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
+                queueconfig, net, new ServerId("localhost", 1),
+                new ServerId("localhost", 1),
+                new HashMapConfiguration("test9", HashMapCreationMode.ReadFromFile,
+                    1, 1, HashFileType.Distributor));
+            net.SetDistributor(distributor);
+            var transaction = new TransactionModule(new QueueConfiguration(1, 1000), net, new TransactionConfiguration(1),
+                                                    distrconfig);
+            var main = new MainLogicModule(cache, distributor, transaction);
+
+            cache.SetMainLogicModule(main);
+            var server1 = new ServerId("localhost", 21151);
+            var server2 = new ServerId("localhost", 21152);
+
+            var s1 = TestHelper.OpenControllerHost(server1, netconfig);
+            var s2 = TestHelper.OpenControllerHost(server2, netconfig);
+
+            cache.Start();
+            distributor.Start();
+            net.Start();
+            transaction.Start();
+            main.Start();
+
+            GlobalQueue.Queue.Start();
+
+            net.ConnectToDbController(server1);
+            net.ConnectToDbController(server2);
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(300));
+            var ev = new InnerData(new Transaction("123", ""))
+            {
+                Transaction =
+                    new Transaction(HashConvertor.GetString("1"), "")
+                    {
+                        OperationName = OperationName.Create,
+                        OperationType = OperationType.Async
+                    }
+            };
+            ev.Transaction.Destination = new List<ServerId>();
+
+            using (var trans = transaction.Rent())
+            {
+                main.ProcessWithData(ev, trans.Element);
+            }
+
+            GlobalQueue.Queue.TransactionQueue.Add(ev.Transaction);
+            GlobalQueue.Queue.TransactionQueue.Add(ev.Transaction);
+            Thread.Sleep(TimeSpan.FromMilliseconds(100));
+
+            Assert.IsTrue(s1.Value > 0);
+            Assert.IsTrue(s2.Value > 0);
+            Assert.AreEqual(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.Complete);
+            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+            Assert.AreEqual(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.DontExist);
+
+            net.Dispose();
+            distributor.Dispose();
+            transaction.Dispose();
+        }
+
+        [TestMethod]
+        public void ControllerSystemModel_GetDestination_CountReplics()
+        {
+            var config = new DistributorHashConfiguration(4);
+
+            var writer = new HashWriter(new HashMapConfiguration("testhash", HashMapCreationMode.CreateNew, 6, 3, HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "local", 11010, 157);
+            writer.SetServer(1, "local", 11011, 157);
+            writer.SetServer(2, "local", 11012, 157);
+            writer.SetServer(3, "local", 11010, 157);
+            writer.SetServer(4, "local", 11011, 157);
+            writer.SetServer(5, "local", 11012, 157);
+            writer.Save();
+
+            var model = new ControllerSystemModel(config,
+                                                  new HashMapConfiguration("testhash", HashMapCreationMode.ReadFromFile,
+                                                                           1, 1, HashFileType.Distributor));
+            model.Start();
+
+            var ev = new InnerData(new Transaction("123", ""))
+            {
+                Transaction = new Transaction(HashConvertor.GetString("1"), "")
+            };
+            ev.Transaction.Destination = new List<ServerId>();
+
+            var ret = model.GetDestination(ev);
+            Assert.IsTrue(ret.Count == 0);
+            model = new ControllerSystemModel(new DistributorHashConfiguration(3),
+                                              new HashMapConfiguration("testhash", HashMapCreationMode.ReadFromFile, 1,
+                                                                       1, HashFileType.Distributor));
+            model.Start();
+
+            ret = model.GetDestination(ev);
+            Assert.AreEqual(3, ret.Count);
+            Assert.AreNotEqual(ret[0], ret[1]);
+            Assert.AreNotEqual(ret[0], ret[2]);
+            Assert.AreNotEqual(ret[2], ret[1]);
+        }
+
+        [TestMethod]
+        public void InputModuleWithParallel_ProcessAsync_SendToOneServers_Success()
+        {
+            const int distrServer1 = 22161;
+            const int distrServer2 = 23161;
+            const int storageServer1 = 22162;
+
+            var q1 = new GlobalQueueInner();
+
+            var writer = new HashWriter(new HashMapConfiguration("test13", HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "localhost", storageServer1, 157);
+            writer.Save();
+
+            #region hell
+
+            GlobalQueue.SetQueue(q1);
+
+            var connection = new ConnectionConfiguration("testService", 10);
+
+            var distrconfig = new DistributorHashConfiguration(1);
+            var queueconfig = new QueueConfiguration(1, 100);
+            var dnet = new DistributorNetModule(connection,
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
+                queueconfig, dnet,
+                new ServerId("localhost", distrServer1),
+                new ServerId("localhost", distrServer2),
+                new HashMapConfiguration("test13", HashMapCreationMode.ReadFromFile,
+                    1, 1, HashFileType.Distributor));
+            dnet.SetDistributor(ddistributor);
+
+            var tranc = new TransactionModule(new QueueConfiguration(1, 1000), dnet, new TransactionConfiguration(4),
+                distrconfig);
+
+            var cache = new DistributorTimeoutCache(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200));
+            var main = new MainLogicModule(cache, ddistributor, tranc);
+            cache.SetMainLogicModule(main);
+
+            var netReceive4 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
+            var netReceive42 = new NetReceiverConfiguration(distrServer2, "localhost", "testService");
+            var input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), main, tranc);
+            var receiver4 = new NetDistributorReceiver(main, input, ddistributor, netReceive4, netReceive42);
+
+            #endregion
+
+            var s = TestHelper.OpenControllerHost(new ServerId("localhost", storageServer1),
+                                       new ConnectionConfiguration("testService", 10));
+
+            main.Start();
+            receiver4.Start();
+            input.Start();
+            dnet.Start();
+            ddistributor.Start();
+
+            q1.Start();
+
+            var list = new List<InnerData>();
+            const int count = 100;
+            for (int i = 1; i < count + 1; i++)
+            {
+                var ev =
+                    new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
+                    {
+                        OperationName = OperationName.Create,
+                        OperationType = OperationType.Async
+                    })
+                    {
+                        Data = CommonDataSerializer.Serialize(i)
+                    };
+                list.Add(ev);
+            }
+
+            foreach (var data in list)
+            {
+                input.ProcessAsync(data);
+            }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+
+            Assert.AreEqual(count, s.Value);
+
+            foreach (var data in list)
+            {
+                var transaction = main.GetTransactionState(data.Transaction.UserTransaction);
+                Assert.AreEqual(TransactionState.TransactionInProcess, transaction.State);
+            }
+            foreach (var data in list)
+            {
+                q1.TransactionQueue.Add(data.Transaction);
+            }
+            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+            foreach (var data in list)
+            {
+                var transaction = main.GetTransactionState(data.Transaction.UserTransaction);
+                Assert.AreEqual(TransactionState.Complete, transaction.State);
+            }
+            q1.Dispose();
+
+            ddistributor.Dispose();
+            dnet.Dispose();
+            cache.Dispose();
+            tranc.Dispose();
+        }
+    }
+}

@@ -44,7 +44,7 @@ namespace Qoollo.Impl.NetInterfaces.Data
 
         }
 
-        public static void CreateServer<T>(object server, NetReceiverConfiguration configuration)
+        public static ServiceHost CreateServer<T>(object server, NetReceiverConfiguration configuration)
         {
             var host = new ServiceHost(server,
                 new Uri(string.Format("net.tcp://{0}:{1}/{2}", configuration.Host, configuration.Port,
@@ -69,6 +69,13 @@ namespace Qoollo.Impl.NetInterfaces.Data
             test.IncludeExceptionDetailInFaults = true;
 
             host.Open();
+
+            return host;
+        }
+
+        public static void StopService(ServiceHost server)
+        {
+            server.Close();         
         }
     }
 }

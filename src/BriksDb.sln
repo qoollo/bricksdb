@@ -20,6 +20,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{570B58
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BriksDb.Tests", "BriksDb.Tests\BriksDb.Tests.csproj", "{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -80,6 +82,18 @@ Global
 		{C68567CF-D547-4AAF-8C63-36B503D21539}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C68567CF-D547-4AAF-8C63-36B503D21539}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C68567CF-D547-4AAF-8C63-36B503D21539}.Release|x86.ActiveCfg = Release|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.DebugRC|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.DebugRC|Any CPU.Build.0 = Debug|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.DebugRC|x86.ActiveCfg = Debug|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.DebugSC|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.DebugSC|Any CPU.Build.0 = Debug|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.DebugSC|x86.ActiveCfg = Debug|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

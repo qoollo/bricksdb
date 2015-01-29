@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using Qoollo.Impl.DbController.Db.Commands;
+using Qoollo.Impl.Writer.Db.Commands;
 
 namespace Qoollo.Impl.Collector.Parser
 {

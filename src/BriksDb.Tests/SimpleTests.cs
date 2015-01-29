@@ -267,9 +267,9 @@ namespace Qoollo.Tests
             Assert.AreEqual(null, dest);
             Assert.AreEqual(null, dest2);
 
-            TestHelper.OpenControllerHost(new ServerId("localhost", storageServer1),
+            TestHelper.OpenWriterHost(new ServerId("localhost", storageServer1),
                 new ConnectionConfiguration("testService", 10));
-            TestHelper.OpenControllerHost(new ServerId("localhost", storageServer2),
+            TestHelper.OpenWriterHost(new ServerId("localhost", storageServer2),
                 new ConnectionConfiguration("testService", 10));
 
             Thread.Sleep(TimeSpan.FromMilliseconds(800));

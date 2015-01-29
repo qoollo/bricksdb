@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using Qoollo.Client.CollectorGate.Handlers;
 using Qoollo.Client.Configuration;
-using Qoollo.Client.StorageGate;
+using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.Exceptions;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Support;

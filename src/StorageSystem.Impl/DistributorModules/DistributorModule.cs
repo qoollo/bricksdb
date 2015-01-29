@@ -7,8 +7,8 @@ using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.NetResults.System.Collector;
-using Qoollo.Impl.Common.NetResults.System.DbController;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
+using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
@@ -23,7 +23,7 @@ namespace Qoollo.Impl.DistributorModules
 {
     internal class DistributorModule : ControlModule
     {
-        private readonly ControllerSystemModel _modelOfDbControllers;
+        private readonly WriterSystemModel _modelOfDbWriters;
         private readonly DistributorSystemModel _modelOfAnotherDistributors;
         private readonly QueueConfiguration _queueConfiguration;
         private readonly DistributorNetModule _distributorNet;
@@ -59,7 +59,7 @@ namespace Qoollo.Impl.DistributorModules
             _asyncTaskModule = new AsyncTaskModule(queueConfiguration);
 
             _queueConfiguration = queueConfiguration;
-            _modelOfDbControllers = new ControllerSystemModel(configuration, hashMapConfiguration);
+            _modelOfDbWriters = new WriterSystemModel(configuration, hashMapConfiguration);
             _modelOfAnotherDistributors = new DistributorSystemModel();
             _distributorNet = distributorNet;
             _localfordb = localfordb;
@@ -72,7 +72,7 @@ namespace Qoollo.Impl.DistributorModules
         {
             _queue.DistributorDistributorQueue.Registrate(_queueConfiguration, Process);
             _queue.DistributorTransactionCallbackQueue.Registrate(_queueConfiguration, ProcessCallbackTransaction);
-            _modelOfDbControllers.Start();
+            _modelOfDbWriters.Start();
 
             _asyncTaskModule.AddAsyncTask(
                 new AsyncDataPeriod(_asyncPing.TimeoutPeriod, PingProcess, AsyncTasksNames.AsyncPing, -1), false);
@@ -96,7 +96,7 @@ namespace Qoollo.Impl.DistributorModules
 
         private HashMapResult GetHashMap()
         {
-            return new HashMapResult(_modelOfDbControllers.GetAllServers());
+            return new HashMapResult(_modelOfDbWriters.GetAllServers());
         }
 
         private void RestoreServerCommand(RestoreCommand command)
@@ -104,8 +104,8 @@ namespace Qoollo.Impl.DistributorModules
             //TODO тоже надо будет выпилить
             command.CountSends++;
 
-            _distributorNet.ConnectToDbController(command.RestoreServer);
-            _modelOfDbControllers.ServerAvailable(command.RestoreServer);
+            _distributorNet.ConnectToWriter(command.RestoreServer);
+            _modelOfDbWriters.ServerAvailable(command.RestoreServer);
 
             if (command.CountSends < 2)
             {
@@ -117,13 +117,13 @@ namespace Qoollo.Impl.DistributorModules
         private void ServerNotAvailableInner(ServerId server)
         {
             Logger.Logger.Instance.Debug("Distributor: Server not available " + server);
-            _modelOfDbControllers.ServerNotAvailable(server);
+            _modelOfDbWriters.ServerNotAvailable(server);
         }
 
         private void PingProcess(AsyncData data)
         {
-            var map = _modelOfDbControllers.GetAllServers2();
-            _distributorNet.PingDbControllers(map, _modelOfDbControllers.ServerAvailable);
+            var map = _modelOfDbWriters.GetAllServers2();
+            _distributorNet.PingWriters(map, _modelOfDbWriters.ServerAvailable);
 
             map = _distributorNet.GetServersByType(typeof (SingleConnectionToProxy));
             _distributorNet.PingProxy(map);
@@ -134,14 +134,14 @@ namespace Qoollo.Impl.DistributorModules
 
         private void CheckRestore(AsyncData data)
         {
-            var map = _modelOfDbControllers.GetAllServers2();
+            var map = _modelOfDbWriters.GetAllServers2();
             map.ForEach(x =>
             {
-                var result = _distributorNet.SendToDbController(x, new IsRestoredCommand());
+                var result = _distributorNet.SendToWriter(x, new IsRestoredCommand());
 
                 if (result is IsRestoredResult && ((IsRestoredResult) result).IsRestored)
                 {
-                    _modelOfDbControllers.ServerIsRestored(x);
+                    _modelOfDbWriters.ServerIsRestored(x);
                 }
             });
         }
@@ -158,10 +158,10 @@ namespace Qoollo.Impl.DistributorModules
 
         public bool IsSomethingHappendInSystem()
         {
-            return _modelOfDbControllers.IsSomethingHappendInSystem();
+            return _modelOfDbWriters.IsSomethingHappendInSystem();
         }
 
-        public List<ControllerDescription> GetDestination(InnerData data, bool needAllServers)
+        public List<WriterDescription> GetDestination(InnerData data, bool needAllServers)
         {
             Logger.Logger.Instance.Trace(
                 string.Format("Distributor: Get destination event hash = {0}, distr hash = {1}",
@@ -169,11 +169,11 @@ namespace Qoollo.Impl.DistributorModules
 
             data.Transaction.IsNeedAllServes = needAllServers;
 
-            List<ControllerDescription> ret = null;
+            List<WriterDescription> ret = null;
             if (!needAllServers)
-                ret = _modelOfDbControllers.GetDestination(data);
+                ret = _modelOfDbWriters.GetDestination(data);
             else
-                ret = _modelOfDbControllers.GetAllAvailableServers();
+                ret = _modelOfDbWriters.GetAllAvailableServers();
 
             if (ret.Count == 0)
                 return null;
@@ -223,7 +223,7 @@ namespace Qoollo.Impl.DistributorModules
 
         public void UpdateModel()
         {
-            _modelOfDbControllers.UpdateFromFile();
+            _modelOfDbWriters.UpdateFromFile();
         }
 
         #endregion

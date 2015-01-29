@@ -24,6 +24,7 @@ using Qoollo.Impl.Modules.Queue;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Consts = Qoollo.Impl.Common.Support.Consts;
+using SingleConnectionToDistributor = Qoollo.Impl.Writer.WriterNet.SingleConnectionToDistributor;
 
 namespace Qoollo.Tests
 {
@@ -32,7 +33,7 @@ namespace Qoollo.Tests
     public class TestDistributorModules
     {
         [TestMethod]
-        public void ControllerSystemModel_GetUnavailableServers_CheckAvailableAndUnAvailableServers()
+        public void WriterSystemModel_GetUnavailableServers_CheckAvailableAndUnAvailableServers()
         {
             var server1 = new ServerId("local", 11010);
             var server2 = new ServerId("local", 11011);
@@ -52,10 +53,10 @@ namespace Qoollo.Tests
             writer.SetServer(5, server3.RemoteHost, server3.Port, 157);
             writer.Save();
 
-            var model = new ControllerSystemModel(config,
+            var model = new WriterSystemModel(config,
                                                   new HashMapConfiguration("TestDbModelGetUnavalibaleServers",
                                                                            HashMapCreationMode.ReadFromFile, 1,
-                                                                           1, HashFileType.Controller));
+                                                                           1, HashFileType.Writer));
             model.Start();
 
             model.ServerNotAvailable(server1);
@@ -121,7 +122,7 @@ namespace Qoollo.Tests
             GlobalQueue.Queue.TransactionQueue.Registrate(data => Interlocked.Increment(ref t));
             GlobalQueue.Queue.Start();
 
-            var connection = new Impl.DbController.DbControllerNet.SingleConnectionToDistributor(
+            var connection = new SingleConnectionToDistributor(
                     new ServerId("localhost", distrServer1), new ConnectionConfiguration("testService", 10),
                     new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
             connection.Connect();
@@ -182,11 +183,11 @@ namespace Qoollo.Tests
             distributor.Start();
             net.Start();
 
-            var s1 = TestHelper.OpenControllerHost(server1, netconfig);
-            var s2 = TestHelper.OpenControllerHost(server2, netconfig);
+            var s1 = TestHelper.OpenWriterHost(server1, netconfig);
+            var s2 = TestHelper.OpenWriterHost(server2, netconfig);
 
-            net.ConnectToDbController(server1);
-            net.ConnectToDbController(server2);
+            net.ConnectToWriter(server1);
+            net.ConnectToWriter(server2);
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
             var ev = new InnerData(new Transaction("", ""))
             {
@@ -236,11 +237,11 @@ namespace Qoollo.Tests
             net.Start();
             GlobalQueue.Queue.Start();
 
-            var s1 = TestHelper.OpenControllerHost(server1, netconfig);
-            var s2 = TestHelper.OpenControllerHost(server2, netconfig);
+            var s1 = TestHelper.OpenWriterHost(server1, netconfig);
+            var s2 = TestHelper.OpenWriterHost(server2, netconfig);
 
-            net.ConnectToDbController(server1);
-            net.ConnectToDbController(server2);
+            net.ConnectToWriter(server1);
+            net.ConnectToWriter(server2);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
@@ -278,8 +279,8 @@ namespace Qoollo.Tests
             var queueconfig = new QueueConfiguration(1, 100);
             var distrconfig = new DistributorHashConfiguration(2);
 
-            var s1 = TestHelper.OpenControllerHost(server1, netconfig);
-            var s2 = TestHelper.OpenControllerHost(server2, netconfig);
+            var s1 = TestHelper.OpenWriterHost(server1, netconfig);
+            var s2 = TestHelper.OpenWriterHost(server2, netconfig);
 
             var net = new DistributorNetModule(netconfig,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
@@ -294,8 +295,8 @@ namespace Qoollo.Tests
             net.Start();
             GlobalQueue.Queue.Start();
 
-            net.ConnectToDbController(server1);
-            net.ConnectToDbController(server2);
+            net.ConnectToWriter(server1);
+            net.ConnectToWriter(server2);
 
             var ev = new InnerData(new Transaction("", ""))
             {
@@ -396,7 +397,7 @@ namespace Qoollo.Tests
         }
 
         [TestMethod]
-        public void ControllerSystemModel_GetDestination_ChechAvailableServers()
+        public void WriterSystemModel_GetDestination_ChechAvailableServers()
         {
             var config = new DistributorHashConfiguration(1);
 
@@ -410,7 +411,7 @@ namespace Qoollo.Tests
             writer.SetServer(5, "local", 11012, 157);
             writer.Save();
 
-            var model = new ControllerSystemModel(config,
+            var model = new WriterSystemModel(config,
                                                   new HashMapConfiguration("test", HashMapCreationMode.ReadFromFile, 1,
                                                                            1, HashFileType.Distributor));
             model.Start();
@@ -468,8 +469,8 @@ namespace Qoollo.Tests
             var server1 = new ServerId("localhost", 21151);
             var server2 = new ServerId("localhost", 21152);
 
-            var s1 = TestHelper.OpenControllerHost(server1, netconfig);
-            var s2 = TestHelper.OpenControllerHost(server2, netconfig);
+            var s1 = TestHelper.OpenWriterHost(server1, netconfig);
+            var s2 = TestHelper.OpenWriterHost(server2, netconfig);
 
             cache.Start();
             distributor.Start();
@@ -479,8 +480,8 @@ namespace Qoollo.Tests
 
             GlobalQueue.Queue.Start();
 
-            net.ConnectToDbController(server1);
-            net.ConnectToDbController(server2);                        
+            net.ConnectToWriter(server1);
+            net.ConnectToWriter(server2);                        
 
             var ev = new InnerData(new Transaction("123", ""))
             {
@@ -544,8 +545,8 @@ namespace Qoollo.Tests
             var server1 = new ServerId("localhost", 21111);
             var server2 = new ServerId("localhost", 21112);
 
-            var s1 = TestHelper.OpenControllerHost(server1, netconfig);
-            var s2 = TestHelper.OpenControllerHost(server2, netconfig);
+            var s1 = TestHelper.OpenWriterHost(server1, netconfig);
+            var s2 = TestHelper.OpenWriterHost(server2, netconfig);
 
             cache.Start();
             distributor.Start();
@@ -555,8 +556,8 @@ namespace Qoollo.Tests
 
             GlobalQueue.Queue.Start();
 
-            net.ConnectToDbController(server1);
-            net.ConnectToDbController(server2);
+            net.ConnectToWriter(server1);
+            net.ConnectToWriter(server2);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(300));
             var ev = new InnerData(new Transaction("123", ""))
@@ -591,7 +592,7 @@ namespace Qoollo.Tests
         }
 
         [TestMethod]
-        public void ControllerSystemModel_GetDestination_CountReplics()
+        public void WriterSystemModel_GetDestination_CountReplics()
         {
             var config = new DistributorHashConfiguration(4);
 
@@ -605,7 +606,7 @@ namespace Qoollo.Tests
             writer.SetServer(5, "local", 11012, 157);
             writer.Save();
 
-            var model = new ControllerSystemModel(config,
+            var model = new WriterSystemModel(config,
                                                   new HashMapConfiguration("testhash", HashMapCreationMode.ReadFromFile,
                                                                            1, 1, HashFileType.Distributor));
             model.Start();
@@ -618,7 +619,7 @@ namespace Qoollo.Tests
 
             var ret = model.GetDestination(ev);
             Assert.IsTrue(ret.Count == 0);
-            model = new ControllerSystemModel(new DistributorHashConfiguration(3),
+            model = new WriterSystemModel(new DistributorHashConfiguration(3),
                                               new HashMapConfiguration("testhash", HashMapCreationMode.ReadFromFile, 1,
                                                                        1, HashFileType.Distributor));
             model.Start();
@@ -677,7 +678,7 @@ namespace Qoollo.Tests
 
             #endregion
 
-            var s = TestHelper.OpenControllerHost(new ServerId("localhost", storageServer1),
+            var s = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer1),
                                        new ConnectionConfiguration("testService", 10));
 
             main.Start();
@@ -784,10 +785,10 @@ namespace Qoollo.Tests
 
             #endregion
 
-            var s1 = TestHelper.OpenControllerHost(new ServerId("localhost", storageServer1),
+            var s1 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer1),
                                         new ConnectionConfiguration("testService", 10));
 
-            var s2 = TestHelper.OpenControllerHost(new ServerId("localhost", storageServer2),
+            var s2 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer2),
                                         new ConnectionConfiguration("testService", 10));
 
             main.Start();
@@ -899,7 +900,7 @@ namespace Qoollo.Tests
 
             #endregion
 
-            var s = TestHelper.OpenControllerHost(new ServerId("localhost", storageServer1),
+            var s = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer1),
                                        new ConnectionConfiguration("testService", 10));
 
             main.Start();

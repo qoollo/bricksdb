@@ -125,7 +125,7 @@ namespace Qoollo.Tests
 
             writer =
                 new HashWriter(new HashMapConfiguration("test6", HashMapCreationMode.CreateNew, 2, 3,
-                    HashFileType.Controller));
+                    HashFileType.Writer));
             writer.CreateMap();
             writer.SetServer(0, "localhost", storageServer1, 157);
             writer.SetServer(1, "localhost", storageServer2, 157);

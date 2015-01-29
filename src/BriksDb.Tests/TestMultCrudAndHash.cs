@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
-using Qoollo.Client.StorageGate;
+using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Configurations;
 using Qoollo.Tests.Support;
@@ -59,7 +59,7 @@ namespace Qoollo.Tests
             var storageConfig = new StorageConfiguration("Test2Crud", 1, 10, TimeSpan.FromHours(1), TimeSpan.FromHours(1),
                 TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
 
-            var storage = new StorageApi(storageNet, storageConfig, common);
+            var storage = new WriterApi(storageNet, storageConfig, common);
 
             #endregion
 
@@ -151,8 +151,8 @@ namespace Qoollo.Tests
             var storageConfig = new StorageConfiguration("Test2CrudRestore", 1, 10, TimeSpan.FromHours(1),
                 TimeSpan.FromHours(1), TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
 
-            var storage1 = new StorageApi(storageNet1, storageConfig, common);
-            var storage2 = new StorageApi(storageNet2, storageConfig, common);
+            var storage1 = new WriterApi(storageNet1, storageConfig, common);
+            var storage2 = new WriterApi(storageNet2, storageConfig, common);
 
             #endregion
 
@@ -249,8 +249,8 @@ namespace Qoollo.Tests
             var storageConfig = new StorageConfiguration("TestCrudRestoreSingle", 1, 10, TimeSpan.FromHours(1),
                 TimeSpan.FromSeconds(1), TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
 
-            var storage1 = new StorageApi(storageNet1, storageConfig, common);
-            var storage2 = new StorageApi(storageNet2, storageConfig, common);
+            var storage1 = new WriterApi(storageNet1, storageConfig, common);
+            var storage2 = new WriterApi(storageNet2, storageConfig, common);
 
             #endregion
 
@@ -349,7 +349,7 @@ namespace Qoollo.Tests
             var storageConfig = new StorageConfiguration("TestHashFromValue", 1, 10, TimeSpan.FromHours(1), TimeSpan.FromHours(1),
                 TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
 
-            var storage = new StorageApi(storageNet, storageConfig, common);
+            var storage = new WriterApi(storageNet, storageConfig, common);
 
             #endregion
 
@@ -433,8 +433,8 @@ namespace Qoollo.Tests
             var storageConfig = new StorageConfiguration("TestHashFromValue", 1, 10, TimeSpan.FromHours(1),
                 TimeSpan.FromHours(1), TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
 
-            var storage1 = new StorageApi(storageNet1, storageConfig, common);
-            var storage2 = new StorageApi(storageNet2, storageConfig, common);
+            var storage1 = new WriterApi(storageNet1, storageConfig, common);
+            var storage2 = new WriterApi(storageNet2, storageConfig, common);
 
             #endregion
 

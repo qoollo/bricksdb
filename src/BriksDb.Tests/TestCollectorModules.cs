@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
-using Qoollo.Client.StorageGate;
+using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Collector;
 using Qoollo.Impl.Collector.Background;
 using Qoollo.Impl.Collector.CollectorNet;
@@ -82,7 +82,7 @@ namespace Qoollo.Tests
             writer.Save();
 
             var model = new CollectorModel(new DistributorHashConfiguration(countReplics),
-                new HashMapConfiguration("TestCollectorModel", HashMapCreationMode.ReadFromFile, 1, countReplics, HashFileType.Controller));
+                new HashMapConfiguration("TestCollectorModel", HashMapCreationMode.ReadFromFile, 1, countReplics, HashFileType.Writer));
             model.Start();
 
 
@@ -239,7 +239,7 @@ namespace Qoollo.Tests
             var server2 = new ServerId("", 2);
             var server3 = new ServerId("", 3);
             const int pageSize = 5;
-            var writer = new HashWriter(new HashMapConfiguration("TestCollector", HashMapCreationMode.CreateNew, 3, 3, HashFileType.Controller));
+            var writer = new HashWriter(new HashMapConfiguration("TestCollector", HashMapCreationMode.CreateNew, 3, 3, HashFileType.Writer));
             writer.CreateMap();
             writer.SetServer(0, server1.RemoteHost, server1.Port, 157);
             writer.SetServer(1, server2.RemoteHost, server2.Port, 157);
@@ -258,7 +258,7 @@ namespace Qoollo.Tests
             var distributor =
                 new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
                     new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Controller)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
             var back = new BackgroundModule(new QueueConfiguration(5, 10));
 
             var searchModule = new SearchTaskModule("Test", merge, loader, distributor, back, parser);
@@ -355,7 +355,7 @@ namespace Qoollo.Tests
             var distributor =
                 new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
                     new HashMapConfiguration("TestCollector2", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Controller)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
             var back = new BackgroundModule(new QueueConfiguration(5, 10));
 
             var searchModule = new SearchTaskModule("Test", merge, loader, distributor, back, parser);
@@ -549,7 +549,7 @@ namespace Qoollo.Tests
             var distributor =
                 new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
                     new HashMapConfiguration("TestCollector4", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Controller)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
             var back = new BackgroundModule(new QueueConfiguration(5, 10));
 
             var searchModule = new SearchTaskModule("", merge, loader, distributor, back, parser);
@@ -656,7 +656,7 @@ namespace Qoollo.Tests
             var storageConfig = new StorageConfiguration("TestCollectorNet", 1, 10, TimeSpan.FromHours(1), TimeSpan.FromHours(1),
                 TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
 
-            var storage = new StorageApi(storageNet, storageConfig, common);
+            var storage = new WriterApi(storageNet, storageConfig, common);
             var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
             var distributor =
                 new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),

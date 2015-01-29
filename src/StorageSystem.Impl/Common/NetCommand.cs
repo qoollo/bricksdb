@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using Qoollo.Impl.Common.NetResults.System.Collector;
-using Qoollo.Impl.Common.NetResults.System.DbController;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
+using Qoollo.Impl.Common.NetResults.System.Writer;
 
 namespace Qoollo.Impl.Common
 {

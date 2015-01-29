@@ -42,7 +42,7 @@ namespace Qoollo.Impl.Common.Server
                         return value.Host == Host && value.PortForDistributor == PortForDistributor;
                     case HashFileType.Collector:
                         return value.Host == Host && value.PortForCollector == PortForCollector;
-                    case HashFileType.Controller:
+                    case HashFileType.Writer:
                         return value.Host == Host && value.PortForCollector == PortForCollector &&
                                value.PortForDistributor == PortForDistributor;
                 }

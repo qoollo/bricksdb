@@ -143,23 +143,23 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 
         #endregion
 
-        #region Connect to controller
+        #region Connect to Writer
 
-        public void PingDbControllers(List<ServerId> servers, Action<ServerId> serverAvailable)
+        public void PingWriters(List<ServerId> servers, Action<ServerId> serverAvailable)
         {
-            PingServers(servers, serverAvailable, id => FindServer(id) as SingleConnectionToDbController,
-                ConnectToDbController);
+            PingServers(servers, serverAvailable, id => FindServer(id) as SingleConnectionToWriter,
+                ConnectToWriter);
         }
 
-        public bool ConnectToDbController(ServerId server)
+        public bool ConnectToWriter(ServerId server)
         {
-            return ConnectToServer(server, CreateConnectionToDbController);
+            return ConnectToServer(server, CreateConnectionToWriter);
         }
 
-        protected virtual ISingleConnection CreateConnectionToDbController(ServerId server,
+        protected virtual ISingleConnection CreateConnectionToWriter(ServerId server,
             ConnectionConfiguration configuration, ConnectionTimeoutConfiguration time)
         {
-            return new SingleConnectionToDbController(server, configuration, time);
+            return new SingleConnectionToWriter(server, configuration, time);
         }
 
 
@@ -167,12 +167,12 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         {
             Logger.Logger.Instance.Debug(string.Format("DistributorNetModule: process server = {0}, data = {1}", server,
                                                        data.Transaction.EventHash));
-            var connection = FindServer(server) as SingleConnectionToDbController;
+            var connection = FindServer(server) as SingleConnectionToWriter;
 
             if (connection == null)
             {
-                ConnectToDbController(server);
-                connection = FindServer(server) as SingleConnectionToDbController;
+                ConnectToWriter(server);
+                connection = FindServer(server) as SingleConnectionToWriter;
             }
 
             if (connection == null)
@@ -188,7 +188,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 
             if (ret is FailNetResult)
             {
-                Logger.Logger.Instance.Debug(string.Format("DbControllerNetModule: process fail result  server = {0}, data = {1}",
+                Logger.Logger.Instance.Debug(string.Format("DistributorNetModule: process fail result  server = {0}, data = {1}",
                                                            server,
                                                            data.Transaction.EventHash));
 
@@ -203,12 +203,12 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         {
             Logger.Logger.Instance.Debug(string.Format("DistributorNetModule: rollback = {0}, data = {1}", server,
                                                            data.Transaction.EventHash));
-            var connection = FindServer(server) as SingleConnectionToDbController;
+            var connection = FindServer(server) as SingleConnectionToWriter;
 
             if (connection == null)
             {
-                ConnectToDbController(server);
-                connection = FindServer(server) as SingleConnectionToDbController;
+                ConnectToWriter(server);
+                connection = FindServer(server) as SingleConnectionToWriter;
             }
 
             if (connection == null)
@@ -221,15 +221,15 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
             return connection.RollbackData(data);
         }
 
-        public RemoteResult SendToDbController(ServerId server, NetCommand command)
+        public RemoteResult SendToWriter(ServerId server, NetCommand command)
         {
             Logger.Logger.Instance.TraceFormat("SendSync command {0} to {1}", command.GetType(), server);
-            var connection = FindServer(server) as SingleConnectionToDbController;
+            var connection = FindServer(server) as SingleConnectionToWriter;
 
             if (connection == null)
             {
-                ConnectToDbController(server);
-                connection = FindServer(server) as SingleConnectionToDbController;
+                ConnectToWriter(server);
+                connection = FindServer(server) as SingleConnectionToWriter;
             }
 
             if (connection == null)
@@ -253,12 +253,12 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         {
             Logger.Logger.Instance.Debug(string.Format("DistributorNetModule: process server = {0}, data = {1}", server,
                                                        data.Transaction.EventHash));
-            var connection = FindServer(server) as SingleConnectionToDbController;
+            var connection = FindServer(server) as SingleConnectionToWriter;
 
             if (connection == null)
             {
-                ConnectToDbController(server);
-                connection = FindServer(server) as SingleConnectionToDbController;
+                ConnectToWriter(server);
+                connection = FindServer(server) as SingleConnectionToWriter;
             }
 
             if (connection == null)

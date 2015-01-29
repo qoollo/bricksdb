@@ -4,8 +4,8 @@ using System.Data;
 using System.Text;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common;
-using Qoollo.Impl.DbController.Db.Commands;
 using Qoollo.Impl.Modules.Db.Impl;
+using Qoollo.Impl.Writer.Db.Commands;
 
 namespace Qoollo.Tests.TestWriter
 {

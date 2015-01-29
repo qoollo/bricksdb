@@ -1,11 +1,11 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
-using Qoollo.Client.StorageGate;
 using Qoollo.Client.Support;
+using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Collector.Parser;
-using Qoollo.Impl.DbController.Db;
-using Qoollo.Impl.DbController.Db.Commands;
 using Qoollo.Impl.Sql.Internal;
+using Qoollo.Impl.Writer.Db;
+using Qoollo.Impl.Writer.Db.Commands;
 
 namespace Qoollo.Impl.Sql
 {

@@ -104,7 +104,7 @@ namespace Qoollo.Impl.Collector.Distributor
             _collectorNet.PingDistributors(servers);
 
             servers = _model.GetAllServers2();
-            _collectorNet.PingDbControllers(servers, _model.ServerAvailable);
+            _collectorNet.PingWriter(servers, _model.ServerAvailable);
         }
     }
 }

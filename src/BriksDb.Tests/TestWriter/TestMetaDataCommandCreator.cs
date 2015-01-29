@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.DbController.Db.Commands;
 using Qoollo.Impl.Modules.Db.Impl;
+using Qoollo.Impl.Writer.Db.Commands;
 
 namespace Qoollo.Tests.TestWriter
 {

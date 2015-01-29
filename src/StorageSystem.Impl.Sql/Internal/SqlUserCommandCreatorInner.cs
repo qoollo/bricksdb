@@ -4,8 +4,8 @@ using System.Data;
 using System.Data.SqlClient;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
-using Qoollo.Impl.DbController.Db.Commands;
 using Qoollo.Impl.Modules.Db.Impl;
+using Qoollo.Impl.Writer.Db.Commands;
 
 namespace Qoollo.Impl.Sql.Internal
 {

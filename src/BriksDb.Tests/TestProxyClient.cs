@@ -4,8 +4,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
-using Qoollo.Client.StorageGate;
 using Qoollo.Client.Support;
+using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
@@ -61,7 +61,7 @@ namespace Qoollo.Tests
             var netReceive1 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
             var netReceive12 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
             var trans = new TransactionConfiguration(1);
-            var hashMap = new HashMapConfiguration("TestClientProxy", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller);
+            var hashMap = new HashMapConfiguration("TestClientProxy", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer);
             var async = new AsyncTasksConfiguration(TimeSpan.FromSeconds(10));
 
             var distr = new DistributorSystem(new ServerId("localhost", distrServer1),
@@ -74,7 +74,7 @@ namespace Qoollo.Tests
             var netReceivedb = new NetReceiverConfiguration(storageServer, "localhost", "testService");
             var restore = new RestoreModuleConfiguration(4, TimeSpan.FromMinutes(1));
 
-            var storage = new DbControllerSystem(new ServerId("localhost", storageServer), queue,
+            var storage = new WriterSystem(new ServerId("localhost", storageServer), queue,
                 netReceivedb, new NetReceiverConfiguration(1, "fake", "fake"), hashMap, connection, restore, restore,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
@@ -146,7 +146,7 @@ namespace Qoollo.Tests
             var netReceive1 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
             var netReceive12 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
             var trans = new TransactionConfiguration(1);
-            var hashMap = new HashMapConfiguration("TestClientProxy", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller);
+            var hashMap = new HashMapConfiguration("TestClientProxy", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer);
             var async = new AsyncTasksConfiguration(TimeSpan.FromSeconds(10));
 
             var distr = new DistributorSystem(new ServerId("localhost", distrServer1),
@@ -159,7 +159,7 @@ namespace Qoollo.Tests
             var netReceivedb = new NetReceiverConfiguration(storageServer, "localhost", "testService");
             var restore = new RestoreModuleConfiguration(4, TimeSpan.FromMinutes(1));
 
-            var storage = new DbControllerSystem(new ServerId("localhost", storageServer), queue,
+            var storage = new WriterSystem(new ServerId("localhost", storageServer), queue,
                 netReceivedb, new NetReceiverConfiguration(1, "fake", "fake"), hashMap, connection, restore, restore,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
@@ -233,7 +233,7 @@ namespace Qoollo.Tests
                     new DistributorConfiguration(1, "TestProxyDispose"), common);
 
 
-            var storage = new StorageApi(
+            var storage = new WriterApi(
                 new StorageNetConfiguration("localhost", storageServer, 157, "testService"),
                 new StorageConfiguration(1, "TestProxyDispose"),
                 new CommonConfiguration());

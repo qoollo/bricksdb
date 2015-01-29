@@ -14,7 +14,7 @@ namespace Qoollo.Impl.Common.HashFile
     internal class HashMap:IDisposable
     {
         public List<HashMapRecord> Map { get; protected set; }
-        public List<ControllerDescription> Servers { get; private set; }
+        public List<WriterDescription> Servers { get; private set; }
         public List<HashMapRecord> AvailableMap { get; private set; } 
         private HashMapConfiguration _configuration;
 
@@ -24,7 +24,7 @@ namespace Qoollo.Impl.Common.HashFile
             _configuration = configuration;
             Map = new List<HashMapRecord>(configuration.CountSlices);    
             AvailableMap = new List<HashMapRecord>();
-            Servers = new List<ControllerDescription>();
+            Servers = new List<WriterDescription>();
         }
 
         #region Start work

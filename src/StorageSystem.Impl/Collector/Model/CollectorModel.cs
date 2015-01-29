@@ -13,7 +13,7 @@ namespace Qoollo.Impl.Collector.Model
     internal class CollectorModel
     {
         public bool UseStart { get; private set; }
-        private List<ControllerDescription> _servers; 
+        private List<WriterDescription> _servers; 
         private readonly ReaderWriterLockSlim _lock;
         private DistributorHashConfiguration _configuration;
         private HashMap _map;
@@ -26,7 +26,7 @@ namespace Qoollo.Impl.Collector.Model
             Contract.Requires(mapConfiguration != null);
             _configuration = configuration;
             _lock = new ReaderWriterLockSlim();
-            _servers = new List<ControllerDescription>();
+            _servers = new List<WriterDescription>();
             _map = new HashMap(mapConfiguration);
         }
 

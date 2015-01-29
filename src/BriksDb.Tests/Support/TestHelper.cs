@@ -10,8 +10,8 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.NetInterfaces.DbController;
 using Qoollo.Impl.NetInterfaces.Distributor;
+using Qoollo.Impl.NetInterfaces.Writer;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestProxy;
 
@@ -56,7 +56,7 @@ namespace Qoollo.Tests.Support
             return ret;
         }
 
-        public static TestWriterServer OpenControllerHost(ServerId server, ConnectionConfiguration config)
+        public static TestWriterServer OpenWriterHost(ServerId server, ConnectionConfiguration config)
         {
             var ret = new TestWriterServer();
             var host = new ServiceHost(ret,
@@ -67,7 +67,7 @@ namespace Qoollo.Tests.Support
                 Security = { Mode = SecurityMode.None },
                 TransactionFlow = true
             };
-            var contractType = typeof(ICommonNetReceiverDbControllerForWrite);
+            var contractType = typeof(ICommonNetReceiverWriterForWrite);
             host.AddServiceEndpoint(contractType, binding, "");
             var behavior = host.Description.Behaviors.Find<ServiceBehaviorAttribute>();
             behavior.InstanceContextMode = InstanceContextMode.Single;

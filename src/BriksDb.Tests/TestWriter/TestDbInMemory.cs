@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common.HashHelp;
-using Qoollo.Impl.DbController.Db;
+using Qoollo.Impl.Writer.Db;
 using Qoollo.Tests.Support;
 
 namespace Qoollo.Tests.TestWriter

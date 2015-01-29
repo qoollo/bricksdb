@@ -7,27 +7,27 @@ using Qoollo.Client.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.DbController;
-using Qoollo.Impl.DbController.AsyncDbWorks;
-using Qoollo.Impl.DbController.Db;
-using Qoollo.Impl.DbController.DbControllerNet;
-using Qoollo.Impl.DbController.Distributor;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.Writer;
+using Qoollo.Impl.Writer.AsyncDbWorks;
+using Qoollo.Impl.Writer.Db;
+using Qoollo.Impl.Writer.Distributor;
+using Qoollo.Impl.Writer.WriterNet;
 using Qoollo.Tests.TestWriter;
 
 namespace Qoollo.Tests.Support
 {
     class TestWriterGate
     {
-        private NetDbControllerReceiver _netRc;
+        private NetWriterReceiver _netRc;
         public InputModule Input;
         private MainLogicModule _mainС;
         public DistributorModule Distributor { get; set; }
         public AsyncDbWorkModule Restore { get; set; }
         private AsyncTaskModule _async;
         public DbModuleCollection Db { get; set; }
-        private DbControllerNetModule _net;
+        private WriterNetModule _net;
         public GlobalQueueInner Q { get; set; }
 
         public void Build(int storageServer, string hashFile, int countReplics)
@@ -37,10 +37,10 @@ namespace Qoollo.Tests.Support
 
             var queueConfiguration = new QueueConfiguration(1, 1000);
             var hashMapConfiguration = new HashMapConfiguration(hashFile,
-                HashMapCreationMode.ReadFromFile, 1, countReplics, HashFileType.Controller);
+                HashMapCreationMode.ReadFromFile, 1, countReplics, HashFileType.Writer);
             var local = new ServerId("localhost", storageServer);
 
-            _net = new DbControllerNetModule(new ConnectionConfiguration("testService", 10),
+            _net = new WriterNetModule(new ConnectionConfiguration("testService", 10),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
 
             Db = new DbModuleCollection();
@@ -57,7 +57,7 @@ namespace Qoollo.Tests.Support
                 hashMapConfiguration, new QueueConfiguration(2, 10), Db);
             _mainС = new MainLogicModule(Distributor, Db);
             Input = new InputModule(_mainС, queueConfiguration);
-            _netRc = new NetDbControllerReceiver(Input, Distributor,
+            _netRc = new NetWriterReceiver(Input, Distributor,
                 new NetReceiverConfiguration(storageServer, "localhost", "testService"),
                 new NetReceiverConfiguration(1, "fake", "fake"));
         }

@@ -23,27 +23,27 @@ namespace Qoollo.Impl.Collector.CollectorNet
             _distributor = distributor;
         }
 
-        #region Connect to Controller
+        #region Connect to Writer
 
-        public bool ConnectToController(ServerId server)
+        public bool ConnectToWriter(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToController(id, configuration, time));
+                (id, configuration, time) => new SingleConnectionToWriter(id, configuration, time));
         }
 
-        public void PingDbControllers(List<ServerId> servers, Action<ServerId> serverAvailable)
+        public void PingWriter(List<ServerId> servers, Action<ServerId> serverAvailable)
         {
-            PingServers(servers, serverAvailable, id => FindServer(id) as SingleConnectionToController,
-                ConnectToController);
+            PingServers(servers, serverAvailable, id => FindServer(id) as SingleConnectionToWriter,
+                ConnectToWriter);
         }
 
         public Tuple<RemoteResult, SelectSearchResult> SelectQuery(ServerId server, SelectDescription description)
         {
-            var connection = FindServer(server) as SingleConnectionToController;
+            var connection = FindServer(server) as SingleConnectionToWriter;
             if (connection == null)
             {
-                ConnectToController(server);
-                connection = FindServer(server) as SingleConnectionToController;
+                ConnectToWriter(server);
+                connection = FindServer(server) as SingleConnectionToWriter;
             }
 
             if (connection == null)
@@ -85,7 +85,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
             var connection = FindServer(server) as SingleConnectionToDistributor;
             if (connection == null)
             {
-                ConnectToController(server);
+                ConnectToWriter(server);
                 connection = FindServer(server) as SingleConnectionToDistributor;
             }
 

@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Qoollo.Client.StorageGate;
+using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common.HashHelp;
-using Qoollo.Impl.DbController.Db;
+using Qoollo.Impl.Writer.Db;
 
 namespace Qoollo.Tests.TestWriter
 {

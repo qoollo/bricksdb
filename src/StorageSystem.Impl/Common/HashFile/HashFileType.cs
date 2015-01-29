@@ -4,6 +4,6 @@
     {
         Distributor = 0,
         Collector = 1,
-        Controller = 2
+        Writer = 2
     }
 }

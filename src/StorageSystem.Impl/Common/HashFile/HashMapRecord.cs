@@ -15,7 +15,7 @@ namespace Qoollo.Impl.Common.HashFile
         
         public SavedServerId Save { get; set; }
         [XmlIgnore]
-        public ControllerDescription ServerId { get; private set; }
+        public WriterDescription ServerId { get; private set; }
 
         public HashMapRecord()
         {
@@ -39,11 +39,11 @@ namespace Qoollo.Impl.Common.HashFile
         {
             Save.Type = type;
             ServerId = type == HashFileType.Collector
-                ? new ControllerDescription(Save.Host, Save.PortForCollector)
-                : new ControllerDescription(Save.Host, Save.PortForDistributor);
+                ? new WriterDescription(Save.Host, Save.PortForCollector)
+                : new WriterDescription(Save.Host, Save.PortForDistributor);
         }
 
-        public void SetServer(ControllerDescription server)
+        public void SetServer(WriterDescription server)
         {
             ServerId = server;
         }

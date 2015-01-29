@@ -88,7 +88,7 @@ namespace Qoollo.Tests
 
                 var server1 = new ServerId("localhost", 21181);
                 var netconfig = new ConnectionConfiguration("testService", 1);
-                TestHelper.OpenControllerHost(server1, netconfig);
+                TestHelper.OpenWriterHost(server1, netconfig);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
@@ -121,13 +121,13 @@ namespace Qoollo.Tests
         [TestMethod]
         public void ProxyAndDistributor_Create_WriterMock_TwoReplics()
         {
-            var writer = new HashWriter(new HashMapConfiguration("test3", HashMapCreationMode.CreateNew, 2, 3, HashFileType.Controller));
+            var writer = new HashWriter(new HashMapConfiguration("test3", HashMapCreationMode.CreateNew, 2, 3, HashFileType.Writer));
             writer.CreateMap();
             writer.SetServer(0, "localhost", 21191, 157);
             writer.SetServer(1, "localhost", 21192, 157);
             writer.Save();
 
-            writer = new HashWriter(new HashMapConfiguration("test4", HashMapCreationMode.CreateNew, 2, 3, HashFileType.Controller));
+            writer = new HashWriter(new HashMapConfiguration("test4", HashMapCreationMode.CreateNew, 2, 3, HashFileType.Writer));
             writer.CreateMap();
             writer.SetServer(0, "localhost", 21193, 157);
             writer.SetServer(1, "localhost", 21192, 157);
@@ -179,9 +179,9 @@ namespace Qoollo.Tests
                 var server2 = new ServerId("localhost", 21192);
                 var server3 = new ServerId("localhost", 21193);
                 var netconfig = new ConnectionConfiguration("testService", 1);
-                var s1 = TestHelper.OpenControllerHost(server1, netconfig);
-                var s2 = TestHelper.OpenControllerHost(server2, netconfig);
-                var s3 = TestHelper.OpenControllerHost(server3, netconfig);
+                var s1 = TestHelper.OpenWriterHost(server1, netconfig);
+                var s2 = TestHelper.OpenWriterHost(server2, netconfig);
+                var s3 = TestHelper.OpenWriterHost(server3, netconfig);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(300));
 
@@ -240,7 +240,7 @@ namespace Qoollo.Tests
 
             _proxy.Distributor.SayIAmHere(server);
 
-            var s = TestHelper.OpenControllerHost(new ServerId("localhost", storageServer), connection);
+            var s = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer), connection);
             
             s.retData = TestHelper.CreateEvent(new StoredDataHashCalculator(), 10);
 
@@ -285,11 +285,11 @@ namespace Qoollo.Tests
 
             var server = new ServerId("localhost", distrServerForProxy);
 
-            var storage = new DbControllerSystem(new ServerId("localhost", storageServer1), queue,
+            var storage = new WriterSystem(new ServerId("localhost", storageServer1), queue,
                 new NetReceiverConfiguration(storageServer1, "localhost", "testService")
                 , new NetReceiverConfiguration(1, "fake", "fake"),
                 new HashMapConfiguration("TestProxyAndDistributorRead1ServerFull",
-                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller),
+                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer),
                 connection, new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
@@ -365,21 +365,21 @@ namespace Qoollo.Tests
 
             var server = new ServerId("localhost", distrServerForProxy);
 
-            var storage1 = new DbControllerSystem(new ServerId("localhost", storageServer1), queue,
+            var storage1 = new WriterSystem(new ServerId("localhost", storageServer1), queue,
                 new NetReceiverConfiguration(storageServer1, "localhost", "testService")
                 , new NetReceiverConfiguration(1, "fake", "fake"),
                 new HashMapConfiguration("TestProxyAndDistributorRead2ServersFull",
-                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller),
+                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer),
                 connection, new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
 
-            var storage2 = new DbControllerSystem(new ServerId("localhost", storageServer2), queue,
+            var storage2 = new WriterSystem(new ServerId("localhost", storageServer2), queue,
                 new NetReceiverConfiguration(storageServer2, "localhost", "testService")
                 , new NetReceiverConfiguration(1, "fake", "fake"),
                 new HashMapConfiguration("TestProxyAndDistributorRead2ServersFull",
-                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller),
+                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer),
                 connection, new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
@@ -459,21 +459,21 @@ namespace Qoollo.Tests
 
             var server = new ServerId("localhost", distrServerForProxy);
 
-            var storage1 = new DbControllerSystem(new ServerId("localhost", storageServer1), queue,
+            var storage1 = new WriterSystem(new ServerId("localhost", storageServer1), queue,
                 new NetReceiverConfiguration(storageServer1, "localhost", "testService")
                 , new NetReceiverConfiguration(1, "fake", "fake"),
                 new HashMapConfiguration("TestProxyAndDistributorRead2Servers2ReplicsFull",
-                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller),
+                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer),
                 connection, new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
 
-            var storage2 = new DbControllerSystem(new ServerId("localhost", storageServer2), queue,
+            var storage2 = new WriterSystem(new ServerId("localhost", storageServer2), queue,
                 new NetReceiverConfiguration(storageServer2, "localhost", "testService")
                 , new NetReceiverConfiguration(1, "fake", "fake"),
                 new HashMapConfiguration("TestProxyAndDistributorRead2Servers2ReplicsFull",
-                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller),
+                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer),
                 connection, new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
@@ -554,21 +554,21 @@ namespace Qoollo.Tests
 
             var server = new ServerId("localhost", distrServerForProxy);
 
-            var storage1 = new DbControllerSystem(new ServerId("localhost", storageServer1), queue,
+            var storage1 = new WriterSystem(new ServerId("localhost", storageServer1), queue,
                 new NetReceiverConfiguration(storageServer1, "localhost", "testService")
                 , new NetReceiverConfiguration(1, "fake", "fake"),
                 new HashMapConfiguration("TestProxyAndDistributorRead2Servers2ReplicsFullEmptyRead",
-                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller),
+                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer),
                 connection, new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
 
-            var storage2 = new DbControllerSystem(new ServerId("localhost", storageServer2), queue,
+            var storage2 = new WriterSystem(new ServerId("localhost", storageServer2), queue,
                 new NetReceiverConfiguration(storageServer2, "localhost", "testService")
                 , new NetReceiverConfiguration(1, "fake", "fake"),
                 new HashMapConfiguration("TestProxyAndDistributorRead2Servers2ReplicsFullEmptyRead",
-                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller),
+                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer),
                 connection, new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
@@ -637,21 +637,21 @@ namespace Qoollo.Tests
 
             var server = new ServerId("localhost", distrServerForProxy);
 
-            var storage1 = new DbControllerSystem(new ServerId("localhost", storageServer1), queue,
+            var storage1 = new WriterSystem(new ServerId("localhost", storageServer1), queue,
                 new NetReceiverConfiguration(storageServer1, "localhost", "testService")
                 , new NetReceiverConfiguration(1, "fake", "fake"),
                 new HashMapConfiguration("TestProxyAndDistributorRead2Servers2ReplicsFullLongRead",
-                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller),
+                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer),
                 connection, new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
 
-            var storage2 = new DbControllerSystem(new ServerId("localhost", storageServer2), queue,
+            var storage2 = new WriterSystem(new ServerId("localhost", storageServer2), queue,
                 new NetReceiverConfiguration(storageServer2, "localhost", "testService")
                 , new NetReceiverConfiguration(1, "fake", "fake"),
                 new HashMapConfiguration("TestProxyAndDistributorRead2Servers2ReplicsFullLongRead",
-                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller),
+                    HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer),
                 connection, new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),

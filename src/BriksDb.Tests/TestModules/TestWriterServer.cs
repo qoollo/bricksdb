@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults;
-using Qoollo.Impl.NetInterfaces.DbController;
+using Qoollo.Impl.NetInterfaces.Writer;
 
 namespace Qoollo.Tests.TestModules
 {
-    class TestWriterServer : ICommonNetReceiverDbControllerForWrite
+    class TestWriterServer : ICommonNetReceiverWriterForWrite
     {
         public InnerData retData = null;
 

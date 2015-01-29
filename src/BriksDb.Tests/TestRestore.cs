@@ -7,8 +7,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
-using Qoollo.Client.StorageGate;
 using Qoollo.Client.Support;
+using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -381,9 +381,9 @@ namespace Qoollo.Tests
                 TimeSpan.FromMilliseconds(10000),
                 TimeSpan.FromMilliseconds(200), TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
 
-            var storage1 = new StorageApi(storageNet1, storageConfig, common);
+            var storage1 = new WriterApi(storageNet1, storageConfig, common);
             var storageNet2 = new StorageNetConfiguration("localhost", storageServer2, 157, "testService", 10);
-            var storage2 = new StorageApi(storageNet2, storageConfig, common);
+            var storage2 = new WriterApi(storageNet2, storageConfig, common);
 
             #endregion
             
@@ -439,7 +439,7 @@ namespace Qoollo.Tests
                 TimeSpan.FromMilliseconds(200), TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
 
             var factory = new TestInMemoryDbFactory();
-            var storage1 = new StorageApi(storageNet1, storageConfig, common);
+            var storage1 = new WriterApi(storageNet1, storageConfig, common);
 
             #endregion
 
@@ -503,7 +503,7 @@ namespace Qoollo.Tests
                 TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(1), TimeSpan.FromSeconds(1), false);
 
             var factory = new TestInMemoryDbFactory();
-            var storage1 = new StorageApi(storageNet1, storageConfig, new CommonConfiguration(1, 10));
+            var storage1 = new WriterApi(storageNet1, storageConfig, new CommonConfiguration(1, 10));
 
             #endregion
             

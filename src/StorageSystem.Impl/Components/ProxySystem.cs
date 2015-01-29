@@ -84,12 +84,12 @@ namespace Qoollo.Impl.Components
             AddModule(receive);
             AddModule(q);
 
+            AddModuleDispose(distributor);
             AddModuleDispose(receive);
             AddModuleDispose(q);
             AddModuleDispose(input);
             AddModuleDispose(asyncCache);
-            AddModuleDispose(main);
-            AddModuleDispose(distributor);
+            AddModuleDispose(main);            
             AddModuleDispose(net);
             AddModuleDispose(cache);
         }

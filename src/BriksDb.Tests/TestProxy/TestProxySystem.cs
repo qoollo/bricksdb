@@ -21,12 +21,6 @@ namespace Qoollo.Tests.TestProxy
         {
         }
 
-        public void AddServer(ServerId server)
-        {
-            var distributorModule = Modules.First(x => x is ProxyDistributorModule) as ProxyDistributorModule;
-            //distributorModule.AddDistributorServer(server);
-        }
-
         public GlobalQueueInner Queue
         {
             get { return Modules.First(x => x is GlobalQueueInner) as GlobalQueueInner; }

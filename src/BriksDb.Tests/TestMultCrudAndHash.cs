@@ -16,10 +16,24 @@ namespace Qoollo.Tests
     [TestClass]
     public class TestMultCrudAndHash
     {
+        private TestGate _proxy;
+        const int proxyServer = 22378;
+        [TestInitialize]
+        public void Initialize()
+        {
+            var common = new CommonConfiguration(1, 100);
+
+            var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
+            var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1),
+                TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
+
+            _proxy = new TestGate(netconfig, toconfig, common);
+            _proxy.Build();
+        }
+
         [TestMethod]
         public void Proxy_CRUD_TwoTables()
-        {
-            const int proxyServer = 22378;
+        {            
             const int distrServer1 = 22379;
             const int distrServer12 = 22380;
             const int st1 = 22381;
@@ -33,12 +47,6 @@ namespace Qoollo.Tests
             writer.Save();
 
             var common = new CommonConfiguration(1, 100);
-
-            var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
-            var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
-
-            var proxy = new TestGate(netconfig, toconfig, common);
 
             var distrNet = new DistributorNetConfiguration("localhost",
                 distrServer1, distrServer12, "testService", 10);
@@ -55,8 +63,7 @@ namespace Qoollo.Tests
 
             #endregion
 
-            storage.Build();
-            proxy.Build();
+            storage.Build();            
             distr.Build();
 
             var f = new TestInMemoryDbFactory();
@@ -66,10 +73,10 @@ namespace Qoollo.Tests
             storage.AddDbModule(f2);
 
             storage.Start();
-            proxy.Start();
+            _proxy.Start();
             distr.Start();
 
-            proxy.Int.SayIAmHere("localhost", distrServer1);
+            _proxy.Int.SayIAmHere("localhost", distrServer1);
 
             const int count = 5;
 
@@ -77,17 +84,17 @@ namespace Qoollo.Tests
             {
                 RequestDescription result;
 
-                proxy.Int.Read(i, out result);
+                _proxy.Int.Read(i, out result);
                 Assert.AreEqual(RequestState.DataNotFound, result.State);
-                proxy.Int2.Read(i, out result);
+                _proxy.Int2.Read(i, out result);
                 Assert.AreEqual(RequestState.DataNotFound, result.State);
             }
 
             for (int i = 0; i < count; i++)
             {
-                RequestDescription result = proxy.Int.CreateSync(i, i);
+                RequestDescription result = _proxy.Int.CreateSync(i, i);
                 Assert.AreEqual(RequestState.Complete, result.State);
-                result = proxy.Int2.CreateSync(i, i);
+                result = _proxy.Int2.CreateSync(i, i);
                 Assert.AreEqual(RequestState.Complete, result.State);
             }
 
@@ -95,25 +102,24 @@ namespace Qoollo.Tests
             {
                 RequestDescription result;
 
-                var value = proxy.Int.Read(i, out result);
+                var value = _proxy.Int.Read(i, out result);
                 Assert.AreEqual(RequestState.Complete, result.State);
                 Assert.AreEqual(i, value);
-                value = proxy.Int2.Read(i, out result);
+                value = _proxy.Int2.Read(i, out result);
                 Assert.AreEqual(i, value);
             }
 
             Assert.AreEqual(count, f.Db.Local);
             Assert.AreEqual(count, f2.Db.Local);
 
-            proxy.Dispose();
+            _proxy.Dispose();
             distr.Dispose();
             storage.Dispose();
         }
 
         [TestMethod]
         public void Proxy_Restore_TwoTablesOneCommand()
-        {
-            const int proxyServer = 22383;
+        {            
             const int distrServer1 = 22384;
             const int distrServer12 = 22385;
             const int st1 = 22386;
@@ -131,12 +137,6 @@ namespace Qoollo.Tests
             writer.Save();
 
             var common = new CommonConfiguration(1, 100);
-
-            var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
-            var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
-
-            var proxy = new TestGate(netconfig, toconfig, common);
 
             var distrNet = new DistributorNetConfiguration("localhost",
                 distrServer1, distrServer12, "testService", 10);
@@ -157,8 +157,7 @@ namespace Qoollo.Tests
             #endregion
 
             storage1.Build();
-            storage2.Build();
-            proxy.Build();
+            storage2.Build();            
             distr.Build();
 
             var f = new TestInMemoryDbFactory();
@@ -172,30 +171,30 @@ namespace Qoollo.Tests
             storage2.AddDbModule(f4);
 
             storage1.Start();
-            proxy.Start();
+            _proxy.Start();
             distr.Start();
 
-            proxy.Int.SayIAmHere("localhost", distrServer1);
+            _proxy.Int.SayIAmHere("localhost", distrServer1);
 
             const int count = 5;
 
             for (int i = 0; i < count; i++)
             {
-                proxy.Int.CreateSync(i, i);
-                proxy.Int2.CreateSync(i, i);
+                _proxy.Int.CreateSync(i, i);
+                _proxy.Int2.CreateSync(i, i);
 
-                proxy.Int.CreateSync(i, i);
-                proxy.Int2.CreateSync(i, i);
+                _proxy.Int.CreateSync(i, i);
+                _proxy.Int2.CreateSync(i, i);
             }
 
             for (int i = 0; i < count; i++)
             {
                 RequestDescription result;
 
-                var value = proxy.Int.Read(i, out result);
+                var value = _proxy.Int.Read(i, out result);
                 Assert.AreEqual(RequestState.Complete, result.State);
                 Assert.AreEqual(i, value);
-                value = proxy.Int2.Read(i, out result);
+                value = _proxy.Int2.Read(i, out result);
                 Assert.AreEqual(i, value);
             }
 
@@ -210,7 +209,7 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
             Assert.AreEqual(count, f2.Db.Local + f4.Db.Local);
 
-            proxy.Dispose();
+            _proxy.Dispose();
             distr.Dispose();
             storage1.Dispose();
             storage2.Dispose();
@@ -218,8 +217,7 @@ namespace Qoollo.Tests
 
         [TestMethod]
         public void Proxy_Restore_TwoTablesTwoCommands()
-        {
-            const int proxyServer = 22390;
+        {            
             const int distrServer1 = 22391;
             const int distrServer12 = 22392;
             const int st1 = 22393;
@@ -237,12 +235,6 @@ namespace Qoollo.Tests
             writer.Save();
 
             var common = new CommonConfiguration(1, 100);
-
-            var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
-            var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
-
-            var proxy = new TestGate(netconfig, toconfig, common);
 
             var distrNet = new DistributorNetConfiguration("localhost",
                 distrServer1, distrServer12, "testService", 10);
@@ -263,8 +255,7 @@ namespace Qoollo.Tests
             #endregion
 
             storage1.Build();
-            storage2.Build();
-            proxy.Build();
+            storage2.Build();            
             distr.Build();
 
             var f = new TestInMemoryDbFactory();
@@ -278,30 +269,30 @@ namespace Qoollo.Tests
             storage2.AddDbModule(f4);
 
             storage1.Start();
-            proxy.Start();
+            _proxy.Start();
             distr.Start();
 
-            proxy.Int.SayIAmHere("localhost", distrServer1);
+            _proxy.Int.SayIAmHere("localhost", distrServer1);
 
             const int count = 5;
 
             for (int i = 0; i < count; i++)
             {
-                proxy.Int.CreateSync(i, i);
-                proxy.Int2.CreateSync(i, i);
+                _proxy.Int.CreateSync(i, i);
+                _proxy.Int2.CreateSync(i, i);
 
-                proxy.Int.CreateSync(i, i);
-                proxy.Int2.CreateSync(i, i);
+                _proxy.Int.CreateSync(i, i);
+                _proxy.Int2.CreateSync(i, i);
             }
 
             for (int i = 0; i < count; i++)
             {
                 RequestDescription result;
 
-                var value = proxy.Int.Read(i, out result);
+                var value = _proxy.Int.Read(i, out result);
                 Assert.AreEqual(RequestState.Complete, result.State);
                 Assert.AreEqual(i, value);
-                value = proxy.Int2.Read(i, out result);
+                value = _proxy.Int2.Read(i, out result);
                 Assert.AreEqual(i, value);
             }
 
@@ -321,7 +312,7 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
             Assert.AreEqual(count, f2.Db.Local + f4.Db.Local);
 
-            proxy.Dispose();
+            _proxy.Dispose();
             distr.Dispose();
             storage1.Dispose();
             storage2.Dispose();
@@ -330,7 +321,6 @@ namespace Qoollo.Tests
         [TestMethod]
         public void Proxy_HashFromValue()
         {
-            const int proxyServer = 22397;
             const int distrServer1 = 22398;
             const int distrServer12 = 22399;
             const int st1 = 22400;
@@ -346,12 +336,6 @@ namespace Qoollo.Tests
             writer.Save();
 
             var common = new CommonConfiguration(1, 100);
-
-            var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
-            var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
-
-            var proxy = new TestGate(netconfig, toconfig, common);
 
             var distrNet = new DistributorNetConfiguration("localhost",
                 distrServer1, distrServer12, "testService", 10);
@@ -370,7 +354,6 @@ namespace Qoollo.Tests
             #endregion
 
             storage.Build();
-            proxy.Build();
             distr.Build();
 
             var f = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
@@ -378,10 +361,10 @@ namespace Qoollo.Tests
             storage.AddDbModule(f);
 
             storage.Start();
-            proxy.Start();
+            _proxy.Start();
             distr.Start();
 
-            proxy.Int.SayIAmHere("localhost", distrServer1);
+            _proxy.Int.SayIAmHere("localhost", distrServer1);
 
             const int count = 5;
 
@@ -389,13 +372,13 @@ namespace Qoollo.Tests
             {
                 RequestDescription result;
 
-                proxy.Int3.Read(i, out result);
+                _proxy.Int3.Read(i, out result);
                 Assert.AreEqual(RequestState.DataNotFound, result.State);
             }
 
             for (int i = 0; i < count; i++)
             {
-                RequestDescription result = proxy.Int3.CreateSync(i, i);
+                RequestDescription result = _proxy.Int3.CreateSync(i, i);
                 Assert.AreEqual(RequestState.Complete, result.State);
             }
 
@@ -403,14 +386,14 @@ namespace Qoollo.Tests
             {
                 RequestDescription result;
 
-                var value = proxy.Int3.Read(i, out result);
+                var value = _proxy.Int3.Read(i, out result);
                 Assert.AreEqual(RequestState.Complete, result.State);
                 Assert.AreEqual(i, value);
             }
 
             Assert.AreEqual(count, f.Db.Local);
 
-            proxy.Dispose();
+            _proxy.Dispose();
             distr.Dispose();
             storage.Dispose();
         }
@@ -418,7 +401,6 @@ namespace Qoollo.Tests
         [TestMethod]
         public void Proxy_Restore_HashFromValue()
         {
-            const int proxyServer = 22402;
             const int distrServer1 = 22403;
             const int distrServer12 = 22404;
             const int st1 = 22405;
@@ -437,12 +419,6 @@ namespace Qoollo.Tests
             writer.Save();
 
             var common = new CommonConfiguration(1, 100);
-
-            var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
-            var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
-
-            var proxy = new TestGate(netconfig, toconfig, common);
 
             var distrNet = new DistributorNetConfiguration("localhost",
                 distrServer1, distrServer12, "testService", 10);
@@ -464,7 +440,6 @@ namespace Qoollo.Tests
 
             storage1.Build();
             storage2.Build();
-            proxy.Build();
             distr.Build();
 
             var f1 = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
@@ -474,24 +449,24 @@ namespace Qoollo.Tests
             storage2.AddDbModule(f2);
 
             storage1.Start();
-            proxy.Start();
+            _proxy.Start();
             distr.Start();
 
-            proxy.Int.SayIAmHere("localhost", distrServer1);
+            _proxy.Int.SayIAmHere("localhost", distrServer1);
 
             const int count = 50;
 
             for (int i = 0; i < count; i++)
             {
-                proxy.Int3.CreateSync(i, i);
-                proxy.Int3.CreateSync(i, i);
+                _proxy.Int3.CreateSync(i, i);
+                _proxy.Int3.CreateSync(i, i);
             }
 
             for (int i = 0; i < count; i++)
             {
                 RequestDescription result;
 
-                var value = proxy.Int3.Read(i, out result);
+                var value = _proxy.Int3.Read(i, out result);
                 Assert.AreEqual(RequestState.Complete, result.State);
                 Assert.AreEqual(i, value);
             }
@@ -507,7 +482,7 @@ namespace Qoollo.Tests
             Assert.AreEqual(0, f1.Db.Remote);
             Assert.AreEqual(0, f2.Db.Remote);
 
-            proxy.Dispose();
+            _proxy.Dispose();
             distr.Dispose();
             storage1.Dispose();
             storage2.Dispose();

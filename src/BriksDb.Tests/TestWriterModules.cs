@@ -11,17 +11,8 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.DbController.AsyncDbWorks;
-using Qoollo.Impl.DbController.Db;
-using Qoollo.Impl.DbController.DbControllerNet;
-using Qoollo.Impl.DistributorModules;
-using Qoollo.Impl.DistributorModules.Caches;
-using Qoollo.Impl.DistributorModules.DistributorNet;
-using Qoollo.Impl.DistributorModules.ParallelWork;
-using Qoollo.Impl.DistributorModules.Transaction;
-using Qoollo.Impl.Modules.Async;
-using Qoollo.Impl.Modules.Queue;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
@@ -31,6 +22,36 @@ namespace Qoollo.Tests
     [TestClass]
     public class TestWriterModules
     {
+        private TestProxySystem _proxy;
+        private TestWriterGate _writer1;
+        private TestWriterGate _writer2;
+        private TestDistributorGate _distributor1;
+        private TestDistributorGate _distributor2;
+
+        [TestInitialize]
+        public void Initialize()
+        {
+            const int proxyServer = 22020;
+            var queue = new QueueConfiguration(2, 100);
+            var connection = new ConnectionConfiguration("testService", 10);
+            var ndrc2 = new NetReceiverConfiguration(proxyServer, "localhost", "testService");
+            var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(20));
+            var pccc2 = new ProxyCacheConfiguration(TimeSpan.FromSeconds(40));
+
+            _proxy = new TestProxySystem(new ServerId("localhost", proxyServer),
+                queue, connection, pcc, pccc2, ndrc2,
+                new AsyncTasksConfiguration(new TimeSpan()),
+                new AsyncTasksConfiguration(new TimeSpan()),
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+
+            _proxy.Build();
+
+            _writer1 = new TestWriterGate();
+            _writer2 = new TestWriterGate();
+            _distributor1 = new TestDistributorGate();
+            _distributor2 = new TestDistributorGate();
+        }
+
         [TestMethod]
         public void DbModule_LocalAndRemoteData_Count()
         {
@@ -40,32 +61,11 @@ namespace Qoollo.Tests
                 new HashWriter(new HashMapConfiguration("TestLocalAndRemote", HashMapCreationMode.CreateNew, 2, 3,
                     HashFileType.Collector));
             writer.CreateMap();
-            writer.SetServer(0, "localhost", 54321, 157);
+            writer.SetServer(0, "localhost", 157, 157);
             writer.SetServer(1, "localhost", 11011, 157);
             writer.Save();
 
-            var queueConfiguration = new QueueConfiguration(2, 1000);
-            var hashMapConfiguration = new HashMapConfiguration("TestLocalAndRemote",
-                HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor);
-            var local = new ServerId("localhost", 54321);
-
-            var net = new DbControllerNetModule(new ConnectionConfiguration("", 10),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            
-            var db = new DbModuleCollection();
-            db.AddDbModule(new TestDbInMemory());
-
-            var async = new AsyncTaskModule(new QueueConfiguration(1, 1));
-            var restore = new AsyncDbWorkModule(net, async, db,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 1), local);
-
-            var distributor = new Impl.DbController.Distributor.DistributorModule(async, restore, net, local,
-                hashMapConfiguration, new QueueConfiguration(2, 100), db);
-            var main = new Impl.DbController.MainLogicModule(distributor, db);
-            var input = new Impl.DbController.InputModule(main, queueConfiguration);
+            _writer1.Build(157, "TestLocalAndRemote", 1);            
 
             var list = new List<InnerData>();
             const int count = 100;
@@ -87,32 +87,27 @@ namespace Qoollo.Tests
             }
 
             TestHelper.OpenDistributorHostForDb(new ServerId("localhost", 22188), new ConnectionConfiguration("testService", 10));
-            distributor.Start();
-            main.Start();
-            input.Start();
-
-            GlobalQueue.Queue.Start();
+            
+            _writer1.Start();            
 
             foreach (var data in list)
             {
-                input.Process(data);
+                _writer1.Input.Process(data);
             }
 
             Thread.Sleep(1000);
 
-            var mem = db.GetDbModules.First() as TestDbInMemory;
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
             Assert.AreNotEqual(count, mem.Local);
             Assert.AreNotEqual(count, mem.Remote);
             Assert.AreEqual(count, mem.Local + mem.Remote);
 
-            restore.Dispose();
-            async.Dispose();
+            _writer1.Dispose();
         }
 
         [TestMethod]
         public void Writer_SendRestoreCommandToDistributors_RestoreRemoteTable()
-        {
-            const int proxyServer = 22110;
+        {            
             const int distrServer1 = 22113;
             const int distrServer12 = 23113;
             const int distrServer2 = 22114;
@@ -136,162 +131,27 @@ namespace Qoollo.Tests
             writer.SetServer(1, "localhost", storageServer2, 157);
             writer.Save();
 
-            #region hell
+            _distributor1.Build(2, distrServer1, distrServer12, "test7");
+            _distributor2.Build(2, distrServer2, distrServer22, "test6");
 
-            var q1 = new GlobalQueueInner();
-            var q2 = new GlobalQueueInner();
-            var q3 = new GlobalQueueInner();
-            var q4 = new GlobalQueueInner();
-
-
-            var queue = new QueueConfiguration(2, 100);
-            var connection = new ConnectionConfiguration("testService", 10);
-            var ndrc2 = new NetReceiverConfiguration(proxyServer, "localhost", "testService");
-            var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(20));
-            var pccc2 = new ProxyCacheConfiguration(TimeSpan.FromSeconds(4));
-
-            var proxy = new TestProxySystem(new ServerId("localhost", proxyServer), queue,
-                connection, pcc, pccc2, ndrc2,
-                new AsyncTasksConfiguration(new TimeSpan()),
-                new AsyncTasksConfiguration(new TimeSpan()),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-
-            GlobalQueue.SetQueue(q1);
-
-            var distrconfig = new DistributorHashConfiguration(2);
-            var queueconfig = new QueueConfiguration(2, 100);
-            var dnet = new DistributorNetModule(connection,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
-                queueconfig, dnet, new ServerId("localhost", distrServer1),
-                new ServerId("localhost", distrServer12),
-                new HashMapConfiguration("test7", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
-            dnet.SetDistributor(ddistributor);
-
-            var trans = new TransactionModule(new QueueConfiguration(1, 1000), dnet, new TransactionConfiguration(2),
-                new DistributorHashConfiguration(2));
-            var main =
-                new MainLogicModule(new DistributorTimeoutCache(TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20)),
-                    ddistributor, trans);
-            var netReceive4 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
-            var netReceive42 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
-            var input = new InputModuleWithParallel(new QueueConfiguration(2, 100), main, trans);
-            var receiver4 = new NetDistributorReceiver(main, input, ddistributor, netReceive4, netReceive42);
-
-            GlobalQueue.SetQueue(q2);
-
-            var dnet2 = new DistributorNetModule(connection,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var ddistributor2 = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
-                queueconfig, dnet2,
-                new ServerId("localhost", distrServer2),
-                new ServerId("localhost", distrServer22),
-                new HashMapConfiguration("test6", HashMapCreationMode.ReadFromFile,
-                    1, 2, HashFileType.Distributor));
-            dnet2.SetDistributor(ddistributor2);
-
-            var trans2 = new TransactionModule(new QueueConfiguration(1, 1000), dnet2, new TransactionConfiguration(2),
-                new DistributorHashConfiguration(2));
-            var main2 =
-                new MainLogicModule(new DistributorTimeoutCache(TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20)),
-                    ddistributor2,
-                    trans2);
-            var netReceive5 = new NetReceiverConfiguration(distrServer2, "localhost", "testService");
-            var netReceive52 = new NetReceiverConfiguration(distrServer22, "localhost", "testService");
-            var input2 = new InputModuleWithParallel(new QueueConfiguration(2, 100), main2, trans2);
-            var receiver5 = new NetDistributorReceiver(main2, input2, ddistributor2, netReceive5, netReceive52);
-
-
-            GlobalQueue.SetQueue(q3);
-
-            var queueConfiguration = new QueueConfiguration(1, 1000);
-            var hashMapConfiguration = new HashMapConfiguration("test6",
-                HashMapCreationMode.ReadFromFile, 1, 2, HashFileType.Controller);
-            var local = new ServerId("localhost", storageServer1);
-
-            var net = new DbControllerNetModule(new ConnectionConfiguration("testService", 10),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            _writer1.Build(storageServer1, "test6", 2);
+            _writer2.Build(storageServer2, "test7", 2);
             
-            var db = new DbModuleCollection();
-            db.AddDbModule(new TestDbInMemory());
+            _proxy.Start();
 
-            var async = new AsyncTaskModule(new QueueConfiguration(1, 1));
-            var restore = new AsyncDbWorkModule(net, async, db,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 1), local);
+            _distributor1.Start();
+            _distributor2.Start();
 
-            var distributor = new Impl.DbController.Distributor.DistributorModule(async, restore, net, local,
-                hashMapConfiguration, new QueueConfiguration(2, 10), db);
-            var mainС = new Impl.DbController.MainLogicModule(distributor, db);
-            var inputС = new Impl.DbController.InputModule(mainС, queueConfiguration);
-            var netRc = new NetDbControllerReceiver(inputС, distributor,
-                new NetReceiverConfiguration(storageServer1, "localhost", "testService"),
-                new NetReceiverConfiguration(1, "fake", "fake"));
+            _proxy.Distributor.SayIAmHere(new ServerId("localhost", distrServer12));
+            _proxy.Distributor.SayIAmHere(new ServerId("localhost", distrServer22));
 
-            GlobalQueue.SetQueue(q4);
-
-            var hashMapConfiguration2 = new HashMapConfiguration("test7",
-                HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller);
-            var local2 = new ServerId("localhost", storageServer2);
-
-            var net2 = new DbControllerNetModule(new ConnectionConfiguration("testService", 10),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-
-            //var db2 = new TestDbInMemory();
-            var db2 = new DbModuleCollection();
-            db2.AddDbModule(new TestDbInMemory());
-
-            var async2 = new AsyncTaskModule(new QueueConfiguration(1, 1));
-            var restore2 = new AsyncDbWorkModule(net2, async2, db2,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 1), local);
-
-            var distributor2 = new Impl.DbController.Distributor.DistributorModule(async2, restore2, net2, local2,
-                hashMapConfiguration2, new QueueConfiguration(2, 10), db2);
-            var mainС2 = new Impl.DbController.MainLogicModule(distributor2, db2);
-            var inputС2 = new Impl.DbController.InputModule(mainС2, queueConfiguration);
-            var netRc2 = new NetDbControllerReceiver(inputС2, distributor2,
-                new NetReceiverConfiguration(storageServer2, "localhost",
-                    "testService"), new NetReceiverConfiguration(1, "fake", "fake"));
-
-            #endregion
-
-            proxy.Build();
-            proxy.Start();
-
-            receiver4.Start();
-            receiver5.Start();
-
-            input.Start();
-            input2.Start();
-            dnet.Start();
-            dnet2.Start();
-            ddistributor.Start();
-            ddistributor2.Start();
-
-            main.Start();
-            main2.Start();
-
-            q1.Start();
-            q2.Start();
-
-
-            proxy.Distributor.SayIAmHere(new ServerId("localhost", distrServer12));
-            proxy.Distributor.SayIAmHere(new ServerId("localhost", distrServer22));
-
-            ddistributor2.SayIAmHereRemoteResult(new ServerId("localhost", distrServer12));
+            _distributor2.Distributor.SayIAmHereRemoteResult(new ServerId("localhost", distrServer12));
 
             Thread.Sleep(TimeSpan.FromMilliseconds(300));
-            Assert.AreEqual(1, ddistributor.GetDistributors().Count);
-            Assert.AreEqual(1, ddistributor2.GetDistributors().Count);
+            Assert.AreEqual(1, _distributor1.Distributor.GetDistributors().Count);
+            Assert.AreEqual(1, _distributor2.Distributor.GetDistributors().Count);
 
-            var api = proxy.CreateApi("Int", false, new IntHashConvertor());
+            var api = _proxy.CreateApi("Int", false, new IntHashConvertor());
 
             var tr1 = api.CreateSync(10, 10);
             var tr2 = api.CreateSync(11, 11);
@@ -299,19 +159,12 @@ namespace Qoollo.Tests
             tr1.Wait();
             tr2.Wait();
 
-            inputС.Start();
-            inputС2.Start();
-            distributor.Start();
-            distributor2.Start();
-            netRc.Start();
-            netRc2.Start();
+            _writer1.Start();
+            _writer2.Start();
 
-            q3.Start();
-            q4.Start();
+            _writer1.Distributor.Restore(new ServerId("localhost", distrServer1), false);
 
-            distributor.Restore(new ServerId("localhost", distrServer1), false);            
-
-            distributor2.Restore(new ServerId("localhost", distrServer2), false);
+            _writer2.Distributor.Restore(new ServerId("localhost", distrServer2), false);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
@@ -321,28 +174,19 @@ namespace Qoollo.Tests
             tr3.Wait();
             tr4.Wait();
 
-            var mem = db.GetDbModules.First() as TestDbInMemory;
-            var mem2 = db2.GetDbModules.First() as TestDbInMemory;
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+            var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
 
             Assert.AreEqual(2, mem.Local);
             Assert.AreEqual(2, mem2.Local);
 
-            proxy.Dispose();
-            distributor.Dispose();
-            distributor2.Dispose();
-            ddistributor.Dispose();
-            ddistributor2.Dispose();
+            _writer1.Dispose();
+            _writer2.Dispose();
 
-            dnet.Dispose();
-            dnet2.Dispose();
-            net.Dispose();
-            net2.Dispose();
-
-            async.Dispose();
-            async2.Dispose();
-
-            restore.Dispose();
-            restore2.Dispose();
+            _proxy.Dispose();
+            
+            _distributor1.Dispose();
+            _distributor2.Dispose();
         }
 
         [TestMethod]
@@ -351,10 +195,6 @@ namespace Qoollo.Tests
             const int distributorServer1 = 22171;
             const int storageServer1 = 22172;
 
-            var q1 = new GlobalQueueInner();
-
-            GlobalQueue.SetQueue(q1);
-
             var writer =
                 new HashWriter(new HashMapConfiguration("TestDbTransaction", HashMapCreationMode.CreateNew, 1, 1,
                     HashFileType.Distributor));
@@ -362,42 +202,8 @@ namespace Qoollo.Tests
             writer.SetServer(0, "localhost", storageServer1, 157);
             writer.Save();
 
-            #region hell
-
-            var queueConfiguration = new QueueConfiguration(1, 1000);
-            var hashMapConfiguration = new HashMapConfiguration("TestDbTransaction",
-                HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller);
-            var local = new ServerId("localhost", storageServer1);
-
-            var net = new DbControllerNetModule(new ConnectionConfiguration("testService", 1),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            
-            var db = new DbModuleCollection();
-            db.AddDbModule(new TestDbInMemory());
-
-            var async = new AsyncTaskModule(new QueueConfiguration(1, 10));
-            var restore = new AsyncDbWorkModule(net, async, db,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMilliseconds(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 1), local);
-
-            var distributor = new Impl.DbController.Distributor.DistributorModule(async, restore, net, local,
-                hashMapConfiguration, new QueueConfiguration(2, 1000), db);
-            var mainС = new Impl.DbController.MainLogicModule(distributor, db);
-            var inputС = new Impl.DbController.InputModule(mainС, queueConfiguration);
-            var netRc = new NetDbControllerReceiver(inputС, distributor,
-                new NetReceiverConfiguration(storageServer1, "localhost", "testService"),
-                new NetReceiverConfiguration(1, "fake", "fake"));
-
-            #endregion
-
-            inputС.Start();
-            distributor.Start();
-            netRc.Start();
-            async.Start();
-
-            q1.Start();
+            _writer1.Build(storageServer1, "TestDbTransaction", 1);
+            _writer1.Start();
 
             var s = TestHelper.OpenDistributorHostForDb(new ServerId("localhost", distributorServer1),
                 new ConnectionConfiguration("testService", 10));
@@ -423,15 +229,13 @@ namespace Qoollo.Tests
 
             foreach (var data in list)
             {
-                q1.DbInputProcessQueue.Add(data);
+                _writer1.Q.DbInputProcessQueue.Add(data);
             }
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
             Assert.AreEqual(count, s.SendValue);
-            net.Dispose();
-            netRc.Dispose();
-            async.Dispose();
+            _writer1.Dispose();
         }
 
         [TestMethod]
@@ -440,11 +244,7 @@ namespace Qoollo.Tests
             const int distributorServer1 = 22173;
             const int distributorServer2 = 22174;
             const int storageServer1 = 22175;
-
-            var q1 = new GlobalQueueInner();
-
-            GlobalQueue.SetQueue(q1);
-
+            
             var writer =
                 new HashWriter(new HashMapConfiguration("TestDbTransaction2Distributors", HashMapCreationMode.CreateNew,
                     1, 1, HashFileType.Distributor));
@@ -452,42 +252,8 @@ namespace Qoollo.Tests
             writer.SetServer(0, "localhost", storageServer1, 157);
             writer.Save();
 
-            #region hell
-
-            var queueConfiguration = new QueueConfiguration(1, 1000);
-            var hashMapConfiguration = new HashMapConfiguration("TestDbTransaction2Distributors",
-                HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller);
-            var local = new ServerId("localhost", storageServer1);
-
-            var net = new DbControllerNetModule(new ConnectionConfiguration("testService", 1),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            
-            var db = new DbModuleCollection();
-            db.AddDbModule(new TestDbInMemory());
-
-            var async = new AsyncTaskModule(new QueueConfiguration(1, 10));
-            var restore = new AsyncDbWorkModule(net, async, db,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMilliseconds(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 1), local);
-
-            var distributor = new Impl.DbController.Distributor.DistributorModule(async, restore, net, local,
-                hashMapConfiguration, new QueueConfiguration(2, 1000), db);
-            var mainС = new Impl.DbController.MainLogicModule(distributor, db);
-            var inputС = new Impl.DbController.InputModule(mainС, queueConfiguration);
-            var netRc = new NetDbControllerReceiver(inputС, distributor,
-                new NetReceiverConfiguration(storageServer1, "localhost", "testService"),
-                new NetReceiverConfiguration(1, "fake", "fake"));
-
-            #endregion
-
-            inputС.Start();
-            distributor.Start();
-            netRc.Start();
-            async.Start();            
-
-            q1.Start();
+            _writer1.Build(storageServer1, "TestDbTransaction2Distributors", 1);
+            _writer1.Start();
 
             var s = TestHelper.OpenDistributorHostForDb(new ServerId("localhost", distributorServer1),
                 new ConnectionConfiguration("testService", 10));
@@ -535,7 +301,7 @@ namespace Qoollo.Tests
 
             foreach (var data in list)
             {
-                q1.DbInputProcessQueue.Add(data);
+                _writer1.Q.DbInputProcessQueue.Add(data);
             }
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
@@ -543,7 +309,7 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, s.SendValue);
             Assert.AreEqual(count, s2.SendValue);
 
-            async.Dispose();
+            _writer1.Dispose();
         }
 
         [TestMethod]
@@ -553,8 +319,6 @@ namespace Qoollo.Tests
             const int distrServer12 = 23180;
             const int storageServer1 = 22181;
 
-            var q1 = new GlobalQueueInner();
-
             var writer =
                 new HashWriter(new HashMapConfiguration("TestTransaction1D1S", HashMapCreationMode.CreateNew, 1, 1,
                     HashFileType.Distributor));
@@ -562,77 +326,11 @@ namespace Qoollo.Tests
             writer.SetServer(0, "localhost", storageServer1, 157);
             writer.Save();
 
-            #region hell
+            _distributor1.Build(1, distrServer1, distrServer12, "TestTransaction1D1S");
+            _writer1.Build(storageServer1, "TestTransaction1D1S", 1);
 
-            GlobalQueue.SetQueue(q1);
-
-            var connection = new ConnectionConfiguration("testService", 10);
-            var distrconfig = new DistributorHashConfiguration(1);
-            var queueconfig = new QueueConfiguration(1, 100);
-            var dnet = new DistributorNetModule(connection,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
-                queueconfig, dnet,
-                new ServerId("localhost", distrServer1),
-                new ServerId("localhost", distrServer12),
-                new HashMapConfiguration("TestTransaction1D1S",
-                    HashMapCreationMode.ReadFromFile,
-                    1, 1, HashFileType.Distributor));
-            dnet.SetDistributor(ddistributor);
-
-            var tranc = new TransactionModule(new QueueConfiguration(1, 1000), dnet, new TransactionConfiguration(4),
-                distrconfig);
-            var main =
-                new MainLogicModule(new DistributorTimeoutCache(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)),
-                    ddistributor, tranc);
-
-            var netReceive4 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
-            var netReceive42 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
-            var input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), main, tranc);
-            var receiver4 = new NetDistributorReceiver(main, input, ddistributor, netReceive4, netReceive42);
-
-
-            var queueConfiguration = new QueueConfiguration(1, 1000);
-            var hashMapConfiguration = new HashMapConfiguration("TestTransaction1D1S",
-                HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller);
-            var local = new ServerId("localhost", storageServer1);
-
-            var net = new DbControllerNetModule(new ConnectionConfiguration("testService", 1),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-
-            var db = new DbModuleCollection();
-            db.AddDbModule(new TestDbInMemory());
-
-            var async = new AsyncTaskModule(new QueueConfiguration(1, 10));
-            var restore = new AsyncDbWorkModule(net, async, db,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMilliseconds(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 1), local);
-
-            var distributor = new Impl.DbController.Distributor.DistributorModule(async, restore, net, local,
-                hashMapConfiguration, new QueueConfiguration(2, 10), db);
-            var mainС = new Impl.DbController.MainLogicModule(distributor, db);
-            var inputС = new Impl.DbController.InputModule(mainС, queueConfiguration);
-            var netRc = new NetDbControllerReceiver(inputС, distributor,
-                new NetReceiverConfiguration(storageServer1, "localhost", "testService"),
-                new NetReceiverConfiguration(1, "fake", "fake"));
-
-            #endregion
-
-            main.Start();
-            receiver4.Start();
-            input.Start();
-            dnet.Start();
-            ddistributor.Start();
-
-            inputС.Start();
-            distributor.Start();
-            netRc.Start();
-            async.Start();
-
-            q1.Start();
+            _distributor1.Start();
+            _writer1.Start();
 
             var list = new List<InnerData>();
             const int count = 100;
@@ -654,24 +352,22 @@ namespace Qoollo.Tests
 
             foreach (var data in list)
             {
-                input.ProcessAsync(data);
+                _distributor1.Input.ProcessAsync(data);
             }
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
             foreach (var data in list)
             {
-                var transaction = main.GetTransactionState(data.Transaction.UserTransaction);
+                var transaction = _distributor1.Main.GetTransactionState(data.Transaction.UserTransaction);
                 Assert.AreEqual(TransactionState.Complete, transaction.State);
             }
 
-            var mem = db.GetDbModules.First() as TestDbInMemory;
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
             Assert.AreEqual(count, mem.Local);
 
-            restore.Dispose();
-            async.Dispose();
-            distributor.Dispose();
-            ddistributor.Dispose();
+            _writer1.Dispose();
+            _distributor1.Dispose();
         }
 
         [TestMethod]
@@ -682,125 +378,24 @@ namespace Qoollo.Tests
             const int storageServer1 = 22183;
             const int storageServer2 = 22184;
 
-            var q1 = new GlobalQueueInner();
-            var q2 = new GlobalQueueInner();
-
             var writer =
                 new HashWriter(new HashMapConfiguration("TestTransaction1D2S", HashMapCreationMode.CreateNew, 2, 2,
                     HashFileType.Distributor));
+
             writer.CreateMap();
             writer.SetServer(0, "localhost", storageServer1, 157);
             writer.SetServer(1, "localhost", storageServer2, 157);
             writer.Save();
 
-            #region hell
+            _distributor1.Build(1, distrServer1, distrServer12, "TestTransaction1D2S");
 
-            GlobalQueue.SetQueue(q1);
+            _writer1.Build(storageServer1, "TestTransaction1D2S", 1);
+            _writer2.Build(storageServer2, "TestTransaction1D2S", 1);
+         
+            _distributor1.Start();
 
-            var connection = new ConnectionConfiguration("testService", 10);
-
-            var distrconfig = new DistributorHashConfiguration(1);
-            var queueconfig = new QueueConfiguration(1, 100);
-            var dnet = new DistributorNetModule(connection,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
-                queueconfig, dnet,
-                new ServerId("localhost", distrServer1),
-                new ServerId("localhost", distrServer12),
-                new HashMapConfiguration("TestTransaction1D2S",
-                    HashMapCreationMode.ReadFromFile,
-                    1, 1, HashFileType.Distributor));
-            dnet.SetDistributor(ddistributor);
-
-            var tranc = new TransactionModule(new QueueConfiguration(1, 1000), dnet, new TransactionConfiguration(4),
-                distrconfig);
-            var main =
-                new MainLogicModule(new DistributorTimeoutCache(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)),
-                    ddistributor, tranc);
-
-            var netReceive4 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
-            var netReceive42 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
-            var input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), main, tranc);
-            var receiver4 = new NetDistributorReceiver(main, input, ddistributor, netReceive4, netReceive42);
-
-            var queueConfiguration = new QueueConfiguration(1, 1000);
-            var hashMapConfiguration = new HashMapConfiguration("TestTransaction1D2S",
-                HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller);
-            var local = new ServerId("localhost", storageServer1);
-
-            var net = new DbControllerNetModule(new ConnectionConfiguration("testService", 1),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-
-            //var db = new TestDbInMemory();
-            var db = new DbModuleCollection();
-            db.AddDbModule(new TestDbInMemory());
-
-            var async = new AsyncTaskModule(new QueueConfiguration(1, 10));
-            var restore = new AsyncDbWorkModule(net, async, db,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMilliseconds(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 1), local);
-
-            var distributor = new Impl.DbController.Distributor.DistributorModule(async, restore, net, local,
-                hashMapConfiguration, new QueueConfiguration(2, 10), db);
-            var mainС = new Impl.DbController.MainLogicModule(distributor, db);
-            var inputС = new Impl.DbController.InputModule(mainС, queueConfiguration);
-            var netRc = new NetDbControllerReceiver(inputС, distributor,
-                new NetReceiverConfiguration(storageServer1, "localhost", "testService"),
-                new NetReceiverConfiguration(1, "fake", "fake"));
-
-            GlobalQueue.SetQueue(q2);
-
-            var queueConfiguration2 = new QueueConfiguration(1, 1000);
-            var hashMapConfiguration2 = new HashMapConfiguration("TestTransaction1D2S",
-                HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller);
-            var local2 = new ServerId("localhost", storageServer2);
-
-            var net2 = new DbControllerNetModule(new ConnectionConfiguration("testService", 1),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-
-            //var db2 = new TestDbInMemory();
-            var db2 = new DbModuleCollection();
-            db2.AddDbModule(new TestDbInMemory());
-
-            var async2 = new AsyncTaskModule(new QueueConfiguration(1, 10));
-            var restore2 = new AsyncDbWorkModule(net2, async2, db2,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMilliseconds(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 1), local);
-
-            var distributor2 = new Impl.DbController.Distributor.DistributorModule(async2, restore2, net2, local2,
-                hashMapConfiguration2, new QueueConfiguration(2, 10), db2);
-            var mainС2 = new Impl.DbController.MainLogicModule(distributor2, db2);
-            var inputС2 = new Impl.DbController.InputModule(mainС2, queueConfiguration2);
-            var netRc2 = new NetDbControllerReceiver(inputС2, distributor2,
-                new NetReceiverConfiguration(storageServer2, "localhost", "testService"),
-                new NetReceiverConfiguration(1, "fake", "fake"));
-
-            #endregion
-
-            main.Start();
-            receiver4.Start();
-            input.Start();
-            dnet.Start();
-            ddistributor.Start();
-
-            inputС.Start();
-            distributor.Start();
-            netRc.Start();
-            async.Start();
-
-            q1.Start();
-
-            inputС2.Start();
-            distributor2.Start();
-            netRc2.Start();
-            async2.Start();
-
-            q2.Start();
+            _writer1.Start();            
+            _writer2.Start();
 
             var list = new List<InnerData>();
             const int count = 100;
@@ -823,27 +418,26 @@ namespace Qoollo.Tests
 
             foreach (var data in list)
             {
-                input.ProcessAsync(data);
+                _distributor1.Input.ProcessAsync(data);
             }
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
             foreach (var data in list)
             {
-                var transaction = main.GetTransactionState(data.Transaction.UserTransaction);
+                var transaction = _distributor1.Main.GetTransactionState(data.Transaction.UserTransaction);
                 Assert.AreEqual(TransactionState.Complete, transaction.State);
             }
 
-            var mem = db.GetDbModules.First() as TestDbInMemory;
-            var mem2 = db2.GetDbModules.First() as TestDbInMemory;
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+            var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
 
             Assert.AreEqual(count, mem.Local + mem2.Local);
 
-            ddistributor.Dispose();
-            restore.Dispose();
-            restore2.Dispose();
-            async.Dispose();
-            async2.Dispose();
+            _writer1.Dispose();
+            _writer2.Dispose();
+
+            _distributor1.Dispose();        
         }
 
         [TestMethod]
@@ -854,9 +448,6 @@ namespace Qoollo.Tests
             const int storageServer1 = 22186;
             const int storageServer2 = 22187;
 
-            var q1 = new GlobalQueueInner();
-            var q2 = new GlobalQueueInner();
-
             var writer =
                 new HashWriter(new HashMapConfiguration("TestTransaction1D2S2Replics", HashMapCreationMode.CreateNew, 2,
                     2, HashFileType.Distributor));
@@ -865,113 +456,15 @@ namespace Qoollo.Tests
             writer.SetServer(1, "localhost", storageServer2, 157);
             writer.Save();
 
-            #region hell
+            _distributor1.Build(2, distrServer1, distrServer12, "TestTransaction1D2S2Replics");
 
-            GlobalQueue.SetQueue(q1);
+            _writer1.Build(storageServer1, "TestTransaction1D2S2Replics",1);     
+            _writer2.Build(storageServer2, "TestTransaction1D2S2Replics", 1);
 
-            var connection = new ConnectionConfiguration("testService", 10);
+            _distributor1.Start();
 
-            var distrconfig = new DistributorHashConfiguration(2);
-            var queueconfig = new QueueConfiguration(1, 100);
-            var dnet = new DistributorNetModule(connection,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
-                queueconfig, dnet,
-                new ServerId("localhost", distrServer1),
-                new ServerId("localhost", distrServer12),
-                new HashMapConfiguration("TestTransaction1D2S2Replics",
-                    HashMapCreationMode.ReadFromFile,
-                    1, 2, HashFileType.Distributor));
-            dnet.SetDistributor(ddistributor);
-
-            var tranc = new TransactionModule(new QueueConfiguration(1, 1000), dnet, new TransactionConfiguration(4),
-                distrconfig);
-            var main =
-                new MainLogicModule(new DistributorTimeoutCache(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)),
-                    ddistributor, tranc);
-
-            var netReceive4 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
-            var netReceive42 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
-            var input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), main, tranc);
-            var receiver4 = new NetDistributorReceiver(main, input, ddistributor, netReceive4, netReceive42);
-
-
-            var queueConfiguration = new QueueConfiguration(1, 1000);
-            var hashMapConfiguration = new HashMapConfiguration("TestTransaction1D2S2Replics",
-                HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller);
-            var local = new ServerId("localhost", storageServer1);
-
-            var net = new DbControllerNetModule(new ConnectionConfiguration("testService", 1),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            
-            var db = new DbModuleCollection();
-            db.AddDbModule(new TestDbInMemory());
-
-            var async = new AsyncTaskModule(new QueueConfiguration(1, 10));
-            var restore = new AsyncDbWorkModule(net, async, db,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMilliseconds(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 1), local);
-
-            var distributor = new Impl.DbController.Distributor.DistributorModule(async, restore, net, local,
-                hashMapConfiguration, new QueueConfiguration(2, 10), db);
-            var mainС = new Impl.DbController.MainLogicModule(distributor, db);
-            var inputС = new Impl.DbController.InputModule(mainС, queueConfiguration);
-            var netRc = new NetDbControllerReceiver(inputС, distributor,
-                new NetReceiverConfiguration(storageServer1, "localhost", "testService"),
-                new NetReceiverConfiguration(1, "fake", "fake"));
-
-            GlobalQueue.SetQueue(q2);
-
-            var queueConfiguration2 = new QueueConfiguration(1, 1000);
-            var hashMapConfiguration2 = new HashMapConfiguration("TestTransaction1D2S2Replics",
-                HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Controller);
-            var local2 = new ServerId("localhost", storageServer2);
-
-            var net2 = new DbControllerNetModule(new ConnectionConfiguration("testService", 1),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            
-            var db2 = new DbModuleCollection();
-            db2.AddDbModule(new TestDbInMemory());
-
-            var async2 = new AsyncTaskModule(new QueueConfiguration(1, 10));
-            var restore2 = new AsyncDbWorkModule(net2, async2, db2,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMilliseconds(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 1), local);
-
-            var distributor2 = new Impl.DbController.Distributor.DistributorModule(async2, restore2, net2, local2,
-                hashMapConfiguration2, new QueueConfiguration(2, 10), db2);
-            var mainС2 = new Impl.DbController.MainLogicModule(distributor2, db2);
-            var inputС2 = new Impl.DbController.InputModule(mainС2, queueConfiguration2);
-            var netRc2 = new NetDbControllerReceiver(inputС2, distributor2,
-                new NetReceiverConfiguration(storageServer2, "localhost", "testService"),
-                new NetReceiverConfiguration(1, "fake", "fake"));
-
-            #endregion
-
-            main.Start();
-            receiver4.Start();
-            input.Start();
-            dnet.Start();
-            ddistributor.Start();
-
-            inputС.Start();
-            distributor.Start();
-            netRc.Start();
-            async.Start();
-
-            q1.Start();
-
-            inputС2.Start();
-            distributor2.Start();
-            netRc2.Start();
-            async2.Start();
-
-            q2.Start();
+            _writer1.Start();
+            _writer2.Start();
 
             var list = new List<InnerData>();
             const int count = 50;
@@ -994,43 +487,36 @@ namespace Qoollo.Tests
 
             foreach (var data in list)
             {
-                input.ProcessAsync(data);
+                _distributor1.Input.ProcessAsync(data);
             }
 
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
             foreach (var data in list)
             {
-                var transaction = main.GetTransactionState(data.Transaction.UserTransaction);
+                var transaction = _distributor1.Main.GetTransactionState(data.Transaction.UserTransaction);
                 Assert.AreEqual(TransactionState.Complete, transaction.State);
             }
 
-            var mem = db.GetDbModules.First() as TestDbInMemory;
-            var mem2 = db2.GetDbModules.First() as TestDbInMemory;
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+            var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
 
             Assert.AreEqual(count, mem.Local + mem2.Local);
             Assert.AreEqual(count, mem.Remote + mem2.Remote);
+            
+            _writer1.Dispose();
+            _writer2.Dispose();
 
-            restore.Dispose();
-            restore2.Dispose();
-            ddistributor.Dispose();
-            async.Dispose();
-            async2.Dispose();
+           _distributor1.Dispose();       
         }
 
         [TestMethod]
         public void Writer_ProcessDataFromDistributor_CRUD_TwoWriters()
-        {
-            const int proxyServer = 22020;
+        {            
             const int distrServer1 = 22201;
             const int distrServer12 = 22202;
             const int storageServer1 = 22203;
-            const int storageServer2 = 22204;
-
-            var q1 = new GlobalQueueInner();
-            var q2 = new GlobalQueueInner();
-
-            GlobalQueue.SetQueue(q1);
+            const int storageServer2 = 22204;            
 
             var writer =
                 new HashWriter(new HashMapConfiguration("TestCreateReadDelete", HashMapCreationMode.CreateNew, 2, 3,
@@ -1042,136 +528,44 @@ namespace Qoollo.Tests
 
             #region hell
 
-            var queue = new QueueConfiguration(2, 100);
-            var connection = new ConnectionConfiguration("testService", 10);
-            var ndrc2 = new NetReceiverConfiguration(proxyServer, "localhost", "testService");
-            var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(20));
-            var pccc2 = new ProxyCacheConfiguration(TimeSpan.FromSeconds(40));
-
-            var proxy = new TestProxySystem(new ServerId("localhost", proxyServer),
-                queue, connection, pcc, pccc2, ndrc2,
-                new AsyncTasksConfiguration(new TimeSpan()),
-                new AsyncTasksConfiguration(new TimeSpan()),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-
-
+            var connection = new ConnectionConfiguration("testService", 10);            
             var distrconfig = new DistributorHashConfiguration(1);
-            var queueconfig = new QueueConfiguration(2, 100);
-            var dnet = new DistributorNetModule(connection,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
-                queueconfig, dnet,
-                new ServerId("localhost", distrServer1),
-                new ServerId("localhost", distrServer12),
-                new HashMapConfiguration("TestCreateReadDelete", HashMapCreationMode.ReadFromFile,
-                    1, 1, HashFileType.Distributor));
-            dnet.SetDistributor(ddistributor);
-
-            var tranc = new TransactionModule(new QueueConfiguration(1, 1000), dnet, new TransactionConfiguration(4),
-                distrconfig);
-
-            var distrcache = new DistributorTimeoutCache(TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20));
-            var main = new MainLogicModule(distrcache, ddistributor, tranc);
-
-            distrcache.SetMainLogicModule(main);
+            var queueconfig = new QueueConfiguration(2, 100);            
 
             var netReceive4 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
             var netReceive42 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
-            var input = new InputModuleWithParallel(new QueueConfiguration(4, 100000), main, tranc);
-            var receiver4 = new NetDistributorReceiver(main, input, ddistributor, netReceive4, netReceive42);
 
-
-            var queueConfiguration = new QueueConfiguration(1, 1000);
-            var hashMapConfiguration = new HashMapConfiguration("TestCreateReadDelete",
-                HashMapCreationMode.ReadFromFile, 1, 2, HashFileType.Controller);
-            var local = new ServerId("localhost", storageServer1);
-
-            var net = new DbControllerNetModule(new ConnectionConfiguration("testService", 10),
+            var d = new DistributorSystem(new ServerId("localhost", distrServer1),
+                new ServerId("localhost", distrServer12),
+                distrconfig, queueconfig, connection,
+                new DistributorCacheConfiguration(TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20)), netReceive4,
+                netReceive42, new TransactionConfiguration(4),
+                new HashMapConfiguration("TestCreateReadDelete", HashMapCreationMode.ReadFromFile,
+                    1, 1, HashFileType.Distributor), new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
             
-            var db = new DbModuleCollection();
-            db.AddDbModule(new TestDbInMemory());
+            _writer1.Build(storageServer1, "TestCreateReadDelete",2);
+            _writer2.Build(storageServer2, "TestCreateReadDelete",2);
 
-            var async = new AsyncTaskModule(new QueueConfiguration(1, 10));
-            var restore = new AsyncDbWorkModule(net, async, db,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMilliseconds(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 100), local);
-
-            var distributor = new Impl.DbController.Distributor.DistributorModule(async, restore, net, local,
-                hashMapConfiguration, new QueueConfiguration(2, 10), db);
-            var mainС = new Impl.DbController.MainLogicModule(distributor, db);
-            var inputС = new Impl.DbController.InputModule(mainС, queueConfiguration);
-            var netRc = new NetDbControllerReceiver(inputС, distributor,
-                new NetReceiverConfiguration(storageServer1, "localhost", "testService"),
-                new NetReceiverConfiguration(1, "fake", "fake"));
-
-            GlobalQueue.SetQueue(q2);
-
-            var hashMapConfiguration2 = new HashMapConfiguration("TestCreateReadDelete",
-                HashMapCreationMode.ReadFromFile, 1, 2, HashFileType.Controller);
-            var local2 = new ServerId("localhost", storageServer2);
-
-            var net2 = new DbControllerNetModule(new ConnectionConfiguration("testService", 10),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+            var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
             
-            var db2 = new DbModuleCollection();
-            db2.AddDbModule(new TestDbInMemory());
+            _proxy.Start();
 
-            var async2 = new AsyncTaskModule(new QueueConfiguration(1, 10));
-            var restore2 = new AsyncDbWorkModule(net2, async2, db2,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMilliseconds(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 100), local);
+            d.Build();
+            d.Start();
 
-            var distributor2 = new Impl.DbController.Distributor.DistributorModule(async2, restore2, net2, local2,
-                hashMapConfiguration2, new QueueConfiguration(2, 10), db2);
-            var mainС2 = new Impl.DbController.MainLogicModule(distributor2, db2);
-            var inputС2 = new Impl.DbController.InputModule(mainС2, queueConfiguration);
-            var netRc2 = new NetDbControllerReceiver(inputС2, distributor2,
-                new NetReceiverConfiguration(storageServer2, "localhost", "testService"),
-                new NetReceiverConfiguration(1, "fake", "fake"));
+            _writer1.Start();
+            _writer2.Start();
 
-
-            #endregion
-
-            var mem = db.GetDbModules.First() as TestDbInMemory;
-            var mem2 = db2.GetDbModules.First() as TestDbInMemory;
-
-            #region hell2
-
-            proxy.Build();
-            proxy.Start();
-
-            main.Start();
-            receiver4.Start();
-            input.Start();
-            dnet.Start();
-            ddistributor.Start();
-
-            inputС.Start();
-            distributor.Start();
-            netRc.Start();
-            async.Start();
-
-            q1.Start();
-
-            inputС2.Start();
-            distributor2.Start();
-            netRc2.Start();
-            async2.Start();
-
-            q2.Start();
-            proxy.Distributor.SayIAmHere(new ServerId("localhost", distrServer12));
+            _proxy.Distributor.SayIAmHere(new ServerId("localhost", distrServer12));
 
             #endregion
 
             const int count = 50;
 
-            var api = proxy.CreateApi("Int", false, new IntHashConvertor());
+            var api = _proxy.CreateApi("Int", false, new IntHashConvertor());
 
             for (int i = 0; i < count; i++)
             {
@@ -1201,18 +595,11 @@ namespace Qoollo.Tests
                 Assert.IsNull(data);
             }
 
-            q1.Dispose();
+            _writer2.Dispose();
+            _writer1.Dispose();
 
-            distributor.Dispose();
-            distributor2.Dispose();
-            ddistributor.Dispose();
-            async.Dispose();
-            async2.Dispose();
-            dnet.Dispose();
-            net.Dispose();
-            net2.Dispose();
-
-            proxy.Dispose();
+            d.Dispose();
+            _proxy.Dispose();
         }
     }
 }

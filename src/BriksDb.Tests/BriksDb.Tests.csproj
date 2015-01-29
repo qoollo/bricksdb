@@ -61,12 +61,14 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleTests.cs" />
+    <Compile Include="Support\TestDistributorGate.cs" />
     <Compile Include="Support\TestHelper.cs" />
     <Compile Include="Support\IntDataProvider.cs" />
     <Compile Include="Support\IntHashConvertor.cs" />
     <Compile Include="Support\IntValueHashDataProvider.cs" />
     <Compile Include="Support\StoredDataHashCalculator.cs" />
     <Compile Include="Support\StoredData.cs" />
+    <Compile Include="Support\TestWriterGate.cs" />
     <Compile Include="TestCollectorModules.cs" />
     <Compile Include="TestCollector\TestDataLoader.cs" />
     <Compile Include="TestCollector\TestIntParser.cs" />

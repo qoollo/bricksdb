@@ -3,7 +3,7 @@
 namespace Qoollo.Impl.Common.NetResults
 {
     [DataContract]
-    internal class SuccessResult:RemoteResult
+    public class SuccessResult:RemoteResult
     {
         public SuccessResult() : base(false, "")
         {

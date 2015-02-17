@@ -3,7 +3,7 @@ using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.Modules.Db.Impl
 {
-    internal abstract class DbImplModule<TCommand, TConnection, TReader> : ControlModule where TConnection : class
+    public abstract class DbImplModule<TCommand, TConnection, TReader> : ControlModule where TConnection : class
     {
         public abstract RemoteResult ExecuteNonQuery(TCommand command);
 

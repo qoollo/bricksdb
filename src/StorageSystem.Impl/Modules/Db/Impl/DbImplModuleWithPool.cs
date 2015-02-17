@@ -5,7 +5,7 @@ using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.Modules.Db.Impl
 {
-    internal abstract class DbImplModuleWithPool<TConnection, TConnectionParam, TCommand, TReader> : DbImplModule<TCommand, TConnection, TReader>
+    public abstract class DbImplModuleWithPool<TConnection, TConnectionParam, TCommand, TReader> : DbImplModule<TCommand, TConnection, TReader>
         where TConnection : class
         where TConnectionParam : class
     {

@@ -6,7 +6,7 @@ using Qoollo.Impl.Modules.Db.Impl;
 
 namespace Qoollo.Impl.Writer.Db.Commands
 {
-    internal interface IMetaDataCommandCreator<TCommand, TReader>
+    public interface IMetaDataCommandCreator<TCommand, TReader>
     {
         void SetKeyName(string keyName);
         void SetTableName(List<string> tableName);

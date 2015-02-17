@@ -6,7 +6,7 @@ using Qoollo.Impl.Modules.Db.Impl;
 
 namespace Qoollo.Impl.Writer.Db.Commands
 {
-    internal interface IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader>
+    public interface IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader>
     {
         bool CreateDb(TConnection connection);
 

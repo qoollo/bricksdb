@@ -12,7 +12,7 @@ namespace BricksDb.RedisInterface.Server
     {
         private readonly TcpListener tcpListener;
         private DeleageQueueAsyncProcessor<Socket> _queue;
-        private readonly int _processorCount = Environment.ProcessorCount;
+        private readonly int _processorCount = 1; //Environment.ProcessorCount;
         private readonly int _maxQueueSize = 10000;
         private Func<string, string> _processMessageFunc;
 

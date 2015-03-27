@@ -14,13 +14,8 @@ namespace BricksDb.RedisInterface
     {
         static void Main(string[] args)
         {
-            var listener = new RedisListener();
-            var gate = new RedisGate(new NetConfiguration(listener.LocalIPAddress().ToString(), 8000),
-                new ProxyConfiguration(Consts.ChangeDistributorTimeoutSec), new CommonConfiguration(Consts.CountThreads));
-            gate.Build();
-
-            
-            listener.ListenWithQueue();
+            var server = new RedisToBriks();
+            server.StartServer();
         }
     }
 }

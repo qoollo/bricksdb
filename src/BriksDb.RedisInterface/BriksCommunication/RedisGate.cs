@@ -24,7 +24,7 @@ namespace BricksDb.RedisInterface.BriksCommunication
     {
     }
 
-    public IStorage<string, string> DataWithBufferTable
+    public IStorage<string, string> RedisTable
     {
         get { return _data; }
     }

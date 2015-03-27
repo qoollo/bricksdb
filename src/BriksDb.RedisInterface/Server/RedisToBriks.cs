@@ -14,24 +14,26 @@ namespace BricksDb.RedisInterface.Server
     {
         private RedisListener _redisListener;
         private RedisGate _redisGate;
+        private RedisMessageProcessor _processor;
 
         public RedisToBriks()
         {
-            _redisListener = new RedisListener(ProcessMessage);
-            _redisGate = new RedisGate(new NetConfiguration(RedisListener.LocalIPAddress().ToString(), 8000),
-                new ProxyConfiguration(Consts.ChangeDistributorTimeoutSec), new CommonConfiguration(Consts.CountThreads));
+            _redisGate =
+                new RedisGate(
+                    new NetConfiguration(RedisListener.LocalIPAddress().ToString(), 8000, Consts.WcfServiceName),
+                    new ProxyConfiguration(Consts.ChangeDistributorTimeoutSec),
+                    new CommonConfiguration(Consts.CountThreads));
+            _redisGate.Build();
+            _processor = new RedisMessageProcessor(_redisGate.RedisTable);
+            _redisListener = new RedisListener(_processor.ProcessMessage);
         }
 
         public void StartServer()
         {
-            _redisGate.Build();
+            _redisGate.Start();
             _redisListener.ListenWithQueue();
         }
 
-        private string ProcessMessage(string message)
-        {
-            var responce = "+OK\r\n";
-            return responce;
-        }
+        
     }
 }

@@ -52,7 +52,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\RedisListener.cs" />
     <Compile Include="Server\RedisMessageProcessor.cs" />
-    <Compile Include="Server\RedisOperation.cs" />
+    <Compile Include="Server\RedisOperations\RedisGet.cs" />
+    <Compile Include="Server\RedisOperations\RedisOperation.cs" />
+    <Compile Include="Server\RedisOperations\RedisSet.cs" />
     <Compile Include="Server\RedisToBriks.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using BricksDb.RedisInterface.Server.RedisOperations;
 using Qoollo.Client.ProxyGate;
 
 namespace BricksDb.RedisInterface.Server
@@ -12,16 +13,7 @@ namespace BricksDb.RedisInterface.Server
     {
         private IStorage<string, string> _redisTable;
         private Dictionary<char, Func<string, string>> _processOnDataType;
-        private Dictionary<string, Func<object, string>> _executeCommand;
-
-        private const string KeyRand = "key:__rand_int__";
-        private static Random random = new Random(DateTime.Now.Millisecond);
-        
-        private int successWrites = 0;
-        private int failWrite = 0;
-
-        private int successRead = 0;
-        private int failRead = 0;
+        private Dictionary<string, RedisOperation> _executeCommand;
 
         public RedisMessageProcessor(IStorage<string, string> redisTable)
         {
@@ -34,16 +26,14 @@ namespace BricksDb.RedisInterface.Server
                 {'$', ProcessBulk},*/
                 {'*', ProcessArrays}
             };
-            _executeCommand = new Dictionary<string, Func<object, string>>()
+            _executeCommand = new Dictionary<string, RedisOperation>()
             {
-                {"SET", ProcessSet}
+                {"SET", new RedisSet(_redisTable)}
             };
         }
 
         public string ProcessMessage(string message)
         {
-            //_redisGate.RedisTable.Create()
-            //var responce = "+OK\r\n";
             var responce = _processOnDataType[message[0]](message); 
             return responce;
         }
@@ -77,30 +67,10 @@ namespace BricksDb.RedisInterface.Server
             {
                 array[4], array[6]
             };
-            var responce = _executeCommand[command](parameters);
+            var responce = _executeCommand[command].PerformOperation(parameters);
             return responce;
         }
 
-        public string ProcessSet(object parameter_array)
-        {
-            string[] parameters = parameter_array as string[]; // TODO: проверить на null
-            var key = parameters[0];
-            var value = parameters[1];
-            var responseBriks = _redisTable.Create(key, value);
-            if (responseBriks.IsError)
-            {
-                
-            }
-            else
-            {
-
-            }
-            
-            
-            
-            
-            var responseRedis = "+OK\r\n"; // всегда ОК, чтобы бенчмарк работал. Ошибки считаются внутри этой системы
-            return responseRedis;
-        }
+        
     }
 }

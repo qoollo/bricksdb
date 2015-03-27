@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BriksDb.Client", "StorageSystem.Client\BriksDb.Client.csproj", "{1BE55462-F506-45B7-AD6D-C29F36CE68E0}"
 EndProject
@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{570B58
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BriksDb.Tests", "BriksDb.Tests\BriksDb.Tests.csproj", "{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BricksDb.RedisInterface", "BricksDb.RedisInterface\BricksDb.RedisInterface.csproj", "{B60B2666-0473-46DC-A81E-DD64A8A7E01B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -94,6 +96,18 @@ Global
 		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1EAA72BE-E30D-4027-B554-87B3C3DD26A3}.Release|x86.ActiveCfg = Release|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.DebugRC|Any CPU.ActiveCfg = Debug|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.DebugRC|Any CPU.Build.0 = Debug|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.DebugRC|x86.ActiveCfg = Debug|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.DebugSC|Any CPU.ActiveCfg = Debug|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.DebugSC|Any CPU.Build.0 = Debug|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.DebugSC|x86.ActiveCfg = Debug|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B60B2666-0473-46DC-A81E-DD64A8A7E01B}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

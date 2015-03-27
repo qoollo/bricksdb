@@ -8,23 +8,25 @@ using Qoollo.Turbo.Threading.QueueProcessing;
 
 namespace BricksDb.RedisInterface.Server
 {
-    class RedisServer
+    class RedisListener
     {
         private readonly TcpListener tcpListener;
         private DeleageQueueAsyncProcessor<Socket> _queue;
         private readonly int _processorCount = Environment.ProcessorCount;
         private readonly int _maxQueueSize = 10000;
+        private Func<string, string> _processMessageFunc;
 
 
-        public RedisServer()
+        public RedisListener(Func<string, string> processMessageFunc)
         {
+            _processMessageFunc = processMessageFunc;
             IPAddress ipAddress = LocalIPAddress(); //System.Net.IPAddress.Parse("10.5.7.11");
             IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
             tcpListener = new TcpListener(localEndPoint);
         }
 
 
-        public IPAddress LocalIPAddress()
+        public static IPAddress LocalIPAddress()
         {
             IPHostEntry host;
             IPAddress localIP = null;
@@ -92,7 +94,7 @@ namespace BricksDb.RedisInterface.Server
             if (bytesRec != 0)
             {
                 var data = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                var responce = ProcessMessage(data);
+                var responce = _processMessageFunc(data);
                 byte[] msg = Encoding.ASCII.GetBytes(responce);
 
                 handler.Send(msg); // TODO: контрлировать, сколько отослал, т.е. sended = han...
@@ -101,10 +103,6 @@ namespace BricksDb.RedisInterface.Server
             }
         }
 
-        private string ProcessMessage(string message)
-        {
-            var responce = "+OK\r\n";
-            return responce;
-        }
+        
     }
 }

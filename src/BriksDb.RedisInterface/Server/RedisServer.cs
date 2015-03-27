@@ -92,14 +92,19 @@ namespace BricksDb.RedisInterface.Server
             if (bytesRec != 0)
             {
                 var data = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-
-                var responce = "+OK\r\n";
+                var responce = ProcessMessage(data);
                 byte[] msg = Encoding.ASCII.GetBytes(responce);
 
                 handler.Send(msg); // TODO: контрлировать, сколько отослал, т.е. sended = han...
 
                 _queue.Add(handler);
             }
+        }
+
+        private string ProcessMessage(string message)
+        {
+            var responce = "+OK\r\n";
+            return responce;
         }
     }
 }

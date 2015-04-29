@@ -11,13 +11,11 @@ namespace BricksDb.RedisInterface.Server
 {
     class RedisMessageProcessor
     {
-        private IStorage<string, string> _redisTable;
-        private Dictionary<char, Func<string, string>> _processOnDataType;
-        private Dictionary<string, RedisOperation> _executeCommand;
+        private readonly Dictionary<char, Func<string, string>> _processOnDataType;
+        private readonly Dictionary<string, RedisOperation> _executeCommand;
 
         public RedisMessageProcessor(IStorage<string, string> redisTable)
         {
-            _redisTable = redisTable;
             _processOnDataType = new Dictionary<char, Func<string, string>>()
             {
                 /*{'+', ProcessStrings},
@@ -28,8 +26,8 @@ namespace BricksDb.RedisInterface.Server
             };
             _executeCommand = new Dictionary<string, RedisOperation>()
             {
-                {"SET", new RedisSet(_redisTable)},
-                {"GET", new RedisGet(_redisTable)}
+                {"SET", new RedisSet(redisTable)},
+                {"GET", new RedisGet(redisTable)}
             };
         }
 

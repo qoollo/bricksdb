@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BricksDb.RedisInterface.BriksCommunication;
+﻿using BricksDb.RedisInterface.BriksCommunication;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.Support;
 
@@ -12,28 +6,31 @@ namespace BricksDb.RedisInterface.Server
 {
     class RedisToBriks
     {
-        private RedisListener _redisListener;
-        private RedisGate _redisGate;
-        private RedisMessageProcessor _processor;
+        private readonly RedisListener _redisListener;
+        private readonly RedisGate _redisGate;
 
         public RedisToBriks()
         {
-            _redisGate =
-                new RedisGate(
-                    new NetConfiguration(RedisListener.LocalIPAddress().ToString(), 8000, Consts.WcfServiceName),
+            _redisGate = new RedisGate(
+                    new NetConfiguration(RedisListener.LocalIpAddress().ToString(), 8000, Consts.WcfServiceName),
                     new ProxyConfiguration(Consts.ChangeDistributorTimeoutSec),
-                    new CommonConfiguration(Consts.CountThreads));
+                    new CommonConfiguration(ConfigurationHelper.Instance.CountThreads));
+
             _redisGate.Build();
-            _processor = new RedisMessageProcessor(_redisGate.RedisTable);
-            _redisListener = new RedisListener(_processor.ProcessMessage);
+            var processor = new RedisMessageProcessor(_redisGate.RedisTable);
+            _redisListener = new RedisListener(processor, _redisGate.RedisTable);
         }
 
-        public void StartServer()
+        public void Start()
         {
             _redisGate.Start();
-            _redisListener.ListenWithQueue();
+            _redisListener.ListenWithQueueAsync();
         }
 
-        
+        public void Stop()
+        {
+            _redisListener.StopListen();
+            _redisGate.Dispose();
+        }
     }
 }

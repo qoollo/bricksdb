@@ -12,6 +12,7 @@ namespace BricksDb.RedisInterface.Server
 {
     internal class RedisListener
     {
+        private readonly RedisMessageProcessor _process;
         private readonly IStorage<string, string> _redisTable;
         private readonly TcpListener _tcpListener;
         private DeleageQueueAsyncProcessor<Socket> _queue;        
@@ -20,6 +21,7 @@ namespace BricksDb.RedisInterface.Server
 
         public RedisListener(RedisMessageProcessor process, IStorage<string, string> redisTable)
         {
+            _process = process;
             _redisTable = redisTable;
             _processMessageFunc = process.ProcessMessage;
             var ipAddress = LocalIpAddress();
@@ -29,19 +31,27 @@ namespace BricksDb.RedisInterface.Server
         
         private void ProcessSocket(Socket handler, CancellationToken token)
         {
-            var bytes = new byte[1024];
-
-            int bytesRec = handler.Receive(bytes);            
-            if (bytesRec != 0)
+            try
             {
-                var data = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                var responce = _processMessageFunc(data);
-                byte[] msg = Encoding.ASCII.GetBytes(responce);
+                var bytes = new byte[1024];
 
-                Send(handler, msg);
+                int bytesRec = handler.Receive(bytes);
+                if (bytesRec != 0)
+                {
+                    var data = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                    var responce = _processMessageFunc(data);
+                    byte[] msg = Encoding.ASCII.GetBytes(responce);
 
-                _queue.Add(handler, token);
+                    Send(handler, msg);
+
+                    _queue.Add(handler, token);
+                }
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            
         }
 
         private void Send(Socket handler, byte[] msg)
@@ -67,6 +77,8 @@ namespace BricksDb.RedisInterface.Server
         public void ListenWithQueue()
         {
             ConnectToBriksDb();
+            _process.Start();
+            
 
             _tcpListener.Start();
             Console.WriteLine("Listen started on {0} ...", _tcpListener.LocalEndpoint);
@@ -100,6 +112,7 @@ namespace BricksDb.RedisInterface.Server
         {
             _tcpListener.Stop();
             _queue.Stop();
+            _process.Stop();
         }
 
         public static IPAddress LocalIpAddress()

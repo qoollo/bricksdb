@@ -1,34 +1,40 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using Qoollo.Client.ProxyGate;
 
-namespace BricksDb.RedisInterface.Server
+namespace BricksDb.RedisInterface.Server.RedisOperations
 {
     abstract class RedisOperation
     {
-        protected IStorage<string, string> table;
-        protected int OperationSuccess;
-        protected int OperationFail;
-        protected string OperationName;
+        protected IStorage<string, string> Table;
+        private int _operationSuccess;
+        private int _operationFail;
+        public string OperationName { get; private set; }
 
-        public RedisOperation(IStorage<string,string> tableStorage)
+        protected RedisOperation(IStorage<string,string> tableStorage, string operationName)
         {
-            OperationSuccess = 0;
-            OperationFail = 0;
-            table = tableStorage;
+            _operationSuccess = 0;
+            _operationFail = 0;
+            Table = tableStorage;
+            OperationName = operationName;
         }
 
-        public virtual string PerformOperation(object parameters)
-        {
-            return null;
-        }
+        public abstract string PerformOperation(object parameterArray);
 
         public void WritePerformanceToConsole()
         {
-            Console.WriteLine("Operation {0}: Success # {1}, Fail # {2}", OperationName,OperationSuccess,OperationFail);
+            Console.WriteLine("Operation {0}: Success # {1}, Fail # {2}", OperationName, _operationSuccess,
+                _operationFail);
+        }
+
+        protected void Success()
+        {
+            Interlocked.Increment(ref _operationSuccess);
+        }
+
+        protected void Fail()
+        {
+            Interlocked.Increment(ref _operationFail);
         }
     }
 }

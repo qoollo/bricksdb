@@ -10,25 +10,22 @@ namespace BricksDb.RedisInterface.Server.RedisOperations
 {
     class RedisSet: RedisOperation
     {
-        public RedisSet(IStorage<string, string> tableStorage)
-            : base(tableStorage){}
+        public RedisSet(IStorage<string, string> tableStorage, string operationName)
+            : base(tableStorage, operationName) { }
 
-        public override string PerformOperation(object parameter_array)
+        public override string PerformOperation(object parameterArray)
         {
-            string[] parameters = parameter_array as string[]; // TODO: проверить на null
+            var parameters = parameterArray as string[]; // TODO: проверить на null
             var key = parameters[0];
             var value = parameters[1];
-            var responseBriks = table.Create(key, value);
+            var responseBriks = Table.Create(key, value);
             if (responseBriks.IsError)
-            {
-                Interlocked.Increment(ref OperationFail);
-            }
+                Fail();
             else
-            {
-                Interlocked.Increment(ref OperationSuccess);
-            }
+                Success();
 
-            var responseRedis = "+OK\r\n"; // всегда ОК, чтобы бенчмарк работал. Ошибки считаются внутри этой системы
+            const string responseRedis = "+OK\r\n";
+                // всегда ОК, чтобы бенчмарк работал. Ошибки считаются внутри этой системы
             return responseRedis;
         }
 

@@ -11,24 +11,23 @@ namespace BricksDb.RedisInterface.Server.RedisOperations
 {
     class RedisGet:RedisOperation
     {
-        public RedisGet(IStorage<string, string> tableStorage) : base(tableStorage){}
+        public RedisGet(IStorage<string, string> tableStorage, string operationName) 
+            : base(tableStorage, operationName){}
 
-        public override string PerformOperation(object parameter_array)
+        public override string PerformOperation(object parameterArray)
         {
-            string[] parameters = parameter_array as string[]; // TODO: проверить на null
+            var parameters = parameterArray as string[]; // TODO: проверить на null
             var key = parameters[0];
-            var request = new RequestDescription();
-            var responseBriks = table.Read(key, out request);
+            RequestDescription request;
+            
+            Table.Read(key, out request);
             if (request.IsError)
-            {
-                Interlocked.Increment(ref OperationFail);
-            }
+                Fail();
             else
-            {
-                Interlocked.Increment(ref OperationSuccess);
-            }
+                Success();
 
-            var responseRedis = ":1\r\n"; // всегда результат, чтобы бенчмарк работал. Ошибки считаются внутри этой системы
+            const string responseRedis = ":1\r\n";
+                // всегда результат, чтобы бенчмарк работал. Ошибки считаются внутри этой системы
             return responseRedis;
         }
     }

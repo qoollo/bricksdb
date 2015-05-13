@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace BricksDb.RedisInterface.Server.RedisOperations
+namespace BricksDb.RedisInterface.RedisOperations
 {
     abstract class RedisOperation
     {

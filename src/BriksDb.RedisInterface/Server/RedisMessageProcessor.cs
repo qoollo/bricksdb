@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using BricksDb.RedisInterface.Server.RedisOperations;
+using BricksDb.RedisInterface.RedisOperations;
 
 namespace BricksDb.RedisInterface.Server
 {

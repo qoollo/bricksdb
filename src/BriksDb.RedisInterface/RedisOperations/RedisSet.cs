@@ -1,24 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Qoollo.Client.ProxyGate;
-
-namespace BricksDb.RedisInterface.Server.RedisOperations
+﻿namespace BricksDb.RedisInterface.RedisOperations
 {
-    class RedisSet : RedisOperationForProxy
+    class RedisSet : RedisOperation
     {
-        public RedisSet(IStorage<string, string> tableStorage, string operationName)
-            : base(tableStorage, operationName) { }
+        private readonly IDataAdapter _dataAdapter;
+
+        public RedisSet(IDataAdapter dataAdapter, string operationName)
+            : base(operationName)
+        {
+            _dataAdapter = dataAdapter;
+        }
 
         public override string PerformOperation(object parameterArray)
         {
             var parameters = parameterArray as string[]; // TODO: проверить на null
             var key = parameters[0];
             var value = parameters[1];
-            var responseBriks = Table.Create(key, value);
+            var responseBriks = _dataAdapter.Create(key, value);
             if (responseBriks.IsError)
                 Fail();
             else

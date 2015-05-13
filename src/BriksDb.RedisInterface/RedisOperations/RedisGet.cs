@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Qoollo.Client.ProxyGate;
-using Qoollo.Client.Request;
+﻿using Qoollo.Client.Request;
 
-namespace BricksDb.RedisInterface.Server.RedisOperations
+namespace BricksDb.RedisInterface.RedisOperations
 {
-    class RedisGet : RedisOperationForProxy
+    class RedisGet : RedisOperation
     {
-        public RedisGet(IStorage<string, string> tableStorage, string operationName)
-            : base(tableStorage, operationName) { }
+        private readonly IDataAdapter _dataAdapter;
+
+        public RedisGet(IDataAdapter dataAdapter, string operationName)
+            : base(operationName)
+        {
+            _dataAdapter = dataAdapter;
+        }
 
         public override string PerformOperation(object parameterArray)
         {
@@ -20,7 +18,7 @@ namespace BricksDb.RedisInterface.Server.RedisOperations
             var key = parameters[0];
             RequestDescription request;
 
-            Table.Read(key, out request);
+            _dataAdapter.Read(key, out request);
             if (request.IsError)
                 Fail();
             else

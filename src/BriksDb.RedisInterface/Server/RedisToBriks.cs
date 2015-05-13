@@ -1,6 +1,6 @@
 ﻿using System;
 using BricksDb.RedisInterface.BriksCommunication;
-using BricksDb.RedisInterface.Server.RedisOperations;
+using BricksDb.RedisInterface.RedisOperations;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.Support;
 
@@ -22,8 +22,8 @@ namespace BricksDb.RedisInterface.Server
         {
             _redisGate.Build();
 
-            processor.AddOperation("SET", new RedisSet(_redisGate.RedisTable, "SET"));
-            processor.AddOperation("GET", new RedisGet(_redisGate.RedisTable, "GET"));
+            processor.AddOperation("SET", new RedisSet(new ProxyDataAdapter(_redisGate.RedisTable), "SET"));
+            processor.AddOperation("GET", new RedisGet(new ProxyDataAdapter(_redisGate.RedisTable), "GET"));
         }
 
         public override void Start()

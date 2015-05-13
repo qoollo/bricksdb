@@ -13,30 +13,27 @@ namespace BricksDb.RedisInterface.Server
         public RedisToBriks()
         {
             _redisGate = new RedisGate(
-                    new NetConfiguration(RedisListener.LocalIpAddress().ToString(), 8000, Consts.WcfServiceName),
+                    new NetConfiguration(ConfigurationHelper.Instance.Localhost, 8000, Consts.WcfServiceName),
                     new ProxyConfiguration(Consts.ChangeDistributorTimeoutSec),
                     new CommonConfiguration(ConfigurationHelper.Instance.CountThreads));
-
-            _redisGate.Build();
-        }
-
-        private void ConnectToBriksDb()
-        {
-            var result = _redisGate.RedisTable.SayIAmHere(ConfigurationHelper.Instance.DistributorHost,
-                ConfigurationHelper.Instance.DistributorPort);
-            Console.WriteLine(result);
         }
 
         protected override void InnerBuild(RedisMessageProcessor processor)
         {
+            _redisGate.Build();
+
             processor.AddOperation("SET", new RedisSet(_redisGate.RedisTable, "SET"));
             processor.AddOperation("GET", new RedisGet(_redisGate.RedisTable, "GET"));
         }
 
         public override void Start()
         {
-            ConnectToBriksDb();
             _redisGate.Start();
+
+            var result = _redisGate.RedisTable.SayIAmHere(ConfigurationHelper.Instance.DistributorHost,
+                ConfigurationHelper.Instance.DistributorPort);
+            Console.WriteLine(result);            
+
             base.Start();
         }
 

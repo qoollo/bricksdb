@@ -51,13 +51,17 @@
     <Compile Include="BriksCommunication\RedisGate.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RedisOperations\IDataAdapter.cs" />
+    <Compile Include="RedisOperations\ProxyDataAdapter.cs" />
     <Compile Include="Server\ConfigurationHelper.cs" />
     <Compile Include="Server\RedisListener.cs" />
     <Compile Include="Server\RedisMessageProcessor.cs" />
-    <Compile Include="Server\RedisOperations\RedisGet.cs" />
-    <Compile Include="Server\RedisOperations\RedisOperation.cs" />
-    <Compile Include="Server\RedisOperations\RedisSet.cs" />
+    <Compile Include="RedisOperations\RedisGet.cs" />
+    <Compile Include="RedisOperations\RedisOperation.cs" />
+    <Compile Include="RedisOperations\RedisSet.cs" />
     <Compile Include="Server\RedisToBriks.cs" />
+    <Compile Include="Server\RedisToDbWriter.cs" />
+    <Compile Include="Server\RedisToSmthSystem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

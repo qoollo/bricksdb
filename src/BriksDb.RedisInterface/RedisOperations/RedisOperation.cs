@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Threading;
-using Qoollo.Client.ProxyGate;
 
-namespace BricksDb.RedisInterface.Server.RedisOperations
+namespace BricksDb.RedisInterface.RedisOperations
 {
     abstract class RedisOperation
     {
-        protected IStorage<string, string> Table;
+
         private int _operationSuccess;
         private int _operationFail;
         public string OperationName { get; private set; }
 
-        protected RedisOperation(IStorage<string,string> tableStorage, string operationName)
+        protected RedisOperation(string operationName)
         {
             _operationSuccess = 0;
             _operationFail = 0;
-            Table = tableStorage;
             OperationName = operationName;
         }
 

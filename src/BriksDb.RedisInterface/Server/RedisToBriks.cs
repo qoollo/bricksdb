@@ -1,35 +1,45 @@
-﻿using BricksDb.RedisInterface.BriksCommunication;
+﻿using System;
+using BricksDb.RedisInterface.BriksCommunication;
+using BricksDb.RedisInterface.RedisOperations;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.Support;
 
 namespace BricksDb.RedisInterface.Server
 {
-    class RedisToBriks
+    class RedisToBriks : RedisToSmthSystem
     {
-        private readonly RedisListener _redisListener;
         private readonly RedisGate _redisGate;
 
         public RedisToBriks()
         {
             _redisGate = new RedisGate(
-                    new NetConfiguration(RedisListener.LocalIpAddress().ToString(), 8000, Consts.WcfServiceName),
+                    new NetConfiguration(ConfigurationHelper.Instance.Localhost, 8000, Consts.WcfServiceName),
                     new ProxyConfiguration(Consts.ChangeDistributorTimeoutSec),
                     new CommonConfiguration(ConfigurationHelper.Instance.CountThreads));
-
-            _redisGate.Build();
-            var processor = new RedisMessageProcessor(_redisGate.RedisTable);
-            _redisListener = new RedisListener(processor, _redisGate.RedisTable);
         }
 
-        public void Start()
+        protected override void InnerBuild(RedisMessageProcessor processor)
+        {
+            _redisGate.Build();
+
+            processor.AddOperation("SET", new RedisSet(new ProxyDataAdapter(_redisGate.RedisTable), "SET"));
+            processor.AddOperation("GET", new RedisGet(new ProxyDataAdapter(_redisGate.RedisTable), "GET"));
+        }
+
+        public override void Start()
         {
             _redisGate.Start();
-            _redisListener.ListenWithQueueAsync();
+
+            var result = _redisGate.RedisTable.SayIAmHere(ConfigurationHelper.Instance.DistributorHost,
+                ConfigurationHelper.Instance.DistributorPort);
+            Console.WriteLine(result);            
+
+            base.Start();
         }
 
-        public void Stop()
+        public override void Stop()
         {
-            _redisListener.StopListen();
+            base.Stop();
             _redisGate.Dispose();
         }
     }

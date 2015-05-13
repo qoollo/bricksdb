@@ -8,6 +8,7 @@ namespace BricksDb.RedisInterface
         static void Main(string[] args)
         {
             var server = new RedisToBriks();
+            server.Build();
             server.Start();
             Console.WriteLine("Press enter to stop");
             Console.ReadLine();

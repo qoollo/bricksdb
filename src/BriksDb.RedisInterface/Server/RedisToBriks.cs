@@ -1,12 +1,13 @@
-﻿using BricksDb.RedisInterface.BriksCommunication;
+﻿using System;
+using BricksDb.RedisInterface.BriksCommunication;
+using BricksDb.RedisInterface.Server.RedisOperations;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.Support;
 
 namespace BricksDb.RedisInterface.Server
 {
-    class RedisToBriks
+    class RedisToBriks : RedisToSmthSystem
     {
-        private readonly RedisListener _redisListener;
         private readonly RedisGate _redisGate;
 
         public RedisToBriks()
@@ -17,19 +18,31 @@ namespace BricksDb.RedisInterface.Server
                     new CommonConfiguration(ConfigurationHelper.Instance.CountThreads));
 
             _redisGate.Build();
-            var processor = new RedisMessageProcessor(_redisGate.RedisTable);
-            _redisListener = new RedisListener(processor, _redisGate.RedisTable);
         }
 
-        public void Start()
+        private void ConnectToBriksDb()
         {
+            var result = _redisGate.RedisTable.SayIAmHere(ConfigurationHelper.Instance.DistributorHost,
+                ConfigurationHelper.Instance.DistributorPort);
+            Console.WriteLine(result);
+        }
+
+        protected override void InnerBuild(RedisMessageProcessor processor)
+        {
+            processor.AddOperation("SET", new RedisSet(_redisGate.RedisTable, "SET"));
+            processor.AddOperation("GET", new RedisGet(_redisGate.RedisTable, "GET"));
+        }
+
+        public override void Start()
+        {
+            ConnectToBriksDb();
             _redisGate.Start();
-            _redisListener.ListenWithQueueAsync();
+            base.Start();
         }
 
-        public void Stop()
+        public override void Stop()
         {
-            _redisListener.StopListen();
+            base.Stop();
             _redisGate.Dispose();
         }
     }

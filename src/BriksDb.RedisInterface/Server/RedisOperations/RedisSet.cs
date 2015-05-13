@@ -8,7 +8,7 @@ using Qoollo.Client.ProxyGate;
 
 namespace BricksDb.RedisInterface.Server.RedisOperations
 {
-    class RedisSet: RedisOperation
+    class RedisSet : RedisOperationForProxy
     {
         public RedisSet(IStorage<string, string> tableStorage, string operationName)
             : base(tableStorage, operationName) { }
@@ -25,7 +25,7 @@ namespace BricksDb.RedisInterface.Server.RedisOperations
                 Success();
 
             const string responseRedis = "+OK\r\n";
-                // всегда ОК, чтобы бенчмарк работал. Ошибки считаются внутри этой системы
+            // всегда ОК, чтобы бенчмарк работал. Ошибки считаются внутри этой системы
             return responseRedis;
         }
 

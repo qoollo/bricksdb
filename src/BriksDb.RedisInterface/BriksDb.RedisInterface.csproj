@@ -56,8 +56,11 @@
     <Compile Include="Server\RedisMessageProcessor.cs" />
     <Compile Include="Server\RedisOperations\RedisGet.cs" />
     <Compile Include="Server\RedisOperations\RedisOperation.cs" />
+    <Compile Include="Server\RedisOperations\RedisOperationForDbWriter.cs" />
+    <Compile Include="Server\RedisOperations\RedisOperationForProxy.cs" />
     <Compile Include="Server\RedisOperations\RedisSet.cs" />
     <Compile Include="Server\RedisToBriks.cs" />
+    <Compile Include="Server\RedisToSmthSystem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

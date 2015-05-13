@@ -5,7 +5,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Qoollo.Client.ProxyGate;
 using Qoollo.Turbo.Threading.QueueProcessing;
 
 namespace BricksDb.RedisInterface.Server
@@ -13,22 +12,20 @@ namespace BricksDb.RedisInterface.Server
     internal class RedisListener
     {
         private readonly RedisMessageProcessor _process;
-        private readonly IStorage<string, string> _redisTable;
         private readonly TcpListener _tcpListener;
-        private DeleageQueueAsyncProcessor<Socket> _queue;        
+        private DeleageQueueAsyncProcessor<Socket> _queue;
         private const int MaxQueueSize = 10000;
         private readonly Func<string, string> _processMessageFunc;
 
-        public RedisListener(RedisMessageProcessor process, IStorage<string, string> redisTable)
+        public RedisListener(RedisMessageProcessor process)
         {
             _process = process;
-            _redisTable = redisTable;
             _processMessageFunc = process.ProcessMessage;
             var ipAddress = LocalIpAddress();
             var localEndPoint = new IPEndPoint(ipAddress, 11000);
             _tcpListener = new TcpListener(localEndPoint);
         }
-        
+
         private void ProcessSocket(Socket handler, CancellationToken token)
         {
             try
@@ -51,7 +48,7 @@ namespace BricksDb.RedisInterface.Server
             {
                 Console.WriteLine(e);
             }
-            
+
         }
 
         private void Send(Socket handler, byte[] msg)
@@ -61,24 +58,15 @@ namespace BricksDb.RedisInterface.Server
 
             while (offset < length)
             {
-                var sended =  handler.Send(msg, offset, length, SocketFlags.None);
+                var sended = handler.Send(msg, offset, length, SocketFlags.None);
                 offset += sended;
                 length -= sended;
             }
         }
 
-        private void ConnectToBriksDb()
-        {
-            var result = _redisTable.SayIAmHere(ConfigurationHelper.Instance.DistributorHost,
-                ConfigurationHelper.Instance.DistributorPort);
-            Console.WriteLine(result);
-        }
-
         public void ListenWithQueue()
         {
-            ConnectToBriksDb();
             _process.Start();
-            
 
             _tcpListener.Start();
             Console.WriteLine("Listen started on {0} ...", _tcpListener.LocalEndpoint);

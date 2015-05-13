@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common;
@@ -43,6 +44,7 @@ namespace Qoollo.Client.ProxyGate.Handlers
 
             RequestDescription ret = null;
             utr.Wait();
+
             ret = new RequestDescription(utr.Result);
 
             return ret;

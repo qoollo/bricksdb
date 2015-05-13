@@ -15,7 +15,13 @@ namespace BricksDb.RedisInterface.Server
         public string DistributorHost;
         public int DistributorPort;
         public int CountThreads;
+        public string Localhost;
 
+        public string DbWriterHost;
+        public int PortForDistributor;
+        public int PortForCollector;
+        public int CountThreadsWriter;
+        public int CountReplicsWriter;
         public static ConfigurationHelper Instance
         {
             get
@@ -35,10 +41,27 @@ namespace BricksDb.RedisInterface.Server
 
         public ConfigurationHelper()
         {
+            ProxyConfiguration();
+            DbWriterConfiguration();     
+        }
+
+        private void DbWriterConfiguration()
+        {
+            var section = ConfigurationManager.GetSection("DbWriter") as NameValueCollection;
+            DbWriterHost = section["host"];
+            PortForDistributor = int.Parse(section["portForDistributor"]);
+            PortForCollector = int.Parse(section["portForCollector"]);
+            CountThreadsWriter = int.Parse(section["countTreads"]);
+            CountReplicsWriter = int.Parse(section["countReplics"]);
+        }
+
+        private void ProxyConfiguration()
+        {
             var section = ConfigurationManager.GetSection("RedisBenchmark") as NameValueCollection;
             DistributorHost = section["distributorHost"];
             DistributorPort = int.Parse(section["distributorPort"]);
             CountThreads = int.Parse(section["countTreads"]);
+            Localhost = section["localhost"];
         }
     }
 }

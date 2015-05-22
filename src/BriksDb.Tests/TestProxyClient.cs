@@ -180,6 +180,7 @@ namespace Qoollo.Tests
             for (int i = 0; i < count; i++)
             {
                 var state = _proxy.Int.CreateSync(i, i);
+                
                 Assert.AreEqual(RequestState.Complete, state.State);
             }
 

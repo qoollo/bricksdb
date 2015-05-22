@@ -2,16 +2,16 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Runtime.Serialization.Formatters;
 using System.Threading;
 using System.Threading.Tasks;
 using Qoollo.Benchmark.Load;
 using Qoollo.Benchmark.Statistics;
+using Qoollo.Concierge;
 
 namespace Qoollo.Benchmark
 {
     internal class BenchmarkTest
-    {        
+    {
         public BenchmarkTest(int countThreads, int countData = -1)
         {
             Contract.Requires(countThreads > 0);
@@ -27,19 +27,10 @@ namespace Qoollo.Benchmark
         private readonly List<Func<LoadTest>> _testFactory;
         private readonly CancellationTokenSource _token;
 
-        private void ThreadTest(List<LoadTest> tests, int countData)
+        public BenchmarkTest AddLoadTestFactory(Func<LoadTest> factory)
         {
-            var current = 0;
-            while (!_token.IsCancellationRequested)
-            {
-                foreach (var loadTest in tests)
-                {
-                    if (current++ >= countData)
-                        break;
-
-                    loadTest.OneDataProcess();
-                }
-            }
+            _testFactory.Add(factory);
+            return this;
         }
 
         private void RunAsync()
@@ -49,51 +40,63 @@ namespace Qoollo.Benchmark
                 var metric = new BenchmarkMetrics();
                 var taskList = new List<Task>();
 
-                var restCount = _countData;
+                var count = _countData == -1 ? _countData : _countData/_countThreads;
 
                 for (int i = 0; i < _countThreads; i++)
                 {
-                    var count = _countData/_countThreads;
-                    restCount -= count;
-
-                    if (i == _countThreads - 1 || restCount != 0)
-                        count += restCount;
+                    if (_countData != -1 && i == _countThreads - 1 && _countData%_countThreads != 0)
+                        count += _countData%_countThreads;
 
                     taskList.Add(CreateThread(metric, count));
                 }
 
-                Task.WaitAll(taskList.ToArray(), _token.Token);
+                Task.WhenAll(taskList);
 
                 metric.CreateStatistics();
             }
+
             catch (OperationCanceledException)
             {
             }
+        }
+
+        public void Run()
+        {
+            RunAsync();
+        }
+
+        public void Cancel()
+        {
+            _token.Cancel();
         }
 
         private Task CreateThread(BenchmarkMetrics metrics, int count)
         {
             var tests = _testFactory.Select(x => x()).ToList();
             tests.ForEach(x => CreateMetrics(x, metrics));
-            
 
             return Task.Factory.StartNew(() => ThreadTest(tests, count));
+        }
+
+        private void ThreadTest(List<LoadTest> tests, int countData)
+        {
+            var current = 0;
+            while (!_token.IsCancellationRequested)
+            {
+                foreach (var loadTest in tests)
+                {
+                    if (current++ >= countData && countData != -1)
+                        break;
+
+                    loadTest.OneDataProcess();
+                }
+            }
         }
 
         private void CreateMetrics(LoadTest test, BenchmarkMetrics metrics)
         {
             test.CreateMetric(metrics);
             metrics.AddMetrics(test.GetMetric());
-        }
-
-        public void Run()
-        {
-            Task.Factory.StartNew(RunAsync);
-        }
-
-        public void Cancel()
-        {
-            _token.Cancel();
         }
     }
 }

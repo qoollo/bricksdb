@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using Qoollo.Benchmark.DataGenerator;
 using Qoollo.Benchmark.Send;
 using Qoollo.Benchmark.Statistics;
 
@@ -8,16 +9,14 @@ namespace Qoollo.Benchmark.Load
 {
     class SetLoadTest : LoadTest
     {
-        public SetLoadTest(DataSender sender, Func<IDataGenerator> dataGeneratorFactory,
-            Func<KeyGenerator> keyGeneratorFactory)
-            :base(sender)
-        {
-            Contract.Requires(sender != null);
-            Contract.Requires(dataGeneratorFactory != null);
-            Contract.Requires(keyGeneratorFactory != null);
+        public SetLoadTest(Func<DataSender> senderFactory, IDataGenerator dataGenerator, KeyGenerator keyGenerator)
+            : base(senderFactory())
+        {            
+            Contract.Requires(dataGenerator != null);
+            Contract.Requires(keyGenerator != null);
 
-            _dataGenerator = dataGeneratorFactory();
-            _keyGenerator = keyGeneratorFactory();
+            _dataGenerator = dataGenerator;
+            _keyGenerator = keyGenerator;
         }
 
         private readonly IDataGenerator _dataGenerator;
@@ -39,6 +38,8 @@ namespace Qoollo.Benchmark.Load
         {
             var key = _keyGenerator.Generate();
             var timer = _metric.StartMeasure();
+
+            _iterator.MoveNext();
 
             _metric.AddResult(Sender.Send(key, _iterator.Current));
             _metric.StopMeasure(timer);

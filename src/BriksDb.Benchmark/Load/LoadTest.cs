@@ -19,6 +19,7 @@ namespace Qoollo.Benchmark.Load
         {
             Contract.Requires(sender!=null);
             Sender = sender;
+            sender.Start();
         }
 
         public abstract void OneDataProcess();        

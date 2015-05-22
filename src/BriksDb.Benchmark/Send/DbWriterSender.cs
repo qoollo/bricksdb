@@ -33,9 +33,10 @@ namespace Qoollo.Benchmark.Send
         private readonly DataProvider _dataProvider;
 
 
-        public void Start()
+        public override void Start()
         {
             _channel = CreateChannel(_host, _port);
+            _channel.Ping();
         }
 
         private ICommonNetReceiverWriterForWrite CreateChannel(string host, int port)
@@ -66,7 +67,7 @@ namespace Qoollo.Benchmark.Send
                 });
                 return !result.IsError;
             }
-            catch (Exception)
+            catch (Exception e)
             {
                  return false;    
             }            

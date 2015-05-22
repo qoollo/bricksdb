@@ -7,7 +7,7 @@ namespace Qoollo.Benchmark
         static void Main(string[] args)
         {
             new AppBuilder()
-            .WithDefaultStartupString(DefaultStatupArguments.Interactive)
+            .WithDefaultStartupString(DefaultStatupArguments.Debug)
             .Run(args);
         }
     }

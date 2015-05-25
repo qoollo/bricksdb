@@ -49,7 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BenchmarkBaseCommand.cs" />
+    <Compile Include="BenchmarkCommand.cs" />
     <Compile Include="BenchmarkTest.cs" />
     <Compile Include="BenchmarkExecutor.cs" />
     <Compile Include="DataGenerator\DefaultDataGenerator.cs" />

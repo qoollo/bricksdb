@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -43,8 +44,20 @@ namespace Qoollo.Benchmark.Statistics
         {
             _timer.Stop();
             _timer.TimerTick();
+            
+            PrintTotalStatistics();
         }
 
-        
+        private void PrintTotalStatistics()
+        {
+            Console.CursorTop += _metrics.Count;
+            Console.WriteLine();
+
+            foreach (var metric in _metrics)
+            {                                
+                Console.WriteLine(metric.TotalStatistics());
+                Console.WriteLine("-------------------");
+            }
+        }
     }
 }

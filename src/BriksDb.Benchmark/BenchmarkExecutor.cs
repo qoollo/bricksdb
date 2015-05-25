@@ -67,7 +67,7 @@ namespace Qoollo.Benchmark
         }
 
         [CommandHandler("writer", "Run DbWriter benchmark")]
-        public string TestCommand(BenchmarkBaseCommand command)
+        public string TestCommand(BenchmarkCommand command)
         {
             try
             {

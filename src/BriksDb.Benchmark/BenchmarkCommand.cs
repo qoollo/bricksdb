@@ -3,7 +3,7 @@ using Qoollo.Concierge.Commands;
 
 namespace Qoollo.Benchmark
 {
-    internal class BenchmarkBaseCommand : UserCommand
+    internal class BenchmarkCommand : UserCommand
     {
         [Parameter(ShortKey = 't', IsRequired = false, Description = "Table name", DefaultValue = "BenchmarkTable")]
         public string TableName { get; set; }

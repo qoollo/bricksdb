@@ -28,30 +28,43 @@ namespace Qoollo.Benchmark.Statistics
         public TimerStat(IEnumerable<SingleMetric> metrics)
         {
             Contract.Requires(metrics != null);
-            _metrics = metrics;
+            _metrics = metrics;            
         }
 
         private const int TimerTickMls = 1000;
         private readonly IEnumerable<SingleMetric> _metrics;
         private Timer _timer;
-
+        
         public void Start()
-        {
+        {            
             _timer = new Timer(TimerTick, null, 0, TimerTickMls);                        
         }
 
         private void TimerTick(object state)
         {
+            TickAllMetrics();            
+            PrintCurrentInfo();
+        }        
+
+        private void TickAllMetrics()
+        {
+            foreach (var singleMetric in _metrics)
+            {
+                singleMetric.Tick();
+            }
+        }
+
+        private void PrintCurrentInfo()
+        {
             using (new ConsoleCoordinate())
             {
                 foreach (var metric in _metrics)
-                {
-                    metric.Tick();
+                {                    
                     Console.WriteLine(metric);
-                }   
-            }            
+                }
+            }
         }
-
+        
         public void TimerTick()
         {
             TimerTick(null);

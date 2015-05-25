@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Threading;
 
 namespace Qoollo.Benchmark.Statistics
@@ -51,5 +52,11 @@ namespace Qoollo.Benchmark.Statistics
         }
 
         public abstract void Tick();
+
+        public virtual string TotalStatistics()
+        {
+            return string.Format("Name: {0}\nTotalCount: {1}\nFailCount: {2}\nOperation AvgTime: {3}mls", Name, TotalCount,
+                FailCount, _operationTime.Sum()/_operationTime.Count);
+        }
     }
 }

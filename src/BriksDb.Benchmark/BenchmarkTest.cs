@@ -51,7 +51,7 @@ namespace Qoollo.Benchmark
                 }
 
                 Task.WaitAll(taskList.ToArray(), _token.Token);
-
+                
                 metric.CreateStatistics();
             }
 
@@ -83,20 +83,20 @@ namespace Qoollo.Benchmark
             var current = 0;
             while (!_token.IsCancellationRequested)
             {
+                if (current >= countData && countData != -1)
+                    break;
                 foreach (var loadTest in tests)
                 {
                     if (current++ >= countData && countData != -1)
                         break;
-
                     loadTest.OneDataProcess();
                 }
-            }
+            }            
         }
 
         private void CreateMetrics(LoadTest test, BenchmarkMetrics metrics)
         {
-            test.CreateMetric(metrics);
-            metrics.AddMetrics(test.GetMetric());
+            test.CreateMetric(metrics);            
         }
     }
 }

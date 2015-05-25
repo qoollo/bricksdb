@@ -4,5 +4,6 @@
     {
         public abstract void Start();
         public abstract bool Send(long key, string data);
+        public abstract bool Read(long key);
     }
 }

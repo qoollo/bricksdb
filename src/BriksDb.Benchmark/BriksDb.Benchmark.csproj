@@ -49,9 +49,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BenchmarkBaseCommand.cs" />
     <Compile Include="BenchmarkTest.cs" />
     <Compile Include="BenchmarkExecutor.cs" />
     <Compile Include="DataGenerator\DefaultDataGenerator.cs" />
+    <Compile Include="Load\GetLoadTest.cs" />
     <Compile Include="Load\LoadTest.cs" />
     <Compile Include="Load\SetLoadTest.cs" />
     <Compile Include="Send\DbWriterSender.cs" />

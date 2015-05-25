@@ -7,6 +7,24 @@ namespace Qoollo.Benchmark.Statistics
 {
     class TimerStat
     {
+        class ConsoleCoordinate:IDisposable
+        {
+            public ConsoleCoordinate()
+            {                
+                _x = Console.CursorLeft;
+                _y = Console.CursorTop;
+            }
+
+            private readonly int _x;
+            private readonly int _y;
+
+            public void Dispose()
+            {
+                Console.CursorLeft = _x;
+                Console.CursorTop = _y;
+            }
+        }
+
         public TimerStat(IEnumerable<SingleMetric> metrics)
         {
             Contract.Requires(metrics != null);
@@ -24,11 +42,19 @@ namespace Qoollo.Benchmark.Statistics
 
         private void TimerTick(object state)
         {
-            foreach (var metric in _metrics)
+            using (new ConsoleCoordinate())
             {
-                metric.Tick();
-                Console.WriteLine(metric);
-            }
+                foreach (var metric in _metrics)
+                {
+                    metric.Tick();
+                    Console.WriteLine(metric);
+                }   
+            }            
+        }
+
+        public void TimerTick()
+        {
+            TimerTick(null);
         }
 
         public void Stop()
@@ -36,5 +62,6 @@ namespace Qoollo.Benchmark.Statistics
             if (_timer != null)
                 _timer.Dispose();
         }
+        
     }
 }

@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Qoollo.Benchmark.Statistics
 {
@@ -29,7 +25,7 @@ namespace Qoollo.Benchmark.Statistics
                 _values.RemoveAt(0);
             _lastCount = TotalCount;
 
-            AvgPerSec = _values.Sum()/AvgCount;
+            AvgPerSec = _values.Sum()/_values.Count;
         }
 
         public override string ToString()

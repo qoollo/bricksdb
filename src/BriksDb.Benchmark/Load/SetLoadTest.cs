@@ -38,9 +38,7 @@ namespace Qoollo.Benchmark.Load
         {
             var key = _keyGenerator.Generate();
             var timer = _metric.StartMeasure();
-
-            _iterator.MoveNext();
-
+            
             _metric.AddResult(Sender.Send(key, _iterator.Current));
             _metric.StopMeasure(timer);
         }
@@ -48,6 +46,7 @@ namespace Qoollo.Benchmark.Load
         private void GenerateNextData(int count = GenerateCount)
         {             
              _iterator = _dataGenerator.GenerateData(count).GetEnumerator();
+            _iterator.MoveNext();
         }
 
         public override void CreateMetric(BenchmarkMetrics metrics)

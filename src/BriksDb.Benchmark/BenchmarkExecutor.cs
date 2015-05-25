@@ -8,39 +8,9 @@ using Qoollo.Benchmark.Load;
 using Qoollo.Benchmark.Send;
 using Qoollo.Concierge;
 using Qoollo.Concierge.Attributes;
-using Qoollo.Concierge.Commands;
 
 namespace Qoollo.Benchmark
 {
-    // benchmark -n <count> -t <set> -h <host> -p <port> -c <threads>
-
-    internal class BenchmarkBaseCommand : UserCommand
-    {
-        [Parameter(ShortKey = 't', IsRequired = false, Description = "Table name", DefaultValue = "BenchmarkTable")]
-        public string TableName { get; set; }
-
-        [Parameter(ShortKey = 'n', IsRequired = false, Description = "Count data", DefaultValue = -1)]
-        public int DataCount { get; set; }
-
-        [Parameter(ShortKey = 'l', IsRequired = true, Description = "Test type")]
-        public string TestType { get; set; }
-
-        [Parameter(ShortKey = 'h', IsRequired = true, Description = "Connection host")]
-        public string Host { get; set; }
-
-        [Parameter(ShortKey = 'p', IsRequired = true, Description = "Connection port")]
-        public int Port { get; set; }
-
-        [Parameter(ShortKey = 'c', IsRequired = false, Description = "Count threads", DefaultValue = 1)]
-        public int ThreadsCount { get; set; }
-
-        [Parameter(ShortKey = 'r', IsRequired = false, Description = "KeyRange", DefaultValue = 1000000)]
-        public int KeyRange { get; set; }
-
-        [Parameter(ShortKey = 'g', IsRequired = false, Description = "Generator type", DefaultValue = "default")]
-        public string Generator { get; set; }
-    }
-
     [DefaultExecutor]
     class BenchmarkExecutor:IUserExecutable
     {
@@ -49,6 +19,7 @@ namespace Qoollo.Benchmark
   
         public BenchmarkExecutor()
         {
+            AppDomain.CurrentDomain.FirstChanceException += (e, sender) => Console.WriteLine(e);
             _dataGenerators = new Dictionary<string, IDataGenerator>();            
             AddDataGenerator("default", new DefaultDataGenerator());
         }
@@ -74,6 +45,11 @@ namespace Qoollo.Benchmark
             return () => new SetLoadTest(senderFactory, FindGenerator(generatorName), keyGenerator);
         }
 
+        private Func<LoadTest> CreateGetTest(Func<DataSender> senderFactory,  KeyGenerator keyGenerator)
+        {
+            return () => new GetLoadTest(senderFactory, keyGenerator);
+        }
+
         private IEnumerable<Func<LoadTest>> ParseTestTypes(string testType, Func<DataSender> senderFactory, string generatorName,
             KeyGenerator keyGenerator)
         {
@@ -84,6 +60,8 @@ namespace Qoollo.Benchmark
             {
                 if (string.Equals(name, "set"))
                     ret.Add(CreateSetTest(senderFactory, generatorName, keyGenerator));
+                if (string.Equals(name, "get"))
+                    ret.Add(CreateGetTest(senderFactory, keyGenerator));
             }
             return ret;
         }

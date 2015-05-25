@@ -17,7 +17,7 @@ namespace Qoollo.Benchmark.Statistics
         private readonly List<SingleMetric> _metrics;
         private readonly TimerStat _timer;
 
-        public void AddMetrics(SingleMetric metric)
+        private void AddMetrics(SingleMetric metric)
         {
             _metrics.Add(metric);
         }
@@ -29,13 +29,20 @@ namespace Qoollo.Benchmark.Statistics
 
         public AvgMetric GetAvgMetric(string name)
         {
-            var metric = _metrics.FirstOrDefault(x => string.Equals(name, x.Name)) ?? CreateAvgMetric(name);
+            var metric = _metrics.FirstOrDefault(x => string.Equals(name, x.Name));
+            if (metric == null)
+            {
+                metric = CreateAvgMetric(name);
+                AddMetrics(metric);
+            }
+
             return metric as AvgMetric;
         }
 
         public void CreateStatistics()
         {
             _timer.Stop();
+            _timer.TimerTick();
         }
 
         

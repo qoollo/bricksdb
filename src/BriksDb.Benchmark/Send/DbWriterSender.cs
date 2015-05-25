@@ -54,7 +54,7 @@ namespace Qoollo.Benchmark.Send
         {
             try
             {
-                var sendData = new InnerData(new Transaction("123", "123")
+                return !_channel.ProcessSync(new InnerData(new Transaction("123", "123")
                 {
                     OperationName = OperationName.Create,
                     OperationType = OperationType.Sync,
@@ -63,15 +63,32 @@ namespace Qoollo.Benchmark.Send
                 {
                     Data = _dataProvider.SerializeValue(data),
                     Key = _dataProvider.SerializeKey(key)
-                };
-
-                var result = _channel.ProcessSync(sendData);
-                return !result.IsError;
+                }).IsError;                
             }
-            catch (Exception e)
+            catch (Exception)
             {
                  return false;    
             }            
+        }
+
+        public override bool Read(long key)
+        {
+            try
+            {
+               return _channel.ReadOperation(new InnerData(new Transaction("123", "123")
+                {
+                    OperationName = OperationName.Read,
+                    OperationType = OperationType.Sync,
+                    TableName = _tableName
+                })
+                {
+                    Key = _dataProvider.SerializeKey(key)
+                }) != null;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private class DataProvider:CommonDataProvider<long, string>

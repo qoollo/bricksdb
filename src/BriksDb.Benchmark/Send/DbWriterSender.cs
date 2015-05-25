@@ -32,7 +32,6 @@ namespace Qoollo.Benchmark.Send
         private ICommonNetReceiverWriterForWrite _channel;
         private readonly DataProvider _dataProvider;
 
-
         public override void Start()
         {
             _channel = CreateChannel(_host, _port);
@@ -55,7 +54,7 @@ namespace Qoollo.Benchmark.Send
         {
             try
             {
-                var result = _channel.ProcessSync(new InnerData(new Transaction("123", "123")
+                var sendData = new InnerData(new Transaction("123", "123")
                 {
                     OperationName = OperationName.Create,
                     OperationType = OperationType.Sync,
@@ -64,7 +63,9 @@ namespace Qoollo.Benchmark.Send
                 {
                     Data = _dataProvider.SerializeValue(data),
                     Key = _dataProvider.SerializeKey(key)
-                });
+                };
+
+                var result = _channel.ProcessSync(sendData);
                 return !result.IsError;
             }
             catch (Exception e)

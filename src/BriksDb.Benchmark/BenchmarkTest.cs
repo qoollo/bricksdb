@@ -50,7 +50,7 @@ namespace Qoollo.Benchmark
                     taskList.Add(CreateThread(metric, count));
                 }
 
-                Task.WhenAll(taskList);
+                Task.WaitAll(taskList.ToArray(), _token.Token);
 
                 metric.CreateStatistics();
             }

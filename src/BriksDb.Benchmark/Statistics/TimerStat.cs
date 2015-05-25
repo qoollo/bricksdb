@@ -19,7 +19,7 @@ namespace Qoollo.Benchmark.Statistics
 
         public void Start()
         {
-            _timer = new Timer(TimerTick, null, 0, TimerTickMls);            
+            _timer = new Timer(TimerTick, null, 0, TimerTickMls);                        
         }
 
         private void TimerTick(object state)

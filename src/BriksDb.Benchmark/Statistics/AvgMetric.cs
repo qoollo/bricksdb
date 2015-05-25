@@ -34,7 +34,7 @@ namespace Qoollo.Benchmark.Statistics
 
         public override string ToString()
         {
-            return string.Format("{0}: {1}", Name, AvgPerSec);
+            return string.Format("{0}: {1}, total: {2}, fail: {3}", Name, AvgPerSec, TotalCount, FailCount);
         }
     }
 }

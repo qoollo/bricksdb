@@ -8,7 +8,7 @@ using Qoollo.Concierge.Commands;
 
 namespace Qoollo.Benchmark.Commands
 {
-    class CommandBase : UserCommand
+    public class CommandBase : UserCommand
     {
         [Parameter(ShortKey = 'c', IsRequired = false, Description = "Count threads", DefaultValue = 1)]
         public int ThreadsCount { get; set; }

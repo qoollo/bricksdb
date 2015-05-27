@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Qoollo.Benchmark.Commands;
 using Qoollo.Benchmark.Load;
@@ -24,7 +21,7 @@ namespace Qoollo.Benchmark.Executor
 
         public void AddDbFactory(string name, DbFactory dbFactory)
         {
-            _dbFactories.Add(name, dbFactory);
+            _dbFactories.Add(name.Trim().ToLower(), dbFactory);
         }
 
         private DbFactory FindDbFactory(string dbFactoryName)

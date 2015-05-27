@@ -19,7 +19,7 @@ namespace Qoollo.Benchmark.Executor
 
         public void AddDataGenerator(string generatorName, IDataGenerator generator)
         {
-            _dataGenerators.Add(generatorName, generator);
+            _dataGenerators.Add(generatorName.Trim().ToLower(), generator);
         }
 
         private IDataGenerator FindGenerator(string generatorName)

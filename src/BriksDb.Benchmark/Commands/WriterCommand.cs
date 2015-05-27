@@ -2,7 +2,7 @@
 
 namespace Qoollo.Benchmark.Commands
 {
-    internal class WriterCommand : CommandBase
+    public class WriterCommand : CommandBase
     {
         [Parameter(ShortKey = 'l', IsRequired = true, Description = "Test type")]
         public string TestType { get; set; }        

@@ -1,13 +1,14 @@
 ﻿using System;
 using Qoollo.Benchmark.Commands;
 using Qoollo.Benchmark.DataGenerator;
+using Qoollo.Client.WriterGate;
 using Qoollo.Concierge;
 using Qoollo.Concierge.Attributes;
 
 namespace Qoollo.Benchmark.Executor
 {
     [DefaultExecutor]
-    class BenchmarkExecutor:IUserExecutable
+    public class BenchmarkExecutor:IUserExecutable
     {
         private readonly WriterExecutor _writerExecutor;
         private readonly CollectorExecutor _collectorExecutor;
@@ -22,7 +23,12 @@ namespace Qoollo.Benchmark.Executor
         public void AddDataGenerator(string generatorName, IDataGenerator generator)
         {
             _writerExecutor.AddDataGenerator(generatorName, generator);
-        }                
+        }
+
+        public void AddDbFactory(string name, DbFactory dbFactory)
+        {
+            _collectorExecutor.AddDbFactory(name, dbFactory);
+        }
 
         [CommandHandler("writer", "Run DbWriter benchmark")]
         public string WriterCommandHandler(WriterCommand command)

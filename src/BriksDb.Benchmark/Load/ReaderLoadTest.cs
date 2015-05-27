@@ -40,15 +40,13 @@ namespace Qoollo.Benchmark.Load
 
         public override bool OneDataProcess()
         {
-            var exit = true;
             if (_reader == null || !ReadData())
             {
-                if (CreateNewReader())
-                    ReadData();
-                else
-                    exit = false;
+                if (!CreateNewReader())
+                    return false;
+                ReadData();
             }
-            return exit;
+            return true;
         }
 
         public bool NeedCreateReader()

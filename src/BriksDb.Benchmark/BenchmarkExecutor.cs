@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Qoollo.Benchmark.Commands;
 using Qoollo.Benchmark.DataGenerator;
 using Qoollo.Benchmark.Load;
 using Qoollo.Benchmark.Send;
+using Qoollo.Client.Support;
 using Qoollo.Concierge;
 using Qoollo.Concierge.Attributes;
 
@@ -16,7 +19,6 @@ namespace Qoollo.Benchmark
     {
         private readonly Dictionary<string, IDataGenerator> _dataGenerators;
         
-  
         public BenchmarkExecutor()
         {
             AppDomain.CurrentDomain.FirstChanceException += (e, sender) => Console.WriteLine(e);
@@ -40,20 +42,10 @@ namespace Qoollo.Benchmark
             _dataGenerators.Add(generatorName, generator);
         }
 
-        private Func<LoadTest> CreateSetTest(Func<DataSender> senderFactory, string generatorName, KeyGenerator keyGenerator)
-        {
-            return () => new SetLoadTest(senderFactory, FindGenerator(generatorName), keyGenerator);
-        }
-
-        private Func<LoadTest> CreateGetTest(Func<DataSender> senderFactory,  KeyGenerator keyGenerator)
-        {
-            return () => new GetLoadTest(senderFactory, keyGenerator);
-        }
-
-        private IEnumerable<Func<LoadTest>> ParseTestTypes(string testType, Func<DataSender> senderFactory, string generatorName,
+        private IEnumerable<Func<LoadTest>> ParseTestTypes(string testType, Func<DbWriterAdapter> senderFactory, string generatorName,
             KeyGenerator keyGenerator)
         {
-            var testNames = testType.ToLower().Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
+            var testNames = testType.ToLower().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             var ret = new List<Func<LoadTest>>();
 
             foreach (var name in testNames)
@@ -66,15 +58,42 @@ namespace Qoollo.Benchmark
             return ret;
         }
 
+        private Func<LoadTest> CreateSetTest(Func<DbWriterAdapter> senderFactory, string generatorName, KeyGenerator keyGenerator)
+        {
+            return () => new SetLoadTest(senderFactory(), FindGenerator(generatorName), keyGenerator);
+        }
+
+        private Func<LoadTest> CreateGetTest(Func<DbWriterAdapter> senderFactory,  KeyGenerator keyGenerator)
+        {
+            return () => new GetLoadTest(senderFactory(), keyGenerator);
+        }
+
+        private Func<LoadTest> CreateReaderTest(IEnumerable<QueryDescription> queries,
+            string tableName, string hashFileName, int countReplics, int pageSize)
+        {
+            return () => new ReaderLoadTest(new ReaderAdapter(tableName, hashFileName,
+                countReplics, pageSize), new BlockingQueue<QueryDescription>(queries));
+        }
+
+        private IEnumerable<QueryDescription> ReadJsonFile(string fileName)
+        {
+            using (var r = new StreamReader(fileName))
+            {
+                string json = r.ReadToEnd();
+                //List<QueryDescription> items = JsonConvert.DeserializeObject<List<QueryDescription>>(json);
+            }
+            return null;
+        }
+
         [CommandHandler("writer", "Run DbWriter benchmark")]
-        public string TestCommand(BenchmarkCommand command)
+        public string WriterCommandHandler(WriterCommand command)
         {
             try
             {
                 var benchmark = new BenchmarkTest(command.ThreadsCount, command.DataCount);
 
                 var testTypes = ParseTestTypes(command.TestType,
-                    () => new DbWriterSender(command.Host, command.Port, command.TableName),
+                    () => new DbWriterAdapter(command.Host, command.Port, command.TableName),
                     command.Generator, new KeyGenerator(command.KeyRange));
                 foreach (var func in testTypes)
                 {
@@ -91,6 +110,24 @@ namespace Qoollo.Benchmark
             return string.Empty;
         }
 
+        [CommandHandler("collector", "Run Collector benchmark")]
+        public string ReaderCommandHandler(ReaderCommand command)
+        {
+            try
+            {                
+                var benchmark = new BenchmarkTest(command.ThreadsCount);
+                benchmark.AddLoadTestFactory(CreateReaderTest(ReadJsonFile(command.FileName), command.TableName,
+                    command.HashFileName, command.CountReplics, command.PageSize));
+
+                benchmark.Run();
+            }
+            catch (Exception e)
+            {
+                return e.Message;
+            }
+
+            return string.Empty;
+        }
 
         public void Dispose()
         {            

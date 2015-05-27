@@ -9,26 +9,30 @@ using Qoollo.Benchmark.Statistics;
 
 namespace Qoollo.Benchmark.Load
 {
-    class GetLoadTest : LoadTest
+    internal class GetLoadTest : LoadTest
     {
-        public GetLoadTest(Func<DataSender> senderFactory, KeyGenerator keyGenerator)
-            : base(senderFactory())
+        public GetLoadTest(DbWriterAdapter adapter, KeyGenerator keyGenerator)
+            : base(adapter)
         {
             Contract.Requires(keyGenerator != null);
-
+            Contract.Requires(adapter != null);
+            _adapter = adapter;
             _keyGenerator = keyGenerator;
         }
 
+        private readonly DbWriterAdapter _adapter;
         private readonly KeyGenerator _keyGenerator;
-        private AvgMetric _metric;        
+        private AvgMetric _metric;
 
-        public override void OneDataProcess()
+        public override bool OneDataProcess()
         {
             var key = _keyGenerator.Generate();
             var timer = _metric.StartMeasure();
 
-            _metric.AddResult(Sender.Read(key));
+            _metric.AddResult(_adapter.Read(key));
             _metric.StopMeasure(timer);
+
+            return true;
         }
 
         public override void CreateMetric(BenchmarkMetrics metrics)

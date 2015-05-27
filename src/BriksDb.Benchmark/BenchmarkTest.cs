@@ -81,15 +81,17 @@ namespace Qoollo.Benchmark
         private void ThreadTest(List<LoadTest> tests, int countData)
         {
             var current = 0;
-            while (!_token.IsCancellationRequested)
-            {
-                if (current >= countData && countData != -1)
-                    break;
+            bool exit = true;
+            while (!_token.IsCancellationRequested && exit)
+            {                
                 foreach (var loadTest in tests)
                 {
-                    if (current++ >= countData && countData != -1)
+                    if (current++ >= countData && countData != -1 || !exit)
+                    {
+                        exit = false;
                         break;
-                    loadTest.OneDataProcess();
+                    }
+                    exit = loadTest.OneDataProcess();
                 }
             }            
         }

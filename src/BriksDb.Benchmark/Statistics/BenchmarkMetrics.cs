@@ -28,6 +28,11 @@ namespace Qoollo.Benchmark.Statistics
             return new AvgMetric(name);
         }
 
+        public static MetricsCollection CreateMetricsCollection(string name)
+        {
+            return new MetricsCollection(name);
+        }
+
         public AvgMetric GetAvgMetric(string name)
         {
             var metric = _metrics.FirstOrDefault(x => string.Equals(name, x.Name));
@@ -38,6 +43,18 @@ namespace Qoollo.Benchmark.Statistics
             }
 
             return metric as AvgMetric;
+        }
+
+        public MetricsCollection GetMetricsCollection(string name)
+        {
+            var metric = _metrics.FirstOrDefault(x => string.Equals(name, x.Name));
+            if (metric == null)
+            {
+                metric = CreateMetricsCollection(name);
+                AddMetrics(metric);
+            }
+
+            return metric as MetricsCollection;
         }
 
         public void CreateStatistics()

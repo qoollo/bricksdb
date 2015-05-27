@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using Qoollo.Client.CollectorGate;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -12,9 +13,9 @@ using Consts = Qoollo.Impl.Common.Support.Consts;
 
 namespace Qoollo.Benchmark.Send
 {
-    class DbWriterSender:DataSender
+    class DbWriterAdapter:IDataAdapter
     {
-        public DbWriterSender(string host, int port, string tableName)
+        public DbWriterAdapter(string host, int port, string tableName)
         {
             Contract.Requires(!string.IsNullOrEmpty(host));
             Contract.Requires(!string.IsNullOrEmpty(tableName));
@@ -32,7 +33,7 @@ namespace Qoollo.Benchmark.Send
         private ICommonNetReceiverWriterForWrite _channel;
         private readonly DataProvider _dataProvider;
 
-        public override void Start()
+        public void Start()
         {
             _channel = CreateChannel(_host, _port);
             _channel.Ping();
@@ -50,7 +51,7 @@ namespace Qoollo.Benchmark.Send
         {
         }
 
-        public override bool Send(long key, string data)
+        public bool Send(long key, string data)
         {
             try
             {
@@ -71,7 +72,7 @@ namespace Qoollo.Benchmark.Send
             }            
         }
 
-        public override bool Read(long key)
+        public bool Read(long key)
         {
             try
             {
@@ -97,6 +98,11 @@ namespace Qoollo.Benchmark.Send
             {
                 return key.ToString();
             }            
+        }
+
+        public void Dispose()
+        {
+            
         }
     }
 }

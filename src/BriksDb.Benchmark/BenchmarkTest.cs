@@ -50,8 +50,8 @@ namespace Qoollo.Benchmark
                     taskList.Add(CreateThread(metric, count));
                 }
 
-                Task.WhenAll(taskList);
-
+                Task.WaitAll(taskList.ToArray(), _token.Token);
+                
                 metric.CreateStatistics();
             }
 
@@ -81,22 +81,24 @@ namespace Qoollo.Benchmark
         private void ThreadTest(List<LoadTest> tests, int countData)
         {
             var current = 0;
-            while (!_token.IsCancellationRequested)
-            {
+            bool exit = true;
+            while (!_token.IsCancellationRequested && exit)
+            {                
                 foreach (var loadTest in tests)
                 {
-                    if (current++ >= countData && countData != -1)
+                    if (current++ >= countData && countData != -1 || !exit)
+                    {
+                        exit = false;
                         break;
-
-                    loadTest.OneDataProcess();
+                    }
+                    exit = loadTest.OneDataProcess();
                 }
-            }
+            }            
         }
 
         private void CreateMetrics(LoadTest test, BenchmarkMetrics metrics)
         {
-            test.CreateMetric(metrics);
-            metrics.AddMetrics(test.GetMetric());
+            test.CreateMetric(metrics);            
         }
     }
 }

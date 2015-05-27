@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using Qoollo.Client.CollectorGate;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -12,9 +13,9 @@ using Consts = Qoollo.Impl.Common.Support.Consts;
 
 namespace Qoollo.Benchmark.Send
 {
-    class DbWriterSender:DataSender
+    class DbWriterAdapter:IDataAdapter
     {
-        public DbWriterSender(string host, int port, string tableName)
+        public DbWriterAdapter(string host, int port, string tableName)
         {
             Contract.Requires(!string.IsNullOrEmpty(host));
             Contract.Requires(!string.IsNullOrEmpty(tableName));
@@ -32,8 +33,7 @@ namespace Qoollo.Benchmark.Send
         private ICommonNetReceiverWriterForWrite _channel;
         private readonly DataProvider _dataProvider;
 
-
-        public override void Start()
+        public void Start()
         {
             _channel = CreateChannel(_host, _port);
             _channel.Ping();
@@ -51,11 +51,11 @@ namespace Qoollo.Benchmark.Send
         {
         }
 
-        public override bool Send(long key, string data)
+        public bool Send(long key, string data)
         {
             try
             {
-                var result = _channel.ProcessSync(new InnerData(new Transaction("123", "123")
+                return !_channel.ProcessSync(new InnerData(new Transaction("123", "123")
                 {
                     OperationName = OperationName.Create,
                     OperationType = OperationType.Sync,
@@ -64,13 +64,32 @@ namespace Qoollo.Benchmark.Send
                 {
                     Data = _dataProvider.SerializeValue(data),
                     Key = _dataProvider.SerializeKey(key)
-                });
-                return !result.IsError;
+                }).IsError;                
             }
-            catch (Exception e)
+            catch (Exception)
             {
                  return false;    
             }            
+        }
+
+        public bool Read(long key)
+        {
+            try
+            {
+               return _channel.ReadOperation(new InnerData(new Transaction("123", "123")
+                {
+                    OperationName = OperationName.Read,
+                    OperationType = OperationType.Sync,
+                    TableName = _tableName
+                })
+                {
+                    Key = _dataProvider.SerializeKey(key)
+                }) != null;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private class DataProvider:CommonDataProvider<long, string>
@@ -79,6 +98,11 @@ namespace Qoollo.Benchmark.Send
             {
                 return key.ToString();
             }            
+        }
+
+        public void Dispose()
+        {
+            
         }
     }
 }

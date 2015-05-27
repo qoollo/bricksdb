@@ -13,17 +13,14 @@ namespace Qoollo.Benchmark.Load
 {
     abstract class LoadTest
     {
-        protected DataSender Sender { get; private set; }
-
-        protected LoadTest(DataSender sender)
+        protected LoadTest(IDataAdapter adapter)
         {
-            Contract.Requires(sender!=null);
-            Sender = sender;
-            sender.Start();
+            Contract.Requires(adapter!=null);            
+            adapter.Start();
         }
 
-        public abstract void OneDataProcess();        
+        public abstract bool OneDataProcess();        
         public abstract void CreateMetric(BenchmarkMetrics metrics);
-        public abstract SingleMetric GetMetric();
+        public abstract SingleMetric GetMetric();        
     }
 }

@@ -37,6 +37,11 @@
     <Reference Include="Concierge">
       <HintPath>..\packages\Concierge.1.0.5.2\lib\net40\Concierge.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
@@ -49,25 +54,37 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BlockingQueue.cs" />
+    <Compile Include="Commands\CollectorCommand.cs" />
+    <Compile Include="Commands\WriterCommand.cs" />
     <Compile Include="BenchmarkTest.cs" />
-    <Compile Include="BenchmarkExecutor.cs" />
+    <Compile Include="Executor\BenchmarkExecutor.cs" />
+    <Compile Include="Commands\CommandBase.cs" />
     <Compile Include="DataGenerator\DefaultDataGenerator.cs" />
+    <Compile Include="Executor\CollectorExecutor.cs" />
+    <Compile Include="Load\GetLoadTest.cs" />
     <Compile Include="Load\LoadTest.cs" />
+    <Compile Include="Load\ReaderLoadTest.cs" />
     <Compile Include="Load\SetLoadTest.cs" />
-    <Compile Include="Send\DbWriterSender.cs" />
+    <Compile Include="QueryDescription.cs" />
+    <Compile Include="Send\CollectorGate.cs" />
+    <Compile Include="Send\DbWriterAdapter.cs" />
+    <Compile Include="Send\ReaderAdapter.cs" />
     <Compile Include="Statistics\AvgMetric.cs" />
     <Compile Include="Statistics\BenchmarkMetrics.cs" />
     <Compile Include="ConciergeInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="ConciergeSamples\SampleProgram.cs" />
-    <Compile Include="Send\DataSender.cs" />
+    <Compile Include="Send\IDataAdapter.cs" />
     <Compile Include="DataGenerator\IDataGenerator.cs" />
     <Compile Include="KeyGenerator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Statistics\MetricsCollection.cs" />
     <Compile Include="Statistics\SingleMetric.cs" />
     <Compile Include="Statistics\TimerStat.cs" />
+    <Compile Include="Executor\WriterExecutor.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

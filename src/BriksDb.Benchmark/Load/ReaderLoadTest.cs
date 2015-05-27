@@ -7,6 +7,11 @@ using Qoollo.Client.CollectorGate;
 
 namespace Qoollo.Benchmark.Load
 {
+    enum TripleVariant
+    {
+        True, False, Another
+    }
+
     class ReaderLoadTest:LoadTest
     {
         public class MetricName
@@ -42,9 +47,12 @@ namespace Qoollo.Benchmark.Load
         {
             if (_reader == null || !ReadData())
             {
-                if (!CreateNewReader())
+                var value = CreateNewReader();
+
+                if (value == TripleVariant.Another)
                     return false;
-                ReadData();
+                if (value == TripleVariant.True)
+                    ReadData();
             }
             return true;
         }
@@ -54,7 +62,7 @@ namespace Qoollo.Benchmark.Load
             return _reader == null || !ReadData();
         }
 
-        public bool CreateNewReader()
+        public TripleVariant CreateNewReader()
         {
             if (_timer != null)
             {
@@ -64,8 +72,12 @@ namespace Qoollo.Benchmark.Load
             _timer = _metrics.Get(MetricName.PackageData).StartMeasure();
 
             var value = _queries.Dequeue();
+            if (!value.IsValueExist)
+                return TripleVariant.Another;
+
             _reader = value.IsValueExist ? _adapter.ExecuteQuery(value.Value) : null;
-            return _reader != null;
+
+            return _reader==null ? TripleVariant.False : TripleVariant.True;
         }
 
         public override void CreateMetric(BenchmarkMetrics metrics)

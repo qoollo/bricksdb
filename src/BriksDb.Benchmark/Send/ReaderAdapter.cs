@@ -1,7 +1,7 @@
 ﻿using System;
 using Qoollo.Client.CollectorGate;
 using Qoollo.Client.Configuration;
-using Qoollo.Client.Support;
+using Qoollo.Client.WriterGate;
 
 namespace Qoollo.Benchmark.Send
 {
@@ -9,13 +9,13 @@ namespace Qoollo.Benchmark.Send
     {
         private readonly CollectorGate _collector;
 
-        public ReaderAdapter(string tableName, string hashFileName, int countReplics, int pageSize)
+        public ReaderAdapter(DbFactory dbFactory, string tableName, string hashFileName, int countReplics, int pageSize)
         {
-            _collector = new CollectorGate(tableName, 
+            _collector = new CollectorGate(tableName, dbFactory, 
                 new CollectorConfiguration(hashFileName, countReplics, pageSize),
                 new CollectorNetConfiguration(), new CommonConfiguration(), 
                 new TimeoutConfiguration());
-            _collector.Build();
+            _collector.Build();            
         }
 
         public void Start()

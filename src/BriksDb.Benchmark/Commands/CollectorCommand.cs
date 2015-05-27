@@ -8,7 +8,7 @@ using Qoollo.Concierge.Attributes;
 
 namespace Qoollo.Benchmark.Commands
 {
-    internal class ReaderCommand : CommandBase
+    internal class CollectorCommand : CommandBase
     {
         [Parameter(ShortKey = 'q', IsRequired = true, Description = "File with queries")]
         public string FileName { get; set; }

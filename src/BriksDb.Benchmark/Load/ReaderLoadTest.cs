@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using Qoollo.Benchmark.Send;
 using Qoollo.Benchmark.Statistics;
@@ -10,7 +11,7 @@ namespace Qoollo.Benchmark.Load
     {
         public class MetricName
         {
-            public const string Total = "Total";
+            public const string PackageData = "PackageData";
             public const string Single = "Single";
         }
 
@@ -19,13 +20,14 @@ namespace Qoollo.Benchmark.Load
         {
             Contract.Requires(queries != null);
             _adapter = adapter;
-            _queries = queries;
+            _queries = queries;            
         }
 
         private readonly ReaderAdapter _adapter;
         private readonly BlockingQueue<QueryDescription> _queries;
         private StorageDbReader _reader;
         private MetricsCollection _metrics;
+        private Stopwatch _timer;
 
         private bool ReadData()
         {
@@ -56,6 +58,13 @@ namespace Qoollo.Benchmark.Load
 
         public bool CreateNewReader()
         {
+            if (_timer != null)
+            {
+                _metrics.Get(MetricName.PackageData).StopMeasure(_timer);
+                _metrics.Get(MetricName.PackageData).AddResult(true);
+            }
+            _timer = _metrics.Get(MetricName.PackageData).StartMeasure();
+
             var value = _queries.Dequeue();
             _reader = value.IsValueExist ? _adapter.ExecuteQuery(value.Value) : null;
             return _reader != null;
@@ -64,7 +73,7 @@ namespace Qoollo.Benchmark.Load
         public override void CreateMetric(BenchmarkMetrics metrics)
         {
             _metrics = metrics.GetMetricsCollection("COLLECTOR");
-            _metrics.AddMetrics(new AvgMetric(MetricName.Total));
+            _metrics.AddMetrics(new AvgMetric(MetricName.PackageData));
             _metrics.AddMetrics(new AvgMetric(MetricName.Single));
         }
 

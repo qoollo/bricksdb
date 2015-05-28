@@ -16,7 +16,7 @@ namespace Qoollo.Benchmark.Executor
             ;
         public CollectorExecutor()
         {
-            _dbFactories = new Dictionary<string, DbFactory>();
+            _dbFactories = new Dictionary<string, DbFactory>();            
         }
 
         public void AddDbFactory(string name, DbFactory dbFactory)
@@ -35,12 +35,10 @@ namespace Qoollo.Benchmark.Executor
             throw new InitializationException(string.Format("Key {0} for db factory not found", dbFactoryName));
         }
 
-        private Func<LoadTest> CreateReaderTest(IEnumerable<QueryDescription> queries,
-            string tableName, string hashFileName, int countReplics, int pageSize)
+        private Func<LoadTest> CreateReaderTest(IEnumerable<QueryDescription> queries, CollectorCommand command)
         {
             var queue = new BlockingQueue<QueryDescription>(queries);
-            return () => new ReaderLoadTest(new ReaderAdapter(FindDbFactory(tableName), tableName,
-                hashFileName, countReplics, pageSize), queue);
+            return () => new ReaderLoadTest(new ReaderAdapter(FindDbFactory(command.TableName), command), queue);
         }
 
         private IEnumerable<QueryDescription> ReadJsonFile(string fileName)
@@ -59,8 +57,7 @@ namespace Qoollo.Benchmark.Executor
             try
             {
                 var benchmark = new BenchmarkTest(command.ThreadsCount);
-                benchmark.AddLoadTestFactory(CreateReaderTest(ReadJsonFile(command.FileName), command.TableName,
-                    command.HashFileName, command.CountReplics, command.PageSize));
+                benchmark.AddLoadTestFactory(CreateReaderTest(ReadJsonFile(command.FileName), command));
 
                 benchmark.Run();
             }

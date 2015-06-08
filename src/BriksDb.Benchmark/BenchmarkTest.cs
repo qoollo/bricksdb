@@ -40,9 +40,6 @@ namespace Qoollo.Benchmark
             {                
                 var metric = new BenchmarkMetrics();
 
-                if (processor != null)
-                    metric.AddCsvFileProcessor(processor);
-
                 var taskList = new List<Task>();
                 var count = _countData == -1 ? _countData : _countData/_countThreads;
 

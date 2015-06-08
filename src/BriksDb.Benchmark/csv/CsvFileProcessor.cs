@@ -55,10 +55,10 @@ namespace Qoollo.Benchmark.csv
         }
         
         private void ClearRow()
-        {
-            foreach (var pair in _currentRow)
+        {            
+            foreach (var key in _currentRow.Keys.ToList())
             {
-                _currentRow[pair.Key] = string.Empty;
+                _currentRow[key] = string.Empty;
             }
         }
 

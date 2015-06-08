@@ -83,7 +83,7 @@ namespace Qoollo.Benchmark.Statistics
 
         protected string GetCsvColumnName(string columnName)
         {
-            return Name + columnName;
+            return string.Format("{0}_{1}", Name, columnName);
         }
 
         protected virtual void RegistrateColumns(CsvFileProcessor csvFileProcessor)

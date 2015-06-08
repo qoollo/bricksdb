@@ -51,6 +51,7 @@ namespace Qoollo.Benchmark.Statistics
 
         protected override void RegistrateColumns(CsvFileProcessor csvFileProcessor)
         {
+            base.RegistrateColumns(csvFileProcessor);
             csvFileProcessor.RegistrateColumn(GetCsvColumnName(AvgPerSecConst));
             csvFileProcessor.RegistrateColumn(GetCsvColumnName(MaxPerSecConst));
         }

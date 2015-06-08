@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using Qoollo.Benchmark.Commands;
+using Qoollo.Benchmark.Send.Interfaces;
 using Qoollo.Client.CollectorGate;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.WriterGate;
@@ -12,7 +13,7 @@ namespace Qoollo.Benchmark.Send
         private readonly CollectorCommand _command;
         private readonly CollectorGate _collector;
 
-        public ReaderAdapter(DbFactory dbFactory,   CollectorCommand command)
+        public ReaderAdapter(DbFactory dbFactory,  CollectorCommand command)
         {
             Contract.Requires(dbFactory != null);
             Contract.Requires(command != null);
@@ -37,6 +38,8 @@ namespace Qoollo.Benchmark.Send
             if (IsUseDistributor())
             {
                 var result = _collector.Api.SayIAmHere(_command.Host, _command.Port);
+                if(result.IsError)
+                    Console.WriteLine(result);
             }
         }
 

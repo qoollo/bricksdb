@@ -4,13 +4,14 @@ using System.Diagnostics.Contracts;
 using Qoollo.Benchmark.csv;
 using Qoollo.Benchmark.DataGenerator;
 using Qoollo.Benchmark.Send;
+using Qoollo.Benchmark.Send.Interfaces;
 using Qoollo.Benchmark.Statistics;
 
 namespace Qoollo.Benchmark.Load
 {
     class SetLoadTest : LoadTest
     {
-        public SetLoadTest(DbWriterAdapter adapter, IDataGenerator dataGenerator, KeyGenerator keyGenerator)
+        public SetLoadTest(ICrud adapter, IDataGenerator dataGenerator, KeyGenerator keyGenerator)
             : base(adapter)
         {            
             Contract.Requires(dataGenerator != null);
@@ -22,7 +23,7 @@ namespace Qoollo.Benchmark.Load
             _keyGenerator = keyGenerator;
         }
 
-        private readonly DbWriterAdapter _adapter;
+        private readonly ICrud _adapter;
         private readonly IDataGenerator _dataGenerator;
         private readonly KeyGenerator _keyGenerator;
         private AvgMetric _metric;        

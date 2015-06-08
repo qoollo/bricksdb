@@ -5,16 +5,18 @@ using Qoollo.Benchmark.csv;
 using Qoollo.Benchmark.DataGenerator;
 using Qoollo.Benchmark.Load;
 using Qoollo.Benchmark.Send;
+using Qoollo.Benchmark.Send.Interfaces;
 using Qoollo.Concierge;
 
 namespace Qoollo.Benchmark.Executor
 {
-    class WriterExecutor
+    internal class WriterExecutor
     {
         private readonly Dictionary<string, IDataGenerator> _dataGenerators;
+
         public WriterExecutor()
         {
-            _dataGenerators = new Dictionary<string, IDataGenerator>();            
+            _dataGenerators = new Dictionary<string, IDataGenerator>();
             AddDataGenerator("default", new DefaultDataGenerator());
         }
 
@@ -34,10 +36,11 @@ namespace Qoollo.Benchmark.Executor
             throw new InitializationException(string.Format("Key {0} for generator not found", generatorName));
         }
 
-        private IEnumerable<Func<LoadTest>> ParseTestTypes(string testType, Func<DbWriterAdapter> senderFactory, string generatorName,
-           KeyGenerator keyGenerator)
+        private IEnumerable<Func<LoadTest>> ParseTestTypes(string testType, Func<ICrud> senderFactory,
+            string generatorName,
+            KeyGenerator keyGenerator)
         {
-            var testNames = testType.ToLower().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var testNames = testType.ToLower().Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
             var ret = new List<Func<LoadTest>>();
 
             foreach (var name in testNames)
@@ -50,14 +53,22 @@ namespace Qoollo.Benchmark.Executor
             return ret;
         }
 
-        private Func<LoadTest> CreateSetTest(Func<DbWriterAdapter> senderFactory, string generatorName, KeyGenerator keyGenerator)
+        private Func<LoadTest> CreateSetTest(Func<ICrud> senderFactory, string generatorName,
+            KeyGenerator keyGenerator)
         {
             return () => new SetLoadTest(senderFactory(), FindGenerator(generatorName), keyGenerator);
         }
 
-        private Func<LoadTest> CreateGetTest(Func<DbWriterAdapter> senderFactory, KeyGenerator keyGenerator)
+        private Func<LoadTest> CreateGetTest(Func<ICrud> senderFactory, KeyGenerator keyGenerator)
         {
             return () => new GetLoadTest(senderFactory(), keyGenerator);
+        }
+
+        private Func<ICrud> ChooseAdapter(WriterCommand command)
+        {
+            if (!string.IsNullOrEmpty(command.Localhost) && command.Localport != -1)
+                return () => new DistributorAdapter(command);
+            return () => new DbWriterAdapter(command.Host, command.Port, command.TableName);
         }
 
         public string ProcessBenchmark(WriterCommand command)
@@ -66,8 +77,7 @@ namespace Qoollo.Benchmark.Executor
             {
                 var benchmark = new BenchmarkTest(command.ThreadsCount, command.DataCount);
 
-                var testTypes = ParseTestTypes(command.TestType,
-                    () => new DbWriterAdapter(command.Host, command.Port, command.TableName),
+                var testTypes = ParseTestTypes(command.TestType, ChooseAdapter(command),
                     command.Generator, new KeyGenerator(command.KeyRange));
                 foreach (var func in testTypes)
                 {

@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Qoollo.Benchmark.Send;
+﻿using System.Diagnostics.Contracts;
+using Qoollo.Benchmark.Send.Interfaces;
 using Qoollo.Benchmark.Statistics;
 
 namespace Qoollo.Benchmark.Load
 {
     internal class GetLoadTest : LoadTest
     {
-        public GetLoadTest(DbWriterAdapter adapter, KeyGenerator keyGenerator)
+        public GetLoadTest(ICrud adapter, KeyGenerator keyGenerator)
             : base(adapter)
         {
             Contract.Requires(keyGenerator != null);
@@ -20,7 +15,7 @@ namespace Qoollo.Benchmark.Load
             _keyGenerator = keyGenerator;
         }
 
-        private readonly DbWriterAdapter _adapter;
+        private readonly ICrud _adapter;
         private readonly KeyGenerator _keyGenerator;
         private AvgMetric _metric;
 

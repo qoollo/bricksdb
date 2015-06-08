@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using Qoollo.Client.CollectorGate;
+using Qoollo.Benchmark.Send.Interfaces;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -13,7 +13,7 @@ using Consts = Qoollo.Impl.Common.Support.Consts;
 
 namespace Qoollo.Benchmark.Send
 {
-    class DbWriterAdapter:IDataAdapter
+    class DbWriterAdapter : ICrud
     {
         public DbWriterAdapter(string host, int port, string tableName)
         {
@@ -90,15 +90,7 @@ namespace Qoollo.Benchmark.Send
             {
                 return false;
             }
-        }
-
-        private class DataProvider:CommonDataProvider<long, string>
-        {
-            public override string CalculateHashFromKey(long key)
-            {
-                return key.ToString();
-            }            
-        }
+        }        
 
         public void Dispose()
         {

@@ -73,7 +73,12 @@
     <Compile Include="Load\SetLoadTest.cs" />
     <Compile Include="QueryDescription.cs" />
     <Compile Include="Send\CollectorGate.cs" />
+    <Compile Include="Send\DataProvider.cs" />
     <Compile Include="Send\DbWriterAdapter.cs" />
+    <Compile Include="Send\DistributorAdapter.cs" />
+    <Compile Include="Send\Interfaces\ICrud.cs" />
+    <Compile Include="Send\Interfaces\IStandartApi.cs" />
+    <Compile Include="Send\ProxyGate.cs" />
     <Compile Include="Send\ReaderAdapter.cs" />
     <Compile Include="Statistics\AvgMetric.cs" />
     <Compile Include="Statistics\BenchmarkMetrics.cs" />
@@ -81,7 +86,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="ConciergeSamples\SampleProgram.cs" />
-    <Compile Include="Send\IDataAdapter.cs" />
+    <Compile Include="Send\Interfaces\IDataAdapter.cs" />
     <Compile Include="DataGenerator\IDataGenerator.cs" />
     <Compile Include="KeyGenerator.cs" />
     <Compile Include="Program.cs" />

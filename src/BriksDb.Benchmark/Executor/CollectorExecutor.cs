@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using Qoollo.Benchmark.Commands;
+using Qoollo.Benchmark.csv;
 using Qoollo.Benchmark.Load;
 using Qoollo.Benchmark.Send;
 using Qoollo.Client.WriterGate;
@@ -62,7 +63,10 @@ namespace Qoollo.Benchmark.Executor
                 benchmark.AddLoadTestFactory(CreateReaderTest(ReadJsonFile(command.FileName), command.TableName,
                     command.HashFileName, command.CountReplics, command.PageSize));
 
-                benchmark.Run();
+                if (!string.IsNullOrEmpty(command.CsvFile))
+                    benchmark.Run(new CsvFileProcessor(command.CsvFile));
+                else
+                    benchmark.Run();
             }
             catch (Exception e)
             {

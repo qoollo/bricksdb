@@ -15,5 +15,8 @@ namespace Qoollo.Benchmark.Commands
 
         [Parameter(ShortKey = 't', IsRequired = false, Description = "Table name", DefaultValue = "BenchmarkTable")]
         public string TableName { get; set; }
+
+        [Parameter(ShortKey = 'o', IsRequired = false, Description = "Enable csv file", DefaultValue = "")]
+        public string CsvFile { get; set; }
     }
 }

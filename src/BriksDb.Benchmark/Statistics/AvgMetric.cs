@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Qoollo.Benchmark.csv;
 
 namespace Qoollo.Benchmark.Statistics
 {
     internal class AvgMetric : SingleMetric
     {
+        private const string AvgPerSecConst = "AvgPerSec";
+        private const string MaxPerSecConst = "MaxPerSec";
+
         public AvgMetric(string name) : base(name)
         {
             _values = new List<int>();
@@ -29,7 +33,10 @@ namespace Qoollo.Benchmark.Statistics
             _lastCount = TotalCount;
 
             _avgPerSec = _values.Sum()/_values.Count;
+            CsvFileWrite(GetCsvColumnName(AvgPerSecConst), _avgPerSec);
+
             _maxPerSec = Math.Max(_maxPerSec, _avgPerSec);
+            CsvFileWrite(GetCsvColumnName(MaxPerSecConst), _maxPerSec);
         }
 
         public override string TotalStatistics()
@@ -40,6 +47,12 @@ namespace Qoollo.Benchmark.Statistics
         public override string ToString()
         {
             return string.Format("{0}: {1}, total: {2}", Name, _avgPerSec, TotalCount);
+        }
+
+        protected override void RegistrateColumns(CsvFileProcessor csvFileProcessor)
+        {
+            csvFileProcessor.RegistrateColumn(GetCsvColumnName(AvgPerSecConst));
+            csvFileProcessor.RegistrateColumn(GetCsvColumnName(MaxPerSecConst));
         }
     }
 }

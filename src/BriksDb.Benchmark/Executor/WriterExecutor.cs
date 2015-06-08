@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Qoollo.Benchmark.Commands;
+using Qoollo.Benchmark.csv;
 using Qoollo.Benchmark.DataGenerator;
 using Qoollo.Benchmark.Load;
 using Qoollo.Benchmark.Send;
@@ -73,7 +74,10 @@ namespace Qoollo.Benchmark.Executor
                     benchmark.AddLoadTestFactory(func);
                 }
 
-                benchmark.Run();
+                if (!string.IsNullOrEmpty(command.CsvFile))
+                    benchmark.Run(new CsvFileProcessor(command.CsvFile));
+                else
+                    benchmark.Run();
             }
             catch (Exception e)
             {

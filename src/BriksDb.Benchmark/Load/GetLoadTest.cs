@@ -39,10 +39,5 @@ namespace Qoollo.Benchmark.Load
         {
             _metric = metrics.GetAvgMetric("GET");
         }
-
-        public override SingleMetric GetMetric()
-        {
-            return _metric;
-        }
     }
 }

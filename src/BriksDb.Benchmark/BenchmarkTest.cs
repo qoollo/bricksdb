@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Qoollo.Benchmark.csv;
 using Qoollo.Benchmark.Load;
 using Qoollo.Benchmark.Statistics;
 using Qoollo.Concierge;
@@ -25,21 +26,24 @@ namespace Qoollo.Benchmark
         private readonly int _countThreads;
         private readonly int _countData;
         private readonly List<Func<LoadTest>> _testFactory;
-        private readonly CancellationTokenSource _token;
+        private readonly CancellationTokenSource _token;        
 
         public BenchmarkTest AddLoadTestFactory(Func<LoadTest> factory)
         {
             _testFactory.Add(factory);
             return this;
-        }
+        }       
 
-        private void RunAsync()
+        private void RunAsync(CsvFileProcessor processor)
         {
             try
-            {
+            {                
                 var metric = new BenchmarkMetrics();
-                var taskList = new List<Task>();
 
+                if (processor != null)
+                    metric.AddCsvFileProcessor(processor);
+
+                var taskList = new List<Task>();
                 var count = _countData == -1 ? _countData : _countData/_countThreads;
 
                 for (int i = 0; i < _countThreads; i++)
@@ -47,9 +51,10 @@ namespace Qoollo.Benchmark
                     if (_countData != -1 && i == _countThreads - 1 && _countData%_countThreads != 0)
                         count += _countData%_countThreads;
 
-                    taskList.Add(CreateThread(metric, count));
+                    taskList.Add(CreateThread(metric, count, processor));
                 }
 
+                metric.Start();
                 Task.WaitAll(taskList.ToArray(), _token.Token);
                 
                 metric.CreateStatistics();
@@ -60,9 +65,9 @@ namespace Qoollo.Benchmark
             }
         }
 
-        public void Run()
+        public void Run(CsvFileProcessor processor = null)
         {
-            RunAsync();
+            RunAsync(processor);
         }
 
         public void Cancel()
@@ -70,10 +75,10 @@ namespace Qoollo.Benchmark
             _token.Cancel();
         }
 
-        private Task CreateThread(BenchmarkMetrics metrics, int count)
+        private Task CreateThread(BenchmarkMetrics metrics, int count, CsvFileProcessor processor)
         {
-            var tests = _testFactory.Select(x => x()).ToList();
-            tests.ForEach(x => CreateMetrics(x, metrics));
+            var tests = CreateMetrics(metrics, processor);
+            metrics.AddCsvFileProcessor(processor);
 
             return Task.Factory.StartNew(() => ThreadTest(tests, count));
         }
@@ -96,9 +101,12 @@ namespace Qoollo.Benchmark
             }            
         }
 
-        private void CreateMetrics(LoadTest test, BenchmarkMetrics metrics)
+        private List<LoadTest> CreateMetrics(BenchmarkMetrics metrics, CsvFileProcessor processor)
         {
-            test.CreateMetric(metrics);            
+            var tests = _testFactory.Select(x => x()).ToList();
+            tests.ForEach(x => x.CreateMetric(metrics));
+            
+            return tests;
         }
     }
 }

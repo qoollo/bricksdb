@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Threading;
+using Qoollo.Benchmark.csv;
 
 namespace Qoollo.Benchmark.Statistics
 {
@@ -33,18 +34,27 @@ namespace Qoollo.Benchmark.Statistics
 
         private const int TimerTickMls = 1000;
         private readonly IEnumerable<SingleMetric> _metrics;
+        private CsvFileProcessor _csvFileProcessor;
         private Timer _timer;
-        
+
+        public void AddCsvFileProcessor(CsvFileProcessor csvFileProcessor)
+        {
+            _csvFileProcessor = csvFileProcessor;
+        }
+
         public void Start()
         {            
+            _csvFileProcessor.Start();
             _timer = new Timer(TimerTick, null, 0, TimerTickMls);                        
         }
 
         private void TimerTick(object state)
         {
-            TickAllMetrics();            
+            TickAllMetrics();
             PrintCurrentInfo();
-        }        
+            if (_csvFileProcessor != null)
+                _csvFileProcessor.WriteToFile();
+        }
 
         private void TickAllMetrics()
         {

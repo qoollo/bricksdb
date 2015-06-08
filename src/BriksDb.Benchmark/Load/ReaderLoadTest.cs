@@ -86,10 +86,5 @@ namespace Qoollo.Benchmark.Load
             _metrics.AddMetrics(new AvgMetric(MetricName.PackageData));
             _metrics.AddMetrics(new AvgMetric(MetricName.Single));
         }
-
-        public override SingleMetric GetMetric()
-        {
-            return _metrics;
-        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using Qoollo.Benchmark.csv;
 using Qoollo.Benchmark.DataGenerator;
 using Qoollo.Benchmark.Send;
 using Qoollo.Benchmark.Statistics;
@@ -56,11 +57,6 @@ namespace Qoollo.Benchmark.Load
         public override void CreateMetric(BenchmarkMetrics metrics)
         {
             _metric = metrics.GetAvgMetric("SET");
-        }
-
-        public override SingleMetric GetMetric()
-        {
-            return _metric;
         }
     }
 }

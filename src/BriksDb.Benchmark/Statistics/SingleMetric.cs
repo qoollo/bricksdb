@@ -3,14 +3,26 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
+using Qoollo.Benchmark.csv;
 
 namespace Qoollo.Benchmark.Statistics
 {
-    abstract class SingleMetric
+    internal abstract class SingleMetric
     {
-        public string Name { get { return _name; } }
-        public int TotalCount { get { return _totalCount; } }
-        public int FailCount { get { return _failCount; } }
+        public string Name
+        {
+            get { return _name; }
+        }
+
+        public int TotalCount
+        {
+            get { return _totalCount; }
+        }
+
+        public int FailCount
+        {
+            get { return _failCount; }
+        }
 
         protected SingleMetric(string name)
         {
@@ -25,6 +37,7 @@ namespace Qoollo.Benchmark.Statistics
         private int _totalCount;
         private readonly List<long> _operationTime;
         private int _failCount;
+        private CsvFileProcessor _csvFileProcessor;
 
         public Stopwatch StartMeasure()
         {
@@ -49,14 +62,38 @@ namespace Qoollo.Benchmark.Statistics
         public void AddOperationTime(long mls)
         {
             _operationTime.Add(mls);
+
         }
 
         public abstract void Tick();
 
+        public void SetCsvFileProcessor(CsvFileProcessor csvFileProcessor)
+        {
+            _csvFileProcessor = csvFileProcessor;
+            if (_csvFileProcessor != null)
+                RegistrateColumns(csvFileProcessor);
+        }
+
         public virtual string TotalStatistics()
         {
-            return string.Format("Name: {0}\nTotalCount: {1}\nFailCount: {2}\nOperation AvgTime: {3}mls", Name, TotalCount,
+            return string.Format("Name: {0}\nTotalCount: {1}\nFailCount: {2}\nOperation AvgTime: {3}mls", Name,
+                TotalCount,
                 FailCount, _operationTime.Sum()/_operationTime.Count);
+        }
+
+        protected string GetCsvColumnName(string columnName)
+        {
+            return Name + columnName;
+        }
+
+        protected virtual void RegistrateColumns(CsvFileProcessor csvFileProcessor)
+        {
+        }
+
+        protected void CsvFileWrite(string columnName, object value)
+        {
+            if (_csvFileProcessor != null)
+                _csvFileProcessor.Write(columnName, value);
         }
     }
 }

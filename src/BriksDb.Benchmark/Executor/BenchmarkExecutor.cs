@@ -15,7 +15,7 @@ namespace Qoollo.Benchmark.Executor
 
         public BenchmarkExecutor()
         {
-            AppDomain.CurrentDomain.FirstChanceException += (e, sender) => Console.WriteLine(e);
+            //AppDomain.CurrentDomain.FirstChanceException += (e, sender) => Console.WriteLine(e);
             _writerExecutor = new WriterExecutor();
             _collectorExecutor = new CollectorExecutor();
         }

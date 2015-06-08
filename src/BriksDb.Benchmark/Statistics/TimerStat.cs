@@ -48,17 +48,13 @@ namespace Qoollo.Benchmark.Statistics
             _timer = new Timer(TimerTick, null, 0, TimerTickMls);                        
         }
 
-        private readonly object _lock = new object();
         private void TimerTick(object state)
         {
-            lock (_lock)
-            {
-                TickAllMetrics();
-                PrintCurrentInfo();
+            TickAllMetrics();
+            PrintCurrentInfo();
 
-                if (_csvFileProcessor != null)
-                    _csvFileProcessor.WriteToFile();
-            }            
+            if (_csvFileProcessor != null)
+                _csvFileProcessor.WriteToFile();            
         }
 
         private void TickAllMetrics()

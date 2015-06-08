@@ -101,6 +101,10 @@
       <Project>{1be55462-f506-45b7-ad6d-c29f36ce68e0}</Project>
       <Name>BriksDb.Client</Name>
     </ProjectReference>
+    <ProjectReference Include="..\StorageSystem.Impl.Sql\BriksDb.Impl.Sql.csproj">
+      <Project>{71B1933C-BEBF-4363-8450-F5FB46A3307E}</Project>
+      <Name>BriksDb.Impl.Sql</Name>
+    </ProjectReference>
     <ProjectReference Include="..\StorageSystem.Impl\BriksDb.Impl.csproj">
       <Project>{1A78E244-B4B2-419E-B247-8532B3AFDA87}</Project>
       <Name>BriksDb.Impl</Name>

@@ -9,6 +9,7 @@ namespace Qoollo.Benchmark.Statistics
 {
     internal abstract class SingleMetric
     {
+        private const string TotalCountConst = "TotalCountConst";
         public string Name
         {
             get { return _name; }
@@ -65,20 +66,29 @@ namespace Qoollo.Benchmark.Statistics
 
         }
 
-        public abstract void Tick();
+        public virtual void Tick()
+        {            
+            CsvFileWrite(GetCsvColumnName(TotalCountConst), TotalCount);
+        }
+
+        private bool IsNeedRegistrate(CsvFileProcessor csvFileProcessor)
+        {
+            return _csvFileProcessor == null && csvFileProcessor != null;
+        }
 
         public void SetCsvFileProcessor(CsvFileProcessor csvFileProcessor)
         {
+            bool isNeedRegistrate = IsNeedRegistrate(csvFileProcessor);
             _csvFileProcessor = csvFileProcessor;
-            if (_csvFileProcessor != null)
+
+            if (isNeedRegistrate)
                 RegistrateColumns(csvFileProcessor);
         }
 
         public virtual string TotalStatistics()
         {
-            return string.Format("Name: {0}\nTotalCount: {1}\nFailCount: {2}\nOperation AvgTime: {3}mls", Name,
-                TotalCount,
-                FailCount, _operationTime.Sum()/_operationTime.Count);
+            return string.Format("Name: {0}\nTotalCount: {1}\nFailCount: {2}\nOperation AvgTime: {3}mls",
+                Name, TotalCount, FailCount, _operationTime.Sum()/_operationTime.Count);
         }
 
         protected string GetCsvColumnName(string columnName)
@@ -88,6 +98,7 @@ namespace Qoollo.Benchmark.Statistics
 
         protected virtual void RegistrateColumns(CsvFileProcessor csvFileProcessor)
         {
+            csvFileProcessor.RegistrateColumn(GetCsvColumnName(TotalCountConst));
         }
 
         protected void CsvFileWrite(string columnName, object value)

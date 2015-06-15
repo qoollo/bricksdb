@@ -37,6 +37,7 @@ namespace Qoollo.Benchmark.Statistics
 
             _maxPerSec = Math.Max(_maxPerSec, _avgPerSec);
             CsvFileWrite(GetCsvColumnName(MaxPerSecConst), _maxPerSec);
+            base.Tick();
         }
 
         public override string TotalStatistics()
@@ -46,7 +47,7 @@ namespace Qoollo.Benchmark.Statistics
 
         public override string ToString()
         {
-            return string.Format("{0}: {1}, total: {2}", Name, _avgPerSec, TotalCount);
+            return string.Format("{0}: {1}, total: {2}, fail: {3}", Name, _avgPerSec, TotalCount, FailCount);
         }
 
         protected override void RegistrateColumns(CsvFileProcessor csvFileProcessor)

@@ -65,10 +65,15 @@ namespace Qoollo.Benchmark.Statistics
 
         public void CreateStatistics()
         {
-            _timer.Stop();
-            _timer.TimerTick();
+            Stop();
             
             PrintTotalStatistics();
+        }
+
+        public void Stop()
+        {
+            _timer.TimerTick();
+            _timer.Stop();     
         }
 
         public void Start()

@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Qoollo.Benchmark.csv;
 using Qoollo.Benchmark.Load;
 using Qoollo.Benchmark.Statistics;
-using Qoollo.Concierge;
 
 namespace Qoollo.Benchmark
 {
@@ -36,10 +35,10 @@ namespace Qoollo.Benchmark
 
         private void RunAsync(CsvFileProcessor processor)
         {
-            try
-            {                
-                var metric = new BenchmarkMetrics();
+            var metric = new BenchmarkMetrics();
 
+            try
+            {
                 var taskList = new List<Task>();
                 var count = _countData == -1 ? _countData : _countData/_countThreads;
 
@@ -53,12 +52,17 @@ namespace Qoollo.Benchmark
 
                 metric.Start();
                 Task.WaitAll(taskList.ToArray(), _token.Token);
-                
+
                 metric.CreateStatistics();
             }
 
             catch (OperationCanceledException)
             {
+            }
+            catch (Exception)
+            {
+                metric.Stop();
+                throw;
             }
         }
 

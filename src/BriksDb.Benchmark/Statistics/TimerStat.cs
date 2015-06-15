@@ -43,18 +43,23 @@ namespace Qoollo.Benchmark.Statistics
         }
 
         public void Start()
-        {            
-            _csvFileProcessor.Start();
+        {
+            if (_csvFileProcessor != null)
+                _csvFileProcessor.Start();
             _timer = new Timer(TimerTick, null, 0, TimerTickMls);                        
         }
 
+        private readonly object _lock = new object();
         private void TimerTick(object state)
         {
-            TickAllMetrics();
-            PrintCurrentInfo();
+            lock (_lock)
+            {
+                TickAllMetrics();
+                PrintCurrentInfo();
 
-            if (_csvFileProcessor != null)
-                _csvFileProcessor.WriteToFile();            
+                if (_csvFileProcessor != null)
+                    _csvFileProcessor.WriteToFile();            
+            }            
         }
 
         private void TickAllMetrics()
@@ -85,7 +90,10 @@ namespace Qoollo.Benchmark.Statistics
         {
             if (_timer != null)
                 _timer.Dispose();
+
+            if (_csvFileProcessor != null)
+                _csvFileProcessor.Dispose();
         }
-        
+
     }
 }

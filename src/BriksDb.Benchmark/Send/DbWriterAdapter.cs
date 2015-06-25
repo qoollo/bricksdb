@@ -55,7 +55,17 @@ namespace Qoollo.Benchmark.Send
         {
             try
             {
-                return !_channel.ProcessSync(new InnerData(new Transaction("123", "123")
+                //return !_channel.ProcessSync(new InnerData(new Transaction("123", "123")
+                //{
+                //    OperationName = OperationName.Create,
+                //    OperationType = OperationType.Sync,
+                //    TableName = _tableName
+                //})
+                //{
+                //    Data = _dataProvider.SerializeValue(data),
+                //    Key = _dataProvider.SerializeKey(key)
+                //}).IsError;                
+                _channel.Process(new InnerData(new Transaction("123", "123")
                 {
                     OperationName = OperationName.Create,
                     OperationType = OperationType.Sync,
@@ -64,7 +74,8 @@ namespace Qoollo.Benchmark.Send
                 {
                     Data = _dataProvider.SerializeValue(data),
                     Key = _dataProvider.SerializeKey(key)
-                }).IsError;                
+                });
+                return true;
             }
             catch (Exception)
             {

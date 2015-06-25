@@ -27,7 +27,7 @@ namespace Qoollo.Benchmark.Load
         private readonly IDataGenerator _dataGenerator;
         private readonly KeyGenerator _keyGenerator;
         private AvgMetric _metric;        
-        private const int GenerateCount = 100;
+        private const int GenerateCount = 10000;
         
         private IEnumerator<string> _iterator;
 
@@ -45,7 +45,7 @@ namespace Qoollo.Benchmark.Load
             var key = _keyGenerator.Generate();
             var timer = _metric.StartMeasure();
             
-            _metric.AddResult(_adapter.Send(key, _iterator.Current));
+            _metric.AddResult(_adapter.Send(key, "xxx"));
             _metric.StopMeasure(timer);
         }
 

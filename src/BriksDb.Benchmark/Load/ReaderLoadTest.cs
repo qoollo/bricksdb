@@ -7,6 +7,11 @@ using Qoollo.Client.CollectorGate;
 
 namespace Qoollo.Benchmark.Load
 {
+    enum TripleVariant
+    {
+        True, False, Another
+    }
+
     class ReaderLoadTest:LoadTest
     {
         public class MetricName
@@ -40,15 +45,16 @@ namespace Qoollo.Benchmark.Load
 
         public override bool OneDataProcess()
         {
-            var exit = true;
             if (_reader == null || !ReadData())
             {
-                if (CreateNewReader())
+                var value = CreateNewReader();
+
+                if (value == TripleVariant.Another)
+                    return false;
+                if (value == TripleVariant.True)
                     ReadData();
-                else
-                    exit = false;
             }
-            return exit;
+            return true;
         }
 
         public bool NeedCreateReader()
@@ -56,7 +62,7 @@ namespace Qoollo.Benchmark.Load
             return _reader == null || !ReadData();
         }
 
-        public bool CreateNewReader()
+        public TripleVariant CreateNewReader()
         {
             if (_timer != null)
             {
@@ -66,8 +72,12 @@ namespace Qoollo.Benchmark.Load
             _timer = _metrics.Get(MetricName.PackageData).StartMeasure();
 
             var value = _queries.Dequeue();
+            if (!value.IsValueExist)
+                return TripleVariant.Another;
+
             _reader = value.IsValueExist ? _adapter.ExecuteQuery(value.Value) : null;
-            return _reader != null;
+
+            return _reader==null ? TripleVariant.False : TripleVariant.True;
         }
 
         public override void CreateMetric(BenchmarkMetrics metrics)
@@ -75,11 +85,6 @@ namespace Qoollo.Benchmark.Load
             _metrics = metrics.GetMetricsCollection("COLLECTOR");
             _metrics.AddMetrics(new AvgMetric(MetricName.PackageData));
             _metrics.AddMetrics(new AvgMetric(MetricName.Single));
-        }
-
-        public override SingleMetric GetMetric()
-        {
-            return _metrics;
         }
     }
 }

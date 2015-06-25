@@ -3,14 +3,27 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
+using Qoollo.Benchmark.csv;
 
 namespace Qoollo.Benchmark.Statistics
 {
-    abstract class SingleMetric
+    internal abstract class SingleMetric
     {
-        public string Name { get { return _name; } }
-        public int TotalCount { get { return _totalCount; } }
-        public int FailCount { get { return _failCount; } }
+        private const string TotalCountConst = "TotalCountConst";
+        public string Name
+        {
+            get { return _name; }
+        }
+
+        public int TotalCount
+        {
+            get { return _totalCount; }
+        }
+
+        public int FailCount
+        {
+            get { return _failCount; }
+        }
 
         protected SingleMetric(string name)
         {
@@ -25,6 +38,7 @@ namespace Qoollo.Benchmark.Statistics
         private int _totalCount;
         private readonly List<long> _operationTime;
         private int _failCount;
+        private CsvFileProcessor _csvFileProcessor;
 
         public Stopwatch StartMeasure()
         {
@@ -49,14 +63,48 @@ namespace Qoollo.Benchmark.Statistics
         public void AddOperationTime(long mls)
         {
             _operationTime.Add(mls);
+
         }
 
-        public abstract void Tick();
+        public virtual void Tick()
+        {            
+            CsvFileWrite(GetCsvColumnName(TotalCountConst), TotalCount);
+        }
+
+        private bool IsNeedRegistrate(CsvFileProcessor csvFileProcessor)
+        {
+            return _csvFileProcessor == null && csvFileProcessor != null;
+        }
+
+        public void SetCsvFileProcessor(CsvFileProcessor csvFileProcessor)
+        {
+            bool isNeedRegistrate = IsNeedRegistrate(csvFileProcessor);
+            _csvFileProcessor = csvFileProcessor;
+
+            if (isNeedRegistrate)
+                RegistrateColumns(csvFileProcessor);
+        }
 
         public virtual string TotalStatistics()
         {
-            return string.Format("Name: {0}\nTotalCount: {1}\nFailCount: {2}\nOperation AvgTime: {3}mls", Name, TotalCount,
-                FailCount, _operationTime.Sum()/_operationTime.Count);
+            return string.Format("Name: {0}\nTotalCount: {1}\nFailCount: {2}\nOperation AvgTime: {3}mls",
+                Name, TotalCount, FailCount, _operationTime.Sum()/_operationTime.Count);
+        }
+
+        protected string GetCsvColumnName(string columnName)
+        {
+            return string.Format("{0}_{1}", Name, columnName);
+        }
+
+        protected virtual void RegistrateColumns(CsvFileProcessor csvFileProcessor)
+        {
+            csvFileProcessor.RegistrateColumn(GetCsvColumnName(TotalCountConst));
+        }
+
+        protected void CsvFileWrite(string columnName, object value)
+        {
+            if (_csvFileProcessor != null)
+                _csvFileProcessor.Write(columnName, value);
         }
     }
 }

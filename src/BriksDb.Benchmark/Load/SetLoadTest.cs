@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using Qoollo.Benchmark.csv;
 using Qoollo.Benchmark.DataGenerator;
 using Qoollo.Benchmark.Send;
+using Qoollo.Benchmark.Send.Interfaces;
 using Qoollo.Benchmark.Statistics;
 
 namespace Qoollo.Benchmark.Load
 {
     class SetLoadTest : LoadTest
     {
-        public SetLoadTest(DbWriterAdapter adapter, IDataGenerator dataGenerator, KeyGenerator keyGenerator)
+        public SetLoadTest(ICrud adapter, IDataGenerator dataGenerator, KeyGenerator keyGenerator)
             : base(adapter)
         {            
             Contract.Requires(dataGenerator != null);
@@ -21,11 +23,11 @@ namespace Qoollo.Benchmark.Load
             _keyGenerator = keyGenerator;
         }
 
-        private readonly DbWriterAdapter _adapter;
+        private readonly ICrud _adapter;
         private readonly IDataGenerator _dataGenerator;
         private readonly KeyGenerator _keyGenerator;
         private AvgMetric _metric;        
-        private const int GenerateCount = 100;
+        private const int GenerateCount = 10000;
         
         private IEnumerator<string> _iterator;
 
@@ -43,7 +45,7 @@ namespace Qoollo.Benchmark.Load
             var key = _keyGenerator.Generate();
             var timer = _metric.StartMeasure();
             
-            _metric.AddResult(_adapter.Send(key, _iterator.Current));
+            _metric.AddResult(_adapter.Send(key, "xxx"));
             _metric.StopMeasure(timer);
         }
 
@@ -56,11 +58,6 @@ namespace Qoollo.Benchmark.Load
         public override void CreateMetric(BenchmarkMetrics metrics)
         {
             _metric = metrics.GetAvgMetric("SET");
-        }
-
-        public override SingleMetric GetMetric()
-        {
-            return _metric;
         }
     }
 }

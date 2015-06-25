@@ -8,12 +8,15 @@ using Qoollo.Concierge.Commands;
 
 namespace Qoollo.Benchmark.Commands
 {
-    class CommandBase : UserCommand
+    public class CommandBase : UserCommand
     {
         [Parameter(ShortKey = 'c', IsRequired = false, Description = "Count threads", DefaultValue = 1)]
         public int ThreadsCount { get; set; }
 
         [Parameter(ShortKey = 't', IsRequired = false, Description = "Table name", DefaultValue = "BenchmarkTable")]
         public string TableName { get; set; }
+
+        [Parameter(ShortKey = 'o', IsRequired = false, Description = "Enable csv file", DefaultValue = "")]
+        public string CsvFile { get; set; }
     }
 }

@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.Contracts;
 using Qoollo.Benchmark.Send;
+using Qoollo.Benchmark.Send.Interfaces;
 using Qoollo.Benchmark.Statistics;
-using Qoollo.Concierge.Attributes;
 
 namespace Qoollo.Benchmark.Load
 {
@@ -17,10 +11,10 @@ namespace Qoollo.Benchmark.Load
         {
             Contract.Requires(adapter!=null);            
             adapter.Start();
-        }
 
+        }
         public abstract bool OneDataProcess();        
-        public abstract void CreateMetric(BenchmarkMetrics metrics);
-        public abstract SingleMetric GetMetric();        
+        public abstract void CreateMetric(BenchmarkMetrics metrics);        
+
     }
 }

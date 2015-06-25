@@ -2,7 +2,7 @@
 
 namespace Qoollo.Benchmark.Commands
 {
-    internal class WriterCommand : CommandBase
+    public class WriterCommand : CommandBase
     {
         [Parameter(ShortKey = 'l', IsRequired = true, Description = "Test type")]
         public string TestType { get; set; }        
@@ -16,10 +16,16 @@ namespace Qoollo.Benchmark.Commands
         [Parameter(ShortKey = 'g', IsRequired = false, Description = "Generator type", DefaultValue = "default")]
         public string Generator { get; set; }
 
-        [Parameter(ShortKey = 'h', IsRequired = true, Description = "Connection host")]
+        [Parameter(ShortKey = 'h', IsRequired = true, Description = "Remote connection host")]
         public string Host { get; set; }
 
-        [Parameter(ShortKey = 'p', IsRequired = true, Description = "Connection port")]
+        [Parameter(ShortKey = 'p', IsRequired = true, Description = "Remote connection port")]
         public int Port { get; set; }
+
+        [Parameter(ShortKey = 'k', IsRequired = false, Description = "Local connection host")]
+        public string Localhost { get; set; }
+
+        [Parameter(ShortKey = 'i', IsRequired = false, Description = "Local connection port")]
+        public int Localport { get; set; }
     }
 }

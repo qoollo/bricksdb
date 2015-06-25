@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Qoollo.Benchmark.Commands;
+using Qoollo.Benchmark.csv;
 using Qoollo.Benchmark.Load;
 using Qoollo.Benchmark.Send;
 using Qoollo.Client.WriterGate;
@@ -19,12 +17,12 @@ namespace Qoollo.Benchmark.Executor
             ;
         public CollectorExecutor()
         {
-            _dbFactories = new Dictionary<string, DbFactory>();
+            _dbFactories = new Dictionary<string, DbFactory>();            
         }
 
         public void AddDbFactory(string name, DbFactory dbFactory)
         {
-            _dbFactories.Add(name, dbFactory);
+            _dbFactories.Add(name.Trim().ToLower(), dbFactory);
         }
 
         private DbFactory FindDbFactory(string dbFactoryName)
@@ -38,12 +36,10 @@ namespace Qoollo.Benchmark.Executor
             throw new InitializationException(string.Format("Key {0} for db factory not found", dbFactoryName));
         }
 
-        private Func<LoadTest> CreateReaderTest(IEnumerable<QueryDescription> queries,
-            string tableName, string hashFileName, int countReplics, int pageSize)
+        private Func<LoadTest> CreateReaderTest(IEnumerable<QueryDescription> queries, CollectorCommand command)
         {
             var queue = new BlockingQueue<QueryDescription>(queries);
-            return () => new ReaderLoadTest(new ReaderAdapter(FindDbFactory(tableName), tableName,
-                hashFileName, countReplics, pageSize), queue);
+            return () => new ReaderLoadTest(new ReaderAdapter(FindDbFactory(command.TableName), command), queue);
         }
 
         private IEnumerable<QueryDescription> ReadJsonFile(string fileName)
@@ -62,10 +58,12 @@ namespace Qoollo.Benchmark.Executor
             try
             {
                 var benchmark = new BenchmarkTest(command.ThreadsCount);
-                benchmark.AddLoadTestFactory(CreateReaderTest(ReadJsonFile(command.FileName), command.TableName,
-                    command.HashFileName, command.CountReplics, command.PageSize));
+                benchmark.AddLoadTestFactory(CreateReaderTest(ReadJsonFile(command.FileName), command));
 
-                benchmark.Run();
+                if (!string.IsNullOrEmpty(command.CsvFile))
+                    benchmark.Run(new CsvFileProcessor(command.CsvFile));
+                else
+                    benchmark.Run();
             }
             catch (Exception e)
             {

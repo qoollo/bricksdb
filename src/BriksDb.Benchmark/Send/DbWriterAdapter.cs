@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using Qoollo.Client.CollectorGate;
+using Qoollo.Benchmark.Send.Interfaces;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -13,7 +13,7 @@ using Consts = Qoollo.Impl.Common.Support.Consts;
 
 namespace Qoollo.Benchmark.Send
 {
-    class DbWriterAdapter:IDataAdapter
+    class DbWriterAdapter : ICrud
     {
         public DbWriterAdapter(string host, int port, string tableName)
         {
@@ -55,7 +55,17 @@ namespace Qoollo.Benchmark.Send
         {
             try
             {
-                return !_channel.ProcessSync(new InnerData(new Transaction("123", "123")
+                //return !_channel.ProcessSync(new InnerData(new Transaction("123", "123")
+                //{
+                //    OperationName = OperationName.Create,
+                //    OperationType = OperationType.Sync,
+                //    TableName = _tableName
+                //})
+                //{
+                //    Data = _dataProvider.SerializeValue(data),
+                //    Key = _dataProvider.SerializeKey(key)
+                //}).IsError;                
+                _channel.Process(new InnerData(new Transaction("123", "123")
                 {
                     OperationName = OperationName.Create,
                     OperationType = OperationType.Sync,
@@ -64,7 +74,8 @@ namespace Qoollo.Benchmark.Send
                 {
                     Data = _dataProvider.SerializeValue(data),
                     Key = _dataProvider.SerializeKey(key)
-                }).IsError;                
+                });
+                return true;
             }
             catch (Exception)
             {
@@ -90,15 +101,7 @@ namespace Qoollo.Benchmark.Send
             {
                 return false;
             }
-        }
-
-        private class DataProvider:CommonDataProvider<long, string>
-        {
-            public override string CalculateHashFromKey(long key)
-            {
-                return key.ToString();
-            }            
-        }
+        }        
 
         public void Dispose()
         {

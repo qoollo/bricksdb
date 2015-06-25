@@ -1,7 +1,6 @@
 ﻿using System;
-using Qoollo.Client.CollectorGate;
 
-namespace Qoollo.Benchmark.Send
+namespace Qoollo.Benchmark.Send.Interfaces
 {
     interface IDataAdapter:IDisposable
     {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Qoollo.Benchmark.csv;
 
 namespace Qoollo.Benchmark.Statistics
 {
@@ -11,16 +12,21 @@ namespace Qoollo.Benchmark.Statistics
         public BenchmarkMetrics()
         {
             _metrics = new List<SingleMetric>();
-            _timer = new TimerStat(_metrics);
-            _timer.Start();
+            _timer = new TimerStat(_metrics);            
         }
 
         private readonly List<SingleMetric> _metrics;
-        private readonly TimerStat _timer;
+        private readonly TimerStat _timer;        
 
         private void AddMetrics(SingleMetric metric)
         {
             _metrics.Add(metric);
+        }
+
+        public void AddCsvFileProcessor(CsvFileProcessor csvFileProcessor)
+        {
+            _timer.AddCsvFileProcessor(csvFileProcessor);
+            _metrics.ForEach(x=>x.SetCsvFileProcessor(csvFileProcessor));
         }
 
         public static AvgMetric CreateAvgMetric(string name)
@@ -59,10 +65,20 @@ namespace Qoollo.Benchmark.Statistics
 
         public void CreateStatistics()
         {
-            _timer.Stop();
-            _timer.TimerTick();
+            Stop();
             
             PrintTotalStatistics();
+        }
+
+        public void Stop()
+        {
+            _timer.TimerTick();
+            _timer.Stop();     
+        }
+
+        public void Start()
+        {
+            _timer.Start();
         }
 
         private void PrintTotalStatistics()

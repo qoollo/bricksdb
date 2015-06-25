@@ -8,7 +8,7 @@ using Qoollo.Concierge.Attributes;
 
 namespace Qoollo.Benchmark.Commands
 {
-    internal class CollectorCommand : CommandBase
+    public class CollectorCommand : CommandBase
     {
         [Parameter(ShortKey = 'q', IsRequired = true, Description = "File with queries")]
         public string FileName { get; set; }
@@ -22,5 +22,11 @@ namespace Qoollo.Benchmark.Commands
 
         [Parameter(ShortKey = 's', IsRequired = false, Description = "Page size", DefaultValue = 100)]
         public int PageSize { get; set; }
+
+        [Parameter(ShortKey = 'h', IsRequired = false, Description = "Distributor host", DefaultValue = "default")]
+        public string Host { get; set; }
+
+        [Parameter(ShortKey = 'p', IsRequired = false, Description = "Distributor hort", DefaultValue = -1)]
+        public int Port { get; set; }
     }
 }

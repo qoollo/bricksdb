@@ -2,7 +2,7 @@
 
 namespace Qoollo.Benchmark.DataGenerator
 {
-    interface IDataGenerator
+    public interface IDataGenerator
     {
         IEnumerable<string> GenerateData(int count);
     }

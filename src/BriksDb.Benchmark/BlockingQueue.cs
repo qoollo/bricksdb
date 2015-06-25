@@ -56,5 +56,15 @@ namespace Qoollo.Benchmark
             }
             return hasElements ? new ReturnValue<T>(element) : new ReturnValue<T>();
         }
+
+        public int Count()
+        {
+            int count;
+            lock (_lock)
+            {
+                count = _queue.Count;
+            }
+            return count;
+        }
     }
 }

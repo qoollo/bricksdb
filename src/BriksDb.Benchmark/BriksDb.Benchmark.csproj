@@ -37,6 +37,10 @@
     <Reference Include="Concierge">
       <HintPath>..\packages\Concierge.1.0.5.2\lib\net40\Concierge.dll</HintPath>
     </Reference>
+    <Reference Include="CsvHelper">
+      <HintPath>..\packages\CsvHelper.2.13.0.0\lib\net40-client\CsvHelper.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -58,6 +62,7 @@
     <Compile Include="Commands\CollectorCommand.cs" />
     <Compile Include="Commands\WriterCommand.cs" />
     <Compile Include="BenchmarkTest.cs" />
+    <Compile Include="csv\CsvFileProcessor.cs" />
     <Compile Include="Executor\BenchmarkExecutor.cs" />
     <Compile Include="Commands\CommandBase.cs" />
     <Compile Include="DataGenerator\DefaultDataGenerator.cs" />
@@ -68,7 +73,12 @@
     <Compile Include="Load\SetLoadTest.cs" />
     <Compile Include="QueryDescription.cs" />
     <Compile Include="Send\CollectorGate.cs" />
+    <Compile Include="Send\DataProvider.cs" />
     <Compile Include="Send\DbWriterAdapter.cs" />
+    <Compile Include="Send\DistributorAdapter.cs" />
+    <Compile Include="Send\Interfaces\ICrud.cs" />
+    <Compile Include="Send\Interfaces\IStandartApi.cs" />
+    <Compile Include="Send\ProxyGate.cs" />
     <Compile Include="Send\ReaderAdapter.cs" />
     <Compile Include="Statistics\AvgMetric.cs" />
     <Compile Include="Statistics\BenchmarkMetrics.cs" />
@@ -76,7 +86,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="ConciergeSamples\SampleProgram.cs" />
-    <Compile Include="Send\IDataAdapter.cs" />
+    <Compile Include="Send\Interfaces\IDataAdapter.cs" />
     <Compile Include="DataGenerator\IDataGenerator.cs" />
     <Compile Include="KeyGenerator.cs" />
     <Compile Include="Program.cs" />
@@ -96,11 +106,16 @@
       <Project>{1be55462-f506-45b7-ad6d-c29f36ce68e0}</Project>
       <Name>BriksDb.Client</Name>
     </ProjectReference>
+    <ProjectReference Include="..\StorageSystem.Impl.Sql\BriksDb.Impl.Sql.csproj">
+      <Project>{71B1933C-BEBF-4363-8450-F5FB46A3307E}</Project>
+      <Name>BriksDb.Impl.Sql</Name>
+    </ProjectReference>
     <ProjectReference Include="..\StorageSystem.Impl\BriksDb.Impl.csproj">
       <Project>{1A78E244-B4B2-419E-B247-8532B3AFDA87}</Project>
       <Name>BriksDb.Impl</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

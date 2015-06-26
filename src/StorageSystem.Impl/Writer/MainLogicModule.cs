@@ -108,7 +108,7 @@ namespace Qoollo.Impl.Writer
 
         private bool GetLocal(InnerData data)
         {
-            return  _distributor.IsMine(data.Transaction.EventHash);
+            return  _distributor.IsMine(data.Transaction.dataHash);
         }
 
         private RemoteResult CheckResult(InnerData data, RemoteResult result)

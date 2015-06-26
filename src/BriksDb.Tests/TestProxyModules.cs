@@ -280,7 +280,7 @@ namespace Qoollo.Tests
 
             bool res = main.Process(ev);
 
-            var server = cache.Get(ev.Transaction.EventHash);
+            var server = cache.Get(ev.Transaction.dataHash);
             Assert.IsNull(server);
             Assert.IsTrue(res);
 

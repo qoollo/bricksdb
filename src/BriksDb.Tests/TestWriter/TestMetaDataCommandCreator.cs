@@ -23,40 +23,42 @@ namespace Qoollo.Tests.TestWriter
             return new TestCommand();
         }
 
-        public TestCommand CreateMetaData(bool remote)
+        public TestCommand CreateMetaData(bool remote, string dataHash)
         {
-            return new TestCommand() { Command = "createmeta", Local = remote };
+            return new TestCommand { Command = "createmeta", Local = remote , Hash = dataHash};
         }
 
         public TestCommand DeleteMetaData()
         {
-            return new TestCommand() { Command = "deletemeta" };
+            return new TestCommand { Command = "deletemeta" };
         }
 
         public TestCommand UpdateMetaData(bool local)
         {
-            return new TestCommand() { Command = "updatemeta", Local = local };
+            return new TestCommand { Command = "updatemeta", Local = local };
         }
 
         public TestCommand SetDataDeleted()
         {
-            return new TestCommand() { Command = "setdatadeleted" };
+            return new TestCommand { Command = "setdatadeleted" };
         }
 
         public TestCommand SetDataNotDeleted()
         {
-            return new TestCommand() { Command = "setdatanotdeleted" };
+            return new TestCommand { Command = "setdatanotdeleted" };
         }
 
         public TestCommand ReadMetaData(TestCommand userRead)
         {
-            return new TestCommand() { Command = "readMeta" };
+            return new TestCommand { Command = "readMeta" };
         }
 
-        Tuple<MetaData, bool> IMetaDataCommandCreator<TestCommand, TestDbReader>.ReadMetaDataFromReader(DbReader<TestDbReader> reader, bool readuserId = true)
+        Tuple<MetaData, bool> IMetaDataCommandCreator<TestCommand, TestDbReader>.ReadMetaDataFromReader(
+            DbReader<TestDbReader> reader, bool readuserId)
         {
-            var comman = (TestCommand)reader.GetValue(1);
-            return new Tuple<MetaData, bool>(new MetaData(comman.Local, comman.DeleteTime, comman.IsDeleted), false);
+            var command = (TestCommand) reader.GetValue(1);
+            return new Tuple<MetaData, bool>(
+                    new MetaData(command.Local, command.DeleteTime, command.IsDeleted, command.Hash), false);
         }
 
         public string ReadWithDeleteAndLocal(bool isDelete, bool local)
@@ -66,7 +68,7 @@ namespace Qoollo.Tests.TestWriter
 
         public TestCommand ReadWithDelete(TestCommand userRead, bool idDelete)
         {
-            var ret = new TestCommand()
+            var ret = new TestCommand
             {
                 Command = "ReadAllElementsAndMergeWhereStatemenetForKey",
                 Local = true,
@@ -79,12 +81,12 @@ namespace Qoollo.Tests.TestWriter
 
         public TestCommand ReadWithDeleteAndLocal(TestCommand userRead, bool isDelete, bool local)
         {
-            return new TestCommand() { Command = string.Format("ReadWithDeleteAndLocal%{0}%{1}", local, isDelete) };
+            return new TestCommand { Command = string.Format("ReadWithDeleteAndLocal%{0}%{1}", local, isDelete) };
         }
 
         public TestCommand CreateSelectCommand(string script, FieldDescription idDescription, List<FieldDescription> userParameters)
         {
-            return new TestCommand() { Command = script, IsDeleted = false };
+            return new TestCommand { Command = script, IsDeleted = false };
         }
 
         public TestCommand CreateSelectCommand(SelectDescription description)
@@ -94,12 +96,12 @@ namespace Qoollo.Tests.TestWriter
 
         public TestCommand CreateSelectCommand(TestCommand script, FieldDescription idDescription, List<FieldDescription> userParameters)
         {
-            return new TestCommand() { Command = script.Command, IsDeleted = false };
+            return new TestCommand { Command = script.Command, IsDeleted = false };
         }
 
         public Dictionary<string, Type> GetFieldsDescription()
         {
-            return new Dictionary<string, Type>()
+            return new Dictionary<string, Type>
             {
                 {"id", typeof(int)},
                 {"isdeleted", typeof(bool)},
@@ -110,22 +112,14 @@ namespace Qoollo.Tests.TestWriter
 
         public TestCommand SetKeytoCommand(TestCommand command, object key)
         {
-            if (key == null)
-                return new TestCommand()
-                {
-                    Command = command.Command,
-                    Value = -1,
-                    Support = command.Support,
-                    IsDeleted = command.IsDeleted,
-                    Local = command.Local
-                };
-            return new TestCommand()
+            return new TestCommand
             {
                 Command = command.Command,
-                Value = (int)key,
+                Value = key == null ? -1 : (int) key,
                 Support = command.Support,
                 IsDeleted = command.IsDeleted,
-                Local = command.Local
+                Local = command.Local,
+                Hash = command.Hash
             };
         }
 
@@ -139,6 +133,7 @@ namespace Qoollo.Tests.TestWriter
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).Local, "local"));
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).IsDeleted, "isdelete"));
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).DeleteTime, "time"));
+                fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).Hash, "hash"));
             }
 
             return fields;
@@ -151,11 +146,12 @@ namespace Qoollo.Tests.TestWriter
 
         public MetaData ReadMetaFromSearchData(SearchData data)
         {
-            bool local = (bool)data.Fields.First(x => x.Item2 == "local").Item1;
-            bool isdelete = (bool)data.Fields.First(x => x.Item2 == "isdelete").Item1;
-            DateTime time = (DateTime)data.Fields.First(x => x.Item2 == "time").Item1;
+            var local = (bool)data.Fields.First(x => x.Item2 == "local").Item1;
+            var isdelete = (bool)data.Fields.First(x => x.Item2 == "isdelete").Item1;
+            var time = (DateTime)data.Fields.First(x => x.Item2 == "time").Item1;
+            var hash = (string)data.Fields.First(x => x.Item2 == "hash").Item1;
 
-            return new MetaData(local, time, isdelete) { Id = data.Fields.First(x => x.Item2 == "").Item1 };
+            return new MetaData(local, time, isdelete, hash) {Id = data.Fields.First(x => x.Item2 == "").Item1};
         }
     }
 }

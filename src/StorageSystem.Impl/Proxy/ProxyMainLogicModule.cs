@@ -43,7 +43,7 @@ namespace Qoollo.Impl.Proxy
             if (result is FailNetResult)
             {                
                 //todo Надо поискать другой сервер, надо потом записать новый сервер
-                _cache.AddToCache(ev.Transaction.EventHash, dest);
+                _cache.AddToCache(ev.Transaction.dataHash, dest);
                 return false;
             }            
             return true;

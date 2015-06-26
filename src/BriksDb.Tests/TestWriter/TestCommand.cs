@@ -15,5 +15,7 @@ namespace Qoollo.Tests.TestWriter
         public DateTime DeleteTime { get; set; }
 
         public int Support { get; set; }
+
+        public string Hash { get; set; }
     }
 }

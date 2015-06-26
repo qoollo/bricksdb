@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -12,9 +13,6 @@ using Qoollo.Impl.Modules.Queue;
 
 namespace Qoollo.Impl.DistributorModules
 {
-    /// <summary>
-    /// Модуль, в котором должен реализовывать логика
-    /// </summary>
     internal class MainLogicModule : ControlModule
     {
         private readonly DistributorTimeoutCache _cache;
@@ -66,11 +64,11 @@ namespace Qoollo.Impl.DistributorModules
                 data.Transaction.AddErrorDescription(Errors.NotAvailableServersForWrite);
             }
             else
-            {
                 data.Transaction.Destination = new List<ServerId>(dest);
-            }
+
             if (data.Transaction.OperationName != OperationName.Read)
-                _cache.AddToCache(data.Transaction.CacheKey, data.Transaction);
+                AddDataToCache(data);
+
             if (!data.Transaction.IsError)
             {
                 data.Transaction.Distributor = _distributor.LocalForDb;
@@ -80,7 +78,7 @@ namespace Qoollo.Impl.DistributorModules
                 if (data.Transaction.IsError)
                 {
                     if (data.Transaction.OperationName != OperationName.Read)
-                        _cache.Update(data.Transaction.CacheKey, data.Transaction);
+                        UpdateDataToCache(data);
                     if (data.Transaction.OperationType == OperationType.Sync)
                         ProcessSyncTransaction(data.Transaction);
                 }
@@ -91,7 +89,7 @@ namespace Qoollo.Impl.DistributorModules
                     data.Transaction.DataHash, !data.Transaction.IsError));
 
                 if (data.Transaction.OperationName != OperationName.Read)
-                    _cache.Update(data.Transaction.CacheKey, data.Transaction);
+                    UpdateDataToCache(data);
 
                 if (data.Transaction.OperationType == OperationType.Sync)
                     ProcessSyncTransaction(data.Transaction);
@@ -104,14 +102,14 @@ namespace Qoollo.Impl.DistributorModules
             }
         }
 
-        public void DataTimeout(Common.Data.TransactionTypes.Transaction transaction)
+        public void DataTimeout(InnerData data)
         {
-            Logger.Logger.Instance.ErrorFormat("Operation timeout with key {0}", transaction.CacheKey);
+            Logger.Logger.Instance.ErrorFormat("Operation timeout with key {0}", data.Transaction.CacheKey);
 
-            transaction.SetError();
-            transaction.AddErrorDescription(Errors.TimeoutExpired);
+            data.Transaction.SetError();
+            data.Transaction.AddErrorDescription(Errors.TimeoutExpired);
 
-            _cache.Update(transaction.CacheKey, transaction);
+            _cache.Update(data.Transaction.CacheKey, data);
         }
 
         public void TransactionAnswerIncome(Common.Data.TransactionTypes.Transaction transaction)
@@ -122,9 +120,9 @@ namespace Qoollo.Impl.DistributorModules
             // значит, что либо кеш обновляется(только в случае ошибки), либо 
             // элемента просто нет в кеше(тоже ошибка)
             if (item == null)
-                return;            
+                return;
 
-            if (transaction.IsError || item.IsError)
+            if (transaction.IsError || item.Transaction.IsError)
             {
                 AddErrorAndUpdate(item, transaction.ErrorDescription);                
             }
@@ -132,15 +130,15 @@ namespace Qoollo.Impl.DistributorModules
             //if (transaction.IsError && !item.IsError)
             //    _transaction.RollbackTransaction(item);
 
-            item.IncreaseTransactionAnswersCount();
+            item.Transaction.IncreaseTransactionAnswersCount();
 
-            if (item.TransactionAnswersCount > _transaction.CountReplics)
+            if (item.Transaction.TransactionAnswersCount > _transaction.CountReplics)
             {
                 AddErrorAndUpdate(item, Errors.TransactionCountAnswersError);
                 return;
             }
 
-            if (item.TransactionAnswersCount == _transaction.CountReplics)
+            if (item.Transaction.TransactionAnswersCount == _transaction.CountReplics)
                 FinishTransaction(item);
         }
 
@@ -150,43 +148,42 @@ namespace Qoollo.Impl.DistributorModules
             if (value == null)
             {
                 var ret = new Common.Data.TransactionTypes.Transaction("", "");
-                //todo 
                 ret.DoesNotExist();
                 return ret.UserTransaction;
 
             }
-            return value.UserTransaction;
+            return value.Transaction.UserTransaction;
         }
 
         #endregion
 
         #region Private
 
-        private void FinishTransaction(Common.Data.TransactionTypes.Transaction item)
+        private void FinishTransaction(InnerData data)
         {
-            item.Complete();
+            data.Transaction.Complete();
 
             Logger.Logger.Instance.Trace(string.Format("Mainlogic: process data = {0}, result = {1}",
-                item.DataHash, !item.IsError));
+                data.Transaction.CacheKey, !data.Transaction.IsError));
 
-            if (item.OperationType == OperationType.Sync)
-                ProcessSyncTransaction(item);
+            if (data.Transaction.OperationType == OperationType.Sync)
+                ProcessSyncTransaction(data.Transaction);
             else
-                _cache.Update(item.CacheKey, item);
+                _cache.Update(data.Transaction.CacheKey, data);
 
-            item.PerfTimer.Complete();
+            data.Transaction.PerfTimer.Complete();
             PerfCounters.DistributorCounters.Instance.ProcessPerSec.OperationFinished();
         }
 
-        private void AddErrorAndUpdate(Common.Data.TransactionTypes.Transaction item, string error)
+        private void AddErrorAndUpdate(InnerData data, string error)
         {
-            item.SetError();
-            item.AddErrorDescription(error);
+            data.Transaction.SetError();
+            data.Transaction.AddErrorDescription(error);
 
-            if (item.OperationType == OperationType.Sync)
-                ProcessSyncTransaction(item);
+            if (data.Transaction.OperationType == OperationType.Sync)
+                ProcessSyncTransaction(data.Transaction);
             else
-                _cache.Update(item.CacheKey, item);
+                _cache.Update(data.Transaction.CacheKey, data);
         }
 
         private void ProcessSyncTransaction(Common.Data.TransactionTypes.Transaction item)
@@ -196,6 +193,18 @@ namespace Qoollo.Impl.DistributorModules
                 _cache.Remove(item.CacheKey);
                 _queue.DistributorTransactionCallbackQueue.Add(item);
             }
+        }
+
+        private void AddDataToCache(InnerData data)
+        {
+            var item = new InnerData(data.Transaction) {Key = data.Key};
+            _cache.AddToCache(data.Transaction.CacheKey, item);
+        }
+
+        private void UpdateDataToCache(InnerData data)
+        {
+            var item = new InnerData(data.Transaction) { Key = data.Key };
+            _cache.Update(data.Transaction.CacheKey, item);
         }
 
         #endregion

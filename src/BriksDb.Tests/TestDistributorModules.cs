@@ -323,16 +323,16 @@ namespace Qoollo.Tests
 
             var ev = new InnerData(new Transaction("123", "")) { Transaction = { Destination = new List<ServerId>() } };
 
-            cache.AddToCache("123", ev.Transaction);
+            cache.AddToCache("123", ev);
             var ret = cache.Get("123");
-            Assert.AreEqual(ev.Transaction, ret);
+            Assert.AreEqual(ev, ret);
             ev.Transaction.Complete();
-            cache.Update("123", ev.Transaction);
+            cache.Update("123", ev);
             ret = cache.Get("123");
-            Assert.AreEqual(ev.Transaction, ret);
+            Assert.AreEqual(ev, ret);
             Thread.Sleep(200);
             ret = cache.Get("123");
-            Assert.AreEqual(ev.Transaction, ret);
+            Assert.AreEqual(ev, ret);
             Assert.AreEqual(TransactionState.Complete, ev.Transaction.State);
             Thread.Sleep(500);
             ret = cache.Get("123");
@@ -363,9 +363,9 @@ namespace Qoollo.Tests
             };
 
             ev.Transaction.Complete();
-            cache.AddToCache(ev.Transaction.CacheKey, ev.Transaction);
+            cache.AddToCache(ev.Transaction.CacheKey, ev);
             var ret = cache.Get(ev.Transaction.CacheKey);
-            Assert.AreEqual(ev.Transaction, ret);
+            Assert.AreEqual(ev, ret);
             Thread.Sleep(200);
             cache.Get(ev.Transaction.CacheKey);
             Assert.AreEqual(TransactionState.Complete, ev.Transaction.State);
@@ -382,9 +382,9 @@ namespace Qoollo.Tests
             };
 
             ev.Transaction.StartTransaction();
-            cache.AddToCache(ev.Transaction.CacheKey, ev.Transaction);
+            cache.AddToCache(ev.Transaction.CacheKey, ev);
             ret = cache.Get(ev.Transaction.CacheKey);
-            Assert.AreEqual(ev.Transaction, ret);
+            Assert.AreEqual(ev, ret);
             Thread.Sleep(200);
             cache.Get(ev.Transaction.CacheKey);
             Assert.AreEqual(TransactionState.Error, ev.Transaction.State);

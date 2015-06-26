@@ -21,9 +21,9 @@ namespace Qoollo.Impl.Writer
         private readonly GlobalQueueInner _queue;
 
         public MainLogicModule(DistributorModule distributor, DbModule db)
-        {            
-            Contract.Requires( distributor!=null);
-            Contract.Requires(db!=null);            
+        {
+            Contract.Requires(distributor != null);
+            Contract.Requires(db != null);
 
             _db = db;
             _distributor = distributor;

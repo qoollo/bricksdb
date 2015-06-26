@@ -122,19 +122,15 @@ namespace Qoollo.Impl.DistributorModules
             // значит, что либо кеш обновляется(только в случае ошибки), либо 
             // элемента просто нет в кеше(тоже ошибка)
             if (item == null)
-                return;
+                return;            
 
-            if (item.IsError)
-            {
-                if (transaction.IsError)
-                    AddErrorAndUpdate(item, transaction.ErrorDescription);
-                return;
-            }
-
-            if (transaction.IsError)
+            if (transaction.IsError || item.IsError)
             {
                 AddErrorAndUpdate(item, transaction.ErrorDescription);                
             }
+
+            //if (transaction.IsError && !item.IsError)
+            //    _transaction.RollbackTransaction(item);
 
             item.IncreaseTransactionAnswersCount();
 

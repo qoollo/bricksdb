@@ -191,9 +191,8 @@ namespace Qoollo.Impl.Writer.Db
         {
             var timer = WriterCounters.Instance.ReadMetaDataTimer.StartNew();
 
-            object key;
-            object value;
-            DeserializeData(obj, out key, out value);
+            object key;            
+            DeserializeKey(obj, out key);
 
             var script = _metaDataCommandCreator.ReadMetaData(_userCommandCreator.Read());
             script = _metaDataCommandCreator.SetKeytoCommand(script, key);
@@ -474,8 +473,7 @@ namespace Qoollo.Impl.Writer.Db
         private RemoteResult CreateRollbackInner(InnerData obj)
         {
             object key;
-            object value;
-            DeserializeData(obj, out key, out value);
+            DeserializeKey(obj, out key);
 
             var command = _metaDataCommandCreator.DeleteMetaData();
             command = _metaDataCommandCreator.SetKeytoCommand(command, key);
@@ -496,8 +494,7 @@ namespace Qoollo.Impl.Writer.Db
         public override RemoteResult DeleteRollback(InnerData obj, bool local)
         {
             object key;
-            object value;
-            DeserializeData(obj, out key, out value);
+            DeserializeKey(obj, out key);
 
             var metaCommand = _metaDataCommandCreator.SetDataNotDeleted();
             metaCommand = _metaDataCommandCreator.SetKeytoCommand(metaCommand, key);

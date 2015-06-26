@@ -15,10 +15,10 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 {
     internal class TransactionModule : ControlModule
     {
-        private TransactionPool _transactionPool;
-        private GlobalQueueInner _queue;
-        private INetModule _net;
-        private QueueConfiguration _queueConfiguration;
+        private readonly TransactionPool _transactionPool;
+        private readonly GlobalQueueInner _queue;
+        private readonly INetModule _net;
+        private readonly QueueConfiguration _queueConfiguration;
 
         public int CountReplics { get; private set; }
 
@@ -66,6 +66,10 @@ namespace Qoollo.Impl.DistributorModules.Transaction
         public RentedElementMonitor<TransactionExecutor> Rent()
         {
             return _transactionPool.Rent();
+        }
+
+        public void RollbackTransaction(InnerData data)
+        {
         }
 
         #endregion

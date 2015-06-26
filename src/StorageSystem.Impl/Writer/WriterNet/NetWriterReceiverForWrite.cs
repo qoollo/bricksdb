@@ -11,16 +11,18 @@ using Qoollo.Impl.Writer.Distributor;
 
 namespace Qoollo.Impl.Writer.WriterNet
 {
-    internal class NetWriterReceiverForWrite: NetReceiveModule<ICommonNetReceiverWriterForWrite>, ICommonNetReceiverWriterForWrite
+    internal class NetWriterReceiverForWrite : NetReceiveModule<ICommonNetReceiverWriterForWrite>,
+        ICommonNetReceiverWriterForWrite
     {
-        private InputModule _inputModule;
-        private DistributorModule _distributor;
+        private readonly InputModule _inputModule;
+        private readonly DistributorModule _distributor;
 
-        public NetWriterReceiverForWrite(InputModule inputModule, DistributorModule distributor, NetReceiverConfiguration receiverConfiguration)
-            :base(receiverConfiguration)
+        public NetWriterReceiverForWrite(InputModule inputModule, DistributorModule distributor,
+            NetReceiverConfiguration receiverConfiguration)
+            : base(receiverConfiguration)
         {
-            Contract.Requires(inputModule!=null);
-            Contract.Requires(distributor!=null);
+            Contract.Requires(inputModule != null);
+            Contract.Requires(distributor != null);
             _distributor = distributor;
             _inputModule = inputModule;
         }
@@ -30,7 +32,7 @@ namespace Qoollo.Impl.Writer.WriterNet
         {
             _inputModule.Process(data);
         }
-        
+
         public RemoteResult ProcessSync(InnerData data)
         {
             return _inputModule.ProcessSync(data);

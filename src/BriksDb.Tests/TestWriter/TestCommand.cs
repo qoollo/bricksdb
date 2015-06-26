@@ -6,7 +6,7 @@ namespace Qoollo.Tests.TestWriter
     {
         public string Command { get; set; }
 
-        public int Value { get; set; }
+        public int Key { get; set; }
 
         public bool Local { get; set; }
 

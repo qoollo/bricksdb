@@ -56,7 +56,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         private void ExecuteTransaction(InnerData data, TransactionExecutor executor)
         {
-            Logger.Logger.Instance.Debug(string.Format("Transaction process data = {0}", data.Transaction.dataHash));
+            Logger.Logger.Instance.Debug(string.Format("Transaction process data = {0}", data.Transaction.DataHash));
 
             data.Transaction.StartTransaction();
 

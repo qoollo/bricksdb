@@ -23,34 +23,40 @@ namespace Qoollo.Tests.TestWriter
             return new TestCommand();
         }
 
-        public TestCommand CreateMetaData(bool remote, string dataHash)
+        public TestCommand CreateMetaData(bool remote, string dataHash, object key)
         {
-            return new TestCommand { Command = "createmeta", Local = remote , Hash = dataHash};
+            return new TestCommand
+            {
+                Command = "createmeta",
+                Local = remote,
+                Hash = dataHash,
+                Key = key == null ? -1 : (int) key
+            };
         }
 
-        public TestCommand DeleteMetaData()
+        public TestCommand DeleteMetaData(object key)
         {
-            return new TestCommand { Command = "deletemeta" };
+            return new TestCommand { Command = "deletemeta" , Key = (int)key};
         }
 
-        public TestCommand UpdateMetaData(bool local)
+        public TestCommand UpdateMetaData(bool local, object key)
         {
-            return new TestCommand { Command = "updatemeta", Local = local };
+            return new TestCommand { Command = "updatemeta", Local = local , Key = (int)key};
         }
 
-        public TestCommand SetDataDeleted()
+        public TestCommand SetDataDeleted(object key)
         {
-            return new TestCommand { Command = "setdatadeleted" };
+            return new TestCommand { Command = "setdatadeleted", Key = (int)key };
         }
 
-        public TestCommand SetDataNotDeleted()
+        public TestCommand SetDataNotDeleted(object key)
         {
-            return new TestCommand { Command = "setdatanotdeleted" };
+            return new TestCommand { Command = "setdatanotdeleted", Key = (int)key};
         }
 
-        public TestCommand ReadMetaData(TestCommand userRead)
+        public TestCommand ReadMetaData(string hash)
         {
-            return new TestCommand { Command = "readMeta" };
+            return new TestCommand { Command = "readMeta", Hash = hash, Key = -1};
         }
 
         Tuple<MetaData, bool> IMetaDataCommandCreator<TestCommand, TestDbReader>.ReadMetaDataFromReader(
@@ -66,14 +72,15 @@ namespace Qoollo.Tests.TestWriter
             return string.Format("ReadWithDeleteAndLocal%{0}%{1}", local, isDelete);
         }
 
-        public TestCommand ReadWithDelete(TestCommand userRead, bool idDelete)
+        public TestCommand ReadWithDelete(TestCommand userRead, bool idDelete, object key)
         {
             var ret = new TestCommand
             {
                 Command = "ReadAllElementsAndMergeWhereStatemenetForKey",
                 Local = true,
                 Support = 10,
-                IsDeleted = idDelete
+                IsDeleted = idDelete,
+                Key = (int)key
             };
 
             return ret;
@@ -105,26 +112,13 @@ namespace Qoollo.Tests.TestWriter
             };
         }
 
-        public TestCommand SetKeytoCommand(TestCommand command, object key)
-        {
-            return new TestCommand
-            {
-                Command = command.Command,
-                Value = key == null ? -1 : (int) key,
-                Support = command.Support,
-                IsDeleted = command.IsDeleted,
-                Local = command.Local,
-                Hash = command.Hash
-            };
-        }
-
         public List<Tuple<object, string>> SelectProcess(DbReader<TestDbReader> reader)
         {
             var fields = new List<Tuple<object, string>>();
 
             for (int i = 0; i < reader.CountFields(); i++)
             {
-                fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).Value, ""));
+                fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).Key, ""));
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).Local, "local"));
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).IsDeleted, "isdelete"));
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).DeleteTime, "time"));

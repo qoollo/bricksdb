@@ -166,7 +166,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         public RemoteResult Process(ServerId server, InnerData data)
         {
             Logger.Logger.Instance.Debug(string.Format("DistributorNetModule: process server = {0}, data = {1}", server,
-                                                       data.Transaction.dataHash));
+                                                       data.Transaction.DataHash));
             var connection = FindServer(server) as SingleConnectionToWriter;
 
             if (connection == null)
@@ -179,7 +179,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
             {
                 Logger.Logger.Instance.Debug(string.Format(
                     "DistributorNetModule: process server not found  server = {0}, data = {1}", server,
-                    data.Transaction.dataHash));
+                    data.Transaction.DataHash));
                 _distributor.ServerNotAvailable(server);
                 return new ServerNotFoundResult();
             }
@@ -190,7 +190,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
             {
                 Logger.Logger.Instance.Debug(string.Format("DistributorNetModule: process fail result  server = {0}, data = {1}",
                                                            server,
-                                                           data.Transaction.dataHash));
+                                                           data.Transaction.DataHash));
 
                 RemoveConnection(server);
                 _distributor.ServerNotAvailable(server);
@@ -202,7 +202,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         public RemoteResult Rollback(ServerId server, InnerData data)
         {
             Logger.Logger.Instance.Debug(string.Format("DistributorNetModule: rollback = {0}, data = {1}", server,
-                                                           data.Transaction.dataHash));
+                                                           data.Transaction.DataHash));
             var connection = FindServer(server) as SingleConnectionToWriter;
 
             if (connection == null)
@@ -252,7 +252,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         public InnerData ReadOperation(ServerId server, InnerData data)
         {
             Logger.Logger.Instance.Debug(string.Format("DistributorNetModule: process server = {0}, data = {1}", server,
-                                                       data.Transaction.dataHash));
+                                                       data.Transaction.DataHash));
             var connection = FindServer(server) as SingleConnectionToWriter;
 
             if (connection == null)
@@ -265,7 +265,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
             {
                 Logger.Logger.Instance.Debug(string.Format(
                     "DistributorNetModule: process server not found  server = {0}, data = {1}", server,
-                    data.Transaction.dataHash));
+                    data.Transaction.DataHash));
 
                 RemoveConnection(server);
                 _distributor.ServerNotAvailable(server);

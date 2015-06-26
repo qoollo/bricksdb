@@ -165,7 +165,7 @@ namespace Qoollo.Impl.DistributorModules
         {
             Logger.Logger.Instance.Trace(
                 string.Format("Distributor: Get destination event hash = {0}, distr hash = {1}",
-                    data.Transaction.dataHash, data.Transaction.DistributorHash));
+                    data.Transaction.DataHash, data.Transaction.DistributorHash));
 
             data.Transaction.IsNeedAllServes = needAllServers;
 

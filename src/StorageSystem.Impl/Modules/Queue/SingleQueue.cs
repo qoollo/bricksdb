@@ -7,7 +7,7 @@ namespace Qoollo.Impl.Modules.Queue
     {
         private int _countProcessors;
         private int _elementCounts;
-        private DeleageQueueAsyncProcessor<T> _queue;        
+        private DeleageQueueAsyncProcessor<T> _queue;
         private Action<T> _action;
 
         protected void Registrate(int countProcessors, int elemenetsCount, Action<T> action)
@@ -15,9 +15,12 @@ namespace Qoollo.Impl.Modules.Queue
             _countProcessors = countProcessors;
             _elementCounts = elemenetsCount;
             _action = action;
-        }        
+        }
 
-        public int Count { get { return _queue.ElementCount; } }
+        public int Count
+        {
+            get { return _queue.ElementCount; }
+        }
 
         public void Add(T element)
         {
@@ -30,14 +33,15 @@ namespace Qoollo.Impl.Modules.Queue
             {
                 if (_queue != null)
                     _queue.Dispose();
-                _queue = new DeleageQueueAsyncProcessor<T>(_countProcessors, _elementCounts, "", (obj, token) => _action(obj));
+                _queue = new DeleageQueueAsyncProcessor<T>(_countProcessors, _elementCounts, "",
+                    (obj, token) => _action(obj));
                 _queue.Start();
-            }            
-        }       
+            }
+        }
 
         protected override void Dispose(bool isUserCall)
         {
-            if (isUserCall && _queue!=null)
+            if (isUserCall && _queue != null)
                 _queue.Dispose();
 
             base.Dispose(isUserCall);

@@ -10,20 +10,19 @@ namespace Qoollo.Impl.Writer.Db.Commands
     {
         void SetKeyName(string keyName);
         void SetTableName(List<string> tableName);
-
         TCommand InitMetaDataDb(string idInit);
-        TCommand CreateMetaData(bool remote, string dataHash);
-        TCommand DeleteMetaData();
-        TCommand UpdateMetaData(bool local);
-        TCommand SetDataDeleted();
-        TCommand SetDataNotDeleted();
+        TCommand CreateMetaData(bool remote, string dataHash, object key);
+        TCommand DeleteMetaData(object key);
+        TCommand UpdateMetaData(bool local, object key);
+        TCommand SetDataDeleted(object key);
+        TCommand SetDataNotDeleted(object key);
 
-        TCommand ReadMetaData(TCommand userRead);
+        TCommand ReadMetaData(string dataHash);
         Tuple<MetaData, bool> ReadMetaDataFromReader(DbReader<TReader> reader, bool readuserId = true);
         MetaData ReadMetaFromSearchData(SearchData data);
         string ReadWithDeleteAndLocal(bool isDelete, bool local);
 
-        TCommand ReadWithDelete(TCommand userRead, bool isDelete);
+        TCommand ReadWithDelete(TCommand userRead, bool isDelete, object key);
         TCommand ReadWithDeleteAndLocal(TCommand userRead, bool isDelete, bool local);
 
         TCommand CreateSelectCommand(string script, FieldDescription idDescription,
@@ -35,7 +34,7 @@ namespace Qoollo.Impl.Writer.Db.Commands
         List<Tuple<object, string>> SelectProcess(DbReader<TReader> reader);
 
         Dictionary<string, Type> GetFieldsDescription();
-        TCommand SetKeytoCommand(TCommand command, object key);
+        
         FieldDescription GetKeyDescription();        
     }
 }

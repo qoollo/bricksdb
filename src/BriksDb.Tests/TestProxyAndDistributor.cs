@@ -19,16 +19,16 @@ namespace Qoollo.Tests
     public class TestProxyAndDistributor
     {
         private TestProxySystem _proxy;
-        const int proxyServer = 32223;
+        const int ProxyServer = 32223;
 
         [TestInitialize]
         public void Initialize()
         {
             var queue = new QueueConfiguration(1, 100);
             var connection = new ConnectionConfiguration("testService", 10);
-            var ndrc2 = new NetReceiverConfiguration(proxyServer, "localhost", "testService");
+            var ndrc2 = new NetReceiverConfiguration(ProxyServer, "localhost", "testService");
             var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(2));
-            _proxy = new TestProxySystem(new ServerId("localhost", proxyServer),
+            _proxy = new TestProxySystem(new ServerId("localhost", ProxyServer),
                queue, connection, pcc, pcc, ndrc2,
                new AsyncTasksConfiguration(new TimeSpan()),
                new AsyncTasksConfiguration(new TimeSpan()),
@@ -443,7 +443,7 @@ namespace Qoollo.Tests
             var dhc = new DistributorHashConfiguration(2);
             var queue = new QueueConfiguration(1, 100);
             var connection = new ConnectionConfiguration("testService", 10);
-            var dcc = new DistributorCacheConfiguration(TimeSpan.FromMilliseconds(6000), TimeSpan.FromMilliseconds(10000));
+            var dcc = new DistributorCacheConfiguration(TimeSpan.FromMilliseconds(600000), TimeSpan.FromMilliseconds(1000000));
             var ndrc = new NetReceiverConfiguration(distrServerForDb, "localhost", "testService");
             var ndrc12 = new NetReceiverConfiguration(distrServerForProxy, "localhost", "testService");            
 

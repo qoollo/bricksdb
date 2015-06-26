@@ -33,13 +33,30 @@ namespace Qoollo.Impl.Writer
             _queue.DbInputProcessQueue.Registrate(_queueConfiguration, ProcessInner);
         }
 
-        #region Execute
+        #region Rollback
 
         private void RollbackProcess(InnerData data)
         {
-            Logger.Logger.Instance.DebugFormat("Rollback type {0}, hash {1}", data.Transaction.OperationName, data.Transaction.DataHash);
+            Logger.Logger.Instance.DebugFormat("Rollback type {0}, hash {1}", data.Transaction.OperationName,
+                data.Transaction.DataHash);
 
             _mainLogicModule.Rollback(data);
+        }
+
+        public void Rollback(InnerData data)
+        {
+            _queue.DbInputRollbackQueue.Add(data);
+        }
+
+        #endregion
+
+        #region Process        
+
+        public void Process(InnerData data)
+        {
+            data.Transaction.PerfTimer = WriterCounters.Instance.AverageTimerWithQueue.StartNew();
+            _queue.DbInputProcessQueue.Add(data);
+            WriterCounters.Instance.IncomePerSec.OperationFinished();
         }
 
         private RemoteResult ProcessData(InnerData data)
@@ -55,44 +72,24 @@ namespace Qoollo.Impl.Writer
 
             WriterCounters.Instance.ProcessPerSec.OperationFinished();
             return ret;
-        }
-
-        #endregion        
-
-        #region Insert into queue
-
-        public void Process(InnerData data)
-        {
-            data.Transaction.PerfTimer = WriterCounters.Instance.AverageTimerWithQueue.StartNew();
-            _queue.DbInputProcessQueue.Add(data);
-            WriterCounters.Instance.IncomePerSec.OperationFinished();
-        }
-
-        public void Rollback(InnerData data)
-        {
-            _queue.DbInputRollbackQueue.Add(data);
-        }
-
-        #endregion
-
-        #region Sync
+        }      
 
         private void ProcessInner(InnerData data)
         {
             ProcessData(data);
-        }                
+        }
 
         public RemoteResult ProcessSync(InnerData data)
         {
             return ProcessData(data);
         }
 
+        #endregion          
+
         public Tuple<RemoteResult, SelectSearchResult> SelectQuery(SelectDescription description)
-        {            
+        {
             return _mainLogicModule.SelectQuery(description);
         }
-
-        #endregion
 
         public InnerData ReadOperation(InnerData data)
         {

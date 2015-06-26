@@ -16,14 +16,14 @@ namespace Qoollo.Impl.Writer
 {
     internal class MainLogicModule:ControlModule
     {
-        private DbModule _db;
-        private DistributorModule _distributor;        
-        private GlobalQueueInner _queue;
+        private readonly DbModule _db;
+        private readonly DistributorModule _distributor;        
+        private readonly GlobalQueueInner _queue;
 
         public MainLogicModule(DistributorModule distributor, DbModule db)
-        {            
-            Contract.Requires( distributor!=null);
-            Contract.Requires(db!=null);            
+        {
+            Contract.Requires(distributor != null);
+            Contract.Requires(db != null);
 
             _db = db;
             _distributor = distributor;

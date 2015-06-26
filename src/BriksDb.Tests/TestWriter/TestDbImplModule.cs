@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Qoollo.Impl.Collector.Comparer;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
@@ -17,7 +15,7 @@ namespace Qoollo.Tests.TestWriter
         public List<int> Data = new List<int>();
         public List<TestCommand> Meta = new List<TestCommand>();
 
-        private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
         public int Local
         {
@@ -59,7 +57,6 @@ namespace Qoollo.Tests.TestWriter
         {
             _lock.EnterWriteLock();
 
-            RemoteResult ret = null;
             switch (command.Command)
             {
                 case "create":
@@ -75,7 +72,7 @@ namespace Qoollo.Tests.TestWriter
                 case "updatemeta":
                     if (!Meta.Exists(x => x.Value == command.Value))
                     {
-                        Meta.Add(new TestCommand() { Value = command.Value, Local = command.Local });
+                        Meta.Add(new TestCommand { Value = command.Value, Local = command.Local });
                     }
                     else
                     {
@@ -89,7 +86,7 @@ namespace Qoollo.Tests.TestWriter
                     Delete++;
                     break;
                 case "createmeta":
-                    Meta.Add(new TestCommand() { Value = command.Value, Local = command.Local });
+                    Meta.Add(new TestCommand {Value = command.Value, Local = command.Local, Hash = command.Hash});
                     break;
                 case "deletemeta":
                     Meta.RemoveAll(x => x.Value == command.Value);
@@ -106,12 +103,9 @@ namespace Qoollo.Tests.TestWriter
                     Meta.Find(x => x.Value == command.Value).IsDeleted = false;
                     break;
             }
-
-            ret = new SuccessResult();
-
             _lock.ExitWriteLock();
 
-            return ret;
+            return new SuccessResult();
         }
 
         public override DbReader<TestDbReader> CreateReader(TestCommand command)

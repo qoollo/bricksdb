@@ -6,8 +6,8 @@ namespace Qoollo.Impl.Modules.Cache
 {
     internal abstract class CacheModule<T>:ControlModule where T :class 
     {
-        private MemoryCache _cache;
-        private TimeSpan _timeout;
+        private readonly MemoryCache _cache;
+        private readonly TimeSpan _timeout;
 
         protected CacheModule(TimeSpan timeout)
         {

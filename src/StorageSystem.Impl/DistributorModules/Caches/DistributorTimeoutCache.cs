@@ -37,13 +37,21 @@ namespace Qoollo.Impl.DistributorModules.Caches
 
         public void AddDataToCache(InnerData data)
         {
-            var item = new InnerData(data.Transaction) { Key = data.Key };
+            var item = new InnerData(data.Transaction)
+            {
+                Key = data.Key ,
+                DistributorData = data.DistributorData
+            };
             AddToCache(data.Transaction.CacheKey, item);
         }
 
         public void UpdateDataToCache(InnerData data)
         {
-            var item = new InnerData(data.Transaction) { Key = data.Key };
+            var item = new InnerData(data.Transaction)
+            {
+                Key = data.Key ,
+                DistributorData = data.DistributorData
+            };
             Update(data.Transaction.CacheKey, item);
         }
     }

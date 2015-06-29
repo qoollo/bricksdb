@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
-using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;

@@ -54,7 +54,7 @@ namespace Qoollo.Impl.DistributorModules
                 data.Transaction.Destination = new List<ServerId>(dest);
 
             if (data.Transaction.OperationName != OperationName.Read)
-                _cache.AddDataToCache(data);
+                AddToCache(data);
 
             if (!data.Transaction.IsError)
             {
@@ -65,7 +65,7 @@ namespace Qoollo.Impl.DistributorModules
                 if (data.Transaction.IsError)
                 {
                     if (data.Transaction.OperationName != OperationName.Read)
-                        _cache.UpdateDataToCache(data);
+                        UpdateToCache(data);
                     if (data.Transaction.OperationType == OperationType.Sync)
                         _transaction.RemoveTransaction(data.Transaction);
                 }
@@ -76,7 +76,7 @@ namespace Qoollo.Impl.DistributorModules
                     data.Transaction.DataHash, !data.Transaction.IsError));
 
                 if (data.Transaction.OperationName != OperationName.Read)
-                    _cache.UpdateDataToCache(data);
+                    UpdateToCache(data);
 
                 if (data.Transaction.OperationType == OperationType.Sync)
                     _transaction.RemoveTransaction(data.Transaction);
@@ -100,6 +100,24 @@ namespace Qoollo.Impl.DistributorModules
 
             }
             return value.Transaction.UserTransaction;
+        }
+
+        public void AddToCache(InnerData data)
+        {
+            data.DistributorData = new DistributorData();
+
+            using (data.DistributorData.GetLock())
+            {
+                _cache.AddDataToCache(data);
+            }
+        }
+
+        public void UpdateToCache(InnerData data)
+        {
+            using (data.DistributorData.GetLock())
+            {
+                _cache.UpdateDataToCache(data);
+            }
         }
     }
 }

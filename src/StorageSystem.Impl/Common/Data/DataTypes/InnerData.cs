@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Serialization;
+using Qoollo.Impl.Collector.Tasks;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 
 namespace Qoollo.Impl.Common.Data.DataTypes
@@ -20,7 +21,7 @@ namespace Qoollo.Impl.Common.Data.DataTypes
 
         public MetaData MetaData { get; set; }
 
-        public readonly object Lock = new object();
+        public DistributorData DistributorData { get; set; }
 
         public InnerData(Transaction transaction)
         {

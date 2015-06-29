@@ -197,7 +197,7 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(200));
 
-            int count = 50;
+            const int count = 50;
             int counter = 0;
 
             var api = proxy.CreateApi("Int", false, new IntHashConvertor());

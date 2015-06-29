@@ -79,12 +79,7 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
         /// </summary>        
         public List<ServerId> Destination { get; set; }        
 
-        public TimeCounterTimer PerfTimer { get; set; }
-
-        /// <summary>
-        /// Is need find data on all servers        
-        /// </summary>
-        public bool IsNeedAllServes { get; set; }
+        public TimeCounterTimer PerfTimer { get; set; }        
 
         #endregion
 

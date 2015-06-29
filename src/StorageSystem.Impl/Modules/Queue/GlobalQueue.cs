@@ -53,10 +53,7 @@ namespace Qoollo.Impl.Modules.Queue
         public QueueWithParam<Transaction> TransactionAnswerQueue { get { return _transactionAnswerQueue; } }
 
         private QueueWithParam<Transaction> _distributorTransactionCallbackQueue;
-        public QueueWithParam<Transaction> DistributorTransactionCallbackQueue { get { return _distributorTransactionCallbackQueue; } }
-
-        private QueueWithParam<InnerData> _distributorReadQueue;
-        public QueueWithParam<InnerData> DistributorReadQueue { get { return _distributorReadQueue; } }
+        public QueueWithParam<Transaction> DistributorTransactionCallbackQueue { get { return _distributorTransactionCallbackQueue; } }        
 
         private QueueWithParam<InnerData> _dbTimeoutQueue;
         public QueueWithParam<InnerData> DbTimeoutQueue { get { return _dbTimeoutQueue; } }
@@ -75,7 +72,6 @@ namespace Qoollo.Impl.Modules.Queue
             _transactionQueue = new QueueWithParam<Transaction>();
             _transactionAnswerQueue = new QueueWithParam<Transaction>();
             _distributorTransactionCallbackQueue = new QueueWithParam<Transaction>();
-            _distributorReadQueue = new QueueWithParam<InnerData>();
             _dbTimeoutQueue = new QueueWithParam<InnerData>();
         }
 
@@ -96,7 +92,6 @@ namespace Qoollo.Impl.Modules.Queue
             _transactionQueue.Start();
             _transactionAnswerQueue.Start();
             _distributorTransactionCallbackQueue.Start();
-            _distributorReadQueue.Start();
             _dbTimeoutQueue.Start();
         }
 
@@ -116,7 +111,6 @@ namespace Qoollo.Impl.Modules.Queue
                 _transactionQueue.Dispose();
                 _transactionAnswerQueue.Dispose();
                 _distributorTransactionCallbackQueue.Dispose();
-                _distributorReadQueue.Dispose();
                 _dbTimeoutQueue.Dispose();
             }
 

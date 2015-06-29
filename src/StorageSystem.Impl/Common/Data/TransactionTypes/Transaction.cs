@@ -141,12 +141,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
             set { _systemTransaction.PerfTimer = value; }
         }
 
-        public bool IsNeedAllServes
-        {
-            get { return _systemTransaction.IsNeedAllServes; }
-            set { _systemTransaction.IsNeedAllServes = value; }
-        }
-
         #endregion
 
         #endregion

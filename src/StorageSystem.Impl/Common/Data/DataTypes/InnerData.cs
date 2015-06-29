@@ -11,23 +11,16 @@ namespace Qoollo.Impl.Common.Data.DataTypes
         /// </summary>
         [DataMember]
         public Transaction Transaction { get; set; }
-        
-        /// <summary>
-        /// Serialized data
-        /// </summary>
+                
         [DataMember]
         public byte[] Data { get; set; }
         
-        /// <summary>
-        /// Serialized key
-        /// </summary>
         [DataMember]
         public byte[] Key { get; set; }
 
-        /// <summary>
-        /// Metadata
-        /// </summary>
         public MetaData MetaData { get; set; }
+
+        public readonly object Lock = new object();
 
         public InnerData(Transaction transaction)
         {

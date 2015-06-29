@@ -167,17 +167,11 @@ namespace Qoollo.Impl.DistributorModules
                 string.Format("Distributor: Get destination event hash = {0}, distr hash = {1}",
                     data.Transaction.DataHash, data.Transaction.DistributorHash));
 
-            data.Transaction.IsNeedAllServes = needAllServers;
+            var ret = !needAllServers
+                ? _modelOfDbWriters.GetDestination(data)
+                : _modelOfDbWriters.GetAllAvailableServers();
 
-            List<WriterDescription> ret = null;
-            if (!needAllServers)
-                ret = _modelOfDbWriters.GetDestination(data);
-            else
-                ret = _modelOfDbWriters.GetAllAvailableServers();
-
-            if (ret.Count == 0)
-                return null;
-            return ret;
+            return ret.Count == 0 ? null : ret;
         }
 
         #endregion

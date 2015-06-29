@@ -2,10 +2,12 @@
 using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
+using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet.Interfaces;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Queue;
@@ -15,34 +17,34 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 {
     internal class TransactionModule : ControlModule
     {
-        private readonly TransactionPool _transactionPool;
-        private readonly GlobalQueueInner _queue;
-        private readonly INetModule _net;
-        private readonly QueueConfiguration _queueConfiguration;
-
-        public int CountReplics { get; private set; }
-
-        public TransactionModule(QueueConfiguration configuration, INetModule net, TransactionConfiguration transactionConfiguration,
-                                 DistributorHashConfiguration distributorHashConfiguration)
+        public TransactionModule(INetModule net, TransactionConfiguration transactionConfiguration,
+            int countReplics, DistributorTimeoutCache cache)
         {
             Contract.Requires(net != null);
-            Contract.Requires(transactionConfiguration!=null);
-            Contract.Requires(distributorHashConfiguration!=null);
-            Contract.Requires(configuration!=null);
+            Contract.Requires(transactionConfiguration != null);
+            Contract.Requires(countReplics>0);            
+            Contract.Requires(cache != null);                        
 
-            _queueConfiguration = configuration;
-            _transactionPool = new TransactionPool(transactionConfiguration.ElementsCount, net,
-                                                   distributorHashConfiguration);
-            CountReplics = distributorHashConfiguration.CountReplics;
+            _transactionPool = new TransactionPool(transactionConfiguration.ElementsCount, net, countReplics);
+            _countReplics = countReplics;
             _net = net;
+            _cache = cache;
             _queue = GlobalQueue.Queue;
+
+            _cache.DataTimeout += DataTimeout;
         }
+
+        private readonly int _countReplics;
+        private readonly DistributorTimeoutCache _cache;
+        private readonly TransactionPool _transactionPool;
+        private readonly INetModule _net;
+        private readonly GlobalQueueInner _queue;
 
         #region ControlModule
 
         public override void Start()
         {
-            _queue.DistributorReadQueue.Registrate(_queueConfiguration, ReadProcess);
+            _queue.TransactionQueue.Registrate(TransactionAnswerIncome);
             _transactionPool.FillPoolUpTo(_transactionPool.MaxElementCount);
         }
 
@@ -68,52 +70,16 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             return _transactionPool.Rent();
         }
 
-        public void RollbackTransaction(InnerData data)
-        {
-        }
-
         #endregion
 
         #region Read operation
 
         private void Read(InnerData data, TransactionExecutor executor)
         {
-            if (data.Transaction.IsNeedAllServes)
-                ReadLong(data);
-            else
-                ReadSimple(data, executor);
-        }
-
-        private void ReadSimple(InnerData data, TransactionExecutor executor)
-        {
             var result = executor.ReadSimple(data);
             ProcessReadResult(data, result, data.Transaction.ProxyServerId);
             data.Transaction.PerfTimer.Complete();
             PerfCounters.DistributorCounters.Instance.ProcessPerSec.OperationFinished();
-        }
-
-        private void ReadLong(InnerData data)
-        {
-            _queue.DistributorReadQueue.Add(data);
-        }
-
-        private void ReadProcess(InnerData data)
-        {
-            var list = new List<InnerData>();
-
-            foreach (var serverId in data.Transaction.Destination)
-            {
-                var result = _net.ReadOperation(serverId, data);
-                if (result != null)
-                    list.Add(result);
-            }
-            var readResult = ChooseReadResult(list);
-            ProcessReadResult(data, readResult, data.Transaction.ProxyServerId);
-        }
-
-        private InnerData ChooseReadResult(List<InnerData> list)
-        {
-            return list.Find(x => x != null && x.Data != null);
         }
 
         private void ProcessReadResult(InnerData data, InnerData result, ServerId proxyServerId)
@@ -134,6 +100,88 @@ namespace Qoollo.Impl.DistributorModules.Transaction
         }
 
         #endregion
+
+        public void TransactionAnswerIncome(Common.Data.TransactionTypes.Transaction transaction)
+        {
+            var item = _cache.Get(transaction.CacheKey);
+
+            if (item == null)
+                return;
+
+            if (transaction.IsError || item.Transaction.IsError)
+            {
+                AddErrorAndUpdate(item, transaction.ErrorDescription);
+            }
+
+            //if (transaction.IsError && !item.IsError)
+            //    _transaction.RollbackTransaction(item);
+
+            item.Transaction.IncreaseTransactionAnswersCount();
+
+            if (item.Transaction.TransactionAnswersCount > _countReplics)
+            {
+                AddErrorAndUpdate(item, Errors.TransactionCountAnswersError);
+                return;
+            }
+
+            if (item.Transaction.TransactionAnswersCount == _countReplics)
+                FinishTransaction(item);
+        }
+
+        public void DataTimeout(InnerData data)
+        {
+            Logger.Logger.Instance.ErrorFormat("Operation timeout with key {0}", data.Transaction.CacheKey);
+
+            data.Transaction.SetError();
+            data.Transaction.AddErrorDescription(Errors.TimeoutExpired);
+
+            _cache.Update(data.Transaction.CacheKey, data);
+        }
+
+        public void RemoveTransaction(Common.Data.TransactionTypes.Transaction item)
+        {
+            if (item.OperationName != OperationName.Read)
+            {
+                _cache.Remove(item.CacheKey);
+                _queue.DistributorTransactionCallbackQueue.Add(item);
+            }
+        }
+
+        private void FinishTransaction(InnerData data)
+        {
+            data.Transaction.Complete();
+
+            Logger.Logger.Instance.Trace(string.Format("Mainlogic: process data = {0}, result = {1}",
+                data.Transaction.CacheKey, !data.Transaction.IsError));
+
+            if (data.Transaction.OperationType == OperationType.Sync)
+                ProcessSyncTransaction(data.Transaction);
+            else
+                _cache.Update(data.Transaction.CacheKey, data);
+
+            data.Transaction.PerfTimer.Complete();
+            PerfCounters.DistributorCounters.Instance.ProcessPerSec.OperationFinished();
+        }
+
+        private void AddErrorAndUpdate(InnerData data, string error)
+        {
+            data.Transaction.SetError();
+            data.Transaction.AddErrorDescription(error);
+
+            if (data.Transaction.OperationType == OperationType.Sync)
+                ProcessSyncTransaction(data.Transaction);
+            else
+                _cache.Update(data.Transaction.CacheKey, data);
+        }
+
+        private void ProcessSyncTransaction(Common.Data.TransactionTypes.Transaction item)
+        {
+            if (item.OperationName != OperationName.Read)
+            {
+                _cache.Remove(item.CacheKey);
+                _queue.DistributorTransactionCallbackQueue.Add(item);
+            }
+        }
 
         protected override void Dispose(bool isUserCall)
         {

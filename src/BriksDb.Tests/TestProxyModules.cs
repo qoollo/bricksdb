@@ -350,10 +350,10 @@ namespace Qoollo.Tests
                 new HashMapConfiguration("test7", HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
             dnet.SetDistributor(ddistributor);
 
-            var tranc = new TransactionModule(new QueueConfiguration(1, 1000), dnet, new TransactionConfiguration(4),
-                                              new DistributorHashConfiguration(1));
-            var main = new MainLogicModule(new DistributorTimeoutCache(new TimeSpan(), new TimeSpan()), ddistributor,
-                                           tranc);
+            var cache = new DistributorTimeoutCache(
+                new DistributorCacheConfiguration(new TimeSpan(), new TimeSpan()));
+            var tranc = new TransactionModule(dnet, new TransactionConfiguration(4), 1, cache);
+            var main = new MainLogicModule(ddistributor, tranc, cache);
             var netReceive4 = new NetReceiverConfiguration(server4, "localhost", "testService");
             var netReceive42 = new NetReceiverConfiguration(server42, "localhost", "testService");
 

@@ -48,11 +48,11 @@ namespace Qoollo.Tests.Support
 
             _dnet.SetDistributor(Distributor);
 
-            _tranc = new TransactionModule(new QueueConfiguration(1, 1000), _dnet, new TransactionConfiguration(4),
-                distrconfig);
-            Main =
-                new MainLogicModule(new DistributorTimeoutCache(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)),
-                    Distributor, _tranc);
+            var cache = new DistributorTimeoutCache(
+                new DistributorCacheConfiguration(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)));
+            _tranc = new TransactionModule(_dnet, new TransactionConfiguration(4),
+                distrconfig.CountReplics, cache);
+            Main = new MainLogicModule(Distributor, _tranc, cache);
 
             var netReceive1 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
             var netReceive2 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
@@ -67,6 +67,7 @@ namespace Qoollo.Tests.Support
 
         public void Start()
         {
+            _tranc.Start();
             Main.Start();
             _receiver.Start();
             Input.Start();

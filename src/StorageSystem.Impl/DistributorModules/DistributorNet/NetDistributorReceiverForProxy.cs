@@ -13,9 +13,9 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 {
     internal class NetDistributorReceiverForProxy : NetReceiveModule<ICommonNetReceiverForProxy>, ICommonNetReceiverForProxy
     {
-        private MainLogicModule _mainLogic;
-        private IInputModule _input;
-        private DistributorModule _distributorModule;
+        private readonly MainLogicModule _mainLogic;
+        private readonly IInputModule _input;
+        private readonly DistributorModule _distributorModule;
 
         public NetDistributorReceiverForProxy(MainLogicModule main, IInputModule input, DistributorModule distributorModule,
                                       NetReceiverConfiguration receiverConfiguration):base(receiverConfiguration)

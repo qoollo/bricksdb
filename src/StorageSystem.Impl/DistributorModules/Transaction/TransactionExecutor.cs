@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.DistributorModules.DistributorNet.Interfaces;
+using Qoollo.Impl.Modules.Queue;
 
 namespace Qoollo.Impl.DistributorModules.Transaction
 {
@@ -13,12 +14,17 @@ namespace Qoollo.Impl.DistributorModules.Transaction
     {
         private readonly INetModule _net;
         private readonly List<Task> _tasks;
+        private readonly object _obj = new object();
+        private readonly GlobalQueueInner _queue;
 
         public TransactionExecutor(INetModule net, int countReplics)
         {
             Contract.Requires(net!=null);
             _net = net;
             _tasks = new List<Task>();
+
+            _queue = GlobalQueue.Queue;
+
             for (int i = 0; i < countReplics; i++)
             {
                 _tasks.Add(new Task(() => { }));
@@ -49,15 +55,15 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         private void CommitSingleServer(ServerId server, InnerData data)
         {
-            var obj = new object();
             var result = _net.Process(server, data);
-
             if (result.IsError)
             {
-                lock (obj)
+                lock (_obj)
                 {
                     data.Transaction.SetError();
                     data.Transaction.AddErrorDescription(result.Description);
+
+                    //_queue.DistributorTransactionCallbackQueue.Add(data.Transaction);
                 }
             }
         }

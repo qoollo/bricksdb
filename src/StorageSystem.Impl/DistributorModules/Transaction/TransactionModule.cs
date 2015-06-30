@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
@@ -68,6 +69,20 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             return _transactionPool.Rent();
         }
 
+        private void Rollback(InnerData data)
+        {
+            try
+            {
+                foreach (var server in data.Transaction.Destination)
+                {
+                    _net.Rollback(server, data);
+                }
+            }
+            catch (Exception e)
+            {
+            }
+        }
+
         #endregion
 
         #region Read operation
@@ -106,27 +121,44 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             if (item == null)
                 return;
 
-            if (transaction.IsError || item.Transaction.IsError)
+            using (item.DistributorData.GetLock())
             {
-                AddErrorAndUpdate(item, transaction.ErrorDescription);
+                //if (transaction.IsError && !item.DistributorData.IsRollbackSended)
+                //{
+                //    item.DistributorData.SendRollback();
+                //    Rollback(item);
+                //}
+
+                if (transaction.IsError || item.Transaction.IsError)
+                {
+                    AddErrorAndUpdate(item, transaction.ErrorDescription);
+                }                
+
+                item.Transaction.IncreaseTransactionAnswersCount();
+
+                if (item.Transaction.TransactionAnswersCount > _countReplics)
+                {
+                    AddErrorAndUpdate(item, Errors.TransactionCountAnswersError);
+                    return;
+                }
+
+                if (item.Transaction.TransactionAnswersCount == _countReplics)
+                    FinishTransaction(item);
             }
-
-            //if (transaction.IsError && !item.IsError)
-            //    _transaction.RollbackTransaction(item);
-
-            item.Transaction.IncreaseTransactionAnswersCount();
-
-            if (item.Transaction.TransactionAnswersCount > _countReplics)
-            {
-                AddErrorAndUpdate(item, Errors.TransactionCountAnswersError);
-                return;
-            }
-
-            if (item.Transaction.TransactionAnswersCount == _countReplics)
-                FinishTransaction(item);
+          
         }
 
-        public void DataTimeout(InnerData data)
+        public void ProcessSyncTransaction(InnerData data)
+        {
+            if (data.Transaction.OperationName != OperationName.Read && !data.DistributorData.IsSyncAnswerSended)
+            {
+                data.DistributorData.SendSyncAnswer();
+                _cache.Remove(data.Transaction.CacheKey);
+                _queue.DistributorTransactionCallbackQueue.Add(data.Transaction);
+            }
+        }
+
+        private void DataTimeout(InnerData data)
         {
             Logger.Logger.Instance.ErrorFormat("Operation timeout with key {0}", data.Transaction.CacheKey);
 
@@ -134,15 +166,6 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             data.Transaction.AddErrorDescription(Errors.TimeoutExpired);
 
             _cache.Update(data.Transaction.CacheKey, data);
-        }
-
-        public void RemoveTransaction(Common.Data.TransactionTypes.Transaction item)
-        {
-            if (item.OperationName != OperationName.Read)
-            {
-                _cache.Remove(item.CacheKey);
-                _queue.DistributorTransactionCallbackQueue.Add(item);
-            }
         }
 
         private void FinishTransaction(InnerData data)
@@ -153,7 +176,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
                 data.Transaction.CacheKey, !data.Transaction.IsError));
 
             if (data.Transaction.OperationType == OperationType.Sync)
-                ProcessSyncTransaction(data.Transaction);
+                ProcessSyncTransaction(data);
             else
                 _cache.Update(data.Transaction.CacheKey, data);
 
@@ -162,23 +185,14 @@ namespace Qoollo.Impl.DistributorModules.Transaction
         }
 
         private void AddErrorAndUpdate(InnerData data, string error)
-        {
+        {            
             data.Transaction.SetError();
             data.Transaction.AddErrorDescription(error);
 
             if (data.Transaction.OperationType == OperationType.Sync)
-                ProcessSyncTransaction(data.Transaction);
+                ProcessSyncTransaction(data);
             else
                 _cache.Update(data.Transaction.CacheKey, data);
-        }
-
-        private void ProcessSyncTransaction(Common.Data.TransactionTypes.Transaction item)
-        {
-            if (item.OperationName != OperationName.Read)
-            {
-                _cache.Remove(item.CacheKey);
-                _queue.DistributorTransactionCallbackQueue.Add(item);
-            }
         }
 
         protected override void Dispose(bool isUserCall)

@@ -63,24 +63,14 @@ namespace Qoollo.Impl.DistributorModules
                 _transaction.ProcessSyncWithExecutor(data, executor);
 
                 if (data.Transaction.IsError)
-                {
-                    if (data.Transaction.OperationName != OperationName.Read)
-                        UpdateToCache(data);
-                    if (data.Transaction.OperationType == OperationType.Sync)
-                        _transaction.RemoveTransaction(data.Transaction);
-                }
+                    WorkWithFailTransaction(data);
             }
             else
             {
-                Logger.Logger.Instance.Debug(string.Format("Mainlogic: process data = {0}, result = {1}",
+                Logger.Logger.Instance.Trace(string.Format("Mainlogic: process data = {0}, result = {1}",
                     data.Transaction.DataHash, !data.Transaction.IsError));
 
-                if (data.Transaction.OperationName != OperationName.Read)
-                    UpdateToCache(data);
-
-                if (data.Transaction.OperationType == OperationType.Sync)
-                    _transaction.RemoveTransaction(data.Transaction);
-
+                WorkWithFailTransaction(data);
 
                 data.Transaction.PerfTimer.Complete();
 
@@ -102,7 +92,7 @@ namespace Qoollo.Impl.DistributorModules
             return value.Transaction.UserTransaction;
         }
 
-        public void AddToCache(InnerData data)
+        private void AddToCache(InnerData data)
         {
             data.DistributorData = new DistributorData();
 
@@ -112,12 +102,21 @@ namespace Qoollo.Impl.DistributorModules
             }
         }
 
-        public void UpdateToCache(InnerData data)
+        private void UpdateToCache(InnerData data)
         {
             using (data.DistributorData.GetLock())
             {
                 _cache.UpdateDataToCache(data);
             }
+        }
+
+        private void WorkWithFailTransaction(InnerData data)
+        {
+            if (data.Transaction.OperationName != OperationName.Read)
+                UpdateToCache(data);
+
+            if (data.Transaction.OperationType == OperationType.Sync)
+                _transaction.ProcessSyncTransaction(data);
         }
     }
 }

@@ -1,9 +1,9 @@
-﻿﻿using System;
+﻿using System;
 using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
-﻿using Qoollo.Impl.Common.NetResults;
-﻿using Qoollo.Impl.Common.NetResults.Inner;
+using Qoollo.Impl.Common.NetResults;
+using Qoollo.Impl.Common.NetResults.Inner;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Modules.Db.Impl;
 using Qoollo.Impl.Writer.Db.Commands;

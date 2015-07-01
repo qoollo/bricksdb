@@ -115,7 +115,9 @@ namespace Qoollo.Impl.Writer
         {
             if (result is InnerFailResult)
             {
-                data.Transaction.SetError();
+                if (result.IsError)
+                    data.Transaction.SetError();
+
                 data.Transaction.AddErrorDescription(result.Description);
             }
             _queue.TransactionAnswerQueue.Add(data.Transaction);

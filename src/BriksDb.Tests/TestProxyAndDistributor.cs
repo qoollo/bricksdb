@@ -40,7 +40,9 @@ namespace Qoollo.Tests
         [TestMethod]
         public void ProxyAndDistributor_Create_WriterMock()
         {
-            var writer = new HashWriter(new HashMapConfiguration("test5", HashMapCreationMode.CreateNew, 1, 3, HashFileType.Collector));
+            var writer =
+                new HashWriter(new HashMapConfiguration("test5", HashMapCreationMode.CreateNew, 1, 3,
+                    HashFileType.Collector));
             writer.CreateMap();
             writer.SetServer(0, "localhost", 21181, 157);
             writer.Save();
@@ -63,7 +65,7 @@ namespace Qoollo.Tests
 
             var server = new ServerId("localhost", 23222);
             try
-            {                
+            {
                 distr.Build();
 
                 _proxy.Start();
@@ -81,10 +83,10 @@ namespace Qoollo.Tests
                 transaction = _proxy.GetTransaction(transaction);
                 Assert.IsNotNull(transaction);
                 Assert.AreEqual(TransactionState.TransactionInProcess, transaction.State);
-                Thread.Sleep(1000);
+                Thread.Sleep(4000);
                 transaction = _proxy.GetTransaction(transaction);
                 Assert.IsNotNull(transaction);
-                Assert.AreEqual(TransactionState.DontExist, transaction.State);
+                Assert.AreEqual(TransactionState.DontExist, transaction.State, transaction.ErrorDescription);
 
                 var server1 = new ServerId("localhost", 21181);
                 var netconfig = new ConnectionConfiguration("testService", 1);
@@ -105,11 +107,11 @@ namespace Qoollo.Tests
                     Thread.Sleep(100);
                     transaction = _proxy.GetTransaction(transaction);
                 }
-                Assert.AreEqual(TransactionState.Complete, transaction.State);
+                Assert.AreEqual(TransactionState.Complete, transaction.State, transaction.ErrorDescription);
                 Thread.Sleep(1000);
                 transaction = _proxy.GetTransaction(transaction);
                 Assert.IsNotNull(transaction);
-                Assert.AreEqual(TransactionState.DontExist, transaction.State);
+                Assert.AreEqual(TransactionState.DontExist, transaction.State, transaction.ErrorDescription);
             }
             finally
             {

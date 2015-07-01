@@ -142,24 +142,37 @@ namespace Qoollo.Tests
         public void TransactionModule_ProcessSyncWithExecutor_NoServersToSendData()
         {
             var s1 = new TestServerDescription(1);
-            var s2 = new TestServerDescription(2);
+            var s2 = new TestServerDescription(2);            
+
+            var cache = new DistributorTimeoutCache(new DistributorCacheConfiguration(TimeSpan.FromMinutes(1),
+                TimeSpan.FromMinutes(1)));
 
             var net = new NetModuleTest(new Dictionary<ServerId, bool> { { s1, false }, { s2, true } });
-            var trm = new TransactionModule(net, new TransactionConfiguration(1), 2,
-                new DistributorTimeoutCache(new DistributorCacheConfiguration(TimeSpan.FromMinutes(1),
-                    TimeSpan.FromMinutes(1))));
+            var trm = new TransactionModule(net, new TransactionConfiguration(1), 2, cache);
 
             trm.Start();
-            var ev = new InnerData(new Transaction("", ""))
+
+            GlobalQueue.Queue.Start();
+
+            var data = new InnerData(new Transaction("123", ""))
             {
-                Transaction = { Destination = new List<ServerId> { s1, s2 } }
+                Transaction =
+                {
+                    Destination = new List<ServerId> { s1, s2 },
+                    OperationName = OperationName.Create
+                },
+                DistributorData = new DistributorData()
             };
+            cache.AddDataToCache(data);
 
             using (var trans = trm.Rent())
             {
-                trm.ProcessSyncWithExecutor(ev, trans.Element);
+                trm.ProcessWithExecutor(data, trans.Element);
             }
-            Assert.IsTrue(ev.Transaction.IsError);
+
+            Thread.Sleep(1000);
+
+            Assert.IsTrue(data.Transaction.IsError);
             trm.Dispose();
         }
 
@@ -202,7 +215,7 @@ namespace Qoollo.Tests
 
             using (var trans = trm.Rent())
             {
-                trm.ProcessSyncWithExecutor(ev, trans.Element);
+                trm.ProcessWithExecutor(ev, trans.Element);
             }
 
             Thread.Sleep(TimeSpan.FromMilliseconds(100));
@@ -223,6 +236,8 @@ namespace Qoollo.Tests
             var server2 = new ServerId("localhost", 21142);
             var server3 = new ServerId("localhost", 21143);
 
+            #region hell
+
             var netconfig = new ConnectionConfiguration("testService", 10);
             var queueconfig = new QueueConfiguration(1, 100);
             var distrconfig = new DistributorHashConfiguration(2);
@@ -237,6 +252,13 @@ namespace Qoollo.Tests
             net.SetDistributor(distributor);
             distributor.Start();
             net.Start();
+            
+            var cache = new DistributorTimeoutCache(
+                new DistributorCacheConfiguration(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1)));
+
+            var trm = new TransactionModule(net, new TransactionConfiguration(1), 3, cache);
+            trm.Start();
+
             GlobalQueue.Queue.Start();
 
             var s1 = TestHelper.OpenWriterHost(server1, netconfig);
@@ -245,27 +267,31 @@ namespace Qoollo.Tests
             net.ConnectToWriter(server1);
             net.ConnectToWriter(server2);
 
+            #endregion
+
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
-            var ev = new InnerData(new Transaction("", ""))
+            var data = new InnerData(new Transaction("123", ""))
             {
-                Transaction = { Destination = new List<ServerId> { server1, server2, server3 } }
-            };
-
-            var trm = new TransactionModule(net, new TransactionConfiguration(1), 3, new DistributorTimeoutCache(
-                    new DistributorCacheConfiguration(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1))));
-            trm.Start();
-
+                Transaction =
+                {
+                    Destination = new List<ServerId> { server1, server2, server3 },       
+                    OperationName = OperationName.Create
+                },
+                DistributorData = new DistributorData()
+            };            
+            cache.AddDataToCache(data);
+            
             using (var trans = trm.Rent())
             {
-                trm.ProcessSyncWithExecutor(ev, trans.Element);
+                trm.ProcessWithExecutor(data, trans.Element);
             }
 
-            Thread.Sleep(TimeSpan.FromMilliseconds(100));
+            Thread.Sleep(2000);
 
             Assert.IsTrue(s1.Value <= 0);
             Assert.IsTrue(s2.Value <= 0);
-            Assert.IsTrue(ev.Transaction.IsError);
+            Assert.IsTrue(data.Transaction.IsError);
 
             net.Dispose();   
             trm.Dispose();
@@ -433,83 +459,7 @@ namespace Qoollo.Tests
             Assert.IsTrue(ret4.Count == 0);
         }
 
-        [TestMethod]
-        public void MainLogic_ProcessWithData_NotEnougnServersForWrite()
-        {
-            var writer = new HashWriter(new HashMapConfiguration("test9", HashMapCreationMode.CreateNew, 3, 3, HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", 21151, 157);
-            writer.SetServer(1, "localhost", 21152, 157);
-            writer.SetServer(2, "localhost", 21153, 157);
-            writer.Save();
-
-            var cache = new DistributorTimeoutCache(
-                new DistributorCacheConfiguration(TimeSpan.FromMilliseconds(400), TimeSpan.FromMilliseconds(1000)));
-            var distrconfig = new DistributorHashConfiguration(3);
-            var queueconfig = new QueueConfiguration(1, 100);
-            var netconfig = new ConnectionConfiguration("testService", 10);
-            var net = new DistributorNetModule(netconfig,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var distributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
-                queueconfig, null, new ServerId("localhost", 1),
-                new ServerId("localhost", 1),
-                new HashMapConfiguration("test9", HashMapCreationMode.ReadFromFile, 1, 3, HashFileType.Distributor));
-
-            net.SetDistributor(distributor);
-            var transaction = new TransactionModule(net, new TransactionConfiguration(1),
-                                                distrconfig.CountReplics, cache);
-            var main = new MainLogicModule(distributor, transaction, cache);
-
-            var server1 = new ServerId("localhost", 21151);
-            var server2 = new ServerId("localhost", 21152);
-
-            var s1 = TestHelper.OpenWriterHost(server1, netconfig);
-            var s2 = TestHelper.OpenWriterHost(server2, netconfig);
-
-            cache.Start();
-            distributor.Start();
-            net.Start();
-            transaction.Start();
-            main.Start();
-
-            GlobalQueue.Queue.Start();
-
-            net.ConnectToWriter(server1);
-            net.ConnectToWriter(server2);                        
-
-            var ev = new InnerData(new Transaction("123", ""))
-            {
-                Transaction =
-                    new Transaction(HashConvertor.GetString("1"), "")
-                    {
-                        OperationName = OperationName.Create,
-                        OperationType = OperationType.Async
-                    }
-            };
-            ev.Transaction.Destination = new List<ServerId>();
-
-            s1.Value = 0;
-            s2.Value = 0;
-            using (var trans = transaction.Rent())
-            {
-                main.ProcessWithData(ev, trans.Element);
-            }
-            Thread.Sleep(TimeSpan.FromMilliseconds(300));
-
-            var data = main.GetTransactionState(ev.Transaction.UserTransaction);
-            Assert.AreEqual(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.Error);
-            Assert.IsTrue(s1.Value <= 0);
-            Assert.IsTrue(s2.Value <= 0);
-            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-            Assert.AreEqual(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.DontExist);
-            Assert.AreEqual(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.DontExist);
-
-            net.Dispose();
-            distributor.Dispose();
-            transaction.Dispose();
-        }
-
+     
         [TestMethod]
         public void MainLogic_ProcessWithData_SendAllReplicsThenObsoleteDataInCache()
         {

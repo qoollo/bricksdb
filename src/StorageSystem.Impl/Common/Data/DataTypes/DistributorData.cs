@@ -27,7 +27,7 @@ namespace Qoollo.Impl.Common.Data.DataTypes
 
         public bool IsSyncAnswerSended { get; private set; }
         public bool IsRollbackSended { get; private set; }
-
+        
         public DistributorData()
         {
             _lock = new ReaderWriterLockSlim();

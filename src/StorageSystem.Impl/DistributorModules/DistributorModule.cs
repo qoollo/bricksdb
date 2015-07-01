@@ -165,8 +165,7 @@ namespace Qoollo.Impl.DistributorModules
         public List<WriterDescription> GetDestination(InnerData data, bool needAllServers)
         {
             Logger.Logger.Instance.Trace(
-                string.Format("Distributor: Get destination event hash = {0}, distr hash = {1}",
-                    data.Transaction.DataHash, data.Transaction.DistributorHash));
+                string.Format("Distributor: Get destination event hash = {0}", data.Transaction.DataHash));
 
             var ret = !needAllServers
                 ? _modelOfDbWriters.GetDestination(data)

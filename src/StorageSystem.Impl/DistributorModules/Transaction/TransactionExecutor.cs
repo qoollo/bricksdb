@@ -34,14 +34,14 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         public void Commit(InnerData data)
         {
-            if (data.Transaction.Destination.Count == 1)
-                CommitSingleServer(data.Transaction.Destination.First(), data);
+            if (data.DistributorData.Destination.Count == 1)
+                CommitSingleServer(data.DistributorData.Destination.First(), data);
             else
             {
-                for (int i = 0; i < data.Transaction.Destination.Count; i++)
+                for (int i = 0; i < data.DistributorData.Destination.Count; i++)
                 {
                     int i1 = i;
-                    _tasks[i].ContinueWith(e => CommitSingleServer(data.Transaction.Destination[i1], data));
+                    _tasks[i].ContinueWith(e => CommitSingleServer(data.DistributorData.Destination[i1], data));
                 }
             }
         }
@@ -65,8 +65,8 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         public InnerData ReadSimple(InnerData data)
         {
-            var result = data.Transaction.Destination.Count == 1
-                ? _net.ReadOperation(data.Transaction.Destination.First(), data)
+            var result = data.DistributorData.Destination.Count == 1
+                ? _net.ReadOperation(data.DistributorData.Destination.First(), data)
                 : ReadListServers(data);
 
             return result;
@@ -77,7 +77,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             var retList = new List<InnerData>();
             var obj = new object();
 
-            var list = data.Transaction.Destination.Select((server, i) => _tasks[i].ContinueWith((e) =>
+            var list = data.DistributorData.Destination.Select((server, i) => _tasks[i].ContinueWith((e) =>
             {
                 var ret = _net.ReadOperation(server, data);
                 if (ret != null)

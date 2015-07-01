@@ -42,11 +42,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
             get { return _systemTransaction.EventHash; }
         }
 
-        public string DistributorHash
-        {
-            get { return _userTransaction.DistributorHash; }
-        }
-
         public bool IsError
         {
             get { return _userTransaction.IsError || _systemTransaction.IsError; }
@@ -66,11 +61,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
         {
             get { return _systemTransaction.CustomOperationField; }
             set { _systemTransaction.CustomOperationField = value; }
-        }
-
-        public int TransactionAnswersCount
-        {
-            get { return _systemTransaction.TransactionAnswersCount; }
         }
 
         public OperationName OperationName
@@ -93,12 +83,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
         {
             get { return _systemTransaction.Distributor; }
             set { _systemTransaction.Distributor = value; }
-        }
-
-        public List<ServerId> Destination
-        {
-            get { return _systemTransaction.Destination; }
-            set { _systemTransaction.Destination = value; }
         }
 
         public ServerId ProxyServerId
@@ -204,11 +188,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
         }
 
         #endregion
-
-        public void IncreaseTransactionAnswersCount()
-        {
-            _systemTransaction.IncreaseTransactionAnswersCount();
-        }
 
         [OperationContract]
         public void AddErrorDescription(string error)

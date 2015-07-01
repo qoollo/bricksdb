@@ -158,10 +158,9 @@ namespace Qoollo.Tests
             {
                 Transaction =
                 {
-                    Destination = new List<ServerId> { s1, s2 },
                     OperationName = OperationName.Create
                 },
-                DistributorData = new DistributorData()
+                DistributorData = new DistributorData { Destination = new List<ServerId> { s1, s2 } }
             };
             cache.AddDataToCache(data);
 
@@ -206,7 +205,7 @@ namespace Qoollo.Tests
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
             var ev = new InnerData(new Transaction("", ""))
             {
-                Transaction = { Destination = new List<ServerId> { server1, server2 } }
+                DistributorData = new DistributorData { Destination = new List<ServerId> { server1, server2 } },
             };
 
             var trm = new TransactionModule(net, new TransactionConfiguration(1), 2,
@@ -273,13 +272,9 @@ namespace Qoollo.Tests
 
             var data = new InnerData(new Transaction("123", ""))
             {
-                Transaction =
-                {
-                    Destination = new List<ServerId> { server1, server2, server3 },       
-                    OperationName = OperationName.Create
-                },
-                DistributorData = new DistributorData()
-            };            
+                Transaction = {OperationName = OperationName.Create},
+                DistributorData = new DistributorData {Destination = new List<ServerId> {server1, server2, server3},}
+            };
             cache.AddDataToCache(data);
             
             using (var trans = trm.Rent())
@@ -328,7 +323,7 @@ namespace Qoollo.Tests
 
             var ev = new InnerData(new Transaction("", ""))
             {
-                Transaction = { Destination = new List<ServerId> { server1 } }
+                DistributorData = new DistributorData { Destination = new List<ServerId> { server1 } },
             };
 
             var ret1 = net.Process(server1, ev);
@@ -350,7 +345,10 @@ namespace Qoollo.Tests
             var cache = new DistributorTimeoutCache(
                 new DistributorCacheConfiguration(TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(500)));
 
-            var ev = new InnerData(new Transaction("123", "")) { Transaction = { Destination = new List<ServerId>() } };
+            var ev = new InnerData(new Transaction("123", ""))
+            {
+                DistributorData = new DistributorData { Destination = new List<ServerId>() },
+            };
 
             cache.AddToCache("123", ev);
             var ret = cache.Get("123");
@@ -380,7 +378,7 @@ namespace Qoollo.Tests
 
             var ev = new InnerData(new Transaction("123", "") { OperationName = OperationName.Create })
             {
-                Transaction = { Destination = new List<ServerId>() }
+                DistributorData = new DistributorData { Destination = new List<ServerId>() },
             };
 
             ev.Transaction.Complete();
@@ -399,7 +397,7 @@ namespace Qoollo.Tests
 
             ev = new InnerData(new Transaction("1231", "") { OperationName = OperationName.Create })
             {
-                Transaction = { Destination = new List<ServerId>() }
+                DistributorData = new DistributorData { Destination = new List<ServerId>() },
             };
 
             ev.Transaction.StartTransaction();
@@ -439,9 +437,9 @@ namespace Qoollo.Tests
 
             var ev = new InnerData(new Transaction("123", ""))
             {
-                Transaction = new Transaction(HashConvertor.GetString("1"), "")
+                Transaction = new Transaction(HashConvertor.GetString("1"), ""),
+                DistributorData = new DistributorData { Destination = new List<ServerId>() },
             };
-            ev.Transaction.Destination = new List<ServerId>();
 
             var ret = model.GetDestination(ev);
             Assert.IsTrue(ret.Count == 1);
@@ -512,9 +510,9 @@ namespace Qoollo.Tests
                     {
                         OperationName = OperationName.Create,
                         OperationType = OperationType.Async
-                    }
-            };
-            ev.Transaction.Destination = new List<ServerId>();
+                    },
+                DistributorData = new DistributorData { Destination = new List<ServerId>() },
+            };            
 
             using (var trans = transaction.Rent())
             {
@@ -558,9 +556,9 @@ namespace Qoollo.Tests
 
             var ev = new InnerData(new Transaction("123", ""))
             {
-                Transaction = new Transaction(HashConvertor.GetString("1"), "")
-            };
-            ev.Transaction.Destination = new List<ServerId>();
+                Transaction = new Transaction(HashConvertor.GetString("1"), ""),
+                DistributorData = new DistributorData { Destination = new List<ServerId>() },
+            };            
 
             var ret = model.GetDestination(ev);
             Assert.IsTrue(ret.Count == 0);

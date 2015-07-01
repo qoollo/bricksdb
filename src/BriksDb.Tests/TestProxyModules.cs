@@ -182,7 +182,7 @@ namespace Qoollo.Tests
 
             var ev = new InnerData(new Transaction("", ""))
             {
-                Transaction = { Destination = new List<ServerId> { server1 } }
+                DistributorData = new DistributorData { Destination = new List<ServerId> { server1 } },
             };
 
             var ret1 = net.Process(server1, ev);
@@ -275,8 +275,8 @@ namespace Qoollo.Tests
             ev.Transaction = distributor.CreateTransaction(hash);
             ev.Transaction = distributor.CreateTransaction(hash);
             ev.Transaction = distributor.CreateTransaction(hash);
-
-            ev.Transaction.Destination = new List<ServerId> { server1 };
+            
+            ev.DistributorData = new DistributorData { Destination = new List<ServerId> { server1 } };
 
             bool res = main.Process(ev);
 

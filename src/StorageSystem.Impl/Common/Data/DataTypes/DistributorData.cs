@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Qoollo.Impl.Common.Server;
 
 namespace Qoollo.Impl.Common.Data.DataTypes
 {
@@ -27,12 +28,19 @@ namespace Qoollo.Impl.Common.Data.DataTypes
 
         public bool IsSyncAnswerSended { get; private set; }
         public bool IsRollbackSended { get; private set; }
-        
+        public int TransactionAnswersCount { get; private set; }
+
+        /// <summary>
+        /// Servers for where data store
+        /// </summary>        
+        public List<ServerId> Destination { get; set; }        
+
         public DistributorData()
         {
             _lock = new ReaderWriterLockSlim();
             IsSyncAnswerSended = false;
             IsRollbackSended = false;
+            TransactionAnswersCount = 0;
         }
 
         private readonly ReaderWriterLockSlim _lock;        
@@ -60,6 +68,11 @@ namespace Qoollo.Impl.Common.Data.DataTypes
         public void SendRollback()
         {
             IsRollbackSended = true;
+        }
+
+        public void IncreaseTransactionAnswersCount()
+        {
+            TransactionAnswersCount++;
         }
     }
 }

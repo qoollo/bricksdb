@@ -121,7 +121,7 @@ namespace Qoollo.Tests
 
             var ev = new InnerData(new Transaction("123", ""))
             {
-                Transaction = { Destination = new List<ServerId>() }
+                DistributorData = new DistributorData{ Destination = new List<ServerId>() }
             };
 
             cache.AddToCache("123", ev);

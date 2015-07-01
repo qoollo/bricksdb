@@ -42,6 +42,8 @@ namespace Qoollo.Impl.DistributorModules
         {
             Logger.Logger.Instance.Debug(string.Format("Mainlogic: process data = {0}", data.Transaction.DataHash));
 
+            data.DistributorData = new DistributorData();
+
             var dest = _distributor.GetDestination(data, GetCountServers(data));
             if (dest == null)
             {
@@ -51,7 +53,7 @@ namespace Qoollo.Impl.DistributorModules
                 data.Transaction.AddErrorDescription(Errors.NotAvailableServersForWrite);
             }
             else
-                data.Transaction.Destination = new List<ServerId>(dest);
+                data.DistributorData.Destination = new List<ServerId>(dest);
 
             if (data.Transaction.OperationName != OperationName.Read)
                 AddToCache(data);
@@ -94,8 +96,6 @@ namespace Qoollo.Impl.DistributorModules
 
         private void AddToCache(InnerData data)
         {
-            data.DistributorData = new DistributorData();
-
             using (data.DistributorData.GetLock())
             {
                 _cache.AddDataToCache(data);

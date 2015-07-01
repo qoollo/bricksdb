@@ -73,7 +73,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
         {
             try
             {
-                foreach (var server in data.Transaction.Destination)
+                foreach (var server in data.DistributorData.Destination)
                 {
                     _net.Rollback(server, data);
                 }
@@ -134,15 +134,15 @@ namespace Qoollo.Impl.DistributorModules.Transaction
                     AddErrorAndUpdate(item, transaction.ErrorDescription);
                 }
 
-                item.Transaction.IncreaseTransactionAnswersCount();
+                item.DistributorData.IncreaseTransactionAnswersCount();
 
-                if (item.Transaction.TransactionAnswersCount > _countReplics)
+                if (item.DistributorData.TransactionAnswersCount > _countReplics)
                 {
                     AddErrorAndUpdate(item, Errors.TransactionCountAnswersError);
                     return;
                 }
 
-                if (item.Transaction.TransactionAnswersCount == _countReplics)
+                if (item.DistributorData.TransactionAnswersCount == _countReplics)
                     FinishTransaction(item);
             }
           

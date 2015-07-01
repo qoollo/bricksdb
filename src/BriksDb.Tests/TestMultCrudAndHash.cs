@@ -239,8 +239,8 @@ namespace Qoollo.Tests
             var distrNet = new DistributorNetConfiguration("localhost",
                 distrServer1, distrServer12, "testService", 10);
             var distrConf = new DistributorConfiguration(1, "TestCrudRestoreSingle",
-                TimeSpan.FromMilliseconds(100000), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(10000));
+                TimeSpan.FromMilliseconds(1000000), TimeSpan.FromMinutes(1),
+                TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(1000000));
 
             var distr = new DistributorApi(distrNet, distrConf, common);
 
@@ -278,10 +278,10 @@ namespace Qoollo.Tests
 
             for (int i = 0; i < count; i++)
             {
-                _proxy.Int.CreateSync(i, i);
+               var result =  _proxy.Int.CreateSync(i, i);
                 _proxy.Int2.CreateSync(i, i);
 
-                _proxy.Int.CreateSync(i, i);
+                result = _proxy.Int.CreateSync(i, i);
                 _proxy.Int2.CreateSync(i, i);
             }
 

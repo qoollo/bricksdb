@@ -89,7 +89,8 @@ namespace Qoollo.Impl.DistributorModules
 
         private void ProcessCallbackTransaction(Common.Data.TransactionTypes.Transaction transaction)
         {
-            _distributorNet.ASendToProxy(transaction.ProxyServerId, new OperationCompleteCommand(transaction));
+            if (_distributorNet != null)
+                _distributorNet.ASendToProxy(transaction.ProxyServerId, new OperationCompleteCommand(transaction));
         }
 
         #region Private

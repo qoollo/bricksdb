@@ -60,10 +60,10 @@ namespace Qoollo.Impl.DistributorModules
             {
                 data.Transaction.Distributor = _distributor.LocalForDb;
 
-                _transaction.ProcessSyncWithExecutor(data, executor);
+                _transaction.ProcessWithExecutor(data, executor);
 
-                if (data.Transaction.IsError)
-                    WorkWithFailTransaction(data);
+                //if (data.Transaction.IsError)
+                //    WorkWithFailTransaction(data);
             }
             else
             {

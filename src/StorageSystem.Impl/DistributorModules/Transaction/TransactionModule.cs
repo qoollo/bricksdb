@@ -47,7 +47,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             _transactionPool.FillPoolUpTo(_transactionPool.MaxElementCount);
         }
 
-        public void ProcessSyncWithExecutor(InnerData data, TransactionExecutor executor)
+        public void ProcessWithExecutor(InnerData data, TransactionExecutor executor)
         {
             if (data.Transaction.OperationName == OperationName.Read)
                 Read(data, executor);
@@ -123,16 +123,16 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
             using (item.DistributorData.GetLock())
             {
-                //if (transaction.IsError && !item.DistributorData.IsRollbackSended)
-                //{
-                //    item.DistributorData.SendRollback();
-                //    Rollback(item);
-                //}
+                if (transaction.IsError && !item.DistributorData.IsRollbackSended)
+                {
+                    item.DistributorData.SendRollback();
+                    Rollback(item);
+                }
 
-                if (transaction.IsError || item.Transaction.IsError)
+                if (transaction.ErrorDescription != "" || item.Transaction.IsError)
                 {
                     AddErrorAndUpdate(item, transaction.ErrorDescription);
-                }                
+                }
 
                 item.Transaction.IncreaseTransactionAnswersCount();
 

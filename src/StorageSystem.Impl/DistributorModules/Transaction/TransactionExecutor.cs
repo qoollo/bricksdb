@@ -38,19 +38,12 @@ namespace Qoollo.Impl.DistributorModules.Transaction
                 CommitSingleServer(data.Transaction.Destination.First(), data);
             else
             {
-                //for (int i = 0; i < data.Transaction.Destination.Count; i++)
-                //{
-                //    int i1 = i;
-                //    _tasks[i].ContinueWith(e => CommitSingleServer(data.Transaction.Destination[i1], data));
-                //}
-                var list = data.Transaction.Destination.Select(
-                        (server, i) => _tasks[i].ContinueWith(e => CommitSingleServer(server, data)));
-
-                Task.WaitAll(list.ToArray());
+                for (int i = 0; i < data.Transaction.Destination.Count; i++)
+                {
+                    int i1 = i;
+                    _tasks[i].ContinueWith(e => CommitSingleServer(data.Transaction.Destination[i1], data));
+                }
             }
-
-            if (data.Transaction.IsError)
-                Rollback(data, data.Transaction.Destination);
         }
 
         private void CommitSingleServer(ServerId server, InnerData data)
@@ -63,22 +56,8 @@ namespace Qoollo.Impl.DistributorModules.Transaction
                     data.Transaction.SetError();
                     data.Transaction.AddErrorDescription(result.Description);
 
-                    //_queue.DistributorTransactionCallbackQueue.Add(data.Transaction);
+                    _queue.TransactionQueue.Add(data.Transaction);
                 }
-            }
-        }
-
-        private void Rollback(InnerData data, IEnumerable<ServerId> dest)
-        {
-            try
-            {
-                foreach (var server in dest)
-                {
-                    _net.Rollback(server, data);
-                }
-            }
-            catch (Exception e)
-            {
             }
         }
 

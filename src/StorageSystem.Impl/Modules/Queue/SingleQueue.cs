@@ -24,7 +24,8 @@ namespace Qoollo.Impl.Modules.Queue
 
         public void Add(T element)
         {
-            _queue.Add(element);
+            if (_queue != null)
+                _queue.Add(element);
         }
 
         public override void Start()

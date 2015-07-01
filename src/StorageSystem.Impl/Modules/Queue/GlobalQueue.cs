@@ -78,7 +78,7 @@ namespace Qoollo.Impl.Modules.Queue
         public override void Start()
         {
             //TODO не трогать!
-            _transactionQueue.SetConfiguration(new QueueConfiguration(4, 10000));
+            _transactionQueue.SetConfiguration(new QueueConfiguration(1, 10000));
 
             _proxyInputWriteAndUpdateQueue.Start();
             _proxyInputOtherQueue.Start();

@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
+using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Inner;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Modules.Db.Impl;
@@ -44,7 +45,7 @@ namespace Qoollo.Impl.Writer.Db
             if (meta.Item1.IsDeleted)
                 return CreateWhenDataDeleted(local, key, value);
 
-            return new InnerServerError(Errors.DataAlreadyExists);
+            return new InnerFailResult(Errors.DataAlreadyExists, false);
         }
 
         public RemoteResult Update(InnerData obj, bool local, Tuple<MetaData, bool> meta, object key, object value)

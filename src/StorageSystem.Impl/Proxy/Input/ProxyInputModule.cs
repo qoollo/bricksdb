@@ -8,6 +8,7 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
+using Qoollo.Impl.Common.Timestamps;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Proxy.Caches;
 
@@ -335,6 +336,8 @@ namespace Qoollo.Impl.Proxy.Input
         private void CompleteTransaction(object key, object value, Transaction transaction,
             bool useGenericSerilize = true)
         {
+            transaction.Start("proxy");
+
             var serializeValue = useGenericSerilize
                 ? _hashCalculater.SerializeValue(value)
                 : _hashCalculater.SerializeOther(value);
@@ -353,6 +356,7 @@ namespace Qoollo.Impl.Proxy.Input
 
         private void CompleteTransactionKeyOnly(object key, Transaction transaction)
         {
+            transaction.Start("proxy");
             var serializeKey = _hashCalculater.SerializeKey(key);
             
             transaction.HashFromValue = _hashFromValue;

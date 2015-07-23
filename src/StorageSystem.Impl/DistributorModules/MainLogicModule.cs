@@ -5,6 +5,7 @@ using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
+using Qoollo.Impl.Common.Timestamps;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules;
@@ -41,6 +42,7 @@ namespace Qoollo.Impl.DistributorModules
         public void ProcessWithData(InnerData data, TransactionExecutor executor)
         {
             Logger.Logger.Instance.Debug(string.Format("Mainlogic: process data = {0}", data.Transaction.DataHash));
+            data.Transaction.MakeStamp("distributor start process data");
 
             data.DistributorData = new DistributorData();
 
@@ -61,11 +63,9 @@ namespace Qoollo.Impl.DistributorModules
             if (!data.Transaction.IsError)
             {
                 data.Transaction.Distributor = _distributor.LocalForDb;
-
                 _transaction.ProcessWithExecutor(data, executor);
 
-                //if (data.Transaction.IsError)
-                //    WorkWithFailTransaction(data);
+                data.Transaction.MakeStamp("distributor send to writers");
             }
             else
             {
@@ -74,6 +74,7 @@ namespace Qoollo.Impl.DistributorModules
 
                 WorkWithFailTransaction(data);
 
+                data.Transaction.MakeStamp("distributor failed data process");
                 data.Transaction.PerfTimer.Complete();
 
                 PerfCounters.DistributorCounters.Instance.ProcessPerSec.OperationFinished();

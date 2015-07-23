@@ -25,7 +25,9 @@ namespace Qoollo.Tests
 
             #region hell
 
-            var writer = new HashWriter(new HashMapConfiguration("TestClientDistributor", HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
+            var writer =
+                new HashWriter(new HashMapConfiguration("TestClientDistributor", HashMapCreationMode.CreateNew, 1, 1,
+                    HashFileType.Distributor));
             writer.CreateMap();
             writer.SetServer(0, "localhost", storageServer, 157);
             writer.Save();
@@ -40,12 +42,14 @@ namespace Qoollo.Tests
             var distrNet = new DistributorNetConfiguration("localhost",
                 distrServer1, distrServer12, "testService", 10);
             var distrConf = new DistributorConfiguration(1, "TestClientDistributor",
-                TimeSpan.FromMilliseconds(100000), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(10000));
+                TimeSpan.FromMilliseconds(100000), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1),
+                TimeSpan.FromMilliseconds(10000));
 
             var distr = new DistributorApi(distrNet, distrConf, common);
 
             var storageNet = new StorageNetConfiguration("localhost", storageServer, 157, "testService", 10);
-            var storageConfig = new StorageConfiguration("TestClientDistributor", 1, 10, TimeSpan.FromHours(1), TimeSpan.FromHours(1),
+            var storageConfig = new StorageConfiguration("TestClientDistributor", 1, 10, TimeSpan.FromHours(1),
+                TimeSpan.FromHours(1),
                 TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
 
             var storage = new WriterApi(storageNet, storageConfig, common);
@@ -110,7 +114,9 @@ namespace Qoollo.Tests
 
             #region hell
 
-            var writer = new HashWriter(new HashMapConfiguration("TestClientDistributor", HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
+            var writer =
+                new HashWriter(new HashMapConfiguration("TestClientDistributor", HashMapCreationMode.CreateNew, 1, 1,
+                    HashFileType.Distributor));
             writer.CreateMap();
             writer.SetServer(0, "localhost", storageServer, 157);
             writer.Save();
@@ -125,12 +131,14 @@ namespace Qoollo.Tests
             var distrNet = new DistributorNetConfiguration("localhost",
                 distrServer1, distrServer12, "testService", 10);
             var distrConf = new DistributorConfiguration(1, "TestClientDistributor",
-                TimeSpan.FromMilliseconds(100000), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(10000));
+                TimeSpan.FromMilliseconds(100000), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1),
+                TimeSpan.FromMilliseconds(10000));
 
             var distr = new DistributorApi(distrNet, distrConf, common);
 
             var storageNet = new StorageNetConfiguration("localhost", storageServer, 157, "testService", 10);
-            var storageConfig = new StorageConfiguration("TestClientDistributor", 1, 10, TimeSpan.FromHours(1), TimeSpan.FromHours(1),
+            var storageConfig = new StorageConfiguration("TestClientDistributor", 1, 10, TimeSpan.FromHours(1),
+                TimeSpan.FromHours(1),
                 TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
 
             var storage = new WriterApi(storageNet, storageConfig, common);

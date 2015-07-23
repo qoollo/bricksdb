@@ -2,6 +2,7 @@
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using Qoollo.Impl.Common.Data.Support;
+using Qoollo.Impl.Common.Timestamps;
 
 namespace Qoollo.Impl.Common.Data.TransactionTypes
 {
@@ -23,6 +24,8 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
 
         [DataMember]
         public TransactionState State { get; set; }
+
+        public DataTimeStamps DataTimeStamps { get; set; }
 
         public UserTransaction(string distributorHash)
         {

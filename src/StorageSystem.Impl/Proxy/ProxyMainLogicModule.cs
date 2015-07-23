@@ -4,6 +4,7 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
+using Qoollo.Impl.Common.Timestamps;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Proxy.Caches;
 using Qoollo.Impl.Proxy.ProxyNet;
@@ -12,9 +13,9 @@ namespace Qoollo.Impl.Proxy
 {
     internal class ProxyMainLogicModule : ControlModule
     {
-        private ProxyDistributorModule _distributor;
-        private IProxyNetModule _net;
-        private ProxyCache _cache;
+        private readonly ProxyDistributorModule _distributor;
+        private readonly IProxyNetModule _net;
+        private readonly ProxyCache _cache;
 
         public ProxyMainLogicModule(ProxyDistributorModule distributorModule, IProxyNetModule net,
                                     ProxyCache proxyCache)
@@ -29,6 +30,8 @@ namespace Qoollo.Impl.Proxy
 
         public bool Process(InnerData ev)
         {
+            ev.Transaction.MakeStamp("proxy is searching distributor");
+
             ev.Transaction.ProxyServerId = _distributor.ProxyServerId;
             var dest = _distributor.GetDestination(ev.Transaction.UserTransaction);
 
@@ -41,20 +44,24 @@ namespace Qoollo.Impl.Proxy
 
             var result = _net.Process(dest, ev);
             if (result is FailNetResult)
-            {                
+            {
+                ev.Transaction.MakeStamp("proxy failed to send data to {0}", dest);
                 //todo Надо поискать другой сервер, надо потом записать новый сервер
                 _cache.AddToCache(ev.Transaction.DataHash, dest);
                 return false;
-            }            
+            }
+            ev.Transaction.MakeStamp("proxy sent data to {0}", dest);
             return true;
         }
 
         public UserTransaction GetTransaction(UserTransaction transaction)
         {
             var cachedData = _cache.Get(transaction.CacheKey);
-            var server = cachedData==null || cachedData.Port==-1 ? _distributor.GetDestination(transaction):cachedData;
+            var server = cachedData == null || cachedData.Port == -1
+                ? _distributor.GetDestination(transaction)
+                : cachedData;
 
-            UserTransaction result = null;
+            UserTransaction result;
             var nresult = _net.GetTransaction(server, transaction, out result);
             if (nresult is FailNetResult)
             {
@@ -64,6 +71,5 @@ namespace Qoollo.Impl.Proxy
             }
             return result;
         }
-
     }
 }

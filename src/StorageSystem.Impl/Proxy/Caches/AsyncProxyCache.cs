@@ -1,6 +1,7 @@
 ﻿using System;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Support;
+using Qoollo.Impl.Common.Timestamps;
 using Qoollo.Impl.Modules.Cache;
 
 namespace Qoollo.Impl.Proxy.Caches
@@ -15,19 +16,23 @@ namespace Qoollo.Impl.Proxy.Caches
         {
             if (obj.UserSupportCallback != null)
             {
-                obj.SetError();
-                obj.AddErrorDescription(Errors.SyncOperationTimeout);
-                obj.UserSupportCallback.SetResult(obj.UserTransaction);
-                //obj.UserSupportCallback.SetException(new TimeoutException(Errors.OperationTimeoutException));
+                SetError(obj);
+                obj.UserSupportCallback.SetResult(obj.UserTransaction);                
             }
 
             if (obj.InnerSupportCallback != null)
             {
-                obj.SetError();
-                obj.AddErrorDescription(Errors.SyncOperationTimeout);
+                SetError(obj);
                 obj.InnerSupportCallback.SetResult(null);
-                //obj.InnerSupportCallback.SetException(new TimeoutException(Errors.OperationTimeoutException));
             }
+        }
+
+        private void SetError(Transaction transaction)
+        {
+            transaction.SetError();
+            transaction.AddErrorDescription(Errors.SyncOperationTimeout);
+
+            transaction.MakeStampWithTransactionError("proxy AsyncCache");
         }
     }
 }

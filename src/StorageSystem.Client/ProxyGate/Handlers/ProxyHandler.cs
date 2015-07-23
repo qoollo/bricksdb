@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common;
@@ -11,8 +10,8 @@ namespace Qoollo.Client.ProxyGate.Handlers
 {
     internal class ProxyHandler<TKey, TValue> : ProxyHandlerBase, IStorage<TKey, TValue>
     {
-        private IStorageInner _api;
-        private IDataProvider<TKey, TValue> _dataProvider;
+        private readonly IStorageInner _api;
+        private readonly IDataProvider<TKey, TValue> _dataProvider;
 
         public ProxyHandler(IStorageInner api, IDataProvider<TKey, TValue> dataProvider)
         {
@@ -42,36 +41,27 @@ namespace Qoollo.Client.ProxyGate.Handlers
         {
             var utr = _api.CreateSync(key, value);
 
-            RequestDescription ret = null;
             utr.Wait();
 
-            ret = new RequestDescription(utr.Result);
-
-            return ret;
+            return new RequestDescription(utr.Result);
         }
 
         public RequestDescription UpdateSync(TKey key, TValue value)
         {
             var utr = _api.UpdateSync(key, value);
 
-            RequestDescription ret = null;
-
             utr.Wait();
-            ret = new RequestDescription(utr.Result);
-            return ret;
+
+            return new RequestDescription(utr.Result);
         }
 
         public RequestDescription DeleteSync(TKey key)
         {
             var utr = _api.DeleteSync(key);
 
-            RequestDescription ret = null;
-
-
             utr.Wait();
-            ret = new RequestDescription(utr.Result);
 
-            return ret;
+            return new RequestDescription(utr.Result);
         }
 
         public async Task<RequestDescription> CreateAsync(TKey key, TValue value)
@@ -94,7 +84,7 @@ namespace Qoollo.Client.ProxyGate.Handlers
 
         public TValue Read(TKey key, out RequestDescription result)
         {
-            UserTransaction utr = null;
+            UserTransaction utr;
 
             var ret = _api.Read(key, out utr);
 
@@ -113,7 +103,7 @@ namespace Qoollo.Client.ProxyGate.Handlers
         {
             var innerData = await _api.ReadAsync(key);
 
-            TValue data = default(TValue);
+            var data = default(TValue);
 
             if (innerData == null || innerData.Transaction == null || innerData.Transaction.UserTransaction == null)
             {
@@ -140,12 +130,9 @@ namespace Qoollo.Client.ProxyGate.Handlers
         {
             var utr = _api.CustomOperationSync(key, value, description);
 
-            RequestDescription ret = null;
-
             utr.Wait();
-            ret = new RequestDescription(utr.Result);
 
-            return ret;
+            return new RequestDescription(utr.Result);
         }
 
         public async Task<RequestDescription> CustomOperationAsync(TKey key, object value, string description)

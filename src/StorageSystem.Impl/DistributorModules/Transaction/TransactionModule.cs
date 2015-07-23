@@ -5,6 +5,7 @@ using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
+using Qoollo.Impl.Common.Timestamps;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet.Interfaces;
@@ -60,8 +61,11 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             Logger.Logger.Instance.Debug(string.Format("Transaction process data = {0}", data.Transaction.DataHash));
 
             data.Transaction.StartTransaction();
+            data.Transaction.MakeStamp("distributor start transaction");
 
             executor.Commit(data);
+
+            data.Transaction.MakeStamp("distributor finish transaction");
         }
 
         public RentedElementMonitor<TransactionExecutor> Rent()
@@ -71,6 +75,8 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         private void Rollback(InnerData data)
         {
+            data.Transaction.MakeStamp("distributor start rollback");
+
             try
             {
                 foreach (var server in data.DistributorData.Destination)
@@ -81,6 +87,8 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             catch (Exception e)
             {
             }
+
+            data.Transaction.MakeStamp("distributor finish rollback");
         }
 
         #endregion
@@ -89,8 +97,12 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         private void Read(InnerData data, TransactionExecutor executor)
         {
+            data.Transaction.MakeStamp("distributor start transaction");
             var result = executor.ReadSimple(data);
+            data.Transaction.MakeStamp("distributor finish transaction");
+
             ProcessReadResult(data, result, data.Transaction.ProxyServerId);
+
             data.Transaction.PerfTimer.Complete();
             PerfCounters.DistributorCounters.Instance.ProcessPerSec.OperationFinished();
         }
@@ -123,6 +135,9 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
             using (item.DistributorData.GetLock())
             {
+                item.Transaction.AddStamps(transaction);
+                item.Transaction.MakeStamp("distributor answer income");                
+
                 if (transaction.IsError && !item.DistributorData.IsRollbackSended)
                 {
                     item.DistributorData.SendRollback();
@@ -181,7 +196,8 @@ namespace Qoollo.Impl.DistributorModules.Transaction
                 _cache.Update(data.Transaction.CacheKey, data);
 
             data.Transaction.PerfTimer.Complete();
-            PerfCounters.DistributorCounters.Instance.ProcessPerSec.OperationFinished();
+            data.Transaction.MakeStamp("distributor finish data process");
+            PerfCounters.DistributorCounters.Instance.ProcessPerSec.OperationFinished();            
         }
 
         private void AddErrorAndUpdate(InnerData data, string error)

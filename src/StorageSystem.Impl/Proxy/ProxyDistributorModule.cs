@@ -9,6 +9,7 @@ using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
+using Qoollo.Impl.Common.Timestamps;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
@@ -86,11 +87,16 @@ namespace Qoollo.Impl.Proxy
 
         private void CompleteOperation(Transaction transaction)
         {
-            var data = _asyncProxyCache.Get(transaction.CacheKey);
-            if (data != null)
+            var cacheTransaction = _asyncProxyCache.Get(transaction.CacheKey);
+            if (cacheTransaction != null)
             {
-                _asyncProxyCache.Remove(transaction.CacheKey);
-                data.UserSupportCallback.SetResult(transaction.UserTransaction);
+                cacheTransaction.AddStamps(transaction);
+                cacheTransaction.SystemTransaction.MakeStamp("complete operation");
+                
+                transaction.CopyStamps(cacheTransaction);         
+                _asyncProxyCache.Remove(transaction.CacheKey);                       
+
+                cacheTransaction.UserSupportCallback.SetResult(transaction.UserTransaction);
             }
             else
             {
@@ -100,11 +106,16 @@ namespace Qoollo.Impl.Proxy
 
         private void CompleteOperation(InnerData obj)
         {
-            var data = _asyncProxyCache.Get(obj.Transaction.CacheKey);
-            if (data != null)
+            var transaction = _asyncProxyCache.Get(obj.Transaction.CacheKey);
+            if (transaction != null)
             {
+                transaction.AddStamps(obj.Transaction);
+                transaction.SystemTransaction.MakeStamp("complete operation");                
+                
+                obj.Transaction.CopyStamps(transaction);
                 _asyncProxyCache.Remove(obj.Transaction.CacheKey);
-                data.InnerSupportCallback.SetResult(obj);
+
+                transaction.InnerSupportCallback.SetResult(obj);
             }
             else
             {

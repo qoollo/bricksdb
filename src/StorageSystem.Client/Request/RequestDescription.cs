@@ -1,15 +1,19 @@
 ﻿using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.TransactionTypes;
+using Qoollo.Impl.Common.Timestamps;
 
 namespace Qoollo.Client.Request
 {
     public class RequestDescription
     {
-        private IRequestDescription _request;
+        private readonly IRequestDescription _request;
         private bool _dataNotFound;
-
+        private readonly DataTimeStamps _dataTimeStamps;
+        public DataTimeStamps TimeStamps { get { return _dataTimeStamps; } }
+        
         public RequestDescription(UserTransaction userTransaction)
         {
+            _dataTimeStamps = userTransaction.DataTimeStamps;
             _dataNotFound = false;
             _request = new RequestThroughTransaction(userTransaction);
         }

@@ -13,12 +13,12 @@ namespace Qoollo.Impl.Proxy.Input
 {
     internal class ProxyInputModuleCommon : ControlModule
     {
-        private Dictionary<string, ProxyInputModule> _apis; 
-        private QueueConfiguration _queueConfiguration;
+        private readonly Dictionary<string, ProxyInputModule> _apis; 
+        private readonly QueueConfiguration _queueConfiguration;
         private readonly ProxyDistributorModule _distributor;
         private readonly AsyncProxyCache _asyncProxyCache;
-        private ProxyMainLogicModule _mainLogic;        
-        private GlobalQueueInner _queue;
+        private readonly ProxyMainLogicModule _mainLogic;        
+        private readonly GlobalQueueInner _queue;
 
         public ProxyInputModuleCommon(ProxyMainLogicModule mainLogic, QueueConfiguration queueConfiguration,
             ProxyDistributorModule distributor, AsyncProxyCache asyncProxyCache)

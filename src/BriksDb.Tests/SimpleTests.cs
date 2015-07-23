@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -14,6 +15,7 @@ using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.Modules.Cache;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
@@ -24,6 +26,65 @@ namespace Qoollo.Tests
     public class SimpleTests
     {
         #region Test cache
+
+        class TestData
+        {
+            public int Counter;
+            public DistributorData DistributorData;
+        }
+
+        class CacheForLock : CacheModule<TestData>
+        {
+            private readonly TimeSpan _aliveTimeout;
+
+            public Action<InnerData> DataTimeout;
+
+            public CacheForLock(DistributorCacheConfiguration cacheConfiguration)
+                : base(cacheConfiguration.TimeAliveBeforeDeleteMls)
+            {
+                _aliveTimeout = cacheConfiguration.TimeAliveAfterUpdateMls;
+            }
+
+
+            public void Update(string key, TestData obj)
+            {
+                Remove(key);
+                AddAliveToCache(key, obj, _aliveTimeout);
+            }
+
+            protected override void RemovedCallback(string key, TestData obj)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        [TestMethod]
+        public void DistributorData_TestCacheLock_TwoThread_IncrementCounter()
+        {
+            const string key = "123";
+            var cache =
+                new CacheForLock(new DistributorCacheConfiguration(TimeSpan.FromMinutes(10),
+                    TimeSpan.FromMinutes(10)));
+
+            var data = new TestData { DistributorData = new DistributorData() };
+            cache.AddToCache(key, data);
+
+            var action = new Action(() =>
+            {
+                var value = cache.Get(key);
+                using (value.DistributorData.GetLock())
+                {
+                    value.Counter++;
+                    cache.Update(key, value);
+                }
+            });
+
+            Task.Factory.StartNew(action);
+            Task.Factory.StartNew(action);
+
+            Thread.Sleep(1000);
+            Assert.AreEqual(2, cache.Get(key).Counter);
+        }
 
         [TestMethod]
         public void Cache_AddGetUpdateRemove()
@@ -88,7 +149,7 @@ namespace Qoollo.Tests
         }
 
         private void TestCachePerfHelper(DistributorCache cache, List<InnerData> obj, int count, ref long min,
-                                         ref long max, ref float avg)
+            ref long max, ref float avg)
         {
             var sp = new Stopwatch();
             min = int.MaxValue;
@@ -111,7 +172,7 @@ namespace Qoollo.Tests
                 if (max < mls) max = mls;
                 sp.Reset();
             }
-            avg = avg / count;
+            avg = avg/count;
         }
 
         [TestMethod]
@@ -121,7 +182,7 @@ namespace Qoollo.Tests
 
             var ev = new InnerData(new Transaction("123", ""))
             {
-                DistributorData = new DistributorData{ Destination = new List<ServerId>() }
+                DistributorData = new DistributorData {Destination = new List<ServerId>()}
             };
 
             cache.AddToCache("123", ev);
@@ -153,7 +214,7 @@ namespace Qoollo.Tests
             int value = 0;
             const string name1 = "test1";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(500), async => Interlocked.Increment(ref value),
-                                             name1, -1);
+                name1, -1);
             test.Start();
 
             test.AddAsyncTask(async1, false);
@@ -180,9 +241,9 @@ namespace Qoollo.Tests
             const string name1 = "test1";
             const string name2 = "test2";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(500), async => Interlocked.Increment(ref value),
-                                             name1, -1);
+                name1, -1);
             var async2 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(500), async => Interlocked.Increment(ref value),
-                                             name2, -1);
+                name2, -1);
             test.Start();
 
             test.AddAsyncTask(async1, true);
@@ -203,7 +264,7 @@ namespace Qoollo.Tests
             int value = 0;
             const string name1 = "test1";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(100), async => Interlocked.Increment(ref value),
-                                             name1, 4);
+                name1, 4);
             test.Start();
 
             test.AddAsyncTask(async1, true);
@@ -221,7 +282,9 @@ namespace Qoollo.Tests
             const int distrServer1 = 22134;
             const int distrServer12 = 23134;
 
-            var writer = new HashWriter(new HashMapConfiguration("TestAsyncPing", HashMapCreationMode.CreateNew, 2, 3, HashFileType.Distributor));
+            var writer =
+                new HashWriter(new HashMapConfiguration("TestAsyncPing", HashMapCreationMode.CreateNew, 2, 3,
+                    HashFileType.Distributor));
             writer.CreateMap();
             writer.SetServer(0, "localhost", storageServer1, 157);
             writer.SetServer(1, "localhost", storageServer2, 157);
@@ -241,7 +304,8 @@ namespace Qoollo.Tests
                 queueconfig, dnet,
                 new ServerId("localhost", distrServer1),
                 new ServerId("localhost", distrServer12),
-                new HashMapConfiguration("TestAsyncPing", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
+                new HashMapConfiguration("TestAsyncPing", HashMapCreationMode.ReadFromFile, 1, 1,
+                    HashFileType.Distributor));
             dnet.SetDistributor(ddistributor);
 
             dnet.Start();

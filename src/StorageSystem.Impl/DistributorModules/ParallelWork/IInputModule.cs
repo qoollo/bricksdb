@@ -4,6 +4,6 @@ namespace Qoollo.Impl.DistributorModules.ParallelWork
 {
     internal interface IInputModule
     {
-        void ProcessAsync(InnerData ev);
+        void ProcessAsync(InnerData data);
     }
 }

@@ -546,6 +546,6 @@ namespace Qoollo.Tests
             _proxy.Dispose();
             _distr.Dispose();
             storage1.Dispose();
-        }
+        }       
     }
 }

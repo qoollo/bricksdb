@@ -69,6 +69,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="protobuf-net, Version=2.0.0.668, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\briksdb\src\libs\protobuf-net.2.0.0.668\protobuf-net.dll</HintPath>
@@ -143,6 +147,8 @@
     <Compile Include="Common\Commands\AddDistributorCommand.cs" />
     <Compile Include="Common\Commands\ServerNotAvailableCommand.cs" />
     <Compile Include="Common\Support\delegate.cs" />
+    <Compile Include="Common\Timestamps\DataTimeStampExtension.cs" />
+    <Compile Include="Common\Timestamps\DataTimeStamps.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
     <Compile Include="Writer\AsyncDbWorks\Support\AsyncDbHolder.cs" />
     <Compile Include="Writer\Db\DbLogicCreateAndUpdateHelper.cs" />

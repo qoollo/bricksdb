@@ -11,6 +11,7 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.Timestamps;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
 using Qoollo.Tests.Support;
@@ -600,6 +601,41 @@ namespace Qoollo.Tests
 
             d.Dispose();
             _proxy.Dispose();
+        }
+
+        [TestMethod]
+        public void Test()
+        {
+            const int distrServer1 = 22113;
+            const int distrServer12 = 23113;            
+            const int storageServer1 = 22115;            
+
+            var writer =
+                new HashWriter(new HashMapConfiguration("test7", HashMapCreationMode.CreateNew, 1, 1,
+                    HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "localhost", storageServer1, 157);            
+            writer.Save();
+
+            _distributor1.Build(1, distrServer1, distrServer12, "test7");
+            _writer1.Build(storageServer1, "test7", 2);
+            
+            _proxy.Start();
+            _distributor1.Start();
+            _writer1.Start();
+
+            _proxy.Distributor.SayIAmHere(new ServerId("localhost", distrServer12));
+
+            var api = _proxy.CreateApi("Int", false, new IntHashConvertor());
+
+            DataTimeStampExtension.EnableDataTimeStamps();
+
+            var tr1 = api.CreateSync(10, 10);
+            tr1.Wait();            
+
+            _writer1.Dispose();
+            _proxy.Dispose();
+            _distributor1.Dispose();
         }
     }
 }

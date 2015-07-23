@@ -210,7 +210,7 @@ namespace Qoollo.Impl.DistributorModules
         }
 
         public RemoteResult ProcessTransaction(Common.Data.TransactionTypes.Transaction transaction)
-        {
+        {            
             _queue.TransactionQueue.Add(transaction);
             return new SuccessResult();
         }

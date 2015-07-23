@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Threading.Tasks;
+using Qoollo.Impl.Common.Timestamps;
 using Qoollo.PerformanceCounters;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -72,8 +73,10 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
 
         public string CacheKey { get { return EventHash + OperationName + _uniqueTime; } }
 
-        public TimeCounterTimer PerfTimer { get; set; }        
+        public TimeCounterTimer PerfTimer { get; set; }
 
+        [DataMember]
+        public DataTimeStamps DataTimeStamps { get; set; }
         #endregion
 
         #endregion

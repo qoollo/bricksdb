@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common.Data.DataTypes;
+using Qoollo.Impl.Common.Timestamps;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules.ParallelWork;
 using Qoollo.Turbo.ObjectPools;
@@ -22,7 +23,7 @@ namespace Qoollo.Impl.DistributorModules.ParallelWork
 
         public override void Process(InnerData data)
         {
-            PerfCounters.DistributorCounters.Instance.TransactionCount.Increment();
+            PerfCounters.DistributorCounters.Instance.TransactionCount.Increment();            
             _main.ProcessWithData(data, _transaction.Element);
         }
 

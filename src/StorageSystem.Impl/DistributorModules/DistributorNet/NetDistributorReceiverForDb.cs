@@ -10,7 +10,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 {
     internal class NetDistributorReceiverForDb : NetReceiveModule<ICommonNetReceiverForDb>, ICommonNetReceiverForDb
     {        
-        private DistributorModule _distributorModule;
+        private readonly DistributorModule _distributorModule;
 
         public NetDistributorReceiverForDb(DistributorModule distributorModule,
             NetReceiverConfiguration receiverConfiguration)
@@ -35,6 +35,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
             return new SuccessResult();
         }
 
+        //TODO make one way
         [OperationBehavior(TransactionScopeRequired = true)]
         public void TransactionAnswer(Common.Data.TransactionTypes.Transaction transaction)
         {

@@ -8,7 +8,7 @@ using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Sql.Internal
 {
-    internal class SqlScriptParser:ScriptParser
+    internal class SqlScriptParser : ScriptParser
     {
         #region Public
 
@@ -26,7 +26,7 @@ namespace Qoollo.Impl.Sql.Internal
                 return ScriptType.OrderAsc;
             }
             return ScriptType.Unknown;
-        }       
+        }
 
         public override Tuple<FieldDescription, string> PrepareOrderScript(string script, int pageSize, IUserCommandsHandler handler)
         {
@@ -42,7 +42,7 @@ namespace Qoollo.Impl.Sql.Internal
             return new Tuple<FieldDescription, string>(field, query);
         }
 
-        public override Tuple<FieldDescription, string> PrepareKeyScript(string script,  IUserCommandsHandler handler)
+        public override Tuple<FieldDescription, string> PrepareKeyScript(string script, IUserCommandsHandler handler)
         {
             var query = script.ToLower();
 
@@ -86,12 +86,12 @@ namespace Qoollo.Impl.Sql.Internal
 
             var key = order.FirstOrDefault();
 
-            if(key ==null)
+            if (key == null)
                 return default(KeyValuePair<string, Type>);
 
             //TODO fix
             key = key.Replace('(', ' ').Replace(')', ' ').Trim();
-            
+
             if (key != null)
             {
                 var ere = handler.GetDbFieldsDescription();
@@ -129,11 +129,11 @@ namespace Qoollo.Impl.Sql.Internal
             if (selectSplitPattern == "")
                 return null;
 
-            var split = Regex.Split(query, selectSplitPattern).ToList() ;
+            var split = Regex.Split(query, selectSplitPattern).ToList();
             split.RemoveAll(x => x == "");
 
             if (split.Count < 2)
-                return null;            
+                return null;
 
             string select = split.First();
 
@@ -143,17 +143,17 @@ namespace Qoollo.Impl.Sql.Internal
             }
             else
             {
-                ret.AddRange(select.Split(new[] {' ', ','}));
-                ret.RemoveAll(x => x == "" || x== "*");
+                ret.AddRange(select.Split(new[] { ' ', ',' }));
+                ret.RemoveAll(x => x == "" || x == "*");
                 ret.RemoveAt(0);
-                
+
                 if (query.Contains("top"))
                 {
                     ret.RemoveAt(0);
                     ret.RemoveAt(0);
                 }
 
-                for (int i = ret.Count-1; i >=0; i++)
+                for (int i = ret.Count - 1; i >= 0; i++)
                 {
                     if (ret[i] == "as")
                     {
@@ -176,16 +176,16 @@ namespace Qoollo.Impl.Sql.Internal
 
         private string AddBefore(string query, string pos, string value)
         {
-            return query.Insert(query.IndexOf(pos, System.StringComparison.Ordinal),  value);
+            return query.Insert(query.IndexOf(pos, System.StringComparison.Ordinal), value);
         }
 
         public string AddPageToSelect(string query)
         {
             if (!query.Contains("top"))
-                query =  AddAfter(query, SqlConsts.Select, " top @" + Consts.Page);            
+                query = AddAfter(query, SqlConsts.Select, " top @" + Consts.Page);
 
             return query;
-        }       
+        }
 
         #endregion
 
@@ -222,11 +222,11 @@ namespace Qoollo.Impl.Sql.Internal
             foreach (var param in split)
             {
                 string str = param.Trim();
-              
+
                 var sp = str.Split(' ').ToList();
-                if (sp.Count == 3 && sp[1] == SqlConsts.As && (sp[0] == key || sp[2].Replace("'","").Trim() == key))
+                if (sp.Count == 3 && sp[1] == SqlConsts.As && (sp[0] == key || sp[2].Replace("'", "").Trim() == key))
                 {
-                    return sp.Last().Replace("'","");
+                    return sp.Last().Replace("'", "");
                 }
 
                 if (sp.Count != 0 && sp[0] == key)
@@ -256,7 +256,7 @@ namespace Qoollo.Impl.Sql.Internal
             return order;
         }
 
-        public string CreateOrderScript(string script,  FieldDescription idDescription)
+        public string CreateOrderScript(string script, FieldDescription idDescription)
         {
             var type = ParseQueryType(script);
             CutOrderby(ref script);
@@ -280,7 +280,7 @@ namespace Qoollo.Impl.Sql.Internal
                 int end = script.IndexOf(script.Contains(SqlConsts.With) ? SqlConsts.With : SqlConsts.Select,
                     System.StringComparison.Ordinal);
 
-                string declare = script.Substring(begin, end-begin);
+                string declare = script.Substring(begin, end - begin);
                 script = script.Replace(declare, " ");
                 return declare;
             }
@@ -320,7 +320,7 @@ namespace Qoollo.Impl.Sql.Internal
 
         private static string GetTableNameWhenWith(string script)
         {
-            var split = script.Split(new []{' '}, StringSplitOptions.RemoveEmptyEntries);
+            var split = script.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
             return split[1].Trim();
         }
@@ -339,20 +339,18 @@ namespace Qoollo.Impl.Sql.Internal
             nquery = nquery.Replace("@" + Consts.Page, (idDescription.PageSize).ToString());
 
             if (!WithExists(script))
-            {
                 return
-                    string.Format("{0} ; {1} from ( {2} ) as HelpTable " +
-                                  " where HelpTable.{3} {4} @{5} order by HelpTable.{3}   option(Recompile)",
-                        declare, nquery, script, idDescription.AsFieldName,
-                        idDescription.IsFirstAsk ? ">=" : ">", idDescription.FieldName);
-            }
+                        string.Format("{0} ; {1} from ( {2} ) as HelpTable " +
+                                      " where HelpTable.{3} {4} @{5} order by HelpTable.{3}",
+                            declare, nquery, script, idDescription.AsFieldName,
+                            idDescription.IsFirstAsk ? ">=" : ">", idDescription.FieldName);
 
             string withName = GetTableNameWhenWith(script);
             script = CutSelectWhenWith(script);
 
             return
                 string.Format("{0} ; {2} {1} from {6} as HelpTable " +
-                              " where HelpTable.{3} {4} @{5} order by HelpTable.{3}   option(Recompile)",
+                              " where HelpTable.{3} {4} @{5} order by HelpTable.{3}",
                     declare, nquery, script, idDescription.AsFieldName,
                     idDescription.IsFirstAsk ? ">=" : ">", idDescription.FieldName, withName);
         }
@@ -360,7 +358,6 @@ namespace Qoollo.Impl.Sql.Internal
         private string OrderDesc(string script, FieldDescription idDescription)
         {
             string declare = CutDeclare(ref script);
-
             var nquery = SqlConsts.Select + " * ";
 
             nquery = AddPageToSelect(nquery);
@@ -369,19 +366,14 @@ namespace Qoollo.Impl.Sql.Internal
             if (!WithExists(script))
             {
                 if (idDescription.IsFirstAsk)
-                {
                     nquery =
-                        string.Format("{0} ; {1} from ( {3} ) as HelpTable order by HelpTable.{2} desc  option(Recompile)",
-                            declare, nquery, idDescription.AsFieldName, script);
-                }
-
+                            string.Format("{0} ; {1} from ( {3} ) as HelpTable order by HelpTable.{2} desc",
+                                declare, nquery, idDescription.AsFieldName, script);
                 else
-                {
                     nquery =
-                        string.Format("{0} ; {1} from ( {3} ) as HelpTable " +
-                                      " where  HelpTable.{2} < @{4} order by HelpTable.{2} desc  option(Recompile)",
-                            declare, nquery, idDescription.AsFieldName, script, idDescription.FieldName);
-                }
+                            string.Format("{0} ; {1} from ( {3} ) as HelpTable " +
+                                          " where  HelpTable.{2} < @{4} order by HelpTable.{2} desc ",
+                                declare, nquery, idDescription.AsFieldName, script, idDescription.FieldName);
 
                 return nquery;
             }
@@ -390,24 +382,20 @@ namespace Qoollo.Impl.Sql.Internal
             script = CutSelectWhenWith(script);
 
             if (idDescription.IsFirstAsk)
-            {
                 nquery =
-                    string.Format("{0} ; {3} {1} from {4} as HelpTable order by HelpTable.{2} desc  option(Recompile)",
-                        declare, nquery, idDescription.AsFieldName, script, withName);
-            }
-
+                        string.Format("{0} ; {3} {1} from {4} as HelpTable order by HelpTable.{2} desc",
+                            declare, nquery, idDescription.AsFieldName, script, withName);
             else
-            {
-                nquery =
-                    string.Format("{0} ; {3} {1} from {5} as HelpTable " +
-                                  " where HelpTable.{2} < @{4} order by HelpTable.{2} desc  option(Recompile)",
-                        declare, nquery, idDescription.AsFieldName, script, idDescription.FieldName, withName);
-            }
+                nquery = string.Format("{0} ; {3} {1} from {5} as HelpTable " +
+                                      " where HelpTable.{2} < @{4} order by HelpTable.{2} desc",
+                            declare, nquery, idDescription.AsFieldName, script, idDescription.FieldName, withName);
 
             return nquery;
         }
 
         #endregion
+
+        //option(Recompile)
     }
 }
  

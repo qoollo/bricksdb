@@ -9,9 +9,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class RestoreReaderFull:ReaderFullBase
     {
-        private Func<MetaData, bool> _isMine;
-        private DbModuleCollection _db;
-        private string _tableName;
+        private readonly Func<MetaData, bool> _isMine;
+        private readonly DbModuleCollection _db;
+        private readonly string _tableName;
 
         public RestoreReaderFull(Func<MetaData, bool> isMine, Action<InnerData> process, QueueConfiguration queueConfiguration,
             DbModuleCollection db, bool isBothTables, string tableName, QueueWithParam<InnerData> queue)

@@ -16,9 +16,9 @@ namespace Qoollo.Impl.Writer
 {
     internal class MainLogicModule:ControlModule
     {
-        private DbModule _db;
-        private DistributorModule _distributor;        
-        private GlobalQueueInner _queue;
+        private readonly DbModule _db;
+        private readonly DistributorModule _distributor;        
+        private readonly GlobalQueueInner _queue;
 
         public MainLogicModule(DistributorModule distributor, DbModule db)
         {            
@@ -55,6 +55,7 @@ namespace Qoollo.Impl.Writer
                 case OperationName.RestoreUpdate:
                     ret = _db.RestoreUpdate(data, local);
                     WriterCounters.Instance.RestoreUpdatePerSec.OperationFinished();
+                    WriterCounters.Instance.RestoreCountReceive.Increment();
                     break;
                 case OperationName.Update:
                     ret = CheckResult(data, _db.Update(data, local));
@@ -97,8 +98,11 @@ namespace Qoollo.Impl.Writer
         public Tuple<RemoteResult, SelectSearchResult> SelectQuery(SelectDescription description)
         {
             SelectSearchResult selectResult;
+            var timer = WriterCounters.Instance.QueryAvgTime.StartNew();
             var result = _db.SelectRead(description, out selectResult);
+            timer.Complete();
 
+            WriterCounters.Instance.QueryPerSec.OperationFinished();
             return new Tuple<RemoteResult, SelectSearchResult>(result, selectResult);
         }
 

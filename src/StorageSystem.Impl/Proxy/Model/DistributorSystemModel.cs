@@ -11,8 +11,8 @@ namespace Qoollo.Impl.Proxy.Model
 {
     internal class DistributorSystemModel:IDisposable
     {
-        private List<DistributorDescription> _model;
-        private ReaderWriterLockSlim _lock;
+        private readonly List<DistributorDescription> _model;
+        private readonly ReaderWriterLockSlim _lock;
 
         public DistributorSystemModel()
         {
@@ -52,7 +52,7 @@ namespace Qoollo.Impl.Proxy.Model
             var server = GetDestinationServer();
             if (server == null)
             {
-                var tr = new Transaction("", "");
+                var tr = new Transaction("default", "default");
                 tr.SetError();
                 tr.AddErrorDescription(Errors.NotAvailableServersInSystem);
                 return tr;

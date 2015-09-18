@@ -334,8 +334,7 @@ namespace Qoollo.Impl.Writer.Db
             var result = new List<SearchData>();
 
             description.IdDescription.PageSize = description.CountElements + 2;
-            var command = _metaDataCommandCreator.CreateSelectCommand(description.Script, description.IdDescription,
-                description.UserParametrs);
+            var command = _metaDataCommandCreator.CreateSelectCommand(description);
 
             if (command == null)
             {
@@ -349,6 +348,7 @@ namespace Qoollo.Impl.Writer.Db
 
             if (reader.IsFail)
             {
+                reader.Dispose();
                 searchResult = new SelectSearchResult(result, true);
                 return new InnerFailResult("script error");
             }
@@ -565,7 +565,7 @@ namespace Qoollo.Impl.Writer.Db
 
             foreach (var key in keys)
             {
-                var data = new InnerData(new Transaction(key.Hash, ""));
+                var data = new InnerData(new Transaction(key.Hash, "default"));
 
                 data = ReadInner(key.Id, data, isDeleted);
                 if (data.Transaction.IsError)

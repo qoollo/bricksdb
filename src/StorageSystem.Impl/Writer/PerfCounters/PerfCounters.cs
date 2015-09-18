@@ -33,6 +33,7 @@ namespace Qoollo.Impl.Writer.PerfCounters
 
         protected override void AfterInit()
         {
+            QueryPerSec.Reset();
             CreatePerSec.Reset();
             UpdatePerSec.Reset();
             ReadPerSec.Reset();
@@ -43,46 +44,60 @@ namespace Qoollo.Impl.Writer.PerfCounters
             TransactionCount.Reset();
             ProcessPerSec.Reset();
             IncomePerSec.Reset();
+            QueryAvgTime.Reset();
 
             CreateMetaDataTimer.Reset();
             ReadMetaDataTimer.Reset();
             CreateTimer.Reset();
+
+            RestoreCountReceive.Reset();
+            RestoreCountSend.Reset();
         }
-        
-        [Counter("Count create operation (Per/sec)")]
-        public OperationsPerSecondCounter CreatePerSec { get; private set; }
 
-        [Counter("Count update operations (Per/sec)")]
-        public OperationsPerSecondCounter UpdatePerSec { get; private set; }
+        [Counter("TransactionCount", "Общее количество обработанных данных")]
+        public NumberOfItemsCounter TransactionCount { get; private set; }
 
-        [Counter("Count read operations (Per/sec)")]
-        public OperationsPerSecondCounter ReadPerSec { get; private set; }
+        [Counter("RestoreCountSend", "Количество переданных данных ")]
+        public NumberOfItemsCounter RestoreCountSend { get; private set; }
 
-        [Counter("Count delete operations(Per/sec)")]
-        public OperationsPerSecondCounter DeletePerSec { get; private set; }
+        [Counter("RestoreCountReceive", "Количество принятых данных во время восстановления")]
+        public NumberOfItemsCounter RestoreCountReceive { get; private set; }
 
-        [Counter("Count restoreUpdate operations(Per/sec)")]
-        public OperationsPerSecondCounter RestoreUpdatePerSec { get; private set; }
+        #region Per sec
 
-        [Counter("Count customOperation operations(Per/sec)")]
-        public OperationsPerSecondCounter CustomOperationPerSec { get; private set; }
+        [Counter("Количество поисковых запросов (Per/sec)")]
+        public OperationsPerSecondCounter QueryPerSec { get; private set; }
 
-        [Counter("Total operation count", "Числовой счетчик")]
-        public NumberOfItemsCounter TransactionCount { get; private set; }      
-        
-        [Counter("Avg operations time")]
-        public AverageTimeCounter AverageTimer { get; private set; }
-
-        [Counter("Avg operations time with queue waiting")]
-        public AverageTimeCounter AverageTimerWithQueue { get; private set; }
-
-        [Counter("Count operations (Per/sec)")]
+        [Counter("Количество обрабатываемых транзакций в секунду")]
         public OperationsPerSecondCounter ProcessPerSec { get; private set; }
 
-        [Counter("Count income operations")]
+        [Counter("Количество принятых транзакций в секунду")]
         public OperationsPerSecondCounter IncomePerSec { get; private set; }
 
-        #region TimerFor Create
+        [Counter("Количество обрабатываемых транзакций Create (Per/sec)")]
+        public OperationsPerSecondCounter CreatePerSec { get; private set; }
+
+        [Counter("Количество обрабатываемых транзакций Update (Per/sec)")]
+        public OperationsPerSecondCounter UpdatePerSec { get; private set; }
+
+        [Counter("Количество обрабатываемых транзакций Read (Per/sec)")]
+        public OperationsPerSecondCounter ReadPerSec { get; private set; }
+
+        [Counter("Количество обрабатываемых транзакций Delete (Per/sec)")]
+        public OperationsPerSecondCounter DeletePerSec { get; private set; }
+
+        [Counter("Количество обрабатываемых транзакций RestoreUpdate (Per/sec)")]
+        public OperationsPerSecondCounter RestoreUpdatePerSec { get; private set; }
+
+        [Counter("Количество обрабатываемых транзакций CustomOperation (Per/sec)")]
+        public OperationsPerSecondCounter CustomOperationPerSec { get; private set; }
+
+        #endregion
+
+        #region Timers
+
+        [Counter("Время обработки запроса")]
+        public AverageTimeCounter QueryAvgTime { get; private set; }
 
         [Counter("ReadMetaDataTimer")]
         public AverageTimeCounter ReadMetaDataTimer { get; private set; }
@@ -92,6 +107,12 @@ namespace Qoollo.Impl.Writer.PerfCounters
 
         [Counter("CreateMetaDataTimer")]
         public AverageTimeCounter CreateMetaDataTimer { get; private set; }
+
+        [Counter("Среднее время транзакции")]
+        public AverageTimeCounter AverageTimer { get; private set; }
+
+        [Counter("Среднее время транзакции с очередью")]
+        public AverageTimeCounter AverageTimerWithQueue { get; private set; }
 
         #endregion
     }

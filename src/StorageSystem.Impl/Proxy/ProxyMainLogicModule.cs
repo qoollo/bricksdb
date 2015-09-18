@@ -12,9 +12,9 @@ namespace Qoollo.Impl.Proxy
 {
     internal class ProxyMainLogicModule : ControlModule
     {
-        private ProxyDistributorModule _distributor;
-        private IProxyNetModule _net;
-        private ProxyCache _cache;
+        private readonly ProxyDistributorModule _distributor;
+        private readonly IProxyNetModule _net;
+        private readonly ProxyCache _cache;
 
         public ProxyMainLogicModule(ProxyDistributorModule distributorModule, IProxyNetModule net,
                                     ProxyCache proxyCache)

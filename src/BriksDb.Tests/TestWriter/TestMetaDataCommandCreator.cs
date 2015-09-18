@@ -87,6 +87,11 @@ namespace Qoollo.Tests.TestWriter
             return new TestCommand() { Command = script, IsDeleted = false };
         }
 
+        public TestCommand CreateSelectCommand(SelectDescription description)
+        {
+            return new TestCommand() { Command = description.Script, IsDeleted = false };
+        }
+
         public TestCommand CreateSelectCommand(TestCommand script, FieldDescription idDescription, List<FieldDescription> userParameters)
         {
             return new TestCommand() { Command = script.Command, IsDeleted = false };

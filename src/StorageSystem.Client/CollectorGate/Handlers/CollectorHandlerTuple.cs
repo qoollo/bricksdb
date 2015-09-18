@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Qoollo.Client.Request;
+using Qoollo.Impl.Collector.Parser;
 
 namespace Qoollo.Client.CollectorGate.Handlers
 {
@@ -26,34 +27,41 @@ namespace Qoollo.Client.CollectorGate.Handlers
             return func(CollectorHandler);
         }
 
-        public StorageDbReader CreateReader(string query)
+        public StorageDbReader CreateReader(string query, bool isUseUserScript = false, FieldDescription field = null)
         {
-            return InnerFunc(handler => handler.CreateReader(query));
+            return InnerFunc(handler => handler.CreateReader(query, isUseUserScript, field));
         }
 
-        public StorageDbReader CreateReader(string query, int limitCount)
+        public StorageDbReader CreateReader(string query, int limitCount, bool isUseUserScript = false,
+            FieldDescription field = null)
         {
-            return InnerFunc(handler => handler.CreateReader(query, limitCount));
+            return InnerFunc(handler => handler.CreateReader(query, limitCount, isUseUserScript, field));
         }
 
-        public StorageDbReader CreateReader(string query, int limitCount, int userPage)
+        public StorageDbReader CreateReader(string query, int limitCount, int userPage, bool isUseUserScript = false,
+            FieldDescription field = null)
         {
-            return InnerFunc(handler => handler.CreateReader(query, limitCount, userPage));
+            return InnerFunc(handler => handler.CreateReader(query, limitCount, userPage, isUseUserScript, field));
         }
 
-        public StorageDbReader CreateReader(string query, List<QueryParameter> parameters)
+        public StorageDbReader CreateReader(string query, List<QueryParameter> parameters, bool isUseUserScript = false,
+            FieldDescription field = null)
         {
-            return InnerFunc(handler => handler.CreateReader(query, parameters));
+            return InnerFunc(handler => handler.CreateReader(query, parameters, isUseUserScript, field));
         }
 
-        public StorageDbReader CreateReader(string query, int limitCount, List<QueryParameter> parameters)
+        public StorageDbReader CreateReader(string query, int limitCount, List<QueryParameter> parameters,
+            bool isUseUserScript = false, FieldDescription field = null)
         {
-            return InnerFunc(handler => handler.CreateReader(query, limitCount, parameters));
+            return InnerFunc(handler => handler.CreateReader(query, limitCount, parameters, isUseUserScript, field));
         }
 
-        public StorageDbReader CreateReader(string query, int limitCount, int userPage, List<QueryParameter> parameters)
+        public StorageDbReader CreateReader(string query, int limitCount, int userPage, List<QueryParameter> parameters,
+            bool isUseUserScript = false, FieldDescription field = null)
         {
-            return InnerFunc(handler => handler.CreateReader(query, limitCount, userPage, parameters));
+            return
+                InnerFunc(
+                    handler => handler.CreateReader(query, limitCount, userPage, parameters, isUseUserScript, field));
         }
 
         public RequestDescription SayIAmHere(string host, int port)

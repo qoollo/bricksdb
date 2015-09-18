@@ -1,4 +1,5 @@
-﻿using System.Data.SqlClient;
+﻿using System;
+using System.Data.SqlClient;
 using Qoollo.Impl.Modules.Db.Impl;
 using Qoollo.Turbo.ObjectPools;
 
@@ -53,7 +54,15 @@ namespace Qoollo.Impl.Sql.Internal
         protected override void StartInner()
         {
             _command.Connection = _connection.Element;
-            _reader = _command.ExecuteReader();
+            try
+            {
+                _reader = _command.ExecuteReader();
+            }
+            catch (Exception e)
+            {
+                Logger.Logger.Instance.Error(e, "Command = " + _command.CommandText);
+            }            
+
         }
 
         protected override void Dispose(bool isUserCall)

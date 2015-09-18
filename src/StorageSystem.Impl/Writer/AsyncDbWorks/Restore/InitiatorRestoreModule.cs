@@ -18,7 +18,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private List<HashMapRecord> _local;
         private Dictionary<ServerId, bool> _servers;
         private ServerId _remoteServer;
-        private RestoreModuleConfiguration _configuration;
+        private readonly RestoreModuleConfiguration _configuration;
         private bool _isModelUpdated;
         private string _tableName;
 

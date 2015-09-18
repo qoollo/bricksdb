@@ -69,22 +69,10 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
         public TaskCompletionSource<UserTransaction> UserSupportCallback { get; set; }
 
         public TaskCompletionSource<InnerData> InnerSupportCallback { get; set; }
- 
-        public int TransactionAnswersCount { get; private set; }
 
         public string CacheKey { get { return EventHash + OperationName + _uniqueTime; } }
 
-        /// <summary>
-        /// Servers for where data store
-        /// </summary>        
-        public List<ServerId> Destination { get; set; }        
-
-        public TimeCounterTimer PerfTimer { get; set; }
-
-        /// <summary>
-        /// Is need find data on all servers        
-        /// </summary>
-        public bool IsNeedAllServes { get; set; }
+        public TimeCounterTimer PerfTimer { get; set; }        
 
         #endregion
 
@@ -96,7 +84,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
             EventHash = eventHash;
             IsError = false;
             State = TransactionState.InProcess;
-            TransactionAnswersCount = 0;
             _uniqueTime = DateTimeOffset.Now;
             HashFromValue = false;
         }
@@ -108,7 +95,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
             OperationName = systemTransaction.OperationName;
             OperationType = systemTransaction.OperationType;
             IsError = systemTransaction.IsError;
-            TransactionAnswersCount = systemTransaction.TransactionAnswersCount;
             PerfTimer = systemTransaction.PerfTimer;
             Distributor = systemTransaction.Distributor;
             _uniqueTime = systemTransaction._uniqueTime;
@@ -156,15 +142,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
             IsError = false;
         }
 
-        #endregion
-
-        #region Support
-
-        public void IncreaseTransactionAnswersCount()
-        {
-            TransactionAnswersCount++;
-        }
-
-        #endregion
+        #endregion        
     }
 }

@@ -18,8 +18,8 @@ namespace Qoollo.Impl.Collector.Tasks
 
         public OrderSelectTask(List<ServerId> servers, FieldDescription scriptDescription,
             FieldDescription keyDescription, string script, int limitCount, int userPage,
-            List<FieldDescription> userParametrs, string tableName)
-            : base(servers, keyDescription, script, userParametrs, tableName)
+            List<FieldDescription> userParametrs, string tableName, bool isUserScript = false)
+            : base(servers, keyDescription, script, userParametrs, tableName, isUserScript)
         {
             Contract.Requires(limitCount > 0 || limitCount == -1);
             Contract.Requires(userPage > 0);
@@ -46,7 +46,7 @@ namespace Qoollo.Impl.Collector.Tasks
         {
             _mergeData = merge(this, SearchTasks);
 
-            if (_limitCount == - 1)
+            if (_limitCount == -1)
                 return !CalculateCanReadInner();
 
             _currentRead += _mergeData.Count;

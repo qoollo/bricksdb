@@ -77,8 +77,7 @@ namespace Qoollo.Impl.Components
             var q = new GlobalQueueInner();
             GlobalQueue.SetQueue(q);
 
-            var cache = new DistributorTimeoutCache(_cacheConfiguration.TimeAliveBeforeDeleteMls,
-                _cacheConfiguration.TimeAliveAfterUpdateMls);
+            var cache = new DistributorTimeoutCache(_cacheConfiguration);
             var net = CreateNetModule(_connectionConfiguration);
             var distributor = new DistributorModule(_pingConfig, _checkConfig, _distributorHashConfiguration,
                 new QueueConfiguration(1, 1000), net,
@@ -87,18 +86,17 @@ namespace Qoollo.Impl.Components
             Distributor = distributor;
 
             net.SetDistributor(distributor);
-            var transaction = new TransactionModule(_queueConfiguration, net, _transactionConfiguration,
-                _distributorHashConfiguration);
-            var main = new MainLogicModule(cache, distributor, transaction);
-
-            cache.SetMainLogicModule(main);
+            var transaction = new TransactionModule(net, _transactionConfiguration,
+                _distributorHashConfiguration.CountReplics, cache);
+            var main = new MainLogicModule(distributor, transaction, cache);
+            
             var input = new InputModuleWithParallel(_queueConfiguration, main, transaction);
             var receive = new NetDistributorReceiver(main, input, distributor, _receiverConfigurationForDb,
                 _receiverConfigurationForProxy);
 
-            AddModule(receive);
-            AddModule(transaction);
+            AddModule(receive);            
             AddModule(input);
+            AddModule(transaction);
             AddModule(main);
             AddModule(net);
             AddModule(distributor);
@@ -109,8 +107,8 @@ namespace Qoollo.Impl.Components
             AddModuleDispose(input);
             AddModuleDispose(cache);
             AddModuleDispose(main);
-            AddModuleDispose(distributor);
             AddModuleDispose(transaction);
+            AddModuleDispose(distributor);            
             AddModuleDispose(net);            
         }
     }

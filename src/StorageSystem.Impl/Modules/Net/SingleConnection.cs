@@ -8,9 +8,10 @@ using Qoollo.Turbo;
 
 namespace Qoollo.Impl.Modules.Net
 {
-    internal abstract class SingleConnection<T>:ControlModule
+    internal abstract class SingleConnection<T> : ControlModule
     {
-        private StableElementsDynamicConnectionPool<T> _bPool;
+        private readonly StableElementsDynamicConnectionPool<T> _bPool;
+
         public ServerId Server { get; private set; }
 
         protected SingleConnection(ServerId server, ConnectionConfiguration configuration,
@@ -20,17 +21,25 @@ namespace Qoollo.Impl.Modules.Net
             _bPool =
                 new StableElementsDynamicConnectionPool<T>(
                     NetConnector.Connect<T>(Server, configuration.ServiceName, timeoutConfiguration),
-                    -1, configuration.MaxElementCount);
+                    -1, configuration.MaxElementCount, "Connection pool to " + Server);
         }
 
         public bool Connect()
         {
             bool ret = false;
-            using (var val = _bPool.Rent(10000))
+            try
             {
-                if (val.IsValid)
-                    ret = val.Element.State == StableConnectionState.Opened;
+                using (var val = _bPool.Rent(10000))
+                {
+                    if (val.IsValid)
+                        ret = val.Element.State == StableConnectionState.Opened;
+                }
             }
+            catch (Exception)
+            {
+
+            }
+
 
             return ret;
         }
@@ -39,54 +48,63 @@ namespace Qoollo.Impl.Modules.Net
             string errorLogFromData) where TApi : class
         {
             TResult res;
-            using (var elem = _bPool.Rent())
+            try
             {
-                try
+                using (var elem = _bPool.Rent())
                 {
-                    if (!elem.Element.CanBeUsedForCommunication)
-                        throw new CommunicationException("Connection can't be used for communications. Target: " +
-                                                         Server);
-
-                    using (var request = elem.Element.RunRequest(_bPool.DeadlockTimeout))
+                    try
                     {
-                        if (!request.CanBeUsedForCommunication)
+                        if (!elem.Element.CanBeUsedForCommunication)
                             throw new CommunicationException("Connection can't be used for communications. Target: " +
                                                              Server);
 
-                        res = func(request.API as TApi);
+                        using (var request = elem.Element.RunRequest(_bPool.DeadlockTimeout))
+                        {
+                            if (!request.CanBeUsedForCommunication)
+                                throw new CommunicationException("Connection can't be used for communications. Target: " +
+                                                                 Server);
+
+                            res = func(request.API as TApi);
+                        }
+                    }
+                    catch (EndpointNotFoundException e)
+                    {
+                        Logger.Logger.Instance.ErrorFormat(e, "message = {0}", errorLogFromData);
+                        res = errorRet(e);
+                    }
+                    catch (CommunicationException e)
+                    {
+                        Logger.Logger.Instance.ErrorFormat(e, "message = {0}", errorLogFromData);
+                        res = errorRet(e);
+                    }
+                    catch (CantRetrieveElementException e)
+                    {
+                        Logger.Logger.Instance.ErrorFormat(e, "message = {0}", errorLogFromData);
+                        res = errorRet(e);
+                    }
+                    catch (TimeoutException e)
+                    {
+                        Logger.Logger.Instance.ErrorFormat(e, "message = {0}", errorLogFromData);
+                        res = errorRet(e);
                     }
                 }
-                catch (EndpointNotFoundException e)
-                {
-                    Logger.Logger.Instance.ErrorFormat(e, "message = {0}", errorLogFromData);
-                    res = errorRet(e);
-                }
-                catch (CommunicationException e)
-                {
-                    Logger.Logger.Instance.ErrorFormat(e, "message = {0}", errorLogFromData);
-                    res = errorRet(e);
-                }
-                catch (CantRetrieveElementException e)
-                {
-                    Logger.Logger.Instance.ErrorFormat(e, "message = {0}", errorLogFromData);
-                    res = errorRet(e);
-                }
-                catch (TimeoutException e)
-                {
-                    Logger.Logger.Instance.ErrorFormat(e, "message = {0}", errorLogFromData);
-                    res = errorRet(e);
-                }
             }
+            catch (Exception e)
+            {
+                Logger.Logger.Instance.ErrorFormat(e, "message = {0}", errorLogFromData);
+                res = errorRet(e);
+            }
+
+
             return res;
         }
 
         protected override void Dispose(bool isUserCall)
         {
-            if (isUserCall)
-            {
-                _bPool.Dispose();
-            }
+            Logger.Logger.Instance.FatalFormat("Dispose for {0}", Server);
+            _bPool.Dispose();
+
             base.Dispose(isUserCall);
-        }        
+        }
     }
 }

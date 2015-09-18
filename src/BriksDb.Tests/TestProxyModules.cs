@@ -182,7 +182,7 @@ namespace Qoollo.Tests
 
             var ev = new InnerData(new Transaction("", ""))
             {
-                Transaction = { Destination = new List<ServerId> { server1 } }
+                DistributorData = new DistributorData { Destination = new List<ServerId> { server1 } },
             };
 
             var ret1 = net.Process(server1, ev);
@@ -275,12 +275,12 @@ namespace Qoollo.Tests
             ev.Transaction = distributor.CreateTransaction(hash);
             ev.Transaction = distributor.CreateTransaction(hash);
             ev.Transaction = distributor.CreateTransaction(hash);
-
-            ev.Transaction.Destination = new List<ServerId> { server1 };
+            
+            ev.DistributorData = new DistributorData { Destination = new List<ServerId> { server1 } };
 
             bool res = main.Process(ev);
 
-            var server = cache.Get(ev.Transaction.EventHash);
+            var server = cache.Get(ev.Transaction.DataHash);
             Assert.IsNull(server);
             Assert.IsTrue(res);
 
@@ -350,10 +350,10 @@ namespace Qoollo.Tests
                 new HashMapConfiguration("test7", HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
             dnet.SetDistributor(ddistributor);
 
-            var tranc = new TransactionModule(new QueueConfiguration(1, 1000), dnet, new TransactionConfiguration(4),
-                                              new DistributorHashConfiguration(1));
-            var main = new MainLogicModule(new DistributorTimeoutCache(new TimeSpan(), new TimeSpan()), ddistributor,
-                                           tranc);
+            var cache = new DistributorTimeoutCache(
+                new DistributorCacheConfiguration(new TimeSpan(), new TimeSpan()));
+            var tranc = new TransactionModule(dnet, new TransactionConfiguration(4), 1, cache);
+            var main = new MainLogicModule(ddistributor, tranc, cache);
             var netReceive4 = new NetReceiverConfiguration(server4, "localhost", "testService");
             var netReceive42 = new NetReceiverConfiguration(server42, "localhost", "testService");
 

@@ -8,5 +8,10 @@ namespace Qoollo.Impl.Common.NetResults
         public InnerFailResult(string description) : base(true, description)
         {
         }
+
+        public InnerFailResult(string description, bool isError)
+            : base(isError, description)
+        {
+        }
     }
 }

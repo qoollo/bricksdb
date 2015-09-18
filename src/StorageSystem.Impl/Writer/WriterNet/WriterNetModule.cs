@@ -63,7 +63,8 @@ namespace Qoollo.Impl.Writer.WriterNet
         public RemoteResult ProcessSync(ServerId server, InnerData data)
         {
             Logger.Logger.Instance.Debug(string.Format("WriterNetModule: process server = {0}, ev = {1}", server,
-                                           data.Transaction.EventHash));
+                                                                                      data.Transaction.DataHash));
+
             var connection = FindServer(server) as SingleConnectionToWriter;
 
             if (connection == null)
@@ -76,7 +77,8 @@ namespace Qoollo.Impl.Writer.WriterNet
             {
                 Logger.Logger.Instance.Debug(string.Format(
                     "WriterNetModule: process server not found  server = {0}, ev = {1}", server,
-                    data.Transaction.EventHash), "restore");
+                                        data.Transaction.DataHash), "restore");
+
                 return new ServerNotFoundResult();
             }
             var ret = connection.ProcessSync(data);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Text;
 using System.Threading.Tasks;
+using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Modules.Db.Impl;
 using Qoollo.Impl.Writer.Db.Commands;
@@ -93,6 +94,11 @@ namespace Qoollo.Tests.TestWriter
         {
             var key = (int)fields[0].Item1;
             return key;
+        }
+
+        public TestCommand CreateSelectCommand(SelectDescription description)
+        {
+            return new TestCommand() { Command = description.Script, IsDeleted = false };
         }
 
 

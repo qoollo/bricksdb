@@ -1,23 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.DistributorModules.DistributorNet.Interfaces;
+using Qoollo.Impl.Modules.Queue;
 
 namespace Qoollo.Impl.DistributorModules.Transaction
 {
     internal class TransactionExecutor :IDisposable
     {
-        private INetModule _net;
-        private List<Task> _tasks;
-        private object _lock = new object();
+        private readonly INetModule _net;
+        private readonly List<Task> _tasks;
+        private readonly object _obj = new object();
+        private readonly GlobalQueueInner _queue;
 
         public TransactionExecutor(INetModule net, int countReplics)
         {
+            Contract.Requires(net!=null);
             _net = net;
             _tasks = new List<Task>();
+
+            _queue = GlobalQueue.Queue;
+
             for (int i = 0; i < countReplics; i++)
             {
                 _tasks.Add(new Task(() => { }));
@@ -27,68 +34,62 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         public void Commit(InnerData data)
         {
-            var destination = new List<ServerId>(data.Transaction.Destination);
-            if (data.Transaction.Destination.Count == 1)
+            if (data.DistributorData.Destination.Count == 1)
+                CommitSingleServer(data.DistributorData.Destination.First(), data);
+            else
             {
-                var result = _net.Process(data.Transaction.Destination.First(), data);
+                for (int i = 0; i < data.DistributorData.Destination.Count; i++)
+                {
+                    int i1 = i;
+                    _tasks[i].ContinueWith(e => CommitSingleServer(data.DistributorData.Destination[i1], data));
+                }
+            }
+        }
 
-                if (result.IsError)
+        private void CommitSingleServer(ServerId server, InnerData data)
+        {
+            var result = _net.Process(server, data);
+            if (result.IsError)
+            {
+                lock (_obj)
                 {
                     data.Transaction.SetError();
                     data.Transaction.AddErrorDescription(result.Description);
+
+                    _queue.TransactionQueue.Add(data.Transaction);
                 }
             }
-            else
-            {
-                var list = data.Transaction.Destination.Select((server, i) => _tasks[i].ContinueWith((e) =>
-                    {
-                        var result = _net.Process(server, data);
-
-                        if (result.IsError)
-                        {
-                            lock (_lock)
-                            {
-                                data.Transaction.SetError();
-                                data.Transaction.AddErrorDescription(result.Description);
-                            }
-                        }
-                    }));
-
-                Task.WaitAll(list.ToArray());
-            }
-
-            if (data.Transaction.IsError)
-                Rollback(data, destination);
         }
+
+        #region Read
 
         public InnerData ReadSimple(InnerData data)
         {
-            InnerData result = null;
-
-            if (data.Transaction.Destination.Count == 1)
-            {
-                result = _net.ReadOperation(data.Transaction.Destination.First(), data);
-            }
-            else
-            {
-                var retList = new List<InnerData>();
-
-                var list = data.Transaction.Destination.Select((server, i) => _tasks[i].ContinueWith((e) =>
-                {
-                    var ret = _net.ReadOperation(server, data);
-                    if (ret != null)
-                        lock (_lock)
-                        {
-                            retList.Add(ret);
-                        }
-                }));
-
-                Task.WaitAll(list.ToArray());
-
-                result = GetData(retList);
-            }
+            var result = data.DistributorData.Destination.Count == 1
+                ? _net.ReadOperation(data.DistributorData.Destination.First(), data)
+                : ReadListServers(data);
 
             return result;
+        }
+
+        private InnerData ReadListServers(InnerData data)
+        {
+            var retList = new List<InnerData>();
+            var obj = new object();
+
+            var list = data.DistributorData.Destination.Select((server, i) => _tasks[i].ContinueWith((e) =>
+            {
+                var ret = _net.ReadOperation(server, data);
+                if (ret != null)
+                    lock (obj)
+                    {
+                        retList.Add(ret);
+                    }
+            }));
+
+            Task.WaitAll(list.ToArray());
+
+            return GetData(retList);
         }
 
         private InnerData GetData(List<InnerData> list)
@@ -105,19 +106,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             return data.First();
         }
 
-        private void Rollback(InnerData data, List<ServerId> dest )
-        {
-            try
-            {
-                foreach (var server in dest)
-                {
-                    _net.Rollback(server, data);
-                }
-            }
-            catch (Exception e)
-            {               
-            }            
-        }
+        #endregion        
         
         public void Dispose()
         {

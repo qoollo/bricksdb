@@ -12,9 +12,9 @@ using Qoollo.Impl.Modules;
 namespace Qoollo.Impl.Collector.Tasks
 {
     /// <summary>
-    /// Base class for search
+    /// Базовый класс, описывающий поиск
     /// </summary>
-    internal abstract class SearchTask:ControlModule
+    internal abstract class SearchTask : ControlModule
     {
         public List<SingleServerSearchTask> SearchTasks { get; private set; }
         private ReaderWriterLockSlim _lock;
@@ -43,14 +43,15 @@ namespace Qoollo.Impl.Collector.Tasks
         private bool _isCanRead;
 
         protected SearchTask(List<ServerId> servers, FieldDescription keyDescription, string script,
-            List<FieldDescription> userParametrs, string tableName)
+            List<FieldDescription> userParametrs, string tableName, bool isUserScript = false)
         {
             SearchTasks = new List<SingleServerSearchTask>();
             servers.ForEach(
                 x =>
                     SearchTasks.Add(new SingleServerSearchTask(x, script, keyDescription, tableName)
                     {
-                        UserParametrs = userParametrs
+                        UserParametrs = userParametrs,
+                        IsUserScript = isUserScript
                     }));
 
             _lock = new ReaderWriterLockSlim();
@@ -86,8 +87,8 @@ namespace Qoollo.Impl.Collector.Tasks
 
         protected bool CalculateCanReadInner()
         {
-            return SearchTasks.Exists(x => !(x.IsAllDataRead && x.Length==0 || !x.IsServersAvailbale));
-        }        
+            return SearchTasks.Exists(x => !(x.IsAllDataRead && x.Length == 0 || !x.IsServersAvailbale));
+        }
 
         #endregion
 
@@ -113,7 +114,7 @@ namespace Qoollo.Impl.Collector.Tasks
             return ret;
         }
 
-        public void BackgroundLoadInner(Func<SystemSearchStateInner> getState, IDataLoader loader, Func<OrderSelectTask,List<SingleServerSearchTask>, List<SearchData>> merge)
+        public void BackgroundLoadInner(Func<SystemSearchStateInner> getState, IDataLoader loader, Func<OrderSelectTask, List<SingleServerSearchTask>, List<SearchData>> merge)
         {
             try
             {
@@ -132,7 +133,7 @@ namespace Qoollo.Impl.Collector.Tasks
                         _data.Add(false);
                         _autoResetEvent.WaitOne();
                     }
-                    else if(finish)
+                    else if (finish)
                     {
                         _data.Add(true);
                     }

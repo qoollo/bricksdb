@@ -12,12 +12,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class RestoreReader : SingleReaderBase
     {
-        private AsyncDbHolder _holder;
-        private Action<InnerData> _process;
-        private int _countElements;
-        private string _tableName;
-        private Func<MetaData, bool> _isMine;
-        private bool _local;
+        private readonly AsyncDbHolder _holder;
+        private readonly Action<InnerData> _process;
+        private readonly int _countElements;
+        private readonly string _tableName;
+        private readonly Func<MetaData, bool> _isMine;
+        private readonly bool _local;
 
         private bool _isFirstRead;
         private object _lastId;

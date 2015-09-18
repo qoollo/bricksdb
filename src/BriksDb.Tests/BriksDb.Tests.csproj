@@ -43,6 +43,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml" />
   </ItemGroup>
@@ -96,6 +97,7 @@
     <Compile Include="TestDistributorClient.cs" />
     <Compile Include="TestProxyAndDistributor.cs" />
     <Compile Include="TestMultCrudAndHash.cs" />
+    <Compile Include="UnitTest1.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\StorageSystem.Client\BriksDb.Client.csproj">

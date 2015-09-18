@@ -96,13 +96,13 @@ namespace Qoollo.Tests
             avg = 0;
             for (int i = 0; i < count; i++)
             {
-                cache.AddToCache(obj[i].Transaction.EventHash, obj[i].Transaction);
+                cache.AddToCache(obj[i].Transaction.DataHash, obj[i].Transaction);
             }
 
             for (int i = 0; i < count; i++)
             {
                 sp.Start();
-                cache.Update(obj[i].Transaction.EventHash, obj[i].Transaction);
+                cache.Update(obj[i].Transaction.DataHash, obj[i].Transaction);
                 sp.Stop();
                 long mls = sp.ElapsedMilliseconds;
                 avg += mls;
@@ -121,7 +121,7 @@ namespace Qoollo.Tests
 
             var ev = new InnerData(new Transaction("123", ""))
             {
-                Transaction = { Destination = new List<ServerId>() }
+                DistributorData = new DistributorData{ Destination = new List<ServerId>() }
             };
 
             cache.AddToCache("123", ev);

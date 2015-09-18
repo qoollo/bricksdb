@@ -6,13 +6,14 @@ using Qoollo.Impl.Modules.Db.Impl;
 
 namespace Qoollo.Impl.Writer.Db.Commands
 {
-    public interface IMetaDataCommandCreator<TCommand, TReader>
+    internal interface IMetaDataCommandCreator<TCommand, TReader>
     {
         void SetKeyName(string keyName);
         void SetTableName(List<string> tableName);
 
         TCommand InitMetaDataDb(string idInit);
         TCommand CreateMetaData(bool remote);
+
         TCommand DeleteMetaData();
         TCommand UpdateMetaData(bool local);
         TCommand SetDataDeleted();
@@ -29,6 +30,8 @@ namespace Qoollo.Impl.Writer.Db.Commands
         TCommand CreateSelectCommand(string script, FieldDescription idDescription,
             List<FieldDescription> userParameters);
 
+        TCommand CreateSelectCommand(SelectDescription description);
+
         TCommand CreateSelectCommand(TCommand script, FieldDescription idDescription,
             List<FieldDescription> userParameters);
 
@@ -36,6 +39,6 @@ namespace Qoollo.Impl.Writer.Db.Commands
 
         Dictionary<string, Type> GetFieldsDescription();
         TCommand SetKeytoCommand(TCommand command, object key);
-        FieldDescription GetKeyDescription();        
+        FieldDescription GetKeyDescription();
     }
 }

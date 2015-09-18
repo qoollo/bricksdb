@@ -17,9 +17,10 @@ namespace Qoollo.Impl.Collector.Tasks
 
         public FieldDescription IdDescription { get; private set; }
         public ServerId ServerId { get; private set; }
-        private List<SearchData> _data;
+        private readonly List<SearchData> _data;
         private int _dataPos;
-        public List<FieldDescription> UserParametrs { get; set; } 
+        public List<FieldDescription> UserParametrs { get; set; }
+        public bool IsUserScript { get; set; }
 
         public SingleServerSearchTask(ServerId serverId, string script, FieldDescription idDescription, string tableName)
         {
@@ -32,6 +33,7 @@ namespace Qoollo.Impl.Collector.Tasks
             ServerId = serverId;
             _dataPos = 0;
             UserParametrs = new List<FieldDescription>();
+            IsUserScript = false;
         }
 
         #region Data work

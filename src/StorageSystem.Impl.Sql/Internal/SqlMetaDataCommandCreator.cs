@@ -11,7 +11,7 @@ using Qoollo.Impl.Writer.Db.Commands;
 
 namespace Qoollo.Impl.Sql.Internal
 {
-    internal class SqlMetaDataCommandCreator<TKey, TValue>:IMetaDataCommandCreator<SqlCommand, SqlDataReader>
+    internal class SqlMetaDataCommandCreator<TKey, TValue> : IMetaDataCommandCreator<SqlCommand, SqlDataReader>
     {
         private string _keyName;
         private string _userKeyName;
@@ -139,9 +139,9 @@ namespace Qoollo.Impl.Sql.Internal
 
             if (!(local is DBNull || isDeleted is DBNull || deleteTime is DBNull))
             {
-                bool l = GetLocalBack((int) local);
-                bool i = GetLocalBack((int) isDeleted);
-                var t = (DateTime) deleteTime;
+                bool l = GetLocalBack((int)local);
+                bool i = GetLocalBack((int)isDeleted);
+                var t = (DateTime)deleteTime;
 
                 meta = new MetaData(l, t, i);
             }
@@ -167,9 +167,9 @@ namespace Qoollo.Impl.Sql.Internal
 
             if (!(local is DBNull || isDeleted is DBNull || deleteTime is DBNull))
             {
-                bool l = GetLocalBack((int) local);
-                bool i = GetLocalBack((int) isDeleted);
-                var t = (DateTime) deleteTime;
+                bool l = GetLocalBack((int)local);
+                bool i = GetLocalBack((int)isDeleted);
+                var t = (DateTime)deleteTime;
 
                 meta = new MetaData(l, t, i)
                 {
@@ -230,23 +230,42 @@ namespace Qoollo.Impl.Sql.Internal
         {
             string nquery = _scriptParser.CreateOrderScript(script, idDescription);
 
-            var command = new SqlCommand(nquery);
+            return CreateSelectCommandInner(nquery, idDescription, userParameters);
+        }
 
+        private SqlCommand CreateSelectCommandInner(string script, FieldDescription idDescription,
+            List<FieldDescription> userParameters, bool useUserScript = false)
+        {
+            var command = new SqlCommand(script);
             var name = idDescription.FieldName == _keyName ? _userKeyName : idDescription.FieldName;
-            var dbtype = _handler.GetFieldsDescription().Find(x => x.Item1.ToLower() == name.ToLower());
-            command.Parameters.Add("@" + idDescription.FieldName, dbtype.Item3);
-            command.Parameters["@" + idDescription.FieldName].Value = idDescription.Value;
+
+            if (!useUserScript || !idDescription.IsFirstAsk)
+            {
+                var dbtype = _handler.GetFieldsDescription().Find(x => x.Item1.ToLower() == name.ToLower());
+                command.Parameters.Add("@" + idDescription.FieldName, dbtype.Item3);
+                command.Parameters["@" + idDescription.FieldName].Value = idDescription.Value;
+            }
 
             foreach (var parameter in userParameters)
             {
-                if (parameter.UserType >= 0 && parameter.UserType <= 34)
+                if (parameter.UserType >= 0 && parameter.UserType <= 34 &&
+                    (idDescription.IsFirstAsk || parameter.FieldName.ToLower() != idDescription.FieldName.ToLower()))
                 {
-                    command.Parameters.Add("@" + parameter.FieldName, (SqlDbType) parameter.UserType);
+                    command.Parameters.Add("@" + parameter.FieldName, (SqlDbType)parameter.UserType);
                     command.Parameters["@" + parameter.FieldName].Value = parameter.Value;
                 }
             }
 
             return command;
+        }
+
+        public SqlCommand CreateSelectCommand(SelectDescription description)
+        {
+            if (!description.UseUserScript)
+                return CreateSelectCommand(description.Script, description.IdDescription, description.UserParametrs);
+
+            return CreateSelectCommandInner(description.Script, description.IdDescription, description.UserParametrs,
+                true);
         }
 
         public SqlCommand CreateSelectCommand(SqlCommand script, FieldDescription idDescription,

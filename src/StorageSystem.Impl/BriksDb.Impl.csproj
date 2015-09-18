@@ -118,6 +118,7 @@
     <Compile Include="Collector\Tasks\OrderSelectTask.cs" />
     <Compile Include="Collector\Tasks\SearchTask.cs" />
     <Compile Include="Collector\Tasks\SingleServerSearchTask.cs" />
+    <Compile Include="Common\Data\DataTypes\DistributorData.cs" />
     <Compile Include="Common\Data\DataTypes\InnerData.cs" />
     <Compile Include="Common\Data\DataTypes\MetaData.cs" />
     <Compile Include="Common\Data\DataTypes\SearchData.cs" />
@@ -144,6 +145,7 @@
     <Compile Include="Common\Support\delegate.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
     <Compile Include="Writer\AsyncDbWorks\Support\AsyncDbHolder.cs" />
+    <Compile Include="Writer\Db\DbLogicCreateAndUpdateHelper.cs" />
     <Compile Include="Writer\WriterNet\NetWriterReceiverForCollector.cs" />
     <Compile Include="Writer\WriterNet\NetWriterReceiverForWrite.cs" />
     <Compile Include="Writer\Db\Commands\UserCommandCreatorBase.cs" />

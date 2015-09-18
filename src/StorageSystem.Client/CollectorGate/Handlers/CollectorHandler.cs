@@ -19,55 +19,58 @@ namespace Qoollo.Client.CollectorGate.Handlers
             _system = system;
         }
 
-        public StorageDbReader CreateReader(string query)
+        public StorageDbReader CreateReader(string query, bool isUseUserScript = false, FieldDescription field = null)
         {
-            var reader = _collectorSystem.CreateReader(query);
+            var reader = _collectorSystem.CreateReader(query, isUseUserScript, field);
             reader.Start();
             return new StorageDbReader(reader);
         }
 
-        public StorageDbReader CreateReader(string query, int limitCount)
+        public StorageDbReader CreateReader(string query, int limitCount, bool isUseUserScript = false, FieldDescription field = null)
         {
-            var reader = _collectorSystem.CreateReader(query, limitCount);
+            var reader = _collectorSystem.CreateReader(query, limitCount, isUseUserScript, field);
             reader.Start();
             return new StorageDbReader(reader);
         }
 
-        public StorageDbReader CreateReader(string query, int limitCount, int userPage)
+        public StorageDbReader CreateReader(string query, int limitCount, int userPage, bool isUseUserScript = false, FieldDescription field = null)
         {
-            var reader = _collectorSystem.CreateReader(query, limitCount, userPage);
+            var reader = _collectorSystem.CreateReader(query, limitCount, userPage, isUseUserScript, field);
             reader.Start();
             return new StorageDbReader(reader);
         }
 
-        public StorageDbReader CreateReader(string query, List<QueryParameter> parameters)
+        public StorageDbReader CreateReader(string query, List<QueryParameter> parameters, bool isUseUserScript = false, FieldDescription field = null)
         {
             if (parameters == null)
                 return null;
 
-            var reader = _collectorSystem.CreateReader(query, ConverParameters(parameters));
+            var reader = _collectorSystem.CreateReader(query, ConverParameters(parameters), isUseUserScript, field);
             reader.Start();
             return new StorageDbReader(reader);
         }
 
-        public StorageDbReader CreateReader(string query, int limitCount, List<QueryParameter> parameters)
+        public StorageDbReader CreateReader(string query, int limitCount, List<QueryParameter> parameters,
+            bool isUseUserScript = false, FieldDescription field = null)
         {
             if (parameters == null)
                 return null;
 
             var reader = _collectorSystem.CreateReader(query, limitCount,
-                ConverParameters(parameters));
+                ConverParameters(parameters), isUseUserScript, field);
+
             reader.Start();
             return new StorageDbReader(reader);
         }
 
-        public StorageDbReader CreateReader(string query, int limitCount, int userPage, List<QueryParameter> parameters)
+        public StorageDbReader CreateReader(string query, int limitCount, int userPage, List<QueryParameter> parameters,
+            bool isUseUserScript = false, FieldDescription field = null)
         {
             if (parameters == null)
                 return null;
 
             var reader = _collectorSystem.CreateReader(query, limitCount, userPage,
-                ConverParameters(parameters));
+                ConverParameters(parameters), isUseUserScript, field);
             reader.Start();
             return new StorageDbReader(reader);
         }

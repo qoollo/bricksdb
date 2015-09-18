@@ -37,14 +37,9 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
             get { return _userTransaction.CacheKey; }
         }
 
-        public string EventHash
+        public string DataHash
         {
             get { return _systemTransaction.EventHash; }
-        }
-
-        public string DistributorHash
-        {
-            get { return _userTransaction.DistributorHash; }
         }
 
         public bool IsError
@@ -68,11 +63,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
             set { _systemTransaction.CustomOperationField = value; }
         }
 
-        public int TransactionAnswersCount
-        {
-            get { return _systemTransaction.TransactionAnswersCount; }
-        }
-
         public OperationName OperationName
         {
             get { return _systemTransaction.OperationName; }
@@ -93,12 +83,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
         {
             get { return _systemTransaction.Distributor; }
             set { _systemTransaction.Distributor = value; }
-        }
-
-        public List<ServerId> Destination
-        {
-            get { return _systemTransaction.Destination; }
-            set { _systemTransaction.Destination = value; }
         }
 
         public ServerId ProxyServerId
@@ -139,12 +123,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
         {
             get { return _systemTransaction.PerfTimer; }
             set { _systemTransaction.PerfTimer = value; }
-        }
-
-        public bool IsNeedAllServes
-        {
-            get { return _systemTransaction.IsNeedAllServes; }
-            set { _systemTransaction.IsNeedAllServes = value; }
         }
 
         #endregion
@@ -210,11 +188,6 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
         }
 
         #endregion
-
-        public void IncreaseTransactionAnswersCount()
-        {
-            _systemTransaction.IncreaseTransactionAnswersCount();
-        }
 
         [OperationContract]
         public void AddErrorDescription(string error)

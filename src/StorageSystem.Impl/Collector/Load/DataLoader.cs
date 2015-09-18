@@ -14,7 +14,7 @@ namespace Qoollo.Impl.Collector.Load
         private readonly CollectorNetModule _net;
         private readonly int _serverPageSize;
         private readonly BackgroundModule _backgroundModule;
-        public int SystemPage { get { return _serverPageSize; }}
+        public int SystemPage { get { return _serverPageSize; } }
 
         public DataLoader(CollectorNetModule net, int serverPageSize, BackgroundModule backgroundModule)
         {
@@ -35,14 +35,15 @@ namespace Qoollo.Impl.Collector.Load
         public void LoadPage(SingleServerSearchTask searchTask)
         {
             LoadSingleServer(searchTask);
-        }        
+        }
 
         private void LoadSingleServer(SingleServerSearchTask searchTask)
         {
             var description = new SelectDescription(searchTask.IdDescription, searchTask.Script,
                 _serverPageSize, searchTask.UserParametrs)
             {
-                TableName = searchTask.TableName
+                TableName = searchTask.TableName,
+                UseUserScript = searchTask.IsUserScript
             };
             var result = _net.SelectQuery(searchTask.ServerId, description);
 

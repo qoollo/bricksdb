@@ -33,39 +33,14 @@ namespace Qoollo.Impl.Writer
             _queue.DbInputProcessQueue.Registrate(_queueConfiguration, ProcessInner);
         }
 
-        #region Execute
+        #region Rollback
 
         private void RollbackProcess(InnerData data)
         {
-            Logger.Logger.Instance.DebugFormat("Rollback type {0}, hash {1}", data.Transaction.OperationName, data.Transaction.EventHash);
+            Logger.Logger.Instance.DebugFormat("Rollback type {0}, hash {1}", data.Transaction.OperationName,
+                data.Transaction.DataHash);
 
             _mainLogicModule.Rollback(data);
-        }
-
-        private RemoteResult ProcessData(InnerData data)
-        {
-            WriterCounters.Instance.TransactionCount.Increment();
-            Logger.Logger.Instance.DebugFormat("Create hash {0}", data.Transaction.EventHash);
-            var timer = WriterCounters.Instance.AverageTimer.StartNew();
-
-            var ret = _mainLogicModule.Process(data);
-
-            timer.Complete();
-            data.Transaction.PerfTimer.Complete();
-
-            WriterCounters.Instance.ProcessPerSec.OperationFinished();
-            return ret;
-        }
-
-        #endregion        
-
-        #region Insert into queue
-
-        public void Process(InnerData data)
-        {
-            data.Transaction.PerfTimer = WriterCounters.Instance.AverageTimerWithQueue.StartNew();
-            _queue.DbInputProcessQueue.Add(data);
-            WriterCounters.Instance.IncomePerSec.OperationFinished();
         }
 
         public void Rollback(InnerData data)
@@ -75,24 +50,46 @@ namespace Qoollo.Impl.Writer
 
         #endregion
 
-        #region Sync
+        #region Process        
+
+        public void Process(InnerData data)
+        {
+            data.Transaction.PerfTimer = WriterCounters.Instance.AverageTimerWithQueue.StartNew();
+            _queue.DbInputProcessQueue.Add(data);
+            WriterCounters.Instance.IncomePerSec.OperationFinished();
+        }
+
+        private RemoteResult ProcessData(InnerData data)
+        {
+            WriterCounters.Instance.TransactionCount.Increment();
+            Logger.Logger.Instance.DebugFormat("Create hash {0}", data.Transaction.DataHash);
+            var timer = WriterCounters.Instance.AverageTimer.StartNew();
+
+            var ret = _mainLogicModule.Process(data);
+
+            timer.Complete();
+            data.Transaction.PerfTimer.Complete();
+
+            WriterCounters.Instance.ProcessPerSec.OperationFinished();
+            return ret;
+        }      
 
         private void ProcessInner(InnerData data)
         {
             ProcessData(data);
-        }                
+        }
 
         public RemoteResult ProcessSync(InnerData data)
         {
             return ProcessData(data);
         }
 
+        #endregion          
+
         public Tuple<RemoteResult, SelectSearchResult> SelectQuery(SelectDescription description)
-        {            
+        {
             return _mainLogicModule.SelectQuery(description);
         }
-
-        #endregion
 
         public InnerData ReadOperation(InnerData data)
         {

@@ -12,9 +12,9 @@ namespace Qoollo.Impl.Proxy
 {
     internal class ProxyMainLogicModule : ControlModule
     {
-        private ProxyDistributorModule _distributor;
-        private IProxyNetModule _net;
-        private ProxyCache _cache;
+        private readonly ProxyDistributorModule _distributor;
+        private readonly IProxyNetModule _net;
+        private readonly ProxyCache _cache;
 
         public ProxyMainLogicModule(ProxyDistributorModule distributorModule, IProxyNetModule net,
                                     ProxyCache proxyCache)
@@ -43,7 +43,7 @@ namespace Qoollo.Impl.Proxy
             if (result is FailNetResult)
             {                
                 //todo Надо поискать другой сервер, надо потом записать новый сервер
-                _cache.AddToCache(ev.Transaction.EventHash, dest);
+                _cache.AddToCache(ev.Transaction.DataHash, dest);
                 return false;
             }            
             return true;

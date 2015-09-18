@@ -50,7 +50,7 @@ namespace Qoollo.Impl.NetInterfaces.Data
                 new Uri(string.Format("net.tcp://{0}:{1}/{2}", configuration.Host, configuration.Port,
                     configuration.Service)));
 
-            var binding = new NetTcpBinding()
+            var binding = new NetTcpBinding
             {
                 Security = { Mode = SecurityMode.None },
                 MaxBufferSize = 2147483647,

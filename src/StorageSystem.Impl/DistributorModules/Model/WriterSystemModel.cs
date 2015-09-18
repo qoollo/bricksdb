@@ -103,7 +103,7 @@ namespace Qoollo.Impl.DistributorModules.Model
             var ret = new List<WriterDescription>();
             if (_servers.Count(x=>x.IsAvailable)>=_configuration.CountReplics)
             {
-                string current = ev.Transaction.EventHash;
+                string current = ev.Transaction.DataHash;
                 for (int i = 0; i < _configuration.CountReplics; i++)
                 {
                     var find =

@@ -1,45 +1,58 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Cache;
 
 namespace Qoollo.Impl.DistributorModules.Caches
 {
-    internal class DistributorTimeoutCache : CacheModule<Common.Data.TransactionTypes.Transaction>
+    internal class DistributorTimeoutCache : CacheModule<InnerData>
     {
-        private TimeSpan _aliveTimeout;
-        private MainLogicModule _main;
+        private readonly TimeSpan _aliveTimeout;
 
-        public DistributorTimeoutCache(TimeSpan timeout, TimeSpan aliveTimeout)
-            : base(timeout)
+        public Action<InnerData> DataTimeout;
+
+        public DistributorTimeoutCache(DistributorCacheConfiguration cacheConfiguration)
+            : base(cacheConfiguration.TimeAliveBeforeDeleteMls)
         {
-            Contract.Requires(aliveTimeout!=null);
-            Contract.Requires(aliveTimeout.TotalMilliseconds>0);
-
-            _aliveTimeout = aliveTimeout;
+            Contract.Requires(cacheConfiguration != null);
+            _aliveTimeout = cacheConfiguration.TimeAliveAfterUpdateMls;
         }
 
-        public void SetMainLogicModule(MainLogicModule main)
+        protected override void RemovedCallback(string key, InnerData obj)
         {
-            Contract.Requires(main!=null);
-            _main = main;
-        }
-
-        protected override void RemovedCallback(string key, Common.Data.TransactionTypes.Transaction obj)
-        {
-            if (obj.State == TransactionState.Complete)
+            if (obj.Transaction.State == TransactionState.Complete)
                 AddAliveToCache(key, obj, _aliveTimeout);
 
-            else if (obj.State == TransactionState.TransactionInProcess)
-            {
-                _main.DataTimeout(obj);
-            }            
+            else if (obj.Transaction.State == TransactionState.TransactionInProcess)
+                DataTimeout(obj);         
         }
 
-        public void Update(string key, Common.Data.TransactionTypes.Transaction obj)
+        public void Update(string key, InnerData obj)
         {
             Remove(key);
             AddAliveToCache(key, obj, _aliveTimeout);
+        }
+
+        public void AddDataToCache(InnerData data)
+        {
+            var item = new InnerData(data.Transaction)
+            {
+                Key = data.Key ,
+                DistributorData = data.DistributorData
+            };
+            AddToCache(data.Transaction.CacheKey, item);
+        }
+
+        public void UpdateDataToCache(InnerData data)
+        {
+            var item = new InnerData(data.Transaction)
+            {
+                Key = data.Key ,
+                DistributorData = data.DistributorData
+            };
+            Update(data.Transaction.CacheKey, item);
         }
     }
 }

@@ -13,8 +13,8 @@ namespace Qoollo.Impl.Writer.WriterNet
 {
     internal class NetWriterReceiverForWrite: NetReceiveModule<ICommonNetReceiverWriterForWrite>, ICommonNetReceiverWriterForWrite
     {
-        private InputModule _inputModule;
-        private DistributorModule _distributor;
+        private readonly InputModule _inputModule;
+        private readonly DistributorModule _distributor;
 
         public NetWriterReceiverForWrite(InputModule inputModule, DistributorModule distributor, NetReceiverConfiguration receiverConfiguration)
             :base(receiverConfiguration)

@@ -6,7 +6,7 @@ namespace Qoollo.Impl.DistributorModules.Caches
 {
     internal class DistributorCache:CacheModule<Common.Data.TransactionTypes.Transaction>
     {
-        private TimeSpan _aliveTimeout;
+        private readonly TimeSpan _aliveTimeout;
 
         public DistributorCache(TimeSpan timeout, TimeSpan aliveTimeout) : base(timeout)
         {

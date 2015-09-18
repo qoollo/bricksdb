@@ -37,7 +37,7 @@ namespace Qoollo.Impl.Common.Data.TransactionTypes
             get { return _userTransaction.CacheKey; }
         }
 
-        public string dataHash
+        public string DataHash
         {
             get { return _systemTransaction.EventHash; }
         }

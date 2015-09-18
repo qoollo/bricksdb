@@ -96,13 +96,13 @@ namespace Qoollo.Tests
             avg = 0;
             for (int i = 0; i < count; i++)
             {
-                cache.AddToCache(obj[i].Transaction.dataHash, obj[i].Transaction);
+                cache.AddToCache(obj[i].Transaction.DataHash, obj[i].Transaction);
             }
 
             for (int i = 0; i < count; i++)
             {
                 sp.Start();
-                cache.Update(obj[i].Transaction.dataHash, obj[i].Transaction);
+                cache.Update(obj[i].Transaction.DataHash, obj[i].Transaction);
                 sp.Stop();
                 long mls = sp.ElapsedMilliseconds;
                 avg += mls;

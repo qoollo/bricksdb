@@ -55,13 +55,13 @@ namespace Qoollo.Impl.DistributorModules
 
         public void ProcessWithData(InnerData data, TransactionExecutor executor)
         {
-            Logger.Logger.Instance.Debug(string.Format("Mainlogic: process data = {0}", data.Transaction.dataHash));
+            Logger.Logger.Instance.Debug(string.Format("Mainlogic: process data = {0}", data.Transaction.DataHash));
 
             var dest = _distributor.GetDestination(data, GetCountServers(data));
             if (dest == null)
             {
                 Logger.Logger.Instance.Debug(string.Format("Mainlogic: dont found destination, process data = {0}",
-                    data.Transaction.dataHash));
+                    data.Transaction.DataHash));
                 data.Transaction.SetError();
                 data.Transaction.AddErrorDescription(Errors.NotAvailableServersForWrite);
             }
@@ -88,7 +88,7 @@ namespace Qoollo.Impl.DistributorModules
             else
             {
                 Logger.Logger.Instance.Debug(string.Format("Mainlogic: process data = {0}, result = {1}",
-                    data.Transaction.dataHash, !data.Transaction.IsError));
+                    data.Transaction.DataHash, !data.Transaction.IsError));
 
                 if (data.Transaction.OperationName != OperationName.Read)
                     _cache.Update(data.Transaction.CacheKey, data.Transaction);
@@ -167,7 +167,7 @@ namespace Qoollo.Impl.DistributorModules
             item.Complete();
 
             Logger.Logger.Instance.Trace(string.Format("Mainlogic: process data = {0}, result = {1}",
-                item.dataHash, !item.IsError));
+                item.DataHash, !item.IsError));
 
             if (item.OperationType == OperationType.Sync)
                 ProcessSyncTransaction(item);

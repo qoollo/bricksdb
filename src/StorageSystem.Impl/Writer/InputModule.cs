@@ -37,7 +37,7 @@ namespace Qoollo.Impl.Writer
 
         private void RollbackProcess(InnerData data)
         {
-            Logger.Logger.Instance.DebugFormat("Rollback type {0}, hash {1}", data.Transaction.OperationName, data.Transaction.dataHash);
+            Logger.Logger.Instance.DebugFormat("Rollback type {0}, hash {1}", data.Transaction.OperationName, data.Transaction.DataHash);
 
             _mainLogicModule.Rollback(data);
         }
@@ -45,7 +45,7 @@ namespace Qoollo.Impl.Writer
         private RemoteResult ProcessData(InnerData data)
         {
             WriterCounters.Instance.TransactionCount.Increment();
-            Logger.Logger.Instance.DebugFormat("Create hash {0}", data.Transaction.dataHash);
+            Logger.Logger.Instance.DebugFormat("Create hash {0}", data.Transaction.DataHash);
             var timer = WriterCounters.Instance.AverageTimer.StartNew();
 
             var ret = _mainLogicModule.Process(data);

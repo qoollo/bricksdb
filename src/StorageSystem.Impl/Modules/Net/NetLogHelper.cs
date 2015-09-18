@@ -15,7 +15,7 @@ namespace Qoollo.Impl.Modules.Net
 
         public static string GetLog(InnerData data)
         {
-            return string.Format("process data = {0}", data.Transaction.dataHash);
+            return string.Format("process data = {0}", data.Transaction.DataHash);
         }
 
         public static string GetLog(Transaction transaction)

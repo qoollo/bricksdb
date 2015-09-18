@@ -12,7 +12,8 @@ namespace Qoollo.Impl.Writer.Db.Commands
         void SetTableName(List<string> tableName);
 
         TCommand InitMetaDataDb(string idInit);
-        TCommand CreateMetaData(bool remote, string dataHash);
+        TCommand CreateMetaData(bool remote);
+
         TCommand DeleteMetaData();
         TCommand UpdateMetaData(bool local);
         TCommand SetDataDeleted();

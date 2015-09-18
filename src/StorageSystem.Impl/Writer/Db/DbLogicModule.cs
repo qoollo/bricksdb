@@ -136,7 +136,8 @@ namespace Qoollo.Impl.Writer.Db
             object value;
             DeserializeData(obj, out key, out value);
 
-            var metaCommand = _metaDataCommandCreator.CreateMetaData(local, obj.Transaction.dataHash);
+            var metaCommand = _metaDataCommandCreator.CreateMetaData(local);
+
             metaCommand = _metaDataCommandCreator.SetKeytoCommand(metaCommand, key);
             RemoteResult ret = _implModule.ExecuteNonQuery(metaCommand);
 
@@ -171,7 +172,7 @@ namespace Qoollo.Impl.Writer.Db
             {
                 var metaTimer = WriterCounters.Instance.CreateMetaDataTimer.StartNew();
 
-                var metaCommand = _metaDataCommandCreator.CreateMetaData(local, obj.Transaction.dataHash);
+                var metaCommand = _metaDataCommandCreator.CreateMetaData(local);
                 metaCommand = _metaDataCommandCreator.SetKeytoCommand(metaCommand, key);
                 ret = _implModule.ExecuteNonQuery(metaCommand);
 
@@ -625,6 +626,7 @@ namespace Qoollo.Impl.Writer.Db
                 foreach (var searchData in result.Data)
                 {
                     var meta = _metaDataCommandCreator.ReadMetaFromSearchData(searchData);
+                    meta.Hash = _hashCalculater.CalculateHashFromKey(meta.Id);
 
                     if (isMine(meta))
                     {
@@ -705,6 +707,8 @@ namespace Qoollo.Impl.Writer.Db
                 {
                     var meta = _metaDataCommandCreator.ReadMetaFromSearchData(searchData);
                     var data = _userCommandCreator.ReadObjectFromSearchData(searchData.Fields);
+                    meta.Hash = _hashCalculater.CalculateHashFromValue(data);
+
 
                     if (isMine(meta))
                     {

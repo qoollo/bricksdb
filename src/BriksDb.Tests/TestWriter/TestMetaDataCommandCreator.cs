@@ -23,9 +23,9 @@ namespace Qoollo.Tests.TestWriter
             return new TestCommand();
         }
 
-        public TestCommand CreateMetaData(bool remote, string dataHash)
+        public TestCommand CreateMetaData(bool remote)
         {
-            return new TestCommand { Command = "createmeta", Local = remote , Hash = dataHash};
+            return new TestCommand { Command = "createmeta", Local = remote };
         }
 
         public TestCommand DeleteMetaData()
@@ -56,9 +56,8 @@ namespace Qoollo.Tests.TestWriter
         Tuple<MetaData, bool> IMetaDataCommandCreator<TestCommand, TestDbReader>.ReadMetaDataFromReader(
             DbReader<TestDbReader> reader, bool readuserId)
         {
-            var command = (TestCommand) reader.GetValue(1);
-            return new Tuple<MetaData, bool>(
-                    new MetaData(command.Local, command.DeleteTime, command.IsDeleted, command.Hash), false);
+            var command = (TestCommand)reader.GetValue(1);
+            return new Tuple<MetaData, bool>(new MetaData(command.Local, command.DeleteTime, command.IsDeleted), false);
         }
 
         public string ReadWithDeleteAndLocal(bool isDelete, bool local)
@@ -118,8 +117,7 @@ namespace Qoollo.Tests.TestWriter
                 Value = key == null ? -1 : (int) key,
                 Support = command.Support,
                 IsDeleted = command.IsDeleted,
-                Local = command.Local,
-                Hash = command.Hash
+                Local = command.Local                
             };
         }
 
@@ -132,8 +130,7 @@ namespace Qoollo.Tests.TestWriter
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).Value, ""));
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).Local, "local"));
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).IsDeleted, "isdelete"));
-                fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).DeleteTime, "time"));
-                fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).Hash, "hash"));
+                fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).DeleteTime, "time"));                
             }
 
             return fields;
@@ -148,10 +145,9 @@ namespace Qoollo.Tests.TestWriter
         {
             var local = (bool)data.Fields.First(x => x.Item2 == "local").Item1;
             var isdelete = (bool)data.Fields.First(x => x.Item2 == "isdelete").Item1;
-            var time = (DateTime)data.Fields.First(x => x.Item2 == "time").Item1;
-            var hash = (string)data.Fields.First(x => x.Item2 == "hash").Item1;
+            var time = (DateTime)data.Fields.First(x => x.Item2 == "time").Item1;            
 
-            return new MetaData(local, time, isdelete, hash) {Id = data.Fields.First(x => x.Item2 == "").Item1};
+            return new MetaData(local, time, isdelete) {Id = data.Fields.First(x => x.Item2 == "").Item1};
         }
     }
 }

@@ -86,7 +86,7 @@ namespace Qoollo.Tests.TestWriter
                     Delete++;
                     break;
                 case "createmeta":
-                    Meta.Add(new TestCommand {Value = command.Value, Local = command.Local, Hash = command.Hash});
+                    Meta.Add(new TestCommand {Value = command.Value, Local = command.Local});
                     break;
                 case "deletemeta":
                     Meta.RemoveAll(x => x.Value == command.Value);

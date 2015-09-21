@@ -33,16 +33,17 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Qoollo.Logger">
-      <HintPath>..\packages\Qoollo.Logger.2.1.11\lib\net45\Qoollo.Logger.dll</HintPath>
-    </Reference>
-    <Reference Include="Qoollo.PerformanceCounters, Version=2.0.5472.32643, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Qoollo.Logger, Version=2.2.5646.31970, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Qoollo.PerformanceCounters.2.0.0\lib\net45\Qoollo.PerformanceCounters.dll</HintPath>
+      <HintPath>..\packages\Qoollo.Logger.2.2.0\lib\net45\Qoollo.Logger.dll</HintPath>
     </Reference>
-    <Reference Include="Qoollo.Turbo, Version=2.1.5476.37234, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Qoollo.PerformanceCounters, Version=2.1.5654.32540, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Qoollo.Turbo.2.1.1\lib\net45\Qoollo.Turbo.dll</HintPath>
+      <HintPath>..\packages\Qoollo.PerformanceCounters.2.1.0\lib\net45\Qoollo.PerformanceCounters.dll</HintPath>
+    </Reference>
+    <Reference Include="Qoollo.Turbo">
+      <HintPath>..\packages\Qoollo.Turbo.2.1.21\lib\net45\Qoollo.Turbo.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

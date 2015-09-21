@@ -37,7 +37,8 @@ namespace Qoollo.Impl.Collector
                 if (_limitCount == -1)
                     return _pos < _searchData.Count;
              
-                if (_current >= _limitCount)
+                //TODO test
+                if (_current > _limitCount)
                     return false;
                 
                 return _pos < _searchData.Count;

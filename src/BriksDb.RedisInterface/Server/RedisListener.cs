@@ -13,7 +13,7 @@ namespace BricksDb.RedisInterface.Server
     {
         private readonly RedisMessageProcessor _process;
         private readonly TcpListener _tcpListener;
-        private DeleageQueueAsyncProcessor<Socket> _queue;
+        private DelegateQueueAsyncProcessor<Socket> _queue;
         private const int MaxQueueSize = 10000;
         private readonly Func<string, string> _processMessageFunc;
 
@@ -71,7 +71,7 @@ namespace BricksDb.RedisInterface.Server
             _tcpListener.Start();
             Console.WriteLine("Listen started on {0} ...", _tcpListener.LocalEndpoint);
 
-            _queue = new DeleageQueueAsyncProcessor<Socket>(ConfigurationHelper.Instance.CountThreads,
+            _queue = new DelegateQueueAsyncProcessor<Socket>(ConfigurationHelper.Instance.CountThreads,
                 MaxQueueSize, "Work thread", ProcessSocket);
             _queue.Start();
 

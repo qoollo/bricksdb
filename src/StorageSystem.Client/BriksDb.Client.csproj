@@ -68,11 +68,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Qoollo.Logger">
-      <HintPath>..\packages\Qoollo.Logger.2.1.11\lib\net45\Qoollo.Logger.dll</HintPath>
+    <Reference Include="Qoollo.Logger, Version=2.2.5646.31970, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Qoollo.Logger.2.2.0\lib\net45\Qoollo.Logger.dll</HintPath>
     </Reference>
     <Reference Include="Qoollo.PerformanceCounters">
-      <HintPath>..\packages\Qoollo.PerformanceCounters.2.0.0\lib\net45\Qoollo.PerformanceCounters.dll</HintPath>
+      <HintPath>..\packages\Qoollo.PerformanceCounters.2.1.0\lib\net45\Qoollo.PerformanceCounters.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

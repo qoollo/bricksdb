@@ -7,7 +7,7 @@ namespace Qoollo.Impl.Modules.Queue
     {
         private int _countProcessors;
         private int _elementCounts;
-        private DeleageQueueAsyncProcessor<T> _queue;        
+        private DelegateQueueAsyncProcessor<T> _queue;        
         private Action<T> _action;
 
         protected void Registrate(int countProcessors, int elemenetsCount, Action<T> action)
@@ -31,7 +31,7 @@ namespace Qoollo.Impl.Modules.Queue
             {
                 if (_queue != null)
                     _queue.Dispose();
-                _queue = new DeleageQueueAsyncProcessor<T>(_countProcessors, _elementCounts, "", (obj, token) => _action(obj));
+                _queue = new DelegateQueueAsyncProcessor<T>(_countProcessors, _elementCounts, "", (obj, token) => _action(obj));
                 _queue.Start();
             }            
         }       

@@ -51,7 +51,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             string tableName)
         {            
             _lock.EnterReadLock();
-            bool exit = _isStart;
+            bool exit = IsStart;
             _lock.ExitReadLock();
             if (exit)
                 return;
@@ -59,14 +59,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             Logger.Logger.Instance.Debug(string.Format("transafer start {0}, {1}", remoteServer, hash), "restore");
 
             _lock.EnterWriteLock();
-            _isStart = true;
+            IsStart = true;
             _lock.ExitWriteLock();
 
             _remote = remoteServer;
 
             _hash = hash;
 
-            _asyncTaskModule.AddAsyncTask(
+            AsyncTaskModule.AddAsyncTask(
                 new AsyncDataPeriod(_configuration.PeriodRetry, RestoreAnswerCallback, AsyncTasksNames.RestoreLocal,
                     -1), false);
 
@@ -78,7 +78,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private void ProcessData(InnerData data)
         {
             _lock.EnterReadLock();
-            bool exit = _isStart;
+            bool exit = IsStart;
             _lock.ExitReadLock();
             if (!exit)
                 return;
@@ -91,11 +91,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if (result is FailNetResult)
             {
                 Logger.Logger.Instance.InfoFormat("Servers {0} unavailable in recover process", _remote);
-                _asyncTaskModule.DeleteTask(AsyncTasksNames.RestoreLocal);
+                AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreLocal);
                 _reader.Stop();
 
                 _lock.EnterWriteLock();
-                _isStart = false;
+                IsStart = false;
                 _lock.ExitWriteLock();
             }
             else if(!_local.Equals(_remote))
@@ -116,20 +116,20 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private void RestoreAnswerCallback(AsyncData obj)
         {
             Logger.Logger.Instance.Debug(
-                string.Format("Async complete = {0}, start = {1}", _reader.IsComplete, _isStart), "restore");
+                string.Format("Async complete = {0}, start = {1}", _reader.IsComplete, IsStart), "restore");
 
-            if (_reader.IsComplete && _isStart)
+            if (_reader.IsComplete && IsStart)
             {
-                _asyncTaskModule.DeleteTask(AsyncTasksNames.RestoreLocal);
+                AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreLocal);
                 _lock.EnterWriteLock();
-                _isStart = false;
+                IsStart = false;
                 _lock.ExitWriteLock();
                 WriterNet.SendToWriter(_remote, new RestoreCompleteCommand(_local));
                 _reader.Dispose();
             }
             else
             {
-                if(_reader.IsQueueEmpty && _isStart)
+                if(_reader.IsQueueEmpty && IsStart)
                     _reader.GetAnotherData();
 
                 WriterNet.SendToWriter(_remote, new RestoreInProcessCommand(_local));
@@ -140,7 +140,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         {
             if (isUserCall)
             {
-                _asyncTaskModule.StopTask(AsyncTasksNames.RestoreLocal);
+                AsyncTaskModule.StopTask(AsyncTasksNames.RestoreLocal);
                 if(_reader!=null)
                     _reader.Dispose();
             }

@@ -101,12 +101,10 @@ namespace Qoollo.Impl.Writer.Db
         {
             var timer = WriterCounters.Instance.ReadMetaDataTimer.StartNew();
 
-            object key;            
+            object key;
             DeserializeKey(obj, out key);
 
-            var script = _metaDataCommandCreator.ReadMetaData(_userCommandCreator.Read());
-            script = _metaDataCommandCreator.SetKeytoCommand(script, key);
-
+            var script = _metaDataCommandCreator.ReadMetaData(_userCommandCreator.Read(), key);
             var reader = _implModule.CreateReader(script);
 
             var meta = new Tuple<MetaData, bool>(null, true);
@@ -131,7 +129,10 @@ namespace Qoollo.Impl.Writer.Db
             {
                 Logger.Logger.Instance.Warn(e, "");
             }
-            reader.Dispose();
+            finally
+            {
+                reader.Dispose();
+            }            
 
             timer.Complete();
             return meta;
@@ -165,14 +166,11 @@ namespace Qoollo.Impl.Writer.Db
             object key;
             DeserializeKey(obj, out key);
 
-            var metaCommand = _metaDataCommandCreator.SetDataDeleted();
-            metaCommand = _metaDataCommandCreator.SetKeytoCommand(metaCommand, key);
-            RemoteResult ret = _implModule.ExecuteNonQuery(metaCommand);
+            var metaCommand = _metaDataCommandCreator.SetDataDeleted(key);            
+            var ret = _implModule.ExecuteNonQuery(metaCommand);
 
             if (ret.IsError)
-            {
                 ret = new InnerServerError(ret);
-            }
 
             return ret;
         }
@@ -183,8 +181,7 @@ namespace Qoollo.Impl.Writer.Db
             object value;
             DeserializeData(obj, out key, out value);
 
-            var command = _metaDataCommandCreator.DeleteMetaData();
-            command = _metaDataCommandCreator.SetKeytoCommand(command, key);
+            var command = _metaDataCommandCreator.DeleteMetaData(key);            
             _implModule.ExecuteNonQuery(command);
 
             command = _userCommandCreator.Delete((TKey) key);
@@ -292,8 +289,7 @@ namespace Qoollo.Impl.Writer.Db
         private InnerData ReadInner(object key, InnerData ret, bool isDeleted = false)
         {
             var script = _userCommandCreator.Read();
-            script = _metaDataCommandCreator.ReadWithDelete(script, isDeleted);
-            script = _metaDataCommandCreator.SetKeytoCommand(script, key);
+            script = _metaDataCommandCreator.ReadWithDelete(script, isDeleted, key);            
 
             var reader = _implModule.CreateReader(script);
 
@@ -351,8 +347,7 @@ namespace Qoollo.Impl.Writer.Db
             object key;
             DeserializeKey(obj, out key);
 
-            var command = _metaDataCommandCreator.DeleteMetaData();
-            command = _metaDataCommandCreator.SetKeytoCommand(command, key);
+            var command = _metaDataCommandCreator.DeleteMetaData(key);
             _implModule.ExecuteNonQuery(command);
 
             command = _userCommandCreator.Delete((TKey) key);
@@ -372,11 +367,8 @@ namespace Qoollo.Impl.Writer.Db
             object key;
             DeserializeKey(obj, out key);
 
-            var metaCommand = _metaDataCommandCreator.SetDataNotDeleted();
-            metaCommand = _metaDataCommandCreator.SetKeytoCommand(metaCommand, key);
-            RemoteResult ret = _implModule.ExecuteNonQuery(metaCommand);
-
-            return ret;
+            var metaCommand = _metaDataCommandCreator.SetDataNotDeleted(key);
+            return _implModule.ExecuteNonQuery(metaCommand);
         }
 
         public override RemoteResult CustomOperationRollback(InnerData obj, bool local)
@@ -500,8 +492,7 @@ namespace Qoollo.Impl.Writer.Db
                 bool exit = false;
                 foreach (var searchData in result.Data)
                 {
-                    var meta = _metaDataCommandCreator.ReadMetaFromSearchData(searchData);
-                    meta.Hash = _hashCalculater.CalculateHashFromKey(meta.Id);
+                    var meta = _metaDataCommandCreator.ReadMetaFromSearchData(searchData);                    
 
                     if (isMine(meta))
                     {
@@ -582,8 +573,6 @@ namespace Qoollo.Impl.Writer.Db
                 {
                     var meta = _metaDataCommandCreator.ReadMetaFromSearchData(searchData);
                     var data = _userCommandCreator.ReadObjectFromSearchData(searchData.Fields);
-                    meta.Hash = _hashCalculater.CalculateHashFromValue(data);
-
 
                     if (isMine(meta))
                     {

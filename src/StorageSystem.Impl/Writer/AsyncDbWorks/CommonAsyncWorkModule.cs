@@ -8,16 +8,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
     internal class CommonAsyncWorkModule:ControlModule
     {        
         protected WriterNetModule WriterNet;
-        protected AsyncTaskModule _asyncTaskModule;
-        protected bool _isStart;
+        protected AsyncTaskModule AsyncTaskModule;
+        private bool _isStart;
 
-        public bool IsStart { get { return _isStart; } }
+        public bool IsStart { get { return _isStart; } protected set { _isStart = value; } }
 
         public CommonAsyncWorkModule(WriterNetModule writerNet, AsyncTaskModule asyncTaskModule)
         {
             Contract.Requires(writerNet!=null);            
             Contract.Requires(asyncTaskModule!=null);
-            _asyncTaskModule = asyncTaskModule;
+            AsyncTaskModule = asyncTaskModule;
             WriterNet = writerNet;
             _isStart = false;
         }

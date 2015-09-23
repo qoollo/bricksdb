@@ -90,14 +90,15 @@ namespace Qoollo.Tests
             for (int i = 1; i < count + 1; i++)
             {
                 var ev =
-                    new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
+                    new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
+                        "default")
                     {
                         OperationName = OperationName.Create,
                         OperationType = OperationType.Async
                     })
                     {
                         Data = CommonDataSerializer.Serialize(i),
-                        Key = CommonDataSerializer.Serialize(i),
+                        Key = CommonDataSerializer.Serialize(i),                        
                         Transaction = { Distributor = new ServerId("localhost", distrServer1) }
                     };
                 ev.Transaction.TableName = "Int";

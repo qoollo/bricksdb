@@ -34,22 +34,22 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         public bool Restore(List<HashMapRecord> local, List<ServerId> servers, bool isModelUpdated, string tableName)
         {
-            if (!(servers.Count > 0 && local.Count > 0) || _isStart)
+            if (!(servers.Count > 0 && local.Count > 0) || IsStart)
                 return false;            
 
             _isModelUpdated = isModelUpdated;
             _tableName = tableName;
-            _isStart = true;
+            IsStart = true;
             _local = local;
 
             _failServers = new List<ServerId>();
             _servers = servers.Select(x => new { Key = x, Value = false }).ToDictionary(x => x.Key, x => x.Value);
 
-            _asyncTaskModule.AddAsyncTask(
+            AsyncTaskModule.AddAsyncTask(
                 new AsyncDataPeriod(_configuration.PeriodRetry, NoAnswerCallback, AsyncTasksNames.RestoreRemote,
                                     _configuration.CountRetry), false);
 
-            _asyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
+            AsyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
 
             StartNextServer();
 
@@ -69,7 +69,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         {
             //Logger.Logger.Instance.Debug("period messge income", "restore");
             if (server.Equals(_remoteServer))
-                _asyncTaskModule.RestartTask(AsyncTasksNames.RestoreRemote);
+                AsyncTaskModule.RestartTask(AsyncTasksNames.RestoreRemote);
         }
 
         /// <summary>
@@ -95,12 +95,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if (result == -1)
             {
                 //TODO all servers are processed
-                _asyncTaskModule.DeleteTask(AsyncTasksNames.RestoreRemote);
-                _isStart = false;                
+                AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreRemote);
+                IsStart = false;                
                 Logger.Logger.Instance.Info("Restore completed");
             }
             else
-                _asyncTaskModule.RestartTask(AsyncTasksNames.RestoreRemote);
+                AsyncTaskModule.RestartTask(AsyncTasksNames.RestoreRemote);
         }
 
         private int SendNextServer()
@@ -132,7 +132,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         private void NoAnswerCallback(AsyncData async)
         {
-            _asyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
+            AsyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
 
             if (async.IsLast())
             {
@@ -151,7 +151,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 StartNextServer();
             }
             else
-                _asyncTaskModule.StartTask(AsyncTasksNames.RestoreRemote);
+                AsyncTaskModule.StartTask(AsyncTasksNames.RestoreRemote);
         }
 
         #endregion
@@ -187,7 +187,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         {
             if (isUserCall)
             {
-                _asyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
+                AsyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
             }
 
             base.Dispose(isUserCall);

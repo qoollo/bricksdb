@@ -576,7 +576,7 @@ namespace Qoollo.Impl.Writer.Db
 
                     if (isMine(meta))
                     {
-                        var innerData = new InnerData(new Transaction(meta.Hash, ""))
+                        var innerData = new InnerData(new Transaction(meta.Hash, "default"))
                         {
                             Data = _hashCalculater.SerializeValue(data),
                             MetaData = meta

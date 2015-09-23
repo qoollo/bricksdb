@@ -207,17 +207,12 @@ namespace Qoollo.Impl.Sql.Internal
 
         public SqlCommand ReadWithDelete(SqlCommand userRead, bool isDelete, object key)
         {
-            throw new NotImplementedException();
-        }
+            var command = new SqlCommand(string.Format("select * from ( {0} ) as MetaHelpTable " +
+                                                       " inner join {1} on MetaHelpTable.{5} = {1}.{2}" +
+                                                       " where {1}.{2} = @{2} and {1}.{4} = {3}", userRead.CommandText,
+                _metaTableName, _keyName, IsDeleted(isDelete), SqlConsts.IsDeleted, _userKeyName));
 
-        public SqlCommand ReadWithDelete(SqlCommand userRead, bool isDelete)
-        {
-            string script = string.Format("select * from ( {0} ) as MetaHelpTable " +
-                                          " inner join {1} on MetaHelpTable.{5} = {1}.{2}" +
-                                          " where {1}.{2} = @{2} and {1}.{4} = {3}", userRead.CommandText,
-                _metaTableName, _keyName, IsDeleted(isDelete), SqlConsts.IsDeleted, _userKeyName);
-
-            return new SqlCommand(script);
+            return SetKeytoCommand(command, key);
         }
 
         public SqlCommand ReadWithDeleteAndLocal(SqlCommand userRead, bool isDelete, bool local)

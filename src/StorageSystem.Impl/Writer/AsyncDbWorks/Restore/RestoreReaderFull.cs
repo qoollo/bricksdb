@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
@@ -9,12 +10,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class RestoreReaderFull:ReaderFullBase
     {
-        private readonly Func<MetaData, bool> _isMine;
-        private readonly DbModuleCollection _db;
-        private readonly string _tableName;
+        public Action<InnerData> ProcessData
+        {
+            get { return _processData; }
+        }
 
-        public RestoreReaderFull(Func<MetaData, bool> isMine, Action<InnerData> process, QueueConfiguration queueConfiguration,
-            DbModuleCollection db, bool isBothTables, string tableName, QueueWithParam<InnerData> queue)
+        public RestoreReaderFull(Func<MetaData, bool> isMine, Action<InnerData> process, QueueConfiguration queueConfiguration, DbModuleCollection db, bool isBothTables, string tableName, QueueWithParam<InnerData> queue)
             : base(process, queueConfiguration, isBothTables, queue)
         {
             _isMine = isMine;
@@ -22,9 +23,18 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _tableName = tableName;
         }
 
+        private readonly Func<MetaData, bool> _isMine;
+        private readonly DbModuleCollection _db;
+        private readonly string _tableName;
+
+        private Action<InnerData> _processData;
+
         protected override SingleReaderBase CreateReader(bool isLocal, int countElements, Action<InnerData> process)
         {
+            _processData = process;
             return new RestoreReader(_tableName, isLocal, _isMine, _db, countElements, process);
         }
+
+
     }
 }

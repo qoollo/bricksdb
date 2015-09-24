@@ -91,10 +91,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                 _stateHelper.RestoreStart();
         }
 
-        public void RestoreIncome(ServerId server, bool isSystemUpdated, List<KeyValuePair<string, string>> hash,
-            string tableName)
+        public void RestoreIncome(ServerId server, bool isSystemUpdated, List<KeyValuePair<string, string>> hash, string tableName, List<HashMapRecord> localMap)
         {
-            _transfer.RestoreIncome(server, isSystemUpdated, hash, tableName);
+            _transfer.RestoreIncome(server, isSystemUpdated, hash, tableName, localMap);
         }
 
         public void PeriodMessageIncome(ServerId server)

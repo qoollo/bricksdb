@@ -61,7 +61,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
                 _reader.GetAnotherData();
             });
 
-            _reader = CreateReader(_isBothTables, _queueConfiguration.MaxSizeQueue, (data) => _queue.Add(data));
+            _reader = CreateReader(_isBothTables, _queueConfiguration.MaxSizeQueue, data => _queue.Add(data));
             _reader.Start();
         }
 

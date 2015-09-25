@@ -86,6 +86,7 @@ namespace Qoollo.Tests.Support
             Distributor.Dispose();
 
             _q.Dispose();
+            _tranc.Dispose();
         }
     }
 }

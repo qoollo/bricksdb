@@ -447,6 +447,7 @@ namespace Qoollo.Impl.Writer.Db
 
                 data.Key = _hashCalculater.SerializeKey(key.Id);
                 data.Transaction.TableName = TableName;
+                data.MetaData = key;
 
                 process(data);
             }            

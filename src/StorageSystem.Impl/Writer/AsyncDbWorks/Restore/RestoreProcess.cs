@@ -73,13 +73,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         private bool IsNeedSendData(MetaData data)
         {
-            if (!_isSystemUpdated)
-                return _remoteHashRange.Exists(
+            return _remoteHashRange.Exists(
                     x =>
                         HashComparer.Compare(x.Key, data.Hash) <= 0 &&
                         HashComparer.Compare(data.Hash, x.Value) <= 0);
-
-            return true;
         }
 
         protected override void Dispose(bool isUserCall)

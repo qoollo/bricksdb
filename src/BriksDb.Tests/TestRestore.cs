@@ -86,7 +86,7 @@ namespace Qoollo.Tests
             _writer1.Start();
 
             var list = new List<InnerData>();
-            const int count = 1;
+            const int count = 50;
             for (int i = 1; i < count + 1; i++)
             {
                 var ev =

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,17 +11,23 @@ namespace Qoollo.Impl.Modules.Async
 {
     internal class AsyncTaskModule:ControlModule
     {
-        private ReaderWriterLockSlim _lock;
-        private List<AsyncData> _tasks;
-        private DynamicThreadPool _threadPool;
+        private readonly ReaderWriterLockSlim _lock;
+        private readonly List<AsyncData> _tasks;
+        private readonly Lazy<DynamicThreadPool> _threadPool;
         private Task _disp;
-        private AutoResetEvent _event;
-        private CancellationTokenSource _token;
+        private readonly AutoResetEvent _event;
+        private readonly CancellationTokenSource _token;
 
         public AsyncTaskModule(QueueConfiguration configuration)
-        {            
+        {
+            Contract.Requires(configuration != null);
             _tasks = new List<AsyncData>();
-            _threadPool = new DynamicThreadPool(1, configuration.ProcessotCount, configuration.MaxSizeQueue, "AsyncTaskModule");
+            //_threadPool = new DynamicThreadPool(1, configuration.ProcessotCount, configuration.MaxSizeQueue, "AsyncTaskModule");
+            _threadPool =
+                new Lazy<DynamicThreadPool>(
+                    () =>
+                        new DynamicThreadPool(1, configuration.ProcessotCount, configuration.MaxSizeQueue,
+                            "AsyncTaskModule"));
             _lock = new ReaderWriterLockSlim();
             _event = new AutoResetEvent(false);
             _token = new CancellationTokenSource();
@@ -109,7 +116,7 @@ namespace Qoollo.Impl.Modules.Async
                 {
                     task.IncreaseCount();
 
-                    _threadPool.Run(task.Action, task);
+                    _threadPool.Value.Run(task.Action, task);
 
                     RemoveOldTasks();
                     task.GenerateNextTime(false);
@@ -172,8 +179,9 @@ namespace Qoollo.Impl.Modules.Async
             if (isUserCall)
             {
                 _token.Cancel();
-                _event.Set();                
-                _threadPool.Dispose(false, false, false);
+                _event.Set();
+                if (_threadPool.IsValueCreated)
+                    _threadPool.Value.Dispose(false, false, false);
             }
 
             base.Dispose(isUserCall);

@@ -66,17 +66,17 @@ namespace Qoollo.Tests.TestWriter
 
         public TestCommand Create(int key, int value)
         {
-            return new TestCommand() { Command = "create", Value = (int)value };
+            return new TestCommand() { Command = "create", Key = (int)value };
         }
 
         public TestCommand Update(int key, int value)
         {
-            return new TestCommand() { Command = "update", Value = (int)value };
+            return new TestCommand() { Command = "update", Key = (int)value };
         }
 
         public TestCommand Delete(int key)
         {
-            return new TestCommand() { Command = "delete", Value = (int)key };
+            return new TestCommand() { Command = "delete", Key = (int)key };
         }
 
         public TestCommand Read()

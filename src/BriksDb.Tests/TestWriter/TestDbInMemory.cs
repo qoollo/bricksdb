@@ -10,11 +10,11 @@ namespace Qoollo.Tests.TestWriter
 {
     internal class TestDbInMemory : DbLogicModule<TestCommand, int, int, TestCommand, TestDbReader>
     {
-        private TestDbImplModule _impl;
+        private readonly TestDbImplModule _impl;
 
         public TestDbInMemory(string tableName, IHashCalculater hashCalculater)
             : base(
-                hashCalculater, true,
+                hashCalculater,
                 new TestUserCommandCreator(tableName),
                 new TestMetaDataCommandCreator(), TestDbHelper.NewInstance
                 )
@@ -24,7 +24,7 @@ namespace Qoollo.Tests.TestWriter
 
         public TestDbInMemory(string tableName)
             : base(
-                new IntHashConvertor(), false,
+                new IntHashConvertor(),
                 new TestUserCommandCreator(tableName),
                 new TestMetaDataCommandCreator(), TestDbHelper.NewInstance
                 )
@@ -34,7 +34,7 @@ namespace Qoollo.Tests.TestWriter
 
         public TestDbInMemory()
             : base(
-                new IntHashConvertor(), false,
+                new IntHashConvertor(),
                 new TestUserCommandCreator(),
                 new TestMetaDataCommandCreator(), TestDbHelper.NewInstance
                 )

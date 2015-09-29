@@ -795,6 +795,8 @@ namespace Qoollo.Tests
             ddistributor.Dispose();
             dnet.Dispose();
             cache.Dispose();
+            input.Dispose();
+            tranc.Dispose();
         }
 
         [TestMethod]

@@ -81,7 +81,6 @@ namespace Qoollo.Impl.Writer.Db
         private RemoteResult CreateDataWithoutMetaData(object key, object value)
         {
             var command = _userCommandCreator.Create((TKey)key, (TValue)value);
-            command = _metaDataCommandCreator.SetKeytoCommand(command, key);
             var ret = _implModule.ExecuteNonQuery(command);
 
             IsError(ref ret);
@@ -90,14 +89,12 @@ namespace Qoollo.Impl.Writer.Db
 
         private RemoteResult CreateMetaUpdateData(InnerData obj, bool local, object key, object value)
         {
-            var metaCommand = _metaDataCommandCreator.CreateMetaData(local);
-            metaCommand = _metaDataCommandCreator.SetKeytoCommand(metaCommand, key);
+            var metaCommand = _metaDataCommandCreator.CreateMetaData(local, obj.Transaction.DataHash, key);
             var ret = _implModule.ExecuteNonQuery(metaCommand);
 
             if (!IsError(ref ret))
             {
                 var command = _userCommandCreator.Update((TKey)key, (TValue)value);
-                command = _metaDataCommandCreator.SetKeytoCommand(command, key);
                 ret = _implModule.ExecuteNonQuery(command);
                 IsError(ref ret);
             }
@@ -109,15 +106,13 @@ namespace Qoollo.Impl.Writer.Db
             var timer = WriterCounters.Instance.CreateTimer.StartNew();
 
             var command = _userCommandCreator.Create((TKey)key, (TValue)value);
-            command = _metaDataCommandCreator.SetKeytoCommand(command, key);
             var ret = _implModule.ExecuteNonQuery(command);
 
             if (!ret.IsError)
             {
                 var metaTimer = WriterCounters.Instance.CreateMetaDataTimer.StartNew();
 
-                var metaCommand = _metaDataCommandCreator.CreateMetaData(local);
-                metaCommand = _metaDataCommandCreator.SetKeytoCommand(metaCommand, key);
+                var metaCommand = _metaDataCommandCreator.CreateMetaData(local, obj.Transaction.DataHash, key);
                 ret = _implModule.ExecuteNonQuery(metaCommand);
 
                 metaTimer.Complete();
@@ -132,13 +127,11 @@ namespace Qoollo.Impl.Writer.Db
         private RemoteResult UpdateInner(bool local, object key, object value)
         {
             var command = _userCommandCreator.Update((TKey)key, (TValue)value);
-            command = _metaDataCommandCreator.SetKeytoCommand(command, key);
             var ret = _implModule.ExecuteNonQuery(command);
 
             if (!ret.IsError)
             {
-                command = _metaDataCommandCreator.UpdateMetaData(local);
-                command = _metaDataCommandCreator.SetKeytoCommand(command, key);
+                command = _metaDataCommandCreator.UpdateMetaData(local, key);
                 ret = _implModule.ExecuteNonQuery(command);
             }
 
@@ -148,8 +141,7 @@ namespace Qoollo.Impl.Writer.Db
 
         private RemoteResult SetMetadataNotDeleted(object key)
         {
-            var metaCommand = _metaDataCommandCreator.SetDataNotDeleted();
-            metaCommand = _metaDataCommandCreator.SetKeytoCommand(metaCommand, key);
+            var metaCommand = _metaDataCommandCreator.SetDataNotDeleted(key);            
             return _implModule.ExecuteNonQuery(metaCommand);
         }
 

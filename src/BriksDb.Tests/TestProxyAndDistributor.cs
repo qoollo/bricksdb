@@ -445,7 +445,7 @@ namespace Qoollo.Tests
             var dhc = new DistributorHashConfiguration(2);
             var queue = new QueueConfiguration(1, 100);
             var connection = new ConnectionConfiguration("testService", 10);
-            var dcc = new DistributorCacheConfiguration(TimeSpan.FromMilliseconds(6000), TimeSpan.FromMilliseconds(10000));
+            var dcc = new DistributorCacheConfiguration(TimeSpan.FromMilliseconds(600000), TimeSpan.FromMilliseconds(1000000));
             var ndrc = new NetReceiverConfiguration(distrServerForDb, "localhost", "testService");
             var ndrc12 = new NetReceiverConfiguration(distrServerForProxy, "localhost", "testService");            
 

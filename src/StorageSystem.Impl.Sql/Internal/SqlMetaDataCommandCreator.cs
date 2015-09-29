@@ -67,37 +67,42 @@ namespace Qoollo.Impl.Sql.Internal
             return new SqlCommand(string.Format("create table {1} ({0} not null primary key, " +
                                                 "{2} int not null, " +
                                                 "{3} int not null, " +
-                                                "{4} datetime); " +
+                                                "{4} datetime," +
+                                                "{5} varchar (20)); " +
                                                 "CREATE NONCLUSTERED INDEX [NonClusteredIndex-20140609-052749] ON [dbo].{1} " +
                                                 "([{3}] ASC, " +
                                                 "[{2}] ASC " +
                                                 " )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF," +
                                                 " ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY] "
-                , idInit, _metaTableName, SqlConsts.Local, SqlConsts.IsDeleted, SqlConsts.DeleteTime));
+                , idInit, _metaTableName, SqlConsts.Local, SqlConsts.IsDeleted, SqlConsts.DeleteTime, SqlConsts.Hash));
         }
 
-        public SqlCommand CreateMetaData(bool remote)
+        public SqlCommand CreateMetaData(bool remote, string dataHash, object key)
         {
-            return new SqlCommand(string.Format("insert into {0} ({1}, {3}, {4}, {5})  " +
-                                                "values (@{1}, {2}, 1,'');", _metaTableName, _keyName, GetLocal(remote),
-                SqlConsts.Local, SqlConsts.IsDeleted, SqlConsts.DeleteTime));
+            var command =  new SqlCommand(string.Format("insert into {0} ({1}, {3}, {4}, {5}, {6})  " +
+                                                "values (@{1}, {2}, 1,'', {7});",
+                _metaTableName, _keyName, GetLocal(remote),
+                SqlConsts.Local, SqlConsts.IsDeleted, SqlConsts.DeleteTime, SqlConsts.Hash, dataHash));
+            return SetKeytoCommand(command, key);
         }
 
-        public SqlCommand DeleteMetaData()
+        public SqlCommand DeleteMetaData(object key)
         {
-            return new SqlCommand(string.Format("delete from {0} " +
-                                                "where {1} = @{1};", _metaTableName, _keyName));
+            var command = new SqlCommand(string.Format("delete from {0} " +
+                                               "where {1} = @{1};", _metaTableName, _keyName));
+            return SetKeytoCommand(command, key);            
         }
 
-        public SqlCommand UpdateMetaData(bool local)
+        public SqlCommand UpdateMetaData(bool local, object key)
         {
-            return new SqlCommand(string.Format("update {0} " +
-                                                "set {3} = {1} " +
-                                                "where {2} = @{2};", _metaTableName, GetLocal(local), _keyName,
-                                                SqlConsts.Local));
+            var command = new SqlCommand(string.Format("update {0} " +
+                                                       "set {3} = {1} " +
+                                                       "where {2} = @{2};", _metaTableName, GetLocal(local), _keyName,
+                SqlConsts.Local));
+            return SetKeytoCommand(command, key);   
         }
 
-        public SqlCommand SetDataDeleted()
+        public SqlCommand SetDataDeleted(object key)
         {
             var command = new SqlCommand(string.Format("update {0} " +
                                                        "set {2} = 0," +
@@ -106,27 +111,29 @@ namespace Qoollo.Impl.Sql.Internal
                 SqlConsts.IsDeleted, SqlConsts.DeleteTime));
             command.Parameters.Add("@time", SqlDbType.DateTime);
             command.Parameters["@time"].Value = DateTime.Now.ToString(CultureInfo.InvariantCulture);
-            return command;
+            return SetKeytoCommand(command, key);
         }
 
-        public SqlCommand SetDataNotDeleted()
+        public SqlCommand SetDataNotDeleted(object key)
         {
-            return new SqlCommand(string.Format("update {0} " +
-                                                "set {2} = 1 " +
-                                                "where {1} = @{1};", _metaTableName, _keyName, SqlConsts.IsDeleted));
+            var command = new SqlCommand(string.Format("update {0} " +
+                                                       "set {2} = 1 " +
+                                                       "where {1} = @{1};", _metaTableName, _keyName,
+                SqlConsts.IsDeleted));
+            return SetKeytoCommand(command, key);
         }
 
-        public SqlCommand ReadMetaData(SqlCommand userRead)
+        public SqlCommand ReadMetaData(SqlCommand userRead, object key)
         {
-            string script =
+            var command = new SqlCommand(
                 string.Format(
-                    "select {0}.{3}, {0}.{4}, {0}.{5}, {0}.{1} as 'MetaId', HelpTable.{6} as 'UserId' " +
+                    "select {0}.{3}, {0}.{4}, {0}.{5}, {0}.{1} as 'MetaId', HelpTable.{6} as 'UserId', {0}.{7} " +
                     " from ( {2} ) as HelpTable right join {0} on HelpTable.{6} = {0}.{1} " +
                     " where {0}.{1} = @{1}",
                     _metaTableName, _keyName, userRead.CommandText, SqlConsts.Local, SqlConsts.IsDeleted,
-                    SqlConsts.DeleteTime, _userKeyName);
+                    SqlConsts.DeleteTime, _userKeyName, SqlConsts.Hash));
 
-            return new SqlCommand(script);
+            return SetKeytoCommand(command, key);
         }
 
         public Tuple<MetaData, bool> ReadMetaDataFromReader(DbReader<SqlDataReader> reader, bool readuserId = true)
@@ -134,6 +141,7 @@ namespace Qoollo.Impl.Sql.Internal
             object local = reader.GetValue(SqlConsts.Local);
             object isDeleted = reader.GetValue(SqlConsts.IsDeleted);
             object deleteTime = reader.GetValue(SqlConsts.DeleteTime);
+            object hash = reader.GetValue(SqlConsts.Hash);
 
             MetaData meta = null;
 
@@ -143,7 +151,7 @@ namespace Qoollo.Impl.Sql.Internal
                 bool i = GetLocalBack((int)isDeleted);
                 var t = (DateTime)deleteTime;
 
-                meta = new MetaData(l, t, i);
+                meta = new MetaData(l, t, i, (string)hash);
             }
 
             bool data = false;
@@ -161,6 +169,7 @@ namespace Qoollo.Impl.Sql.Internal
             object local = data.Fields.Find(x => x.Item2.ToLower() == SqlConsts.Local.ToLower()).Item1;
             object isDeleted = data.Fields.Find(x => x.Item2.ToLower() == SqlConsts.IsDeleted.ToLower()).Item1;
             object deleteTime = data.Fields.Find(x => x.Item2.ToLower() == SqlConsts.DeleteTime.ToLower()).Item1;
+            object hash = data.Fields.Find(x => x.Item2.ToLower() == SqlConsts.Hash.ToLower()).Item1;
             object id = data.Fields.Find(x => x.Item2.ToLower() == _keyName.ToLower()).Item1;
 
             MetaData meta = null;
@@ -171,7 +180,7 @@ namespace Qoollo.Impl.Sql.Internal
                 bool i = GetLocalBack((int)isDeleted);
                 var t = (DateTime)deleteTime;
 
-                meta = new MetaData(l, t, i)
+                meta = new MetaData(l, t, i, (string)hash)
                 {
                     Id = id
                 };
@@ -196,14 +205,14 @@ namespace Qoollo.Impl.Sql.Internal
                 SqlConsts.Local, SqlConsts.IsDeleted);
         }
 
-        public SqlCommand ReadWithDelete(SqlCommand userRead, bool isDelete)
+        public SqlCommand ReadWithDelete(SqlCommand userRead, bool isDelete, object key)
         {
-            string script = string.Format("select * from ( {0} ) as MetaHelpTable " +
-                                          " inner join {1} on MetaHelpTable.{5} = {1}.{2}" +
-                                          " where {1}.{2} = @{2} and {1}.{4} = {3}", userRead.CommandText,
-                _metaTableName, _keyName, IsDeleted(isDelete), SqlConsts.IsDeleted, _userKeyName);
+            var command = new SqlCommand(string.Format("select * from ( {0} ) as MetaHelpTable " +
+                                                       " inner join {1} on MetaHelpTable.{5} = {1}.{2}" +
+                                                       " where {1}.{2} = @{2} and {1}.{4} = {3}", userRead.CommandText,
+                _metaTableName, _keyName, IsDeleted(isDelete), SqlConsts.IsDeleted, _userKeyName));
 
-            return new SqlCommand(script);
+            return SetKeytoCommand(command, key);
         }
 
         public SqlCommand ReadWithDeleteAndLocal(SqlCommand userRead, bool isDelete, bool local)
@@ -280,7 +289,8 @@ namespace Qoollo.Impl.Sql.Internal
             {
                 {SqlConsts.Local.ToLower(), typeof (int)},
                 {SqlConsts.IsDeleted.ToLower(), typeof (int)},
-                {SqlConsts.DeleteTime.ToLower(), typeof (string)}
+                {SqlConsts.DeleteTime.ToLower(), typeof (string)},
+                {SqlConsts.Hash.ToLower(), typeof (string)}
             };
         }
 

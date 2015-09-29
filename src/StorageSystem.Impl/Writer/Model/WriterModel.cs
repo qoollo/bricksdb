@@ -10,9 +10,9 @@ namespace Qoollo.Impl.Writer.Model
 {
     internal class WriterModel:IDisposable
     {
-        private HashMap _map;
+        private readonly HashMap _map;
         private List<HashMapRecord> _localMap; 
-        private ServerId _local;
+        private readonly ServerId _local;
 
         public List<HashMapRecord> LocalMap { get { return _localMap; } }
 

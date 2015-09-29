@@ -16,7 +16,7 @@ namespace Qoollo.Impl.Common.HashFile
         public List<HashMapRecord> Map { get; protected set; }
         public List<WriterDescription> Servers { get; private set; }
         public List<HashMapRecord> AvailableMap { get; private set; } 
-        private HashMapConfiguration _configuration;
+        private readonly HashMapConfiguration _configuration;
 
         public HashMap(HashMapConfiguration configuration)
         {

@@ -16,5 +16,6 @@
         public static string Local = "Meta_Local";
         public static string IsDeleted = "Meta_IsDeleted";
         public static string DeleteTime = "Meta_DeleteTime";
+        public static string Hash = "Meta_Hash";
     }
 }

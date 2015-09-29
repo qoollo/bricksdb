@@ -14,7 +14,6 @@ namespace Qoollo.Impl.Sql
         private readonly IUserCommandCreator<SqlCommand, SqlConnection, TKey, TValue, SqlDataReader> _userCommandCreator;
         private readonly IDataProvider<TKey, TValue> _dataProvider;
         private readonly SqlConnectionParams _connectionParams;
-        private readonly bool _hashFromValue;
 
         public SqlDbFactory(IDataProvider<TKey, TValue> dataProvider,
             SqlUserCommandCreator< TKey, TValue> userCommandCreator,
@@ -22,8 +21,7 @@ namespace Qoollo.Impl.Sql
         {
             _userCommandCreator = new SqlUserCommandCreatorInner<TKey, TValue>(userCommandCreator);
             _dataProvider = dataProvider;
-            _connectionParams = connectionParams;
-            _hashFromValue = hashFromValue;
+            _connectionParams = connectionParams;            
         }
 
         public SqlDbFactory(SqlUserCommandCreator<TKey, TValue> userCommandCreator)
@@ -35,7 +33,7 @@ namespace Qoollo.Impl.Sql
         {
             return
                 new DbLogicModule<SqlCommand, TKey, TValue, SqlConnection, SqlDataReader>(
-                    new HashFakeImpl<TKey, TValue>(_dataProvider), _hashFromValue,_userCommandCreator,
+                    new HashFakeImpl<TKey, TValue>(_dataProvider),_userCommandCreator,
                     new SqlMetaDataCommandCreator<TKey, TValue>(_userCommandCreator),
                     new SqlDbModule(_connectionParams, _connectionParams.CountDbConnections,
                         _connectionParams.DbTrimPeriod));

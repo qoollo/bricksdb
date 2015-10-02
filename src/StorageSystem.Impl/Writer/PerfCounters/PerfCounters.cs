@@ -52,10 +52,22 @@ namespace Qoollo.Impl.Writer.PerfCounters
 
             RestoreCountReceive.Reset();
             RestoreCountSend.Reset();
+            RestoreSendPerSec.Reset();
+
+            DeleteTimeoutPerSec.Reset();
+            DeleteFullPerSec.Reset();
         }
 
         [Counter("TransactionCount", "Общее количество обработанных данных")]
         public NumberOfItemsCounter TransactionCount { get; private set; }
+
+        [Counter("DeleteTimeoutPerSec", "Количество удаляемых событий из базы Delete Timeout(Per/sec)")]
+        public OperationsPerSecondCounter DeleteTimeoutPerSec { get; private set; }
+
+        [Counter("DeleteFullPerSec", "Количество сразу удаляемых событий из базы Delete Full(Per/sec)")]
+        public OperationsPerSecondCounter DeleteFullPerSec { get; private set; }
+
+        #region Restore
 
         [Counter("RestoreCountSend", "Количество переданных данных ")]
         public NumberOfItemsCounter RestoreCountSend { get; private set; }
@@ -63,7 +75,15 @@ namespace Qoollo.Impl.Writer.PerfCounters
         [Counter("RestoreCountReceive", "Количество принятых данных во время восстановления")]
         public NumberOfItemsCounter RestoreCountReceive { get; private set; }
 
-        #region Per sec
+        [Counter("RestoreUpdatePerSec", "Количество обрабатываемых транзакций RestoreUpdate (Per/sec)")]
+        public OperationsPerSecondCounter RestoreUpdatePerSec { get; private set; }
+
+        [Counter("RestoreSendPerSec", "Количество отправленных RestoreUpdate (Per/sec)")]
+        public OperationsPerSecondCounter RestoreSendPerSec { get; private set; }
+
+        #endregion
+
+        #region Crud Per sec
 
         [Counter("Количество поисковых запросов (Per/sec)")]
         public OperationsPerSecondCounter QueryPerSec { get; private set; }
@@ -85,10 +105,7 @@ namespace Qoollo.Impl.Writer.PerfCounters
 
         [Counter("Количество обрабатываемых транзакций Delete (Per/sec)")]
         public OperationsPerSecondCounter DeletePerSec { get; private set; }
-
-        [Counter("Количество обрабатываемых транзакций RestoreUpdate (Per/sec)")]
-        public OperationsPerSecondCounter RestoreUpdatePerSec { get; private set; }
-
+        
         [Counter("Количество обрабатываемых транзакций CustomOperation (Per/sec)")]
         public OperationsPerSecondCounter CustomOperationPerSec { get; private set; }
 

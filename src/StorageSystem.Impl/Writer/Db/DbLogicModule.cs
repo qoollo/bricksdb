@@ -183,7 +183,10 @@ namespace Qoollo.Impl.Writer.Db
             _implModule.ExecuteNonQuery(command);
 
             command = _userCommandCreator.Delete((TKey) key);
-            return _implModule.ExecuteNonQuery(command);
+            var ret = _implModule.ExecuteNonQuery(command);
+
+            WriterCounters.Instance.DeleteFullPerSec.OperationFinished();
+            return ret;
         }
 
         public override RemoteResult AsyncProcess(bool isDeleted, bool local, int countElemnts, Action<InnerData> process,

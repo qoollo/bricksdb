@@ -609,7 +609,7 @@ namespace Qoollo.Tests
         {
             const int storageServer1 = 22281;
             const int storageServer2 = 22282;            
-            const int distrServerForProxy = 23283;
+            const int distrServerForProxy = 24283;
             const int distrServerForDb = 22283;
 
             var writer =

@@ -12,10 +12,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
     internal class TimeoutModule:CommonAsyncWorkModule
     {
         private TimeoutReaderFull _reader;
-        private QueueConfiguration _queueConfiguration;
-        private DbModuleCollection _db;
-        private QueueWithParam<InnerData> _queue;
-        private TimeSpan _deleteTimeout;
+        private readonly QueueConfiguration _queueConfiguration;
+        private readonly DbModuleCollection _db;
+        private readonly QueueWithParam<InnerData> _queue;
+        private readonly TimeSpan _deleteTimeout;
 
         public TimeoutModule(WriterNetModule net, AsyncTaskModule asyncTaskModule,
             QueueConfiguration queueConfiguration, DbModuleCollection db,
@@ -54,6 +54,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
         private void Process(InnerData data)
         {            
             _db.DeleteFull(data);
+            PerfCounters.WriterCounters.Instance.DeleteTimeoutPerSec.OperationFinished();
         }
 
         private bool IsMine(MetaData data)

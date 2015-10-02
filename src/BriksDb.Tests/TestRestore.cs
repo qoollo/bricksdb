@@ -548,5 +548,167 @@ namespace Qoollo.Tests
             _distr.Dispose();
             storage1.Dispose();
         }
+
+        [TestMethod]
+        public void Writer_Restore_ThreeServersTwoReplics()
+        {
+            var writer =
+                new HashWriter(new HashMapConfiguration("Writer_Restore_ThreeServersTwoReplics", HashMapCreationMode.CreateNew, 3, 3,
+                    HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "localhost", storageServer1, 157);
+            writer.SetServer(1, "localhost", storageServer2, 157);
+            writer.SetServer(2, "localhost", storageServer3, 157);
+            writer.Save();
+
+            _proxy.Start();
+            _distrTest.Build(2, distrServer1, distrServer12, "Writer_Restore_ThreeServersTwoReplics");
+            _writer1.Build(storageServer1, "Writer_Restore_ThreeServersTwoReplics", 2);
+            _writer2.Build(storageServer2, "Writer_Restore_ThreeServersTwoReplics", 2);
+            _writer3.Build(storageServer3, "Writer_Restore_ThreeServersTwoReplics", 2);
+
+            _distrTest.Start();
+            _writer1.Start();
+            _writer2.Start();
+
+            _proxy.Int.SayIAmHere("localhost", distrServer12);
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(200));
+
+            const int count = 50;
+
+
+            for (int i = 0; i < count; i++)
+            {
+                if (_proxy.Int.CreateSync(i, i).IsError)
+                    _proxy.Int.CreateSync(i, i);
+            }
+
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+            var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
+            var mem3 = _writer3.Db.GetDbModules.First() as TestDbInMemory;
+
+            if (count > 1)
+            {
+                Assert.AreNotEqual(count, mem.Local);
+                Assert.AreNotEqual(count, mem.Remote);
+
+                Assert.AreNotEqual(count, mem2.Local);
+                Assert.AreNotEqual(count, mem2.Remote);
+            }
+            Assert.AreEqual(count*2, mem.Local + mem.Remote + mem2.Local + mem2.Remote);
+            
+            _writer3.Start();
+
+            _writer3.Distributor.Restore(new ServerId("localhost", distrServer1), false);
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(3000));
+
+            Assert.AreEqual(0, mem.Remote);
+            Assert.AreEqual(0, mem2.Remote);
+            Assert.AreEqual(0, mem3.Remote);
+            Assert.AreEqual(count*2, mem.Local + mem2.Local + mem3.Local);
+            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
+            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
+
+            _distrTest.Dispose();
+            _writer1.Dispose();
+            _writer2.Dispose();
+            _writer3.Dispose();
+
+            _proxy.Dispose();
+        }
+
+        [TestMethod]
+        public void Writer_Restore_ThreeServersTwoReplics_UpdateModel()
+        {
+            var writer =
+                new HashWriter(new HashMapConfiguration("Writer_Restore_ThreeServersTwoReplics_UpdateModel",
+                    HashMapCreationMode.CreateNew, 2, 2,
+                    HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "localhost", storageServer1, 157);
+            writer.SetServer(1, "localhost", storageServer2, 157);            
+            writer.Save();
+
+            _proxy.Start();
+            _distrTest.Build(2, distrServer1, distrServer12, "Writer_Restore_ThreeServersTwoReplics_UpdateModel");
+            _writer1.Build(storageServer1, "Writer_Restore_ThreeServersTwoReplics_UpdateModel", 2);
+            _writer2.Build(storageServer2, "Writer_Restore_ThreeServersTwoReplics_UpdateModel", 2);
+            _writer3.Build(storageServer3, "Writer_Restore_ThreeServersTwoReplics_UpdateModel", 2);
+
+            _distrTest.Start();
+            _writer1.Start();
+            _writer2.Start();
+
+            _proxy.Int.SayIAmHere("localhost", distrServer12);
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(200));
+
+            const int count = 50;
+
+
+            for (int i = 0; i < count; i++)
+            {
+                if (_proxy.Int.CreateSync(i, i).IsError)
+                    _proxy.Int.CreateSync(i, i);
+            }
+
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+            var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
+            var mem3 = _writer3.Db.GetDbModules.First() as TestDbInMemory;
+
+            Assert.AreEqual(count, mem.Local);
+            Assert.AreEqual(0, mem.Remote);
+
+            Assert.AreEqual(count, mem2.Local);
+            Assert.AreEqual(0, mem2.Remote);            
+
+            writer =
+                new HashWriter(new HashMapConfiguration("Writer_Restore_ThreeServersTwoReplics_UpdateModel",
+                    HashMapCreationMode.CreateNew, 3, 3,
+                    HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "localhost", storageServer1, 157);
+            writer.SetServer(1, "localhost", storageServer2, 157);
+            writer.SetServer(2, "localhost", storageServer3, 157);
+            writer.Save();
+
+            var localLast = mem.Local;
+            var localLast2 = mem2.Local;
+
+            _writer3.Start();
+
+            _writer1.Distributor.UpdateModel();
+            _writer2.Distributor.UpdateModel();
+
+            _writer3.Distributor.Restore(new ServerId("localhost", distrServer1), true);
+            Thread.Sleep(TimeSpan.FromMilliseconds(3000));
+            
+            _writer2.Distributor.Restore(new ServerId("localhost", distrServer1), true);
+            Thread.Sleep(TimeSpan.FromMilliseconds(3000));
+            
+            _writer1.Distributor.Restore(new ServerId("localhost", distrServer1), true);
+            Thread.Sleep(TimeSpan.FromMilliseconds(3000));
+
+            Assert.AreEqual(0, mem.Remote);
+            Assert.AreEqual(0, mem2.Remote);
+            Assert.AreEqual(0, mem3.Remote);
+            Assert.AreEqual(count * 2, mem.Local + mem2.Local + mem3.Local);
+            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
+            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
+            
+            Assert.AreNotEqual(localLast, mem.Local);
+            Assert.AreNotEqual(localLast2, mem2.Local);
+
+            _distrTest.Dispose();
+            _writer1.Dispose();
+            _writer2.Dispose();
+            _writer3.Dispose();
+
+            _proxy.Dispose();
+        }
     }
 }

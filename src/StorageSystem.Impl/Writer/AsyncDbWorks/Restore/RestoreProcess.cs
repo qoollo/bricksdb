@@ -26,7 +26,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             WriterNetModule writerNet, ServerId remote)
         {
             _remoteHashRange = remoteHashRange;
-            _isSystemUpdated = isSystemUpdated;
             _db = db;
             _writerNet = writerNet;
             _remote = remote;
@@ -34,10 +33,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _reader = new RestoreReaderFull(IsNeedSendData, ProcessData, queueConfiguration, db, isSystemUpdated,
                 tableName, GlobalQueue.Queue.DbRestoreQueue);
             _reader.Start();
+
+            foreach (var pair in remoteHashRange)
+            {
+                Console.WriteLine("{0} {1}", pair.Key, pair.Value);
+            }
         }
 
         private readonly List<KeyValuePair<string, string>> _remoteHashRange;
-        private readonly bool _isSystemUpdated;
         private readonly DbModuleCollection _db;
         private readonly WriterNetModule _writerNet;
         private readonly ServerId _remote;
@@ -59,6 +62,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
             else if (!IsLocalData(data.MetaData))
             {
+                PerfCounters.WriterCounters.Instance.RestoreCountSend.Increment();
+                PerfCounters.WriterCounters.Instance.RestoreSendPerSec.OperationFinished();
+
                 _db.Delete(data);
             }
         }

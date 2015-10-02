@@ -169,7 +169,7 @@ namespace Qoollo.Impl.Writer.Db
 
             if (ret.IsError)
                 ret = new InnerServerError(ret);
-
+            WriterCounters.Instance.DeletePerSec.OperationFinished();
             return ret;
         }
 
@@ -487,6 +487,8 @@ namespace Qoollo.Impl.Writer.Db
                 {
                     var meta = _metaDataCommandCreator.ReadMetaFromSearchData(searchData);
 
+                    WriterCounters.Instance.RestoreCheckPerSec.OperationFinished();
+                    WriterCounters.Instance.RestoreCheckCount.Increment();
                     if (isMine(meta))
                     {
                         list.Add(meta);

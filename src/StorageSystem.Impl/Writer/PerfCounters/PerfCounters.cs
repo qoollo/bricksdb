@@ -56,6 +56,9 @@ namespace Qoollo.Impl.Writer.PerfCounters
 
             DeleteTimeoutPerSec.Reset();
             DeleteFullPerSec.Reset();
+
+            RestoreCheckCount.Reset();
+            RestoreCheckPerSec.Reset();
         }
 
         [Counter("TransactionCount", "Общее количество обработанных данных")]
@@ -69,7 +72,10 @@ namespace Qoollo.Impl.Writer.PerfCounters
 
         #region Restore
 
-        [Counter("RestoreCountSend", "Количество переданных данных ")]
+        [Counter("RestoreCheckCount", "Количество проверенных данных при восстановлении")]
+        public NumberOfItemsCounter RestoreCheckCount { get; private set; }
+
+        [Counter("RestoreCountSend", "Количество переданных данных при восстановлении")]
         public NumberOfItemsCounter RestoreCountSend { get; private set; }
 
         [Counter("RestoreCountReceive", "Количество принятых данных во время восстановления")]
@@ -80,6 +86,9 @@ namespace Qoollo.Impl.Writer.PerfCounters
 
         [Counter("RestoreSendPerSec", "Количество отправленных RestoreUpdate (Per/sec)")]
         public OperationsPerSecondCounter RestoreSendPerSec { get; private set; }
+
+        [Counter("RestoreCheckPerSec", "Количество проверенных данных при восстановлении RestoreUpdate (Per/sec)")]
+        public OperationsPerSecondCounter RestoreCheckPerSec { get; private set; }
 
         #endregion
 

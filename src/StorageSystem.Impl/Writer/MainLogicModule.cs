@@ -49,8 +49,7 @@ namespace Qoollo.Impl.Writer
                     WriterCounters.Instance.CustomOperationPerSec.OperationFinished();
                     break;
                 case OperationName.Delete:
-                    ret = CheckResult(data, _db.Delete(data));
-                    WriterCounters.Instance.DeletePerSec.OperationFinished();
+                    ret = CheckResult(data, _db.Delete(data));                    
                     break;
                 case OperationName.RestoreUpdate:
                     ret = _db.RestoreUpdate(data, local);

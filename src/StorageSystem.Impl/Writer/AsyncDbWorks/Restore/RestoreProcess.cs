@@ -33,11 +33,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _reader = new RestoreReaderFull(IsNeedSendData, ProcessData, queueConfiguration, db, isSystemUpdated,
                 tableName, GlobalQueue.Queue.DbRestoreQueue);
             _reader.Start();
-
-            foreach (var pair in remoteHashRange)
-            {
-                Console.WriteLine("{0} {1}", pair.Key, pair.Value);
-            }
         }
 
         private readonly List<KeyValuePair<string, string>> _remoteHashRange;

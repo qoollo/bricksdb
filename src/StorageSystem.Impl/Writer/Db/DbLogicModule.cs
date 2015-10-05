@@ -282,6 +282,8 @@ namespace Qoollo.Impl.Writer.Db
 
         private InnerData ReadInner(object key, InnerData ret, bool isDeleted = false)
         {
+            var timer = WriterCounters.Instance.ReadTimer.StartNew();
+
             var script = _userCommandCreator.Read();
             script = _metaDataCommandCreator.ReadWithDelete(script, isDeleted, key);            
 
@@ -319,6 +321,7 @@ namespace Qoollo.Impl.Writer.Db
             }
 
             reader.Dispose();
+            timer.Complete();
             return ret;
         }
 

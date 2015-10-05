@@ -94,12 +94,10 @@ namespace Qoollo.Impl.Writer
         public InnerData ReadOperation(InnerData data)
         {
             WriterCounters.Instance.TransactionCount.Increment();
-            WriterCounters.Instance.IncomePerSec.OperationFinished();
-            var timer = WriterCounters.Instance.AverageTimer.StartNew();
+            WriterCounters.Instance.IncomePerSec.OperationFinished();           
 
             var read = _mainLogicModule.Read(data);
-
-            timer.Complete();
+            
             data.Transaction.PerfTimer.Complete();
 
             WriterCounters.Instance.ProcessPerSec.OperationFinished();

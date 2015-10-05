@@ -59,6 +59,8 @@ namespace Qoollo.Impl.Writer.PerfCounters
 
             RestoreCheckCount.Reset();
             RestoreCheckPerSec.Reset();
+
+            ReadTimer.Reset();
         }
 
         [Counter("TransactionCount", "Общее количество обработанных данных")]
@@ -136,6 +138,9 @@ namespace Qoollo.Impl.Writer.PerfCounters
 
         [Counter("Среднее время транзакции")]
         public AverageTimeCounter AverageTimer { get; private set; }
+
+        [Counter("Среднее время Read")]
+        public AverageTimeCounter ReadTimer { get; private set; }
 
         [Counter("Среднее время транзакции с очередью")]
         public AverageTimeCounter AverageTimerWithQueue { get; private set; }

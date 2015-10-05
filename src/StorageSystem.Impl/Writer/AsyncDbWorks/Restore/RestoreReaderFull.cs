@@ -15,7 +15,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             get { return _processData; }
         }
 
-        public RestoreReaderFull(Func<MetaData, bool> isMine, Action<InnerData> process, QueueConfiguration queueConfiguration, DbModuleCollection db, bool isBothTables, string tableName, QueueWithParam<InnerData> queue)
+        public RestoreReaderFull(Func<MetaData, bool> isMine, Action<InnerData> process,
+            QueueConfiguration queueConfiguration, DbModuleCollection db, bool isBothTables, string tableName,
+            QueueWithParam<InnerData> queue)
             : base(process, queueConfiguration, isBothTables, queue)
         {
             _isMine = isMine;

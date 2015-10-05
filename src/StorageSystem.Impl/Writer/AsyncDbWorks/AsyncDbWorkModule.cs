@@ -15,11 +15,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 {
     internal class AsyncDbWorkModule:ControlModule
     {
-        private InitiatorRestoreModule _initiatorRestore;
-        private TransferRestoreModule _transfer;
-        private TimeoutModule _timeout;
+        private readonly InitiatorRestoreModule _initiatorRestore;
+        private readonly TransferRestoreModule _transfer;
+        private readonly TimeoutModule _timeout;
 
-        private RestoreStateHelper _stateHelper;
+        private readonly RestoreStateHelper _stateHelper;
         public bool IsNeedRestore
         {
             get

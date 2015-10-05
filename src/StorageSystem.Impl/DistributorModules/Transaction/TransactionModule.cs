@@ -71,6 +71,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         private void Rollback(InnerData data)
         {
+            PerfCounters.DistributorCounters.Instance.TransactionFailCount.Increment();
             try
             {
                 foreach (var server in data.DistributorData.Destination)
@@ -181,7 +182,11 @@ namespace Qoollo.Impl.DistributorModules.Transaction
                 _cache.Update(data.Transaction.CacheKey, data);
 
             data.Transaction.PerfTimer.Complete();
-            PerfCounters.DistributorCounters.Instance.ProcessPerSec.OperationFinished();
+
+            if (data.DistributorData.ExecuteTimer != null)
+                data.DistributorData.ExecuteTimer.Value.Complete();
+
+            PerfCounters.DistributorCounters.Instance.ProcessPerSec.OperationFinished();            
         }
 
         private void AddErrorAndUpdate(InnerData data, string error)
@@ -193,6 +198,9 @@ namespace Qoollo.Impl.DistributorModules.Transaction
                 ProcessSyncTransaction(data);
             else
                 _cache.Update(data.Transaction.CacheKey, data);
+
+            if (data.DistributorData.ExecuteTimer != null)
+                data.DistributorData.ExecuteTimer.Value.Complete();
         }
 
         protected override void Dispose(bool isUserCall)

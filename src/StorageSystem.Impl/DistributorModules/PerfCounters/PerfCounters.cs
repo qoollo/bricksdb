@@ -29,11 +29,13 @@ namespace Qoollo.Impl.DistributorModules.PerfCounters
 
         protected override void AfterInit()
         {
-            AverageTimer.Reset();
+            AverageTimerWithQueue.Reset();
             TransactionCount.Reset();
             TransactionFailCount.Reset();
             IncomePerSec.Reset();
             ProcessPerSec.Reset();
+            CreateTimer.Reset();
+            ReadTimer.Reset();
         }
 
         [Counter("TransactionCount", "Counter")]
@@ -43,12 +45,18 @@ namespace Qoollo.Impl.DistributorModules.PerfCounters
         public NumberOfItemsCounter TransactionFailCount { get; private set; }        
         
         [Counter("Avg operation time")]
-        public AverageTimeCounter AverageTimer { get; private set; }
+        public AverageTimeCounter AverageTimerWithQueue { get; private set; }
 
         [Counter("Count operation from Proxy per sec")]
         public OperationsPerSecondCounter IncomePerSec { get; private set; }
 
         [Counter("Processed operation per sec")]
         public OperationsPerSecondCounter ProcessPerSec { get; private set; }
+
+        [Counter("Avg create operation time")]
+        public AverageTimeCounter CreateTimer { get; private set; }
+
+        [Counter("Avg read operation time")]
+        public AverageTimeCounter ReadTimer { get; private set; }
     }
 }

@@ -8,8 +8,8 @@ namespace Qoollo.Impl.DistributorModules.ParallelWork
 {
     internal class InputModuleWithParallel : ParallelWorkModule <InnerData>,IInputModule
     {
-        private MainLogicModule _main;
-        private TransactionModule _transactionModule;
+        private readonly MainLogicModule _main;
+        private readonly TransactionModule _transactionModule;
 
         public InputModuleWithParallel(QueueConfiguration configuration, MainLogicModule main, TransactionModule transactionModule)
             : base(configuration)
@@ -28,7 +28,7 @@ namespace Qoollo.Impl.DistributorModules.ParallelWork
 
         public void ProcessAsync(InnerData ev)
         {
-            ev.Transaction.PerfTimer = PerfCounters.DistributorCounters.Instance.AverageTimer.StartNew();
+            ev.Transaction.PerfTimer = PerfCounters.DistributorCounters.Instance.AverageTimerWithQueue.StartNew();
             PerfCounters.DistributorCounters.Instance.IncomePerSec.OperationFinished();
 
             Add(ev);

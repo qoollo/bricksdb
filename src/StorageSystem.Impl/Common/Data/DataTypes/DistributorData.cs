@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common.Server;
+using Qoollo.PerformanceCounters;
 
 namespace Qoollo.Impl.Common.Data.DataTypes
 {
@@ -31,9 +32,11 @@ namespace Qoollo.Impl.Common.Data.DataTypes
         public int TransactionAnswersCount { get; private set; }
 
         /// <summary>
-        /// Servers for where data store
+        /// Servers where data store
         /// </summary>        
-        public List<ServerId> Destination { get; set; }        
+        public List<ServerId> Destination { get; set; }
+
+        public TimeCounterTimer? ExecuteTimer { get; set; }
 
         public DistributorData()
         {
@@ -42,7 +45,7 @@ namespace Qoollo.Impl.Common.Data.DataTypes
             IsRollbackSended = false;
             TransactionAnswersCount = 0;
         }
-
+        
         private readonly ReaderWriterLockSlim _lock;        
 
         private void Lock()

@@ -38,11 +38,25 @@ namespace Qoollo.Impl.DistributorModules
             return false;
         }
 
+        private void CreateTimers(InnerData data)
+        {
+            switch (data.Transaction.OperationName)
+            {
+                case OperationName.Create:
+                    data.DistributorData.ExecuteTimer = PerfCounters.DistributorCounters.Instance.CreateTimer.StartNew();
+                    break;
+                case OperationName.Read:
+                    data.DistributorData.ExecuteTimer = PerfCounters.DistributorCounters.Instance.ReadTimer.StartNew();
+                    break;
+            }            
+        }
+
         public void ProcessWithData(InnerData data, TransactionExecutor executor)
         {
             Logger.Logger.Instance.Debug(string.Format("Mainlogic: process data = {0}", data.Transaction.DataHash));
 
             data.DistributorData = new DistributorData();
+            CreateTimers(data);
 
             var dest = _distributor.GetDestination(data, GetCountServers(data));
             if (dest == null)
@@ -61,11 +75,7 @@ namespace Qoollo.Impl.DistributorModules
             if (!data.Transaction.IsError)
             {
                 data.Transaction.Distributor = _distributor.LocalForDb;
-
                 _transaction.ProcessWithExecutor(data, executor);
-
-                //if (data.Transaction.IsError)
-                //    WorkWithFailTransaction(data);
             }
             else
             {
@@ -74,10 +84,7 @@ namespace Qoollo.Impl.DistributorModules
 
                 WorkWithFailTransaction(data);
 
-                data.Transaction.PerfTimer.Complete();
-
-                PerfCounters.DistributorCounters.Instance.ProcessPerSec.OperationFinished();
-                PerfCounters.DistributorCounters.Instance.TransactionFailCount.Increment();
+                data.Transaction.PerfTimer.Complete();                
             }
         }
 
@@ -86,7 +93,7 @@ namespace Qoollo.Impl.DistributorModules
             var value = _cache.Get(transaction.CacheKey);
             if (value == null)
             {
-                var ret = new Common.Data.TransactionTypes.Transaction("", "");
+                var ret = new Common.Data.TransactionTypes.Transaction("default", "default");
                 ret.DoesNotExist();
                 return ret.UserTransaction;
 

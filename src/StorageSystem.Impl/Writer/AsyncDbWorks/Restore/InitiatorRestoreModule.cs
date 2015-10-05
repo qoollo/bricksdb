@@ -164,9 +164,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         {
             get
             {
-                List<ServerId> ret;
                 _lock.EnterReadLock();
-                ret = _failServers!=null ? new List<ServerId>(_failServers) : new List<ServerId>();
+                var ret = _failServers!=null ? new List<ServerId>(_failServers) : new List<ServerId>();
                 _lock.ExitReadLock();
                 return ret;
             }

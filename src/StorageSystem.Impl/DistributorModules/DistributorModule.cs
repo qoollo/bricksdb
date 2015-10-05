@@ -220,6 +220,11 @@ namespace Qoollo.Impl.DistributorModules
             _modelOfDbWriters.UpdateFromFile();
         }
 
+        public List<ServerId> GetUnrestoredServers()
+        {
+            return _modelOfDbWriters.GetUnrestoredServers();
+        }
+
         #endregion
 
         #region Distributor communication

@@ -15,11 +15,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 {
     internal class AsyncDbWorkModule:ControlModule
     {
-        private readonly InitiatorRestoreModule _initiatorRestore;
-        private readonly TransferRestoreModule _transfer;
-        private readonly TimeoutModule _timeout;
+        public TimeoutModule TimeoutModule { get { return _timeout; } }
 
-        private readonly RestoreStateHelper _stateHelper;
         public bool IsNeedRestore
         {
             get
@@ -61,6 +58,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _timeout = new TimeoutModule(writerNet, async, queueConfiguration,
                 db,  timeoutConfiguration);
         }
+
+        private readonly InitiatorRestoreModule _initiatorRestore;
+        private readonly TransferRestoreModule _transfer;
+        private readonly TimeoutModule _timeout;
+
+        private readonly RestoreStateHelper _stateHelper;
+
 
         public override void Start()
         {
@@ -114,6 +118,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         public List<ServerId> GetFailedServers()
         {
             return _initiatorRestore.FailedServers;
+        }
+
+        public ServerId GetRestoreServer()
+        {
+            return _initiatorRestore.RestoreServer;
         }
 
         protected override void Dispose(bool isUserCall)

@@ -22,13 +22,12 @@ namespace Qoollo.Impl.Writer.Distributor
 {
     internal class DistributorModule : ControlModule
     {
-        private WriterModel _model;
-        private WriterNetModule _writerNet;
-        private QueueConfiguration _queueConfiguration;
-        private DbModuleCollection _dbModuleCollection;
-        private AsyncTaskModule _async;
-        private AsyncDbWorkModule _asyncDbWork;
-        private GlobalQueueInner _queue;
+        private readonly WriterModel _model;
+        private readonly WriterNetModule _writerNet;
+        private readonly QueueConfiguration _queueConfiguration;
+        private readonly DbModuleCollection _dbModuleCollection;
+        private readonly AsyncDbWorkModule _asyncDbWork;
+        private readonly GlobalQueueInner _queue;
 
         public DistributorModule(AsyncTaskModule async, AsyncDbWorkModule asyncDbWork,
             WriterNetModule writerNet,
@@ -43,9 +42,8 @@ namespace Qoollo.Impl.Writer.Distributor
             Contract.Requires(configuration != null);
             Contract.Requires(asyncDbWork != null);
             Contract.Requires(async != null);
-            Contract.Assert(dbModuleCollection != null);
+            Contract.Requires(dbModuleCollection != null);
 
-            _async = async;
             _asyncDbWork = asyncDbWork;
             _model = new WriterModel(local, hashMapConfiguration);
             _writerNet = writerNet;
@@ -58,7 +56,7 @@ namespace Qoollo.Impl.Writer.Distributor
             if (pingConfiguration != null)
                 ping = pingConfiguration.TimeoutPeriod;
 
-            _async.AddAsyncTask(
+            async.AddAsyncTask(
                 new AsyncDataPeriod(ping, Ping, AsyncTasksNames.AsyncPing, -1), false);
         }
 
@@ -180,6 +178,26 @@ namespace Qoollo.Impl.Writer.Distributor
         public List<ServerId> FailedServers()
         {
             return _asyncDbWork.GetFailedServers();
+        }
+
+        public string GetCurrentRestoreServer()
+        {
+            return _asyncDbWork.GetRestoreServer().ToString();
+        }
+
+        public void DisableDelete()
+        {
+            _asyncDbWork.TimeoutModule.Disable();
+        }
+
+        public void EnableDelete()
+        {
+            _asyncDbWork.TimeoutModule.Enable();
+        }
+
+        public void StartDelete()
+        {
+            _asyncDbWork.TimeoutModule.StartDelete();
         }
 
         #endregion

@@ -172,7 +172,18 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
-        private ReaderWriterLockSlim _lock;
+        public ServerId RestoreServer
+        {
+            get
+            {
+                _lock.EnterWriteLock();
+                var server = _remoteServer;
+                _lock.ExitWriteLock();
+                return server;
+            }
+        }
+
+        private readonly ReaderWriterLockSlim _lock;
 
         private void AddServerToFailed(ServerId server)
         {

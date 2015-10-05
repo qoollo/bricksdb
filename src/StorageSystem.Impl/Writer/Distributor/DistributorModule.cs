@@ -76,6 +76,11 @@ namespace Qoollo.Impl.Writer.Distributor
 
             servers = _writerNet.GetServersByType(typeof(SingleConnectionToWriter));
             _writerNet.PingWriter(servers);
+
+            //remove old connections after model update
+            var map = _model.Servers;
+            servers = servers.Where(x => !map.Contains(x)).ToList();
+            servers.ForEach(x => _writerNet.RemoveConnection(x));
         }
 
         #region public

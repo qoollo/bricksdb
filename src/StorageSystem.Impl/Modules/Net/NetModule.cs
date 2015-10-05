@@ -12,10 +12,10 @@ namespace Qoollo.Impl.Modules.Net
 {
     internal abstract class NetModule : ControlModule
     {
-        private Dictionary<ServerId, ISingleConnection> _servers;
-        protected ReaderWriterLockSlim _lock;
-        private ConnectionConfiguration _configuration;
-        private ConnectionTimeoutConfiguration _connectionTimeout;
+        private readonly Dictionary<ServerId, ISingleConnection> _servers;
+        private readonly ReaderWriterLockSlim _lock;
+        private readonly ConnectionConfiguration _configuration;
+        private readonly ConnectionTimeoutConfiguration _connectionTimeout;
 
         protected NetModule(ConnectionConfiguration connectionConfiguration, ConnectionTimeoutConfiguration connectionTimeout)
         {
@@ -146,7 +146,7 @@ namespace Qoollo.Impl.Modules.Net
             return ret;
         }
 
-        protected void RemoveConnection(ServerId server)
+        public void RemoveConnection(ServerId server)
         {
             _lock.EnterWriteLock();
 

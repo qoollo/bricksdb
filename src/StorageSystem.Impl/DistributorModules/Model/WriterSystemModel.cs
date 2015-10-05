@@ -14,9 +14,9 @@ namespace Qoollo.Impl.DistributorModules.Model
     internal class WriterSystemModel
     {
         private List<WriterDescription> _servers; 
-        private ReaderWriterLockSlim _lock;
-        private DistributorHashConfiguration _configuration;
-        private HashMap _map;
+        private readonly ReaderWriterLockSlim _lock;
+        private readonly DistributorHashConfiguration _configuration;
+        private readonly HashMap _map;
 
         public WriterSystemModel(DistributorHashConfiguration configuration, HashMapConfiguration mapConfiguration)
         {

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Commands;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -131,6 +132,11 @@ namespace Qoollo.Impl.DistributorModules
 
             map = _distributorNet.GetServersByType(typeof (SingleConnectionToDistributor));
             _distributorNet.PingDistributors(map);
+
+            //remove old connections after model update
+            var real = _distributorNet.GetServersByType(typeof (SingleConnectionToWriter));
+            real = real.Where(x => !map.Contains(x)).ToList();
+            real.ForEach(x => _distributorNet.RemoveConnection(x));
         }
 
         private void CheckRestore(AsyncData data)

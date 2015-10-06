@@ -190,6 +190,11 @@ namespace Qoollo.Impl.Writer
             return _asyncDbWork.GetRestoreServer().ToString();
         }
 
+        public string GetRestoreRequiredState()
+        {
+            return _asyncDbWork.StateString;
+        }
+
         public void DisableDelete()
         {
             _asyncDbWork.TimeoutModule.Disable();

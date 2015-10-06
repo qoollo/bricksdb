@@ -138,6 +138,7 @@
     <Compile Include="Common\HashHelp\HashConvertor.cs" />
     <Compile Include="Common\HashHelp\IHashCalculater.cs" />
     <Compile Include="Common\IStorageInner.cs" />
+    <Compile Include="Common\NetResults\Data\SetGetRestoreStateResult.cs" />
     <Compile Include="Common\NetResults\System\Distributor\SetGetRestoreStateCommand.cs" />
     <Compile Include="Common\Support\AggregateResultHelper.cs" />
     <Compile Include="Common\NetResults\Event\HashMapResult.cs" />

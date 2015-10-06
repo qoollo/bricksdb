@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
@@ -16,6 +17,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 {
     internal class AsyncDbWorkModule:ControlModule
     {
+        public string StateString
+        {
+            get { return Enum.GetName(typeof (RestoreState), _stateHelper.State); }
+        }
+
         public TimeoutModule TimeoutModule { get { return _timeout; } }
 
         public bool IsNeedRestore

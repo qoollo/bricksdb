@@ -224,6 +224,7 @@ namespace Qoollo.Impl.DistributorModules
         public void UpdateModel()
         {
             _modelOfDbWriters.UpdateFromFile();
+            _modelOfDbWriters.UpdateModel();
         }
 
         public List<ServerId> GetUnrestoredServers()

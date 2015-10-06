@@ -97,6 +97,11 @@ namespace Qoollo.Impl.DistributorModules.Model
             _servers = _map.Servers;
         }
 
+        public void UpdateModel()
+        {
+            _servers.ForEach(x=>x.UpdateModel());
+        }
+
         public List<WriterDescription> GetDestination(InnerData ev)
         {
             _lock.EnterReadLock();

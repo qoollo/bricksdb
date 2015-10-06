@@ -532,6 +532,8 @@ namespace Qoollo.Tests
             net.Dispose();
             distributor.Dispose();
             transaction.Dispose();
+            main.Dispose();
+            GlobalQueue.Queue.Dispose();
         }
 
         [TestMethod]

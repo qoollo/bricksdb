@@ -70,4 +70,11 @@ namespace Qoollo.Impl.Common.Support
         
         public static string AllTables = "AllTablesyNameThatMustntBeUsedAsTableName";
     }
+
+    public enum RestoreState
+    {
+        Restored = 0,
+        FullRestoreNeed = 1,
+        SimpleRestoreNeed = 2
+    }
 }

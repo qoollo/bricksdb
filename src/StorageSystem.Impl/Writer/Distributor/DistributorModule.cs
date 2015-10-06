@@ -88,11 +88,10 @@ namespace Qoollo.Impl.Writer.Distributor
         public void UpdateModel()
         {
             if (!_asyncDbWork.IsStarted)
-                _model.UpdateModel();
-            else
             {
-                //TODO вернуть что нельзя                
-            }
+                _model.UpdateModel();
+                _asyncDbWork.UpdateModel(_model.Servers);
+            }            
         }
 
         /// <summary>

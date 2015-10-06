@@ -419,6 +419,9 @@ namespace Qoollo.Tests
                 UserTransaction transaction;
                 var read = (int)api.Read(i, out transaction);
 
+              //  var read = api.Read(i, out transaction);
+              //  Thread.Sleep(10000000);
+
                 Assert.AreEqual(i, read);
             }
 

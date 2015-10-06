@@ -26,6 +26,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             }
         }
 
+        protected ReaderWriterLockSlim Lock { get { return _lock; } }
+
         public CommonAsyncWorkModule(WriterNetModule writerNet, AsyncTaskModule asyncTaskModule)
         {
             Contract.Requires(writerNet!=null);            

@@ -398,7 +398,7 @@ namespace Qoollo.Tests
             storage1.Api.Restore(new ServerAddress("localhost", distrServer12), false);
 
             Thread.Sleep(4000);
-            Assert.IsTrue(storage1.Api.IsRestoreCompleted());
+            Assert.IsFalse(storage1.Api.IsRestoreCompleted());
 
             var list = storage1.Api.FailedServers();
             Assert.AreEqual(1, list.Count);
@@ -407,7 +407,7 @@ namespace Qoollo.Tests
             storage2.AddDbModule(new TestInMemoryDbFactory());
             storage2.Start();
 
-            storage1.Api.Restore(new ServerAddress("localhost", distrServer12), list, false);
+            //storage1.Api.Restore(new ServerAddress("localhost", distrServer12), list, false);
 
             Thread.Sleep(1000);
             Assert.IsTrue(storage1.Api.IsRestoreCompleted());

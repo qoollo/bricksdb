@@ -115,6 +115,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             return !_initiatorRestore.IsStart;
         }
 
+        public void UpdateModel(List<ServerId> servers)
+        {
+            _initiatorRestore.UpdateModel(servers);
+        }
+
         public List<ServerId> GetFailedServers()
         {
             return _initiatorRestore.FailedServers;

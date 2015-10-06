@@ -138,6 +138,7 @@
     <Compile Include="Common\HashHelp\HashConvertor.cs" />
     <Compile Include="Common\HashHelp\IHashCalculater.cs" />
     <Compile Include="Common\IStorageInner.cs" />
+    <Compile Include="Common\NetResults\System\Distributor\SetGetRestoreStateCommand.cs" />
     <Compile Include="Common\Support\AggregateResultHelper.cs" />
     <Compile Include="Common\NetResults\Event\HashMapResult.cs" />
     <Compile Include="Common\NetResults\System\Collector\GetHashMapCommand.cs" />
@@ -250,7 +251,7 @@
     <Compile Include="Writer\WriterNet\Interfaces\INetModule.cs" />
     <Compile Include="Writer\WriterNet\NetWriterReceiver.cs" />
     <Compile Include="Writer\InputModule.cs" />
-    <Compile Include="Writer\Distributor\DistributorModule.cs" />
+    <Compile Include="Writer\DistributorModule.cs" />
     <Compile Include="DistributorModules\Caches\DistributorCache.cs" />
     <Compile Include="NetInterfaces\Distributor\ICommonNetReceiverForProxy.cs" />
     <Compile Include="DistributorModules\DistributorNet\Interfaces\INetModule.cs" />

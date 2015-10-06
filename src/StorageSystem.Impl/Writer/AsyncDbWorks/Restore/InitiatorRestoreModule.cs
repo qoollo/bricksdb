@@ -42,7 +42,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             AsyncTaskModule asyncTaskModule) : base(writerNet, asyncTaskModule)
         {
             Contract.Requires(configuration != null);
-            _configuration = configuration;            
+            _configuration = configuration;      
+            _failServers = new List<ServerId>();
         }
 
         private List<HashMapRecord> _local;

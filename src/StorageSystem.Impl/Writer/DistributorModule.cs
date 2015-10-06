@@ -18,7 +18,7 @@ using Qoollo.Impl.Writer.Db;
 using Qoollo.Impl.Writer.Model;
 using Qoollo.Impl.Writer.WriterNet;
 
-namespace Qoollo.Impl.Writer.Distributor
+namespace Qoollo.Impl.Writer
 {
     internal class DistributorModule : ControlModule
     {

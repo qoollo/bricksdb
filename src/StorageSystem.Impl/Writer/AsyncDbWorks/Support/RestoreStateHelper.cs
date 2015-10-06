@@ -15,6 +15,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public void DistributorSendState(RestoreState state)
         {
+            if (state == RestoreState.Restored)
+                return;
+
             switch (_state)
             {
                case RestoreState.Restored:

@@ -33,17 +33,12 @@ namespace Qoollo.Impl.Common.Server
             IsAvailable = true;
         }
 
-        public void Restored()
-        {
-            UpdateState(RestoreState.Restored);
-        }
-
         public void UpdateModel()
         {
             UpdateState(RestoreState.FullRestoreNeed);
         }
 
-        private void UpdateState(RestoreState state)
+        public void UpdateState(RestoreState state)
         {
             switch (RestoreState)
             {

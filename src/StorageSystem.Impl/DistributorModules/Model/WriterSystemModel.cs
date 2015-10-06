@@ -13,10 +13,7 @@ namespace Qoollo.Impl.DistributorModules.Model
 {
     internal class WriterSystemModel
     {
-        private List<WriterDescription> _servers; 
-        private readonly ReaderWriterLockSlim _lock;
-        private readonly DistributorHashConfiguration _configuration;
-        private readonly HashMap _map;
+        public List<WriterDescription> Servers { get { return _servers; } } 
 
         public WriterSystemModel(DistributorHashConfiguration configuration, HashMapConfiguration mapConfiguration)
         {
@@ -26,7 +23,12 @@ namespace Qoollo.Impl.DistributorModules.Model
             _lock = new ReaderWriterLockSlim();
             _servers = new List<WriterDescription>();
             _map = new HashMap(mapConfiguration);
-        }        
+        }
+
+        private List<WriterDescription> _servers;
+        private readonly ReaderWriterLockSlim _lock;
+        private readonly DistributorHashConfiguration _configuration;
+        private readonly HashMap _map;
 
         public void ServerNotAvailable(ServerId serverId)
         {
@@ -63,25 +65,6 @@ namespace Qoollo.Impl.DistributorModules.Model
                 server.Available();
             }
             _map.CreateAvailableMap();
-            _lock.ExitWriteLock();
-        }
-
-        public void ServerIsRestored(ServerId serverId)
-        {
-            _lock.EnterWriteLock();
-
-            var server = _servers.FirstOrDefault(x => x.Equals(serverId));
-
-            if (server == null)
-            {
-                Logger.Logger.Instance.ErrorFormat(
-                    "Server {0} is missing in model of this file, but command received that it is unavailable", serverId);
-            }
-            else
-            {
-                server.Restored();
-            }
-
             _lock.ExitWriteLock();
         }
 

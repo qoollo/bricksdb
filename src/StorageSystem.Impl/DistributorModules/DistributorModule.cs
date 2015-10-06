@@ -24,17 +24,6 @@ namespace Qoollo.Impl.DistributorModules
 {
     internal class DistributorModule : ControlModule
     {
-        private readonly WriterSystemModel _modelOfDbWriters;
-        private readonly DistributorSystemModel _modelOfAnotherDistributors;
-        private readonly QueueConfiguration _queueConfiguration;
-        private readonly DistributorNetModule _distributorNet;
-        private readonly ServerId _localfordb;
-        private readonly ServerId _localforproxy;
-        private readonly GlobalQueueInner _queue;
-        private readonly AsyncTaskModule _asyncTaskModule;
-        private readonly AsyncTasksConfiguration _asyncPing;
-        private readonly AsyncTasksConfiguration _asyncCheck;
-
         public ServerId LocalForDb
         {
             get { return _localfordb; }
@@ -68,6 +57,17 @@ namespace Qoollo.Impl.DistributorModules
             _asyncCheck = asyncCheck;
             _queue = GlobalQueue.Queue;
         }
+
+        private readonly WriterSystemModel _modelOfDbWriters;
+        private readonly DistributorSystemModel _modelOfAnotherDistributors;
+        private readonly QueueConfiguration _queueConfiguration;
+        private readonly DistributorNetModule _distributorNet;
+        private readonly ServerId _localfordb;
+        private readonly ServerId _localforproxy;
+        private readonly GlobalQueueInner _queue;
+        private readonly AsyncTaskModule _asyncTaskModule;
+        private readonly AsyncTasksConfiguration _asyncPing;
+        private readonly AsyncTasksConfiguration _asyncCheck;
 
         public override void Start()
         {
@@ -141,14 +141,15 @@ namespace Qoollo.Impl.DistributorModules
 
         private void CheckRestore(AsyncData data)
         {
-            var map = _modelOfDbWriters.GetAllServers2();
+            var map = _modelOfDbWriters.Servers;
             map.ForEach(x =>
             {
-                var result = _distributorNet.SendToWriter(x, new IsRestoredCommand());
+                var result = _distributorNet.SendToWriter(x, new SetGetRestoreStateCommand(x.RestoreState));
 
-                if (result is IsRestoredResult && ((IsRestoredResult) result).IsRestored)
+                if (result is SetGetRestoreStateResult)
                 {
-                    _modelOfDbWriters.ServerIsRestored(x);
+                    var state = ((SetGetRestoreStateResult)result).State;
+                    x.UpdateState(state);
                 }
             });
         }

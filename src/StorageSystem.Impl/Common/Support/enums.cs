@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 namespace Qoollo.Impl.Common.Support
 {
@@ -71,10 +72,14 @@ namespace Qoollo.Impl.Common.Support
         public static string AllTables = "AllTablesyNameThatMustntBeUsedAsTableName";
     }
 
+    [DataContract]
     public enum RestoreState
     {
+        [EnumMemberAttribute]
         Restored = 0,
+        [EnumMemberAttribute]
         FullRestoreNeed = 1,
+        [EnumMemberAttribute]
         SimpleRestoreNeed = 2
     }
 }

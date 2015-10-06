@@ -6,15 +6,15 @@ using System.Text;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common.Support;
 
-namespace Qoollo.Impl.Common.NetResults.System.Distributor
+namespace Qoollo.Impl.Common.NetResults.Data
 {
     [DataContract]
-    internal class SetGetRestoreStateCommand:NetCommand
+    internal class SetGetRestoreStateResult:SuccessResult
     {
-        [DataMember]
+         [DataMember]
         public RestoreState State { get; private set; }
 
-        public SetGetRestoreStateCommand(RestoreState state)
+         public SetGetRestoreStateResult(RestoreState state)
         {
             State = state;
         }

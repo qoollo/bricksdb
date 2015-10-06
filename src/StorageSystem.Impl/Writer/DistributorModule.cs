@@ -5,6 +5,7 @@ using System.Linq;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
+using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
@@ -212,6 +213,9 @@ namespace Qoollo.Impl.Writer
         {
             if (command is IsRestoredCommand)
                 return new IsRestoredResult(_asyncDbWork.IsNeedRestore);
+            if (command is SetGetRestoreStateCommand)
+                return new SetGetRestoreStateResult(
+                    _asyncDbWork.DistributorReceive(((SetGetRestoreStateCommand) command).State));
 
             _queue.DbDistributorInnerQueue.Add(command);
             return new SuccessResult();

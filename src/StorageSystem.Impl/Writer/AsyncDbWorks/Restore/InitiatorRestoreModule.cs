@@ -10,6 +10,7 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.Writer.AsyncDbWorks.Support;
 using Qoollo.Impl.Writer.WriterNet;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
@@ -36,13 +37,15 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 Lock.ExitReadLock();
                 return ret;
             }
-        }                
+        }
 
         public InitiatorRestoreModule(RestoreModuleConfiguration configuration, WriterNetModule writerNet,
-            AsyncTaskModule asyncTaskModule) : base(writerNet, asyncTaskModule)
+            AsyncTaskModule asyncTaskModule, RestoreStateHelper stateHelper) : base(writerNet, asyncTaskModule)
         {
             Contract.Requires(configuration != null);
-            _configuration = configuration;      
+            Contract.Requires(stateHelper != null);
+            _configuration = configuration;
+            _stateHelper = stateHelper;
             _failServers = new List<ServerId>();
         }
 
@@ -50,6 +53,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private Dictionary<ServerId, bool> _servers;
         private ServerId _remoteServer;
         private readonly RestoreModuleConfiguration _configuration;
+        private readonly RestoreStateHelper _stateHelper;
         private bool _isModelUpdated;
         private string _tableName;
         private List<ServerId> _failServers;
@@ -149,6 +153,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         {
             AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreRemote);
             IsStart = false;
+            _stateHelper.FinishRestore(_isModelUpdated);
             Logger.Logger.Instance.Info("Restore completed");
         }
 

@@ -13,18 +13,18 @@ namespace Qoollo.Impl.Components
 {
     internal class WriterSystem: ModuleSystemBase
     {
-        private QueueConfiguration _queueConfiguration;
-        private QueueConfiguration _queueConfigurationRestore;
-        private NetReceiverConfiguration _receiverConfigurationForWrite;
-        private NetReceiverConfiguration _receiverConfigurationForCollector;
-        private HashMapConfiguration _hashMapConfiguration;
-        private ConnectionConfiguration _connectionConfiguration;
-        private ServerId _local;
-        private RestoreModuleConfiguration _transferRestoreConfiguration;
-        private RestoreModuleConfiguration _initiatorRestoreConfiguration;
-        private RestoreModuleConfiguration _timeoutRestoreConfiguration;
-        private  bool _isNeedRestore;        
-        private ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
+        private readonly QueueConfiguration _queueConfiguration;
+        private readonly QueueConfiguration _queueConfigurationRestore;
+        private readonly NetReceiverConfiguration _receiverConfigurationForWrite;
+        private readonly NetReceiverConfiguration _receiverConfigurationForCollector;
+        private readonly HashMapConfiguration _hashMapConfiguration;
+        private readonly ConnectionConfiguration _connectionConfiguration;
+        private readonly ServerId _local;
+        private readonly RestoreModuleConfiguration _transferRestoreConfiguration;
+        private readonly RestoreModuleConfiguration _initiatorRestoreConfiguration;
+        private readonly RestoreModuleConfiguration _timeoutRestoreConfiguration;
+        private readonly bool _isNeedRestore;        
+        private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
 
         public WriterSystem(ServerId local, QueueConfiguration queueConfiguration,
             NetReceiverConfiguration receiverConfigurationForWrite,

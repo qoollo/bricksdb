@@ -13,19 +13,19 @@ namespace Qoollo.Impl.Components
 {
     internal class DistributorSystem : ModuleSystemBase
     {
-        private DistributorHashConfiguration _distributorHashConfiguration;
-        private QueueConfiguration _queueConfiguration;
-        private ConnectionConfiguration _connectionConfiguration;
-        private DistributorCacheConfiguration _cacheConfiguration;
-        private NetReceiverConfiguration _receiverConfigurationForDb;
-        private NetReceiverConfiguration _receiverConfigurationForProxy;
-        private TransactionConfiguration _transactionConfiguration;
-        private HashMapConfiguration _hashMapConfiguration;
-        private AsyncTasksConfiguration _pingConfig;
-        private AsyncTasksConfiguration _checkConfig;
-        private ServerId _localfordb;
-        private ServerId _localforproxy;
-        private ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
+        private readonly DistributorHashConfiguration _distributorHashConfiguration;
+        private readonly QueueConfiguration _queueConfiguration;
+        private readonly ConnectionConfiguration _connectionConfiguration;
+        private readonly DistributorCacheConfiguration _cacheConfiguration;
+        private readonly NetReceiverConfiguration _receiverConfigurationForDb;
+        private readonly NetReceiverConfiguration _receiverConfigurationForProxy;
+        private readonly TransactionConfiguration _transactionConfiguration;
+        private readonly HashMapConfiguration _hashMapConfiguration;
+        private readonly AsyncTasksConfiguration _pingConfig;
+        private readonly AsyncTasksConfiguration _checkConfig;
+        private readonly ServerId _localfordb;
+        private readonly ServerId _localforproxy;
+        private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
 
         public DistributorSystem(ServerId localfordb, ServerId localforproxy,
             DistributorHashConfiguration distributorHashConfiguration,

@@ -13,7 +13,7 @@ namespace Qoollo.Client.Support
         public static TimeSpan DataAliveAfterUpdate = TimeSpan.FromMinutes(1);        
         public static TimeSpan CheckPeriod = TimeSpan.FromMinutes(1);
         public static TimeSpan PingPeriod = TimeSpan.FromSeconds(30);
-        public static string FileWithHashName = "ServersHashFile";
+        public static string FileWithHashName = "ServersHashFile.txt";
 
         public static int CountConnectionsToSingleServer = 10;
         public static string WcfServiceName = "StorageWcfName";

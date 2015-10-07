@@ -1,18 +1,23 @@
 ﻿using System;
+using System.Runtime.Serialization;
 using System.Xml.Serialization;
 using Qoollo.Impl.Common.HashFile;
 
 namespace Qoollo.Impl.Common.Server
 {
     [Serializable]
+    [DataContract]
     public class SavedServerId
     {
+        [DataMember]
         [XmlAttribute("Localhost")]
         public string Host { get; set; }
 
+        [DataMember]
         [XmlAttribute("PortForDistributor")]
         public int PortForDistributor { get; set; }
 
+        [DataMember]
         [XmlAttribute("PortForCollector")]
         public int PortForCollector { get; set; }
 

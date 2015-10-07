@@ -15,8 +15,8 @@ namespace Qoollo.Impl.Common.HashFile
     {
         public List<HashMapRecord> Map { get; protected set; }
         public List<WriterDescription> Servers { get; private set; }
-        public List<HashMapRecord> AvailableMap { get; private set; } 
-        private readonly HashMapConfiguration _configuration;
+        public List<HashMapRecord> AvailableMap { get; private set; }
+        public string FileName { get { return _configuration.Filename; } }
 
         public HashMap(HashMapConfiguration configuration)
         {
@@ -26,6 +26,8 @@ namespace Qoollo.Impl.Common.HashFile
             AvailableMap = new List<HashMapRecord>();
             Servers = new List<WriterDescription>();
         }
+        
+        private readonly HashMapConfiguration _configuration;
 
         #region Start work
 
@@ -39,8 +41,7 @@ namespace Qoollo.Impl.Common.HashFile
             {
                 case HashMapCreationMode.CreateNew:
                     CreateNewMap();
-                    CreateNewFile();
-                    PrepareServerList();
+                    CreateNewMapWithFile(Map);
                     break;
                 case HashMapCreationMode.ReadFromFile:
                     ReadFromFile();
@@ -48,6 +49,13 @@ namespace Qoollo.Impl.Common.HashFile
                     CreateAvailableMap();
                     break;
             }
+        }
+
+        public void CreateNewMapWithFile(List<HashMapRecord> servers)
+        {
+            Map = servers;
+            CreateNewFile();
+            PrepareServerList();
         }
 
         public void CreateMapFromDistributor(List<Tuple<ServerId, string, string>> servers)
@@ -65,7 +73,7 @@ namespace Qoollo.Impl.Common.HashFile
 
             PrepareServerList();
             CreateAvailableMap();
-        }
+        }       
 
         private void CreateNewMap()
         {
@@ -98,7 +106,6 @@ namespace Qoollo.Impl.Common.HashFile
             try
             {
                 var formatter = new XmlSerializer(Map.GetType());
-                //IFormatter formatter = new BinaryFormatter();
                 var stream = new FileStream(_configuration.Filename, FileMode.Create);
                 formatter.Serialize(stream, Map);
                 stream.Close();

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
 using Qoollo.Impl.Common.Support;
 
@@ -16,8 +18,8 @@ namespace Qoollo.Impl.Common.Server
         {
             get
             {
-                return string.Format("{0}. Restore state: {1}", ToString(),
-                    Enum.GetName(typeof(RestoreState), RestoreState));
+                return string.Format("{0}. Restore state: {1}. Available: {2}. {3}", ToString(),
+                    Enum.GetName(typeof(RestoreState), RestoreState), IsAvailable, GetInnerState());
             }
         }
 
@@ -30,6 +32,24 @@ namespace Qoollo.Impl.Common.Server
 
         public WriterDescription(ServerId server) : this(server.RemoteHost, server.Port)
         {
+            _stateInfo = new ConcurrentDictionary<string, string>();
+        }
+
+        private readonly ConcurrentDictionary<string, string> _stateInfo;
+
+        private string GetInnerState()
+        {
+            var keys = _stateInfo.Keys;
+            string result = string.Empty;
+            
+            foreach (var key in keys)
+            {
+                string value;
+                if (_stateInfo.TryGetValue(key, out value))
+                    result += ". " + value;
+            }
+
+            return result;
         }
 
         public void NotAvailable()
@@ -61,6 +81,11 @@ namespace Qoollo.Impl.Common.Server
                         RestoreState = state;
                     break;
             }
-        }        
+        }
+
+        public void SetInfoMessage(string tag, string message)
+        {
+            _stateInfo.AddOrUpdate(tag, message, (s, s1) => s1);
+        }
     }
 }

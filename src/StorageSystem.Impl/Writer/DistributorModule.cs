@@ -222,6 +222,24 @@ namespace Qoollo.Impl.Writer
                 return new SetGetRestoreStateResult(
                     _asyncDbWork.DistributorReceive(((SetGetRestoreStateCommand) command).State));
 
+            if (command is HashFileUpdateCommand )
+            {
+                if (_asyncDbWork.IsStarted)
+                    return new InnerFailResult("Restore process is started");
+
+                var result = _model.UpdateHashViaNet((command as HashFileUpdateCommand).Map);
+                RemoteResult ret;
+
+                if (result == string.Empty)
+                {
+                    ret = new SuccessResult();
+                    _asyncDbWork.UpdateModel(_model.Servers);
+                }
+                else
+                    ret = new InnerFailResult(result);
+
+                return ret;
+            }
             _queue.DbDistributorInnerQueue.Add(command);
             return new SuccessResult();
         }

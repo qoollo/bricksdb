@@ -135,10 +135,12 @@
     <Compile Include="Common\Data\TransactionTypes\UserTransaction.cs" />
     <Compile Include="Common\Exceptions\InitializationException.cs" />
     <Compile Include="Common\HashFile\HashFileType.cs" />
+    <Compile Include="Common\HashFile\HashFileUpdater.cs" />
     <Compile Include="Common\HashHelp\HashConvertor.cs" />
     <Compile Include="Common\HashHelp\IHashCalculater.cs" />
     <Compile Include="Common\IStorageInner.cs" />
     <Compile Include="Common\NetResults\Data\SetGetRestoreStateResult.cs" />
+    <Compile Include="Common\NetResults\System\Distributor\HashFileUpdateCommand.cs" />
     <Compile Include="Common\NetResults\System\Distributor\SetGetRestoreStateCommand.cs" />
     <Compile Include="Common\Support\AggregateResultHelper.cs" />
     <Compile Include="Common\NetResults\Event\HashMapResult.cs" />

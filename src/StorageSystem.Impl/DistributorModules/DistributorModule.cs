@@ -98,7 +98,7 @@ namespace Qoollo.Impl.DistributorModules
 
         private HashMapResult GetHashMap()
         {
-            return new HashMapResult(_modelOfDbWriters.GetAllServers());
+            return new HashMapResult(_modelOfDbWriters.GetAllServersForCollector());
         }
 
         private void RestoreServerCommand(RestoreCommand command)
@@ -160,6 +160,92 @@ namespace Qoollo.Impl.DistributorModules
             AddDistributors(servers);
         }
 
+        private List<WriterDescription> UpdateWritersAsync(List<WriterDescription> servers, HashFileUpdateCommand command)
+        {
+            var ret = new List<WriterDescription>();
+            servers.ForEach(x =>
+            {
+                var result = _distributorNet.SendToWriter(x,command);
+                if (result is InnerFailResult)
+                {
+                    var message = ((InnerFailResult)result).Description;
+                    x.SetInfoMessage(ServerState.Update, message);
+                    Logger.Logger.Instance.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
+
+                }
+
+                if (!result.IsError)
+                {
+                    ret.Add(x);
+                    x.SetInfoMessage(ServerState.Update, string.Empty);
+                }
+            });
+            return ret;
+        }
+
+        private List<ServerId> UpdateDistributorsAsync(List<ServerId> servers, HashFileUpdateCommand command)
+        {
+            var ret = new List<ServerId>();
+            servers.ForEach(x =>
+            {
+                var result = _distributorNet.SendToDistributor(x, command);
+                if (!result.IsError)
+                    ret.Add(x);
+            });
+            return ret;
+        }
+
+        private void UpdateWritersAndDistributors()
+        {
+            var writers = _modelOfDbWriters.Servers;
+            var map = _modelOfDbWriters.GetHashMap();
+            var command = new HashFileUpdateCommand(map);
+
+            var failedWriters = new List<WriterDescription>();
+            writers.ForEach(x =>
+            {
+                var result = _distributorNet.SendToWriter(x, command);
+                if (result.IsError)
+                {
+                    failedWriters.Add(x);
+                    if (result is InnerFailResult)
+                    {
+                        var message = ((InnerFailResult)result).Description;
+                        x.SetInfoMessage(ServerState.Update, message);
+                        Logger.Logger.Instance.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
+
+                    }
+                }
+                else
+                    x.SetInfoMessage(ServerState.Update, string.Empty);
+            });
+
+            if (failedWriters.Count != 0)
+                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(_asyncCheck.TimeoutPeriod,
+                    data =>
+                    {
+                        var list = UpdateWritersAsync(failedWriters, command);
+                        failedWriters.RemoveAll(x => list.Contains(x));
+                    }, AsyncTasksNames.UpdateHashFileForWriter, -1), false);
+
+            var distributors = _modelOfAnotherDistributors.GetDistributorList();
+            var failedDistributors = new List<ServerId>();
+            distributors.ForEach(x =>
+            {
+                var result = _distributorNet.SendToDistributor(x, command);
+                if (result.IsError)
+                    failedDistributors.Add(x);
+            });
+
+            if (failedWriters.Count != 0)
+                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(_asyncCheck.TimeoutPeriod,
+                    data =>
+                    {
+                        var list = UpdateDistributorsAsync(failedDistributors, command);
+                        failedDistributors.RemoveAll(x => list.Contains(x));
+                    }, AsyncTasksNames.UpdateHashFileForDistributor, -1), false);
+        }
+
         #endregion
 
         #region To main logic
@@ -202,30 +288,43 @@ namespace Qoollo.Impl.DistributorModules
             return new SuccessResult();
         }
 
-        private void Process(NetCommand message)
+        private void Process(NetCommand command)
         {
-            if (message is ServerNotAvailableCommand)
-                ServerNotAvailableInner((message as ServerNotAvailableCommand).Server);
+            if (command is ServerNotAvailableCommand)
+                ServerNotAvailableInner((command as ServerNotAvailableCommand).Server);
 
-            else if (message is AddDistributorFromDistributorCommand)
-                AddDistributor(message as AddDistributorFromDistributorCommand);
+            else if (command is AddDistributorFromDistributorCommand)
+                AddDistributor(command as AddDistributorFromDistributorCommand);
 
-            else if (message is RestoreCommand)
-                RestoreServerCommand(message as RestoreCommand);
+            else if (command is RestoreCommand)
+                RestoreServerCommand(command as RestoreCommand);
+
+            else if (command is HashFileUpdateCommand)
+                _modelOfDbWriters.UpdateHashViaNet((command as HashFileUpdateCommand).Map);
+
             else
-                Logger.Logger.Instance.ErrorFormat("Not supported command type = {0}", message.GetType());
+                Logger.Logger.Instance.InfoFormat("Not supported command type = {0}", command.GetType());
         }
 
         public RemoteResult ProcessTransaction(Common.Data.TransactionTypes.Transaction transaction)
         {
             _queue.TransactionQueue.Add(transaction);
             return new SuccessResult();
-        }
+        }       
+
+        #endregion
+
+        #region Command from User
 
         public void UpdateModel()
         {
             _modelOfDbWriters.UpdateFromFile();
             _modelOfDbWriters.UpdateModel();
+
+            _asyncTaskModule.DeleteTask(AsyncTasksNames.UpdateHashFileForDistributor);
+            _asyncTaskModule.DeleteTask(AsyncTasksNames.UpdateHashFileForWriter);
+
+            UpdateWritersAndDistributors();
         }
 
         public string GetServersState()

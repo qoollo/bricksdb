@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using Qoollo.Impl.Common.Exceptions;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Modules;
 
 namespace Qoollo.Impl.Writer.Model
 {
-    internal class WriterModel:IDisposable
+    internal class WriterModel:ControlModule
     {
         private readonly HashMap _map;
         private List<HashMapRecord> _localMap; 
@@ -28,7 +30,7 @@ namespace Qoollo.Impl.Writer.Model
             _map = new HashMap(hashMapConfiguration);
         }
 
-        public void Start()
+        public override void Start()
         {
             _map.CreateMap();
             _localMap = _map.GetLocalMap(_local);
@@ -46,19 +48,45 @@ namespace Qoollo.Impl.Writer.Model
             _map.UpdateFileModel(); 
             _localMap = _map.GetLocalMap(_local);
             if (_localMap.Count == 0)
-                throw new Exception("There is no server in hash file with our address");
+                throw new InitializationException("There is no server in hash file with our address");
         }
 
-        private void Dispose(bool isUserCall)
+        public string UpdateHashViaNet(List<HashMapRecord> map)
+        {
+            var currentMap = _map.Map;
+            bool equal = true;
+            currentMap.ForEach(x =>
+            {
+                if (!map.Contains(x))
+                    equal = false;
+            });
+
+            map.ForEach(x =>
+            {
+                if (!currentMap.Contains(x))
+                    equal = false;
+            });
+
+            if (equal)
+                return string.Empty;
+
+            HashFileUpdater.UpdateFile(_map.FileName);
+            _map.CreateNewMapWithFile(map);
+            try
+            {
+                UpdateModel();
+            }
+            catch (InitializationException e)
+            {
+                return e.Message;
+            }
+            return string.Empty;
+        }
+
+        protected override void Dispose(bool isUserCall)
         {
             if(isUserCall)
                 _map.Dispose();
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+        }        
     }
 }

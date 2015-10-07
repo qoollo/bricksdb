@@ -19,6 +19,14 @@ namespace Qoollo.Impl.Common.Support
         public static string CheckDistributors = "checkDistributors";
         public static string TimeoutDelete = "timeoutDelete";
         public static string GetHashFromDistributor = "getHashFromDistributor";
+        public static string UpdateHashFileForWriter = "updateHashFileForWriter";
+        public static string UpdateHashFileForDistributor = "updateHashFileForDistributor";
+    }
+
+    internal static class ServerState
+    {
+        public static string Update = "update";
+        public static string Restore = "restore";       
     }
 
     internal static class ModuleNames

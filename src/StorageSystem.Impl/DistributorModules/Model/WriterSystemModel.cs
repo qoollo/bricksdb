@@ -85,6 +85,30 @@ namespace Qoollo.Impl.DistributorModules.Model
             _servers.ForEach(x=>x.UpdateModel());
         }
 
+        public void UpdateHashViaNet(List<HashMapRecord> map)
+        {
+            var currentMap = GetAllServersForCollector();
+            bool equal = true;
+            currentMap.ForEach(x =>
+            {
+                if (!map.Contains(x))
+                    equal = false;
+            });
+
+            map.ForEach(x =>
+            {
+                if (!currentMap.Contains(x))
+                    equal = false;
+            });
+
+            if (equal)
+                return;
+
+            HashFileUpdater.UpdateFile(_map.FileName);
+            _map.CreateNewMapWithFile(map);
+            _map.CreateAvailableMap();
+        }
+
         public List<WriterDescription> GetDestination(InnerData ev)
         {
             _lock.EnterReadLock();
@@ -128,13 +152,22 @@ namespace Qoollo.Impl.DistributorModules.Model
             return ret;
         }
 
-        public List<HashMapRecord> GetAllServers()
+        public List<HashMapRecord> GetAllServersForCollector()
         {
             _lock.EnterReadLock();
             var ret = _map.Map.Select(x => x.Clone()).ToList();
             _lock.ExitReadLock();
 
             ret.ForEach(x => x.Prepare(HashFileType.Collector));
+
+            return ret;
+        }
+
+        public List<HashMapRecord> GetHashMap()
+        {
+            _lock.EnterReadLock();
+            var ret = _map.Map.Select(x => x.Clone()).ToList();
+            _lock.ExitReadLock();            
 
             return ret;
         }
@@ -155,7 +188,7 @@ namespace Qoollo.Impl.DistributorModules.Model
             _lock.ExitReadLock();
             return ret;
         }        
-
+        
         public bool IsSomethingHappendInSystem()
         {
             bool ret = false;

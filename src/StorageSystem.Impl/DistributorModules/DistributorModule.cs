@@ -234,6 +234,11 @@ namespace Qoollo.Impl.DistributorModules
                 (current, writerDescription) => current + "\n" + writerDescription.RestoreState);
         }
 
+        public List<ServerId> GetDistributors()
+        {
+            return _modelOfAnotherDistributors.GetDistributorList();
+        }
+
         #endregion
 
         #region Distributor communication
@@ -293,15 +298,6 @@ namespace Qoollo.Impl.DistributorModules
         {
             var data = new DistributorDataContainer(_modelOfAnotherDistributors.GetDistributorList());
             return new SystemInfoResult(data);
-        }
-
-        #endregion
-
-        #region Test
-
-        public List<ServerId> GetDistributors()
-        {
-            return _modelOfAnotherDistributors.GetDistributorList();
         }
 
         #endregion

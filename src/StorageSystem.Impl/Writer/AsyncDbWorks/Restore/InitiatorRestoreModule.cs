@@ -58,15 +58,25 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private string _tableName;
         private List<ServerId> _failServers;
 
-        public bool Restore(List<HashMapRecord> local, List<ServerId> servers, bool isModelUpdated, string tableName)
+        public void Restore(List<HashMapRecord> local, List<ServerId> servers, bool isModelUpdated, string tableName)
         {
-            if (!(servers.Count > 0 && local.Count > 0) || IsStart)
-                return false;
+            Lock.EnterWriteLock();
 
-            _isModelUpdated = isModelUpdated;
-            _tableName = tableName;
-            IsStart = true;
-            _local = local;
+            try
+            {
+                if (IsStartNoLock || !(servers.Count > 0 && local.Count > 0))
+                    return;
+
+                _isModelUpdated = isModelUpdated;
+                _tableName = tableName;
+                IsStartNoLock = true;
+                _local = local;
+            }
+            finally
+            {
+                Lock.ExitWriteLock();
+            }
+
 
             _failServers = new List<ServerId>();
             _servers = servers.Select(x => new { Key = x, Value = false }).ToDictionary(x => x.Key, x => x.Value);
@@ -78,13 +88,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             AsyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
 
             CurrentProcess();
-
-            return true;
         }
 
-        public bool Restore(List<HashMapRecord> local, List<ServerId> servers, bool isModelUpdated)
+        public void Restore(List<HashMapRecord> local, List<ServerId> servers, bool isModelUpdated)
         {
-            return Restore(local, servers, isModelUpdated, Consts.AllTables);
+             Restore(local, servers, isModelUpdated, Consts.AllTables);
         }
 
         public void UpdateModel(List<ServerId> servers)

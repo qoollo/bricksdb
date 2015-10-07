@@ -67,7 +67,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         private readonly RestoreStateHelper _stateHelper;
 
-
         public override void Start()
         {
             _initiatorRestore.Start();

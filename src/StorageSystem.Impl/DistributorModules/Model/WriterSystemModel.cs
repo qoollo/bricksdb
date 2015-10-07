@@ -166,14 +166,5 @@ namespace Qoollo.Impl.DistributorModules.Model
             _lock.ExitReadLock();
             return ret;
         }
-
-        public List<ServerId> GetUnrestoredServers()
-        {
-            _lock.EnterReadLock();
-            var ret = _servers.Where(x => !x.IsServerRestored).Select(x => (ServerId) x).ToList();
-            _lock.ExitReadLock();
-
-            return ret;
-        }
     }
 }

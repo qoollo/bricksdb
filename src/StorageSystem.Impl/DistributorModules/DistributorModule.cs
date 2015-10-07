@@ -228,9 +228,10 @@ namespace Qoollo.Impl.DistributorModules
             _modelOfDbWriters.UpdateModel();
         }
 
-        public List<ServerId> GetUnrestoredServers()
+        public string GetServersState()
         {
-            return _modelOfDbWriters.GetUnrestoredServers();
+            return _modelOfDbWriters.Servers.Aggregate(string.Empty,
+                (current, writerDescription) => current + "\n" + writerDescription.RestoreState);
         }
 
         #endregion

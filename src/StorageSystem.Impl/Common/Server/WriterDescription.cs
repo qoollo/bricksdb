@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Common.Server
@@ -10,7 +11,16 @@ namespace Qoollo.Impl.Common.Server
         public bool IsServerRestored { get { return RestoreState == RestoreState.Restored; } }
 
         public RestoreState RestoreState { get; private set; }
-        
+
+        public string StateString
+        {
+            get
+            {
+                return string.Format("{0}. Restore state: {1}", ToString(),
+                    Enum.GetName(typeof(RestoreState), RestoreState));
+            }
+        }
+
         public WriterDescription(string host,  int port)
             : base(host,  port)
         {
@@ -51,6 +61,6 @@ namespace Qoollo.Impl.Common.Server
                         RestoreState = state;
                     break;
             }
-        }
+        }        
     }
 }

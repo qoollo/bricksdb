@@ -70,7 +70,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 _isModelUpdated = isModelUpdated;
                 _tableName = tableName;
                 IsStartNoLock = true;
-                _local = local;
+                _local = local;                
             }
             finally
             {

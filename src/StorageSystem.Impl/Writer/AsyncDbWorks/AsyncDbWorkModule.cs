@@ -77,6 +77,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         public void UpdateModel(List<ServerId> servers)
         {
             _initiatorRestore.UpdateModel(servers);
+            _stateHelper.LocalSendState(true);
         }
 
         #region Restore process

@@ -221,12 +221,15 @@ namespace Qoollo.Impl.DistributorModules
             });
 
             if (failedWriters.Count != 0)
+            {
                 _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(_asyncCheck.TimeoutPeriod,
                     data =>
                     {
                         var list = UpdateWritersAsync(failedWriters, command);
                         failedWriters.RemoveAll(x => list.Contains(x));
                     }, AsyncTasksNames.UpdateHashFileForWriter, -1), false);
+                _asyncTaskModule.StartTask(AsyncTasksNames.UpdateHashFileForWriter);
+            }
 
             var distributors = _modelOfAnotherDistributors.GetDistributorList();
             var failedDistributors = new List<ServerId>();
@@ -237,13 +240,16 @@ namespace Qoollo.Impl.DistributorModules
                     failedDistributors.Add(x);
             });
 
-            if (failedWriters.Count != 0)
+            if (failedDistributors.Count != 0)
+            {
                 _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(_asyncCheck.TimeoutPeriod,
                     data =>
                     {
                         var list = UpdateDistributorsAsync(failedDistributors, command);
                         failedDistributors.RemoveAll(x => list.Contains(x));
                     }, AsyncTasksNames.UpdateHashFileForDistributor, -1), false);
+                _asyncTaskModule.StartTask(AsyncTasksNames.UpdateHashFileForDistributor);
+            }
         }
 
         #endregion
@@ -330,7 +336,7 @@ namespace Qoollo.Impl.DistributorModules
         public string GetServersState()
         {
             return _modelOfDbWriters.Servers.Aggregate(string.Empty,
-                (current, writerDescription) => current + "\n" + writerDescription.RestoreState);
+                (current, writerDescription) => current + "\n" + writerDescription.StateString);
         }
 
         public List<ServerId> GetDistributors()

@@ -16,7 +16,7 @@ using Qoollo.Impl.Modules.Cache;
 namespace Qoollo.Tests
 {
     [TestClass]
-    public class UnitTest1
+    public class TestTransactionLogic
     {
          class TestData
         {

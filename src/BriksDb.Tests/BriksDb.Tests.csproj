@@ -70,11 +70,13 @@
     <Compile Include="Support\StoredDataHashCalculator.cs" />
     <Compile Include="Support\StoredData.cs" />
     <Compile Include="Support\TestWriterGate.cs" />
+    <Compile Include="TestBase.cs" />
     <Compile Include="TestCollectorModules.cs" />
     <Compile Include="TestCollector\TestDataLoader.cs" />
     <Compile Include="TestCollector\TestIntParser.cs" />
     <Compile Include="TestCollector\TestSelectTask.cs" />
     <Compile Include="TestDistributorModules.cs" />
+    <Compile Include="TestHashUpdate.cs" />
     <Compile Include="TestModules\NetModuleTest.cs" />
     <Compile Include="TestModules\TestCache.cs" />
     <Compile Include="TestModules\TestGate.cs" />

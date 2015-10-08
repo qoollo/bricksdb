@@ -16,17 +16,20 @@ namespace Qoollo.Impl.Common.HashFile
                 return;
 
             var otherFiles = fileInfo.Directory.GetFiles().ToList();
-                        
+
             otherFiles.Sort(((info, info1) => string.CompareOrdinal(info1.Name, info.Name)));
-            otherFiles.ForEach(x=>FilterFile(x, fileInfo));            
+            otherFiles.ForEach(x => FilterFile(x, fileInfo));
         }
 
         private static void FilterFile(FileInfo fileInfo, FileInfo rootFile)
         {
-            if(fileInfo.Extension!= rootFile.Extension)
+            if (fileInfo.Extension != rootFile.Extension)
                 return;
-            var fileInfoName = fileInfo.Name.Replace(fileInfo.Extension, string.Empty);
-            var rootFileName = rootFile.Name.Replace(rootFile.Extension, string.Empty);
+
+            bool userExtension = fileInfo.Extension != string.Empty;
+
+            var fileInfoName = userExtension ? fileInfo.Name.Replace(fileInfo.Extension, string.Empty) : fileInfo.Name;
+            var rootFileName = userExtension ? rootFile.Name.Replace(rootFile.Extension, string.Empty) : rootFile.Name;
 
             var tail = fileInfoName.Replace(rootFileName, string.Empty);
 
@@ -35,7 +38,7 @@ namespace Qoollo.Impl.Common.HashFile
             {
                 File.Move(fileInfo.FullName,
                     string.Format("{0}\\{1}{2}{3}", fileInfo.DirectoryName, rootFileName, version + 1,
-                        rootFile.Extension));                
+                        rootFile.Extension));
             }
         }
     }

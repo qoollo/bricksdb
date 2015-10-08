@@ -12,6 +12,7 @@ namespace Qoollo.Impl.Common.NetResults.System.Distributor
     [DataContract]
     internal class HashFileUpdateCommand:NetCommand
     {
+        [DataMember]
         public List<HashMapRecord> Map { get; private set; }
 
         public HashFileUpdateCommand(List<HashMapRecord> map)

@@ -31,11 +31,10 @@ namespace Qoollo.Impl.Common.Server
         }
 
         public WriterDescription(ServerId server) : this(server.RemoteHost, server.Port)
-        {
-            _stateInfo = new ConcurrentDictionary<string, string>();
+        {            
         }
 
-        private readonly ConcurrentDictionary<string, string> _stateInfo;
+        private readonly ConcurrentDictionary<string, string> _stateInfo = new ConcurrentDictionary<string, string>();
 
         private string GetInnerState()
         {

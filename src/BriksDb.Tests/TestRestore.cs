@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Client.Configuration;
-using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
 using Qoollo.Client.WriterGate;
@@ -17,7 +16,6 @@ using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Tests.Support;
-using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
 using Consts = Qoollo.Impl.Common.Support.Consts;
@@ -25,47 +23,8 @@ using Consts = Qoollo.Impl.Common.Support.Consts;
 namespace Qoollo.Tests
 {
     [TestClass]
-    public class TestRestore
-    {
-        private TestWriterGate _writer1;
-        private TestWriterGate _writer2;
-        private TestWriterGate _writer3;
-        private DistributorApi _distr;
-        private TestGate _proxy;
-        private TestDistributorGate _distrTest;
-        const int distrServer1 = 22323;
-        const int proxyServer = 22331;
-        const int distrServer12 = 22324;
-        const int storageServer1 = 22357;
-        const int storageServer2 = 22156;
-        const int storageServer3 = 22157;
-
-        [TestInitialize]
-        public void Initialize()
-        {            
-            var common = new CommonConfiguration(1, 100);
-            var distrNet = new DistributorNetConfiguration("localhost",
-                distrServer1, distrServer12, "testService", 10);
-            var distrConf = new DistributorConfiguration(1, "TestRestore",
-                TimeSpan.FromMilliseconds(10000000), TimeSpan.FromMilliseconds(500000), TimeSpan.FromMinutes(100),
-                TimeSpan.FromMilliseconds(10000000));
-
-            _distr = new DistributorApi(distrNet, distrConf, common);
-            _distr.Build();
-
-            var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
-            var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));            
-
-            _proxy = new TestGate(netconfig, toconfig, common);  
-            _proxy.Build();
-
-            _distrTest = new TestDistributorGate();
-            _writer1 = new TestWriterGate();
-            _writer2 = new TestWriterGate();
-            _writer3 = new TestWriterGate();
-        }
-
+    public class TestRestore:TestBase
+    {       
         [TestMethod]
         public void Writer_Restore_TwoServers()
         {                        

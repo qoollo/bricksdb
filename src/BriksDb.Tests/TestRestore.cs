@@ -98,7 +98,7 @@ namespace Qoollo.Tests
 
             _writer2.Start();
 
-            _writer2.Distributor.Restore(new ServerId("localhost", distrServer1), false);
+            _writer2.Distributor.Restore(false);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
@@ -197,11 +197,11 @@ namespace Qoollo.Tests
             _writer2.Start();
             _writer3.Start();
 
-            _writer2.Distributor.Restore(new ServerId("localhost", distrServer1), false);
+            _writer2.Distributor.Restore(false);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(4000));
 
-            _writer3.Distributor.Restore(new ServerId("localhost", distrServer1), false);
+            _writer3.Distributor.Restore(false);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
@@ -314,7 +314,7 @@ namespace Qoollo.Tests
             _writer1.Distributor.UpdateModel();
             _writer2.Distributor.UpdateModel();
 
-            _writer3.Distributor.Restore(new ServerId("localhost", distrServer1), true);
+            _writer3.Distributor.Restore(true);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1400));
 
@@ -367,7 +367,7 @@ namespace Qoollo.Tests
             storage1.AddDbModule(new TestInMemoryDbFactory());
             storage1.Start();
 
-            storage1.Api.Restore(new ServerAddress("localhost", distrServer12), false);
+            storage1.Api.Restore(false);
 
             Thread.Sleep(4000);
             Assert.IsFalse(storage1.Api.IsRestoreCompleted());
@@ -447,7 +447,7 @@ namespace Qoollo.Tests
             writer.Save();
 
             storage1.Api.UpdateModel();
-            storage1.Api.Restore(new ServerAddress("localhost", distrServer12), true);
+            storage1.Api.Restore(true);
 
             Thread.Sleep(1000);
 
@@ -573,7 +573,7 @@ namespace Qoollo.Tests
 
             _writer3.Start();
 
-            _writer3.Distributor.Restore(new ServerId("localhost", distrServer1), false);
+            _writer3.Distributor.Restore(false);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
@@ -656,13 +656,13 @@ namespace Qoollo.Tests
             _writer1.Distributor.UpdateModel();
             _writer2.Distributor.UpdateModel();
 
-            _writer3.Distributor.Restore(new ServerId("localhost", distrServer1), true);
+            _writer3.Distributor.Restore(true);
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
-            _writer2.Distributor.Restore(new ServerId("localhost", distrServer1), true);
+            _writer2.Distributor.Restore(true);
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
-            _writer1.Distributor.Restore(new ServerId("localhost", distrServer1), true);
+            _writer1.Distributor.Restore(true);
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
             Assert.AreEqual(0, mem.Remote);
@@ -740,7 +740,7 @@ namespace Qoollo.Tests
 
             Assert.AreEqual("SimpleRestoreNeed", _writer2.Distributor.GetRestoreRequiredState());
 
-            _writer2.Distributor.Restore(new ServerId("localhost", distrServer1), false);
+            _writer2.Distributor.Restore(false);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
@@ -751,7 +751,7 @@ namespace Qoollo.Tests
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).RestoreState);
 
             Assert.AreEqual(count, mem.Local + mem2.Local);
-
+            
             for (int i = 0; i < count; i++)
             {
                 var result = _proxy.Int.CreateSync(i + 50, i);
@@ -854,11 +854,11 @@ namespace Qoollo.Tests
             Assert.AreEqual("FullRestoreNeed", _writer2.Distributor.GetRestoreRequiredState());
             Assert.AreEqual("FullRestoreNeed", _writer3.Distributor.GetRestoreRequiredState());
 
-            _writer1.Distributor.Restore(new ServerId("localhost", distrServer1), true);
+            _writer1.Distributor.Restore(true);
             Thread.Sleep(TimeSpan.FromMilliseconds(1500));
-            _writer2.Distributor.Restore(new ServerId("localhost", distrServer1), true);
+            _writer2.Distributor.Restore(true);
             Thread.Sleep(TimeSpan.FromMilliseconds(1500));
-            _writer3.Distributor.Restore(new ServerId("localhost", distrServer1), true);
+            _writer3.Distributor.Restore(true);
             Thread.Sleep(TimeSpan.FromMilliseconds(1500));
 
             Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);

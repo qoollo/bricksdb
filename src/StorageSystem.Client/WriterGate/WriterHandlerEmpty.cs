@@ -11,22 +11,22 @@ namespace Qoollo.Client.WriterGate
             throw new Exception(new RequestDescription().ErrorDescription);
         }
 
-        public RequestDescription Restore(ServerAddress server, bool isModelUpdated)
+        public RequestDescription Restore(bool isModelUpdated)
         {
             return new RequestDescription();
         }
 
-        public RequestDescription Restore(ServerAddress server, List<ServerAddress> servers, bool isModelUpdated)
+        public RequestDescription Restore(List<ServerAddress> servers, bool isModelUpdated)
         {
             return new RequestDescription();
         }
 
-        public RequestDescription Restore(ServerAddress server, bool isModelUpdated, string tableName)
+        public RequestDescription Restore(bool isModelUpdated, string tableName)
         {
             return new RequestDescription();
         }
 
-        public RequestDescription Restore(ServerAddress server, List<ServerAddress> servers, bool isModelUpdated, string tableName)
+        public RequestDescription Restore(List<ServerAddress> servers, bool isModelUpdated, string tableName)
         {
             return new RequestDescription();
         }

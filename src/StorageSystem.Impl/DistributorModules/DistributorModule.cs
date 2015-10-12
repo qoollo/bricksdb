@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using Qoollo.Impl.Common;
@@ -124,19 +125,27 @@ namespace Qoollo.Impl.DistributorModules
 
         private void PingProcess(AsyncData data)
         {
-            var map = _modelOfDbWriters.GetAllServers2();
-            _distributorNet.PingWriters(map, _modelOfDbWriters.ServerAvailable);
+            try
+            {
+                var map = _modelOfDbWriters.GetAllServers2();
+                _distributorNet.PingWriters(map, _modelOfDbWriters.ServerAvailable);
 
-            map = _distributorNet.GetServersByType(typeof (SingleConnectionToProxy));
-            _distributorNet.PingProxy(map);
+                map = _distributorNet.GetServersByType(typeof(SingleConnectionToProxy));
+                _distributorNet.PingProxy(map);
 
-            map = _distributorNet.GetServersByType(typeof (SingleConnectionToDistributor));
-            _distributorNet.PingDistributors(map);
+                map = _distributorNet.GetServersByType(typeof(SingleConnectionToDistributor));
+                _distributorNet.PingDistributors(map);
 
-            //remove old connections after model update
-            var real = _distributorNet.GetServersByType(typeof (SingleConnectionToWriter));
-            real = real.Where(x => !map.Contains(x)).ToList();
-            real.ForEach(x => _distributorNet.RemoveConnection(x));
+                //remove old connections after model update
+                var real = _distributorNet.GetServersByType(typeof(SingleConnectionToWriter));
+                real = real.Where(x => !map.Contains(x)).ToList();
+                real.ForEach(x => _distributorNet.RemoveConnection(x));
+            }
+            catch (Exception e)
+            {
+                int t = 0;
+            }
+            
         }
 
         private void CheckRestore(AsyncData data)

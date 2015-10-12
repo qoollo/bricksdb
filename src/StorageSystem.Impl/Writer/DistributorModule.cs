@@ -98,13 +98,12 @@ namespace Qoollo.Impl.Writer
         /// <summary>
         /// Start servers recover
         /// </summary>
-        /// <param name="server">Distributor address.</param>
         /// <param name="isModelUpdated">is hash file is new
         ///     true - need check all data
         ///     false - check only metatable</param>
-        public string Restore(ServerId server, bool isModelUpdated)
+        public string Restore(bool isModelUpdated)
         {
-            var ret = CheckRestoreArguments(server, null, isModelUpdated, Consts.AllTables);
+            var ret = CheckRestoreArguments(Consts.AllTables);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
@@ -115,9 +114,9 @@ namespace Qoollo.Impl.Writer
             return ret;
         }
 
-        public string Restore(ServerId server, bool isModelUpdated, string tableName)
+        public string Restore(bool isModelUpdated, string tableName)
         {
-            var ret = CheckRestoreArguments(server, null, isModelUpdated, Consts.AllTables);
+            var ret = CheckRestoreArguments(Consts.AllTables);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
@@ -128,9 +127,9 @@ namespace Qoollo.Impl.Writer
             return ret;
         }
 
-        public string Restore(ServerId server, List<ServerId> servers, bool isModelUpdated)
+        public string Restore(List<ServerId> servers, bool isModelUpdated)
         {
-            var ret = CheckRestoreArguments(server, servers, isModelUpdated, Consts.AllTables);
+            var ret = CheckRestoreArguments(Consts.AllTables);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
@@ -144,9 +143,9 @@ namespace Qoollo.Impl.Writer
             return ret;
         }
 
-        public string Restore(ServerId server, List<ServerId> servers, bool isModelUpdated, string tableName)
+        public string Restore(List<ServerId> servers, bool isModelUpdated, string tableName)
         {
-            var ret = CheckRestoreArguments(server, servers, isModelUpdated, tableName);
+            var ret = CheckRestoreArguments(tableName);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
@@ -160,14 +159,10 @@ namespace Qoollo.Impl.Writer
             return ret;
         }
 
-        private string CheckRestoreArguments(ServerId server, List<ServerId> servers, bool isModelUpdated,
-            string tableName)
+        private string CheckRestoreArguments(string tableName)
         {
             if (_asyncDbWork.IsStarted)
                 return Errors.RestoreAlreadyStarted;
-
-            if (!_writerNet.ConnectToDistributor(server))
-                return Errors.RestoreFailConnectToDistributor;
 
             if (tableName != Consts.AllTables && !_dbModuleCollection.GetDbModules.Exists(x => x.TableName == tableName))
                 return Errors.TableDoesNotExists;

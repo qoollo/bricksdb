@@ -51,7 +51,7 @@ namespace Qoollo.Tests.Support
             var queueconfig = new QueueConfiguration(1, 100);
             _dnet = new DistributorNetModule(connection,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            Distributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+            Distributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
                 new AsyncTasksConfiguration(asyncCheck), distrconfig, queueconfig, _dnet,
                 new ServerId("localhost", distrServer1),
                 new ServerId("localhost", distrServer12),

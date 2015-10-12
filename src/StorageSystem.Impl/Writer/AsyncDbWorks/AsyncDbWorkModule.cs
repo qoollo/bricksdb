@@ -46,7 +46,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                     {ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString()}                    
                 };
                 if (_initiatorRestore.IsStart)
-                    dictionary.Add(ServerState.RestoreCurrentServers, _initiatorRestore.RestoreServer.ToString());
+                {
+                    var server = _initiatorRestore.RestoreServer;
+                    if (server != null)
+                        dictionary.Add(ServerState.RestoreCurrentServers, server.ToString());
+                }
                 return dictionary;
             }
         }

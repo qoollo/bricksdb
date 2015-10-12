@@ -503,10 +503,10 @@ namespace Qoollo.Tests
             net.ConnectToWriter(server2);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(300));
-            var ev = new InnerData(new Transaction("123", ""))
+            var ev = new InnerData(new Transaction("123", "default"))
             {
                 Transaction =
-                    new Transaction(HashConvertor.GetString("1"), "")
+                    new Transaction(HashConvertor.GetString("1"), "default")
                     {
                         OperationName = OperationName.Create,
                         OperationType = OperationType.Async
@@ -521,7 +521,7 @@ namespace Qoollo.Tests
 
             GlobalQueue.Queue.TransactionQueue.Add(ev.Transaction);
             GlobalQueue.Queue.TransactionQueue.Add(ev.Transaction);
-            Thread.Sleep(TimeSpan.FromMilliseconds(100));
+            Thread.Sleep(TimeSpan.FromMilliseconds(300));
 
             Assert.IsTrue(s1.Value > 0);
             Assert.IsTrue(s2.Value > 0);

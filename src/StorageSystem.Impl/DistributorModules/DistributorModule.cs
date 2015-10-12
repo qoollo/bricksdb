@@ -148,8 +148,9 @@ namespace Qoollo.Impl.DistributorModules
 
                 if (result is SetGetRestoreStateResult)
                 {
-                    var state = ((SetGetRestoreStateResult)result).State;
-                    x.UpdateState(state);
+                    var command = ((SetGetRestoreStateResult)result);
+                    x.UpdateState(command.State);
+                    x.SetInfoMessageList(command.FullState);
                 }
             });
         }

@@ -208,7 +208,6 @@
     <Compile Include="Common\NetCommand.cs" />
     <Compile Include="Common\Support\enums.cs" />
     <Compile Include="Common\NetResults\Data\AddDistributorResult.cs" />
-    <Compile Include="Common\NetResults\System\Distributor\IsRestoredResult.cs" />
     <Compile Include="Common\NetResults\Data\SystemInfoResult.cs" />
     <Compile Include="Common\NetResults\Event\InitiatorNotAvailableResult.cs" />
     <Compile Include="Common\RemoteResult.cs" />
@@ -240,7 +239,6 @@
     <Compile Include="Writer\AsyncDbWorks\Readers\ReaderFullBase.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\TransferRestoreModule.cs" />
     <Compile Include="Common\NetResults\System\Distributor\AddDistributorFromDistributorCommand.cs" />
-    <Compile Include="Common\NetResults\System\Distributor\IsRestoredCommand.cs" />
     <Compile Include="Common\NetResults\System\Distributor\OperationCompleteCommand.cs" />
     <Compile Include="Common\NetResults\System\Distributor\ReadOperationCompleteCommand.cs" />
     <Compile Include="Common\NetResults\System\Distributor\TakeInfoCommand.cs" />

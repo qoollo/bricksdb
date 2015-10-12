@@ -24,9 +24,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         public TimeoutModule TimeoutModule { get { return _timeout; } }
 
-        public bool IsNeedRestore
+        internal bool IsNeedRestore
         {
-            get { return _initiatorRestore.IsStart; }
+            get { return _stateHelper.State != RestoreState.Restored; }
         }
 
         public bool IsStarted
@@ -34,6 +34,20 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             get
             {
                 return _initiatorRestore.IsStart;
+            }
+        }
+
+        public Dictionary<string, string> FullState
+        {
+            get
+            {
+                var dictionary = new Dictionary<string, string>
+                {
+                    {ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString()}                    
+                };
+                if (_initiatorRestore.IsStart)
+                    dictionary.Add(ServerState.RestoreCurrentServers, _initiatorRestore.RestoreServer.ToString());
+                return dictionary;
             }
         }
 

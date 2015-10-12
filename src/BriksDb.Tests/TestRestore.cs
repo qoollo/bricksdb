@@ -224,18 +224,37 @@ namespace Qoollo.Tests
         [TestMethod]
         public void Writer_RestoreAfterUpdateHashFile_ThreeServers()
         {
-            var writer =
-                new HashWriter(new HashMapConfiguration("TestRestore3ServersUpdate", HashMapCreationMode.CreateNew, 2, 3,
+            const string fileName = "TestRestore3ServersUpdate";
+            var func = new Action<string>(file =>
+            {
+                var writer = new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 2, 3,
                     HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save(); 
+            });
 
-            _distrTest.Build(1, distrServer1, distrServer12, "TestRestore3ServersUpdate");
-            _writer1.Build(storageServer1, "TestRestore3ServersUpdate", 1);
-            _writer2.Build(storageServer2, "TestRestore3ServersUpdate", 1);
-            _writer3.Build(storageServer3, "TestRestore3ServersUpdate", 1);
+            var func2 = new Action<string>(file =>
+            {
+                var writer = new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 3, 3,
+                    HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.SetServer(2, "localhost", storageServer3, 157);
+                writer.Save();
+            });
+
+            func(fileName);
+            func("1" + fileName);
+            func("2" + fileName);
+            func2("3" + fileName);
+
+            _distrTest.Build(1, distrServer1, distrServer12, fileName);
+            _writer1.Build(storageServer1, "1" + fileName, 1);
+            _writer2.Build(storageServer2, "2" + fileName, 1);
+            _writer3.Build(storageServer3, "3" + fileName, 1);
 
             _distrTest.Start();
             _writer1.Start();
@@ -285,17 +304,10 @@ namespace Qoollo.Tests
             }
             Assert.AreEqual(count, mem.Local + mem2.Local);
             Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
+            Assert.AreEqual(0, mem2.Remote);            
 
-            writer =
-                new HashWriter(new HashMapConfiguration("TestRestore3ServersUpdate", HashMapCreationMode.CreateNew, 3, 3,
-                    HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.SetServer(2, "localhost", storageServer3, 157);
-            writer.Save();
-
+            func2(fileName);
+            
             _writer3.Start();
 
             _distrTest.Distributor.UpdateModel();
@@ -304,15 +316,15 @@ namespace Qoollo.Tests
 
             _writer3.Distributor.Restore(new ServerId("localhost", distrServer1), true);
 
-            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+            Thread.Sleep(TimeSpan.FromMilliseconds(1400));
 
             Assert.AreEqual(0, mem.Remote);
             Assert.AreEqual(0, mem2.Remote);
             Assert.AreEqual(0, mem3.Remote);
             Assert.AreNotEqual(0, mem3.Local);
             Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+            Assert.AreEqual(true, _writer1.Restore.IsNeedRestore);
+            Assert.AreEqual(true, _writer2.Restore.IsNeedRestore);
             Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
 
             _writer1.Dispose();

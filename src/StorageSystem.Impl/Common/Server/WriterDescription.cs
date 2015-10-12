@@ -86,5 +86,13 @@ namespace Qoollo.Impl.Common.Server
         {
             _stateInfo.AddOrUpdate(tag, message, (s, s1) => s1);
         }
+
+        public void SetInfoMessageList(Dictionary<string, string> info)
+        {
+            foreach (var record in info)
+            {
+                SetInfoMessage(record.Key, record.Value);
+            }
+        }
     }
 }

@@ -26,7 +26,9 @@ namespace Qoollo.Impl.Common.Support
     internal static class ServerState
     {
         public static string Update = "update";
-        public static string Restore = "restore";       
+        public static string Restore = "restore";
+        public static string RestoreInProcess = "restoreInProcess";
+        public static string RestoreCurrentServers = "restoreCurrentServers";       
     }
 
     internal static class ModuleNames

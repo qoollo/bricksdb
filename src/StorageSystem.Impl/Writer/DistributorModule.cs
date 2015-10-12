@@ -216,11 +216,13 @@ namespace Qoollo.Impl.Writer
 
         public RemoteResult ProcessSend(NetCommand command)
         {
-            if (command is IsRestoredCommand)
-                return new IsRestoredResult(_asyncDbWork.IsNeedRestore);
             if (command is SetGetRestoreStateCommand)
-                return new SetGetRestoreStateResult(
-                    _asyncDbWork.DistributorReceive(((SetGetRestoreStateCommand) command).State));
+            {
+                var ret = new SetGetRestoreStateResult(
+                    _asyncDbWork.DistributorReceive(((SetGetRestoreStateCommand) command).State),
+                    _asyncDbWork.FullState);
+                return ret;
+            }
 
             if (command is HashFileUpdateCommand )
             {

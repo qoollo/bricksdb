@@ -60,8 +60,8 @@ namespace Qoollo.Tests.Support
 
             _async = new AsyncTaskModule(new QueueConfiguration(1, 10));
             Restore = new AsyncDbWorkModule(_net, _async, Db,
-                new RestoreModuleConfiguration(10, TimeSpan.FromMinutes(100)),
-                new RestoreModuleConfiguration(10, TimeSpan.FromMilliseconds(100)),
+                new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(300)),
+                new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(100)),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
                 new QueueConfiguration(1, 100), local);
 

@@ -16,7 +16,7 @@ namespace Qoollo.Impl.Common
     [KnownType(typeof(ReadOperationCompleteCommand))]
     [KnownType(typeof(GetHashMapCommand))]
     [KnownType(typeof(SetGetRestoreStateCommand))]    
-    [KnownType(typeof(HashFileUpdateCommand))]    
+    [KnownType(typeof(HashFileUpdateCommand))]     
     internal class NetCommand
     {
     }

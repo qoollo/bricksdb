@@ -343,7 +343,7 @@ namespace Qoollo.Impl.DistributorModules
         public List<ServerId> GetDistributors()
         {
             return _modelOfAnotherDistributors.GetDistributorList();
-        }
+        } 
 
         #endregion
 

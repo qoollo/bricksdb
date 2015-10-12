@@ -232,7 +232,7 @@ namespace Qoollo.Tests
                 writer.CreateMap();
                 writer.SetServer(0, "localhost", storageServer1, 157);
                 writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save(); 
+                writer.Save();
             });
 
             var func2 = new Action<string>(file =>
@@ -304,10 +304,10 @@ namespace Qoollo.Tests
             }
             Assert.AreEqual(count, mem.Local + mem2.Local);
             Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);            
+            Assert.AreEqual(0, mem2.Remote);
 
             func2(fileName);
-            
+
             _writer3.Start();
 
             _distrTest.Distributor.UpdateModel();
@@ -685,7 +685,7 @@ namespace Qoollo.Tests
         }
 
         [TestMethod]
-        public void Distributor_RestoreWithDistributirStateCheck_WithouModelUpdate()
+        public void Distributor_RestoreWithDistributirStateCheck_WithoutModelUpdate()
         {
             const string fileName = "Distributor_Restore";
             var writer =
@@ -770,13 +770,13 @@ namespace Qoollo.Tests
         }
 
         [TestMethod]
-        public void Distributor_RestoreWithDistributirStateCheck_WithouModelUpdate2()
-        {            
+        public void Distributor_RestoreWithDistributirStateCheck_WithModelUpdate_RestoreAllServers()
+        {
             var func = new Action<string>(file =>
             {
                 var writer =
-                new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 2, 3,
-                    HashFileType.Distributor));
+                    new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 2, 3,
+                        HashFileType.Distributor));
                 writer.CreateMap();
                 writer.SetServer(0, "localhost", storageServer1, 157);
                 writer.SetServer(1, "localhost", storageServer2, 157);
@@ -786,8 +786,8 @@ namespace Qoollo.Tests
             var func2 = new Action<string>(file =>
             {
                 var writer =
-                new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 3, 3,
-                    HashFileType.Distributor));
+                    new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 3, 3,
+                        HashFileType.Distributor));
                 writer.CreateMap();
                 writer.SetServer(0, "localhost", storageServer1, 157);
                 writer.SetServer(1, "localhost", storageServer2, 157);
@@ -827,7 +827,7 @@ namespace Qoollo.Tests
                 _proxy.Int.CreateSync(i, i);
             }
 
-            Assert.AreEqual(count, mem.Local+ mem2.Local);
+            Assert.AreEqual(count, mem.Local + mem2.Local);
             func2(fileName);
 
             _writer3.Build(storageServer3, fileName4, 1);

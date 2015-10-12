@@ -8,10 +8,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
 {
     internal abstract class SingleReaderBase:ControlModule
     {
-        private Thread _thread;
+        private readonly Thread _thread;
         private bool _isFinish;
         private bool _isWait;
-        private AutoResetEvent _reset;
+        private readonly AutoResetEvent _reset;
 
         public bool IsFinish { get { return _isFinish; } }
 
@@ -28,7 +28,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
             }
         }
 
-        private object _lock = new object();
+        private readonly object _lock = new object();
 
         protected SingleReaderBase()
         {            

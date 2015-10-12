@@ -190,7 +190,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         /// </summary>
         /// <param name="server"></param>
         public void LastMessageIncome(ServerId server)
-        {
+        {            
             Logger.Logger.Instance.Debug(string.Format("last message income from {0}", server), "restore");
 
             if (server.Equals(RestoreServer))

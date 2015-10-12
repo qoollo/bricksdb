@@ -12,7 +12,7 @@ namespace Qoollo.Impl.Common.Server
 
         public bool IsServerRestored { get { return RestoreState == RestoreState.Restored; } }
 
-        public RestoreState RestoreState { get; private set; }
+        public RestoreState RestoreState { get; private set; }        
 
         public string StateString
         {
@@ -21,6 +21,22 @@ namespace Qoollo.Impl.Common.Server
                 return string.Format("{0}. Restore state: {1}. Available: {2}. {3}", ToString(),
                     Enum.GetName(typeof(RestoreState), RestoreState), IsAvailable, GetInnerState());
             }
+        }
+
+        public bool RestoreSendStatus
+        {
+            get
+            {
+                string value;
+                if (_stateInfo.TryGetValue(ServerState.RestoreSendStatus, out value) && value != string.Empty)
+                {
+                    return bool.Parse(value);
+                }
+
+                return false;
+            }
+
+            set { SetInfoMessage(ServerState.RestoreSendStatus, value.ToString()); }
         }
 
         public WriterDescription(string host,  int port)
@@ -45,7 +61,7 @@ namespace Qoollo.Impl.Common.Server
             {
                 string value;
                 if (_stateInfo.TryGetValue(key, out value))
-                    result += ". " + value;
+                    result += string.Format(". {0}: {1}", key, value);
             }
 
             return result;
@@ -93,6 +109,6 @@ namespace Qoollo.Impl.Common.Server
             {
                 SetInfoMessage(record.Key, record.Value);
             }
-        }
+        }    
     }
 }

@@ -224,24 +224,9 @@ namespace Qoollo.Impl.Writer
                 return ret;
             }
 
-            if (command is HashFileUpdateCommand )
-            {
-                if (_asyncDbWork.IsStarted)
-                    return new InnerFailResult("Restore process is started");
+            if (command is HashFileUpdateCommand)
+                return HashFileUpdate(command);
 
-                var result = _model.UpdateHashViaNet((command as HashFileUpdateCommand).Map);
-                RemoteResult ret;
-
-                if (result == string.Empty)
-                {
-                    ret = new SuccessResult();
-                    _asyncDbWork.UpdateModel(_model.Servers);
-                }
-                else
-                    ret = new InnerFailResult(result);
-
-                return ret;
-            }
             _queue.DbDistributorInnerQueue.Add(command);
             return new SuccessResult();
         }
@@ -291,6 +276,25 @@ namespace Qoollo.Impl.Writer
         {
             if (transaction.Distributor != null)
                 _writerNet.TransactionAnswer(transaction.Distributor, transaction);
+        }
+
+        private RemoteResult HashFileUpdate(NetCommand command)
+        {
+            if (_asyncDbWork.IsStarted)
+                return new InnerFailResult("Restore process is started");
+
+            var result = _model.UpdateHashViaNet((command as HashFileUpdateCommand).Map);
+            RemoteResult ret;
+
+            if (result == string.Empty)
+            {
+                ret = new SuccessResult();
+                _asyncDbWork.UpdateModel(_model.Servers);
+            }
+            else
+                ret = new InnerFailResult(result);
+
+            return ret;
         }
 
         #endregion

@@ -13,7 +13,7 @@ namespace Qoollo.Impl.DistributorModules.Model
 {
     internal class WriterSystemModel
     {
-        public List<WriterDescription> Servers { get { return _servers; } } 
+        public List<WriterDescription> Servers { get { return new List<WriterDescription>(_servers); } } 
 
         public WriterSystemModel(DistributorHashConfiguration configuration, HashMapConfiguration mapConfiguration)
         {

@@ -5,7 +5,7 @@ namespace Qoollo.Impl.Modules.Async
 {
     internal class AsyncDataPeriod:AsyncData
     {
-        private TimeSpan _timeout;
+        private readonly TimeSpan _timeout;
 
         public AsyncDataPeriod(TimeSpan timeout, Action<AsyncData> action, string actionName, int totalCount)
             : base(action, actionName, totalCount)

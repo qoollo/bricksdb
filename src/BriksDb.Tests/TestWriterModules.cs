@@ -162,9 +162,9 @@ namespace Qoollo.Tests
             _writer1.Start();
             _writer2.Start();
 
-            _writer1.Distributor.Restore(new ServerId("localhost", distrServer1), false);
+            _writer1.Distributor.Restore(false);
 
-            _writer2.Distributor.Restore(new ServerId("localhost", distrServer2), false);
+            _writer2.Distributor.Restore(false);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 

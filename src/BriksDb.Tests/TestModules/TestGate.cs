@@ -9,7 +9,7 @@ using Qoollo.Tests.Support;
 
 namespace Qoollo.Tests.TestModules
 {
-    class TestGate : ProxyApi
+    public class TestGate : ProxyApi
     {
         //private IStorage<int, DataWithBuffer> _data;
 

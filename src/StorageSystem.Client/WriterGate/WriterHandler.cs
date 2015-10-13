@@ -20,33 +20,31 @@ namespace Qoollo.Client.WriterGate
             _writer.Distributor.UpdateModel();
         }
 
-        public RequestDescription Restore(ServerAddress server, bool isModelUpdated)
+        public RequestDescription Restore(bool isModelUpdated)
         {
-            string result = _writer.Distributor.Restore(new ServerId( server.Host, server.Port), isModelUpdated);
+            string result = _writer.Distributor.Restore(isModelUpdated);
             return new RequestDescription(result);
         }
 
-        public RequestDescription Restore(ServerAddress server, List<ServerAddress> servers, bool isModelUpdated)
+        public RequestDescription Restore(List<ServerAddress> servers, bool isModelUpdated)
         {
             var list = new List<ServerId>();
             servers.ForEach(x => list.Add(new ServerId(x.Host, x.Port)));
-            string result = _writer.Distributor.Restore(new ServerId(server.Host, server.Port), list,
-                isModelUpdated);
+            string result = _writer.Distributor.Restore(list, isModelUpdated);
             return new RequestDescription(result);
         }
 
-        public RequestDescription Restore(ServerAddress server, bool isModelUpdated, string tableName)
+        public RequestDescription Restore(bool isModelUpdated, string tableName)
         {
-            string result = _writer.Distributor.Restore(new ServerId(server.Host, server.Port), isModelUpdated,
-                tableName);
+            string result = _writer.Distributor.Restore(isModelUpdated, tableName);
             return new RequestDescription(result);
         }
 
-        public RequestDescription Restore(ServerAddress server, List<ServerAddress> servers, bool isModelUpdated, string tableName)
+        public RequestDescription Restore(List<ServerAddress> servers, bool isModelUpdated, string tableName)
         {
             var list = new List<ServerId>();
             servers.ForEach(x => list.Add(new ServerId(x.Host, x.Port)));
-            string result = _writer.Distributor.Restore(new ServerId(server.Host, server.Port), list,
+            string result = _writer.Distributor.Restore(list,
                 isModelUpdated, tableName);
             return new RequestDescription(result);
         }

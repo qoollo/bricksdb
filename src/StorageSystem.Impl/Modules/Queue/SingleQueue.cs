@@ -21,7 +21,7 @@ namespace Qoollo.Impl.Modules.Queue
 
         public void Add(T element)
         {
-            if (_queue != null)
+            if (_queue != null && _queue.IsWork)
                 _queue.Add(element);
         }
 

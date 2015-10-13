@@ -1,18 +1,24 @@
 ﻿using System;
+using System.Runtime.Serialization;
 using System.Xml.Serialization;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
 
 namespace Qoollo.Impl.Common.HashFile
 {
-    [Serializable]
+    [Serializable]    
+    [DataContract]
     public class HashMapRecord
     {
-        [XmlAttribute("Begin")]
+        [DataMember]
+        [XmlAttribute("Begin")]        
         public string Begin { get;  set; }
+
+        [DataMember]
         [XmlAttribute("End")]
         public string End { get;  set; }        
         
+        [DataMember]
         public SavedServerId Save { get; set; }
         [XmlIgnore]
         public WriterDescription ServerId { get; private set; }
@@ -56,6 +62,18 @@ namespace Qoollo.Impl.Common.HashFile
         public HashMapRecord Clone()
         {
             return new HashMapRecord(Begin, End) {Save = Save};
+        }
+
+        private bool Compare(HashMapRecord record)
+        {
+            return Begin == record.Begin && End == record.End && record.Save.Host == Save.Host
+                   && record.Save.PortForCollector == Save.PortForCollector
+                   && record.Save.PortForDistributor == Save.PortForDistributor;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Compare(obj as HashMapRecord);
         }
     }
 }

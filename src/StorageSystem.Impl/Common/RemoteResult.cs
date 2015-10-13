@@ -13,10 +13,10 @@ namespace Qoollo.Impl.Common
     [KnownType(typeof(AddDistributorResult))]
     [KnownType(typeof(InitiatorNotAvailableResult))]
     [KnownType(typeof(SystemInfoResult))]
-    [KnownType(typeof(IsRestoredResult))]
     [KnownType(typeof(InnerServerError))]
     [KnownType(typeof(InnerFailResult))]
-    [KnownType(typeof(HashMapResult))]    
+    [KnownType(typeof(HashMapResult))]
+    [KnownType(typeof(SetGetRestoreStateResult))]    
     public abstract class RemoteResult
     {
         protected RemoteResult(bool result, string description)

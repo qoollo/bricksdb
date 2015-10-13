@@ -5,6 +5,7 @@ using System.Linq;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
+using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
@@ -18,17 +19,16 @@ using Qoollo.Impl.Writer.Db;
 using Qoollo.Impl.Writer.Model;
 using Qoollo.Impl.Writer.WriterNet;
 
-namespace Qoollo.Impl.Writer.Distributor
+namespace Qoollo.Impl.Writer
 {
     internal class DistributorModule : ControlModule
     {
-        private WriterModel _model;
-        private WriterNetModule _writerNet;
-        private QueueConfiguration _queueConfiguration;
-        private DbModuleCollection _dbModuleCollection;
-        private AsyncTaskModule _async;
-        private AsyncDbWorkModule _asyncDbWork;
-        private GlobalQueueInner _queue;
+        private readonly WriterModel _model;
+        private readonly WriterNetModule _writerNet;
+        private readonly QueueConfiguration _queueConfiguration;
+        private readonly DbModuleCollection _dbModuleCollection;
+        private readonly AsyncDbWorkModule _asyncDbWork;
+        private readonly GlobalQueueInner _queue;
 
         public DistributorModule(AsyncTaskModule async, AsyncDbWorkModule asyncDbWork,
             WriterNetModule writerNet,
@@ -43,9 +43,8 @@ namespace Qoollo.Impl.Writer.Distributor
             Contract.Requires(configuration != null);
             Contract.Requires(asyncDbWork != null);
             Contract.Requires(async != null);
-            Contract.Assert(dbModuleCollection != null);
+            Contract.Requires(dbModuleCollection != null);
 
-            _async = async;
             _asyncDbWork = asyncDbWork;
             _model = new WriterModel(local, hashMapConfiguration);
             _writerNet = writerNet;
@@ -58,7 +57,7 @@ namespace Qoollo.Impl.Writer.Distributor
             if (pingConfiguration != null)
                 ping = pingConfiguration.TimeoutPeriod;
 
-            _async.AddAsyncTask(
+            async.AddAsyncTask(
                 new AsyncDataPeriod(ping, Ping, AsyncTasksNames.AsyncPing, -1), false);
         }
 
@@ -66,8 +65,7 @@ namespace Qoollo.Impl.Writer.Distributor
         {
             _model.Start();
 
-            _queue.DbDistributorInnerQueue.Registrate(new QueueConfiguration(1, 1000), ProcessInner);
-            _queue.DbDistributorOuterQueue.Registrate(new QueueConfiguration(1, 1000), ProcessOuter);
+            _queue.DbDistributorInnerQueue.Registrate(new QueueConfiguration(1, 1000), ProcessInner);            
             _queue.TransactionAnswerQueue.Registrate(_queueConfiguration, ProcessTransaction);
         }
 
@@ -78,6 +76,11 @@ namespace Qoollo.Impl.Writer.Distributor
 
             servers = _writerNet.GetServersByType(typeof(SingleConnectionToWriter));
             _writerNet.PingWriter(servers);
+
+            //remove old connections after model update
+            var map = _model.Servers;
+            servers = servers.Where(x => !map.Contains(x)).ToList();
+            servers.ForEach(x => _writerNet.RemoveConnection(x));
         }
 
         #region public
@@ -85,49 +88,45 @@ namespace Qoollo.Impl.Writer.Distributor
         public void UpdateModel()
         {
             if (!_asyncDbWork.IsStarted)
-                _model.UpdateModel();
-            else
             {
-                //TODO вернуть что нельзя                
-            }
+                _model.UpdateModel();
+                _asyncDbWork.UpdateModel(_model.Servers);
+            }            
         }
 
         /// <summary>
         /// Start servers recover
         /// </summary>
-        /// <param name="server">Distributor address.</param>
         /// <param name="isModelUpdated">is hash file is new
         ///     true - need check all data
         ///     false - check only metatable</param>
-        public string Restore(ServerId server, bool isModelUpdated)
+        public string Restore(bool isModelUpdated)
         {
-            var ret = CheckRestoreArguments(server, null, isModelUpdated, Consts.AllTables);
+            var ret = CheckRestoreArguments(Consts.AllTables);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
 
             _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, Consts.AllTables));
-            _queue.DbDistributorOuterQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, Consts.AllTables));
 
             return ret;
         }
 
-        public string Restore(ServerId server, bool isModelUpdated, string tableName)
+        public string Restore(bool isModelUpdated, string tableName)
         {
-            var ret = CheckRestoreArguments(server, null, isModelUpdated, Consts.AllTables);
+            var ret = CheckRestoreArguments(Consts.AllTables);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
 
             _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, tableName));
-            _queue.DbDistributorOuterQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, tableName));
 
             return ret;
         }
 
-        public string Restore(ServerId server, List<ServerId> servers, bool isModelUpdated)
+        public string Restore(List<ServerId> servers, bool isModelUpdated)
         {
-            var ret = CheckRestoreArguments(server, servers, isModelUpdated, Consts.AllTables);
+            var ret = CheckRestoreArguments(Consts.AllTables);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
@@ -136,14 +135,13 @@ namespace Qoollo.Impl.Writer.Distributor
             {
                 FailedServers = servers
             });
-            _queue.DbDistributorOuterQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, Consts.AllTables));
 
             return ret;
         }
 
-        public string Restore(ServerId server, List<ServerId> servers, bool isModelUpdated, string tableName)
+        public string Restore(List<ServerId> servers, bool isModelUpdated, string tableName)
         {
-            var ret = CheckRestoreArguments(server, servers, isModelUpdated, tableName);
+            var ret = CheckRestoreArguments(tableName);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
@@ -152,19 +150,14 @@ namespace Qoollo.Impl.Writer.Distributor
             {
                 FailedServers = servers
             });
-            _queue.DbDistributorOuterQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, tableName));
 
             return ret;
         }
 
-        private string CheckRestoreArguments(ServerId server, List<ServerId> servers, bool isModelUpdated,
-            string tableName)
+        private string CheckRestoreArguments(string tableName)
         {
             if (_asyncDbWork.IsStarted)
                 return Errors.RestoreAlreadyStarted;
-
-            if (!_writerNet.ConnectToDistributor(server))
-                return Errors.RestoreFailConnectToDistributor;
 
             if (tableName != Consts.AllTables && !_dbModuleCollection.GetDbModules.Exists(x => x.TableName == tableName))
                 return Errors.TableDoesNotExists;
@@ -182,14 +175,47 @@ namespace Qoollo.Impl.Writer.Distributor
             return _asyncDbWork.GetFailedServers();
         }
 
+        public string GetCurrentRestoreServer()
+        {
+            return _asyncDbWork.GetRestoreServer().ToString();
+        }
+
+        public string GetRestoreRequiredState()
+        {
+            return _asyncDbWork.StateString;
+        }
+
+        public void DisableDelete()
+        {
+            _asyncDbWork.TimeoutModule.Disable();
+        }
+
+        public void EnableDelete()
+        {
+            _asyncDbWork.TimeoutModule.Enable();
+        }
+
+        public void StartDelete()
+        {
+            _asyncDbWork.TimeoutModule.StartDelete();
+        }
+
         #endregion
 
         #region Commands
 
         public RemoteResult ProcessSend(NetCommand command)
         {
-            if (command is IsRestoredCommand)
-                return new IsRestoredResult(_asyncDbWork.IsNeedRestore);
+            if (command is SetGetRestoreStateCommand)
+            {
+                var ret = new SetGetRestoreStateResult(
+                    _asyncDbWork.DistributorReceive(((SetGetRestoreStateCommand) command).State),
+                    _asyncDbWork.FullState);
+                return ret;
+            }
+
+            if (command is HashFileUpdateCommand)
+                return HashFileUpdate(command);
 
             _queue.DbDistributorInnerQueue.Add(command);
             return new SuccessResult();
@@ -228,18 +254,31 @@ namespace Qoollo.Impl.Writer.Distributor
             }
             else
                 Logger.Logger.Instance.ErrorFormat("Not supported command {0}", command.GetType());
-        }
-
-        private void ProcessOuter(NetCommand command)
-        {
-            if (command is RestoreCommand)
-                _writerNet.SendToDistributor(command);
-        }
+        }        
 
         private void ProcessTransaction(Transaction transaction)
         {
             if (transaction.Distributor != null)
                 _writerNet.TransactionAnswer(transaction.Distributor, transaction);
+        }
+
+        private RemoteResult HashFileUpdate(NetCommand command)
+        {
+            if (_asyncDbWork.IsStarted)
+                return new InnerFailResult("Restore process is started");
+
+            var result = _model.UpdateHashViaNet((command as HashFileUpdateCommand).Map);
+            RemoteResult ret;
+
+            if (result == string.Empty)
+            {
+                ret = new SuccessResult();
+                _asyncDbWork.UpdateModel(_model.Servers);
+            }
+            else
+                ret = new InnerFailResult(result);
+
+            return ret;
         }
 
         #endregion

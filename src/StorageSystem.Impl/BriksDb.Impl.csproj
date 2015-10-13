@@ -135,9 +135,13 @@
     <Compile Include="Common\Data\TransactionTypes\UserTransaction.cs" />
     <Compile Include="Common\Exceptions\InitializationException.cs" />
     <Compile Include="Common\HashFile\HashFileType.cs" />
+    <Compile Include="Common\HashFile\HashFileUpdater.cs" />
     <Compile Include="Common\HashHelp\HashConvertor.cs" />
     <Compile Include="Common\HashHelp\IHashCalculater.cs" />
     <Compile Include="Common\IStorageInner.cs" />
+    <Compile Include="Common\NetResults\Data\SetGetRestoreStateResult.cs" />
+    <Compile Include="Common\NetResults\System\Distributor\HashFileUpdateCommand.cs" />
+    <Compile Include="Common\NetResults\System\Distributor\SetGetRestoreStateCommand.cs" />
     <Compile Include="Common\Support\AggregateResultHelper.cs" />
     <Compile Include="Common\NetResults\Event\HashMapResult.cs" />
     <Compile Include="Common\NetResults\System\Collector\GetHashMapCommand.cs" />
@@ -153,7 +157,6 @@
     <Compile Include="Writer\WriterNet\NetWriterReceiverForCollector.cs" />
     <Compile Include="Writer\WriterNet\NetWriterReceiverForWrite.cs" />
     <Compile Include="Writer\Db\Commands\UserCommandCreatorBase.cs" />
-    <Compile Include="Writer\AsyncDbWorks\Support\RestoreState.cs" />
     <Compile Include="Writer\AsyncDbWorks\Support\RestoreStateHelper.cs" />
     <Compile Include="Writer\Db\DbModuleCollection.cs" />
     <Compile Include="Writer\Db\SelectDescriptionForGeneric.cs" />
@@ -205,7 +208,6 @@
     <Compile Include="Common\NetCommand.cs" />
     <Compile Include="Common\Support\enums.cs" />
     <Compile Include="Common\NetResults\Data\AddDistributorResult.cs" />
-    <Compile Include="Common\NetResults\System\Distributor\IsRestoredResult.cs" />
     <Compile Include="Common\NetResults\Data\SystemInfoResult.cs" />
     <Compile Include="Common\NetResults\Event\InitiatorNotAvailableResult.cs" />
     <Compile Include="Common\RemoteResult.cs" />
@@ -237,7 +239,6 @@
     <Compile Include="Writer\AsyncDbWorks\Readers\ReaderFullBase.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\TransferRestoreModule.cs" />
     <Compile Include="Common\NetResults\System\Distributor\AddDistributorFromDistributorCommand.cs" />
-    <Compile Include="Common\NetResults\System\Distributor\IsRestoredCommand.cs" />
     <Compile Include="Common\NetResults\System\Distributor\OperationCompleteCommand.cs" />
     <Compile Include="Common\NetResults\System\Distributor\ReadOperationCompleteCommand.cs" />
     <Compile Include="Common\NetResults\System\Distributor\TakeInfoCommand.cs" />
@@ -250,7 +251,7 @@
     <Compile Include="Writer\WriterNet\Interfaces\INetModule.cs" />
     <Compile Include="Writer\WriterNet\NetWriterReceiver.cs" />
     <Compile Include="Writer\InputModule.cs" />
-    <Compile Include="Writer\Distributor\DistributorModule.cs" />
+    <Compile Include="Writer\DistributorModule.cs" />
     <Compile Include="DistributorModules\Caches\DistributorCache.cs" />
     <Compile Include="NetInterfaces\Distributor\ICommonNetReceiverForProxy.cs" />
     <Compile Include="DistributorModules\DistributorNet\Interfaces\INetModule.cs" />

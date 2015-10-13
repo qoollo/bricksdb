@@ -7,14 +7,13 @@ namespace Qoollo.Client.WriterGate
     {
         void UpdateModel();
 
-        RequestDescription Restore(ServerAddress server, bool isModelUpdated);
+        RequestDescription Restore(bool isModelUpdated);
 
-        RequestDescription Restore(ServerAddress server, List<ServerAddress> servers, bool isModelUpdated);
+        RequestDescription Restore(List<ServerAddress> servers, bool isModelUpdated);
 
-        RequestDescription Restore(ServerAddress server, bool isModelUpdated, string tableName);
+        RequestDescription Restore(bool isModelUpdated, string tableName);
 
-        RequestDescription Restore(ServerAddress server, List<ServerAddress> servers, bool isModelUpdated,
-            string tableName);
+        RequestDescription Restore(List<ServerAddress> servers, bool isModelUpdated, string tableName);
 
         bool IsRestoreCompleted();
 

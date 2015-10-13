@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Diagnostics.Contracts;
 using System.Threading;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
@@ -13,7 +14,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             get
             {
                 _lock.EnterReadLock();
-                bool ret = _isStart;
+                bool ret = IsStartNoLock;
                 _lock.ExitReadLock();
 
                 return ret;
@@ -21,10 +22,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             protected set
             {
                 _lock.EnterWriteLock();
-                _isStart = value;
+                IsStartNoLock = value;
                 _lock.ExitWriteLock();
             }
         }
+
+        protected ReaderWriterLockSlim Lock { get { return _lock; } }
+
+        protected bool IsStartNoLock { get; set; }
 
         public CommonAsyncWorkModule(WriterNetModule writerNet, AsyncTaskModule asyncTaskModule)
         {
@@ -32,13 +37,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             Contract.Requires(asyncTaskModule!=null);
             AsyncTaskModule = asyncTaskModule;
             WriterNet = writerNet;
-            _isStart = false;
+            IsStartNoLock = false;
             _lock = new ReaderWriterLockSlim();
         }
 
         protected WriterNetModule WriterNet;
         protected AsyncTaskModule AsyncTaskModule;
-        private bool _isStart;
         private readonly ReaderWriterLockSlim _lock;
     }
 }

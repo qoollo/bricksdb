@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
@@ -15,19 +17,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 {
     internal class AsyncDbWorkModule:ControlModule
     {
-        private readonly InitiatorRestoreModule _initiatorRestore;
-        private readonly TransferRestoreModule _transfer;
-        private readonly TimeoutModule _timeout;
-
-        private readonly RestoreStateHelper _stateHelper;
-        public bool IsNeedRestore
+        public string StateString
         {
-            get
-            {
-                _stateHelper.InitiatorState(_initiatorRestore.IsStart);
+            get { return Enum.GetName(typeof (RestoreState), _stateHelper.State); }
+        }
 
-                return _stateHelper.IsNeedRestore;
-            }
+        public TimeoutModule TimeoutModule { get { return _timeout; } }
+
+        internal bool IsNeedRestore
+        {
+            get { return _stateHelper.State != RestoreState.Restored; }
         }
 
         public bool IsStarted
@@ -35,6 +34,24 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             get
             {
                 return _initiatorRestore.IsStart;
+            }
+        }
+
+        public Dictionary<string, string> FullState
+        {
+            get
+            {
+                var dictionary = new Dictionary<string, string>
+                {
+                    {ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString()}                    
+                };
+                if (_initiatorRestore.IsStart)
+                {
+                    var server = _initiatorRestore.RestoreServer;
+                    if (server != null)
+                        dictionary.Add(ServerState.RestoreCurrentServers, server.ToString());
+                }
+                return dictionary;
             }
         }
 
@@ -55,12 +72,18 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
             _stateHelper = new RestoreStateHelper(isNeedRestore);
 
-            _initiatorRestore = new InitiatorRestoreModule(initiatorConfiguration, writerNet, async);
+            _initiatorRestore = new InitiatorRestoreModule(initiatorConfiguration, writerNet, async, _stateHelper);
             _transfer = new TransferRestoreModule(transferConfiguration, writerNet, async, 
                 db, local, queueConfiguration);
             _timeout = new TimeoutModule(writerNet, async, queueConfiguration,
                 db,  timeoutConfiguration);
         }
+
+        private readonly InitiatorRestoreModule _initiatorRestore;
+        private readonly TransferRestoreModule _transfer;
+        private readonly TimeoutModule _timeout;
+
+        private readonly RestoreStateHelper _stateHelper;
 
         public override void Start()
         {
@@ -68,16 +91,22 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _transfer.Start();
             _timeout.Start();
         }
-        
+
+        public void UpdateModel(List<ServerId> servers)
+        {
+            _initiatorRestore.UpdateModel(servers);
+            _stateHelper.LocalSendState(true);
+        }
+
+        #region Restore process
+
         public void Restore(List<HashMapRecord> local, List<ServerId> servers, bool isModelUpdated)
         {
             if (_initiatorRestore.IsStart)
                 return;
 
-            bool ret =  _initiatorRestore.Restore(local,servers, isModelUpdated);
-
-            if(ret)
-                _stateHelper.RestoreStart();
+            _stateHelper.LocalSendState(isModelUpdated);
+            _initiatorRestore.Restore(local,servers, isModelUpdated);
         }
 
         public void Restore(List<HashMapRecord> local, List<ServerId> servers, bool isModelUpdated, string tableName)
@@ -85,10 +114,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             if (_initiatorRestore.IsStart)
                 return;
 
-            bool ret = _initiatorRestore.Restore(local, servers, isModelUpdated, tableName);
-
-            if (ret)
-                _stateHelper.RestoreStart();
+            _stateHelper.LocalSendState(isModelUpdated);
+            _initiatorRestore.Restore(local, servers, isModelUpdated, tableName);
         }
 
         public void RestoreIncome(ServerId server, bool isSystemUpdated, List<KeyValuePair<string, string>> hash, string tableName, List<HashMapRecord> localMap)
@@ -106,14 +133,27 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _initiatorRestore.LastMessageIncome(server);
         }
 
+        #endregion
+
         public bool IsRestoreComplete()
         {
             return !_initiatorRestore.IsStart;
-        }
+        }        
 
         public List<ServerId> GetFailedServers()
         {
             return _initiatorRestore.FailedServers;
+        }
+
+        public ServerId GetRestoreServer()
+        {
+            return _initiatorRestore.RestoreServer;
+        }
+
+        public RestoreState DistributorReceive(RestoreState state)
+        {
+            _stateHelper.DistributorSendState(state);
+            return _stateHelper.State;
         }
 
         protected override void Dispose(bool isUserCall)

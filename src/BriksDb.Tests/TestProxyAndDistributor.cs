@@ -419,6 +419,9 @@ namespace Qoollo.Tests
                 UserTransaction transaction;
                 var read = (int)api.Read(i, out transaction);
 
+              //  var read = api.Read(i, out transaction);
+              //  Thread.Sleep(10000000);
+
                 Assert.AreEqual(i, read);
             }
 
@@ -660,7 +663,7 @@ namespace Qoollo.Tests
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
 
             storage1.Build();
-            storage2.Build();            
+            storage2.Build();
             distr.Build();
 
             storage1.DbModule.AddDbModule(new TestDbInMemory());

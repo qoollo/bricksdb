@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.CodeDom;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.NetResults.System.Writer;
@@ -40,14 +41,23 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             List<KeyValuePair<string, string>> remoteHashRange, string tableName,
             List<HashMapRecord> localHashRange)
         {
-            if (IsStart)
-                return;
+            Lock.EnterWriteLock();
+            try
+            {
+                if (IsStartNoLock)
+                    return;
 
-            Logger.Logger.Instance.Debug(string.Format("transafer start {0}, {1}", remoteServer, remoteHashRange),
-                "restore");
-
-            IsStart = true;
-            _remote = remoteServer;
+                Logger.Logger.Instance.Debug(string.Format("transafer start {0}, {1}", remoteServer, remoteHashRange),
+                    "restore");
+                
+                IsStartNoLock = true;
+                _remote = remoteServer;
+            }
+            finally
+            {
+                Lock.ExitWriteLock();
+            }
+           
 
             AsyncTaskModule.AddAsyncTask(
                 new AsyncDataPeriod(_configuration.PeriodRetry, RestoreAnswerCallback, AsyncTasksNames.RestoreLocal,
@@ -59,16 +69,19 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         private void RestoreAnswerCallback(AsyncData obj)
         {
+            if (_restore == null)
+                return;
+
             Logger.Logger.Instance.Debug(
                 string.Format("Async complete = {0}, start = {1}", _restore.Reader.IsComplete, IsStart), "restore");
 
             if (_restore.Reader.IsComplete && IsStart)
             {
                 AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreLocal);
-                IsStart = false;
 
                 WriterNet.SendToWriter(_remote, new RestoreCompleteCommand(_local));
                 _restore.Dispose();
+                IsStart = false;
             }
             else
             {

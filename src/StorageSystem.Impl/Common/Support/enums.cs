@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 namespace Qoollo.Impl.Common.Support
 {
@@ -18,6 +19,17 @@ namespace Qoollo.Impl.Common.Support
         public static string CheckDistributors = "checkDistributors";
         public static string TimeoutDelete = "timeoutDelete";
         public static string GetHashFromDistributor = "getHashFromDistributor";
+        public static string UpdateHashFileForWriter = "updateHashFileForWriter";
+        public static string UpdateHashFileForDistributor = "updateHashFileForDistributor";
+    }
+
+    internal static class ServerState
+    {
+        public static string Update = "Update";
+        public static string Restore = "Restore";
+        public static string RestoreInProcess = "RestoreInProcess";
+        public static string RestoreCurrentServers = "RestoreCurrentServers";
+        public static string RestoreSendStatus = "RestoreSendStatus";       
     }
 
     internal static class ModuleNames
@@ -69,5 +81,16 @@ namespace Qoollo.Impl.Common.Support
         public static string Page = "pageSize";
         
         public static string AllTables = "AllTablesyNameThatMustntBeUsedAsTableName";
+    }
+
+    [DataContract]
+    public enum RestoreState
+    {
+        [EnumMemberAttribute]
+        Restored = 0,
+        [EnumMemberAttribute]
+        FullRestoreNeed = 1,
+        [EnumMemberAttribute]
+        SimpleRestoreNeed = 2
     }
 }

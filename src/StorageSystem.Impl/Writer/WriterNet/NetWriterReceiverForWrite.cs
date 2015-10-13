@@ -7,7 +7,6 @@ using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Writer;
-using Qoollo.Impl.Writer.Distributor;
 
 namespace Qoollo.Impl.Writer.WriterNet
 {

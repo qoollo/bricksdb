@@ -11,6 +11,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
 {
     internal class TimeoutModule:CommonAsyncWorkModule
     {
+        private readonly RestoreModuleConfiguration _configuration;
         private TimeoutReaderFull _reader;
         private readonly QueueConfiguration _queueConfiguration;
         private readonly DbModuleCollection _db;
@@ -22,14 +23,33 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
             RestoreModuleConfiguration configuration)
             : base(net, asyncTaskModule)
         {
+            _configuration = configuration;
             _queueConfiguration = queueConfiguration;
             _db = db;
             _queue = GlobalQueue.Queue.DbTimeoutQueue;
             _deleteTimeout = configuration.DeleteTimeout;
 
             AsyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(configuration.PeriodRetry, PeriodMessage,
-                    AsyncTasksNames.TimeoutDelete, -1), configuration.IsForceStart);            
+                new AsyncDataPeriod(_configuration.PeriodRetry, PeriodMessage,
+                    AsyncTasksNames.TimeoutDelete, -1), _configuration.IsForceStart);
+        }
+
+        public void Enable(bool forceStart = false)
+        {
+            AsyncTaskModule.DeleteTask(AsyncTasksNames.TimeoutDelete);
+            AsyncTaskModule.AddAsyncTask(
+                            new AsyncDataPeriod(_configuration.PeriodRetry, PeriodMessage,
+                                AsyncTasksNames.TimeoutDelete, -1), forceStart);
+        }
+
+        public void Disable()
+        {
+            AsyncTaskModule.DeleteTask(AsyncTasksNames.TimeoutDelete);
+        }
+
+        public void StartDelete()
+        {
+            Enable(true);
         }
 
         private void PeriodMessage(AsyncData obj)

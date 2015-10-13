@@ -202,7 +202,7 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
 
             storage2.Start();
-            storage2.Api.Restore(new ServerAddress("localhost", distrServer12), false);
+            storage2.Api.Restore(false);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
@@ -300,13 +300,13 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
 
             storage2.Start();
-            storage2.Api.Restore(new ServerAddress("localhost", distrServer12), false, "Int");
+            storage2.Api.Restore(false, "Int");
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
             Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
             Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
 
-            storage2.Api.Restore(new ServerAddress("localhost", distrServer12), false, "Int2");
+            storage2.Api.Restore(false, "Int2");
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
             Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
@@ -475,7 +475,7 @@ namespace Qoollo.Tests
 
             storage2.Start();
 
-            storage2.Api.Restore(new ServerAddress("localhost", distrServer12), false);
+            storage2.Api.Restore(false);
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
             Assert.AreEqual(count, f1.Db.Local + f2.Db.Local);

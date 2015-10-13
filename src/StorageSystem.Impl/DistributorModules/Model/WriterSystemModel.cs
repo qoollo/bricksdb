@@ -13,10 +13,7 @@ namespace Qoollo.Impl.DistributorModules.Model
 {
     internal class WriterSystemModel
     {
-        private List<WriterDescription> _servers; 
-        private ReaderWriterLockSlim _lock;
-        private DistributorHashConfiguration _configuration;
-        private HashMap _map;
+        public List<WriterDescription> Servers { get { return new List<WriterDescription>(_servers); } } 
 
         public WriterSystemModel(DistributorHashConfiguration configuration, HashMapConfiguration mapConfiguration)
         {
@@ -26,7 +23,12 @@ namespace Qoollo.Impl.DistributorModules.Model
             _lock = new ReaderWriterLockSlim();
             _servers = new List<WriterDescription>();
             _map = new HashMap(mapConfiguration);
-        }        
+        }
+
+        private List<WriterDescription> _servers;
+        private readonly ReaderWriterLockSlim _lock;
+        private readonly DistributorHashConfiguration _configuration;
+        private readonly HashMap _map;
 
         public void ServerNotAvailable(ServerId serverId)
         {
@@ -66,25 +68,6 @@ namespace Qoollo.Impl.DistributorModules.Model
             _lock.ExitWriteLock();
         }
 
-        public void ServerIsRestored(ServerId serverId)
-        {
-            _lock.EnterWriteLock();
-
-            var server = _servers.FirstOrDefault(x => x.Equals(serverId));
-
-            if (server == null)
-            {
-                Logger.Logger.Instance.ErrorFormat(
-                    "Server {0} is missing in model of this file, but command received that it is unavailable", serverId);
-            }
-            else
-            {
-                server.Restored();
-            }
-
-            _lock.ExitWriteLock();
-        }
-
         public void Start()
         {
             _map.CreateMap();
@@ -95,6 +78,35 @@ namespace Qoollo.Impl.DistributorModules.Model
         {
             _map.UpdateFileModel();
             _servers = _map.Servers;
+        }
+
+        public void UpdateModel()
+        {
+            _servers.ForEach(x=>x.UpdateModel());
+        }
+
+        public void UpdateHashViaNet(List<HashMapRecord> map)
+        {
+            var currentMap = GetAllServersForCollector();
+            bool equal = true;
+            currentMap.ForEach(x =>
+            {
+                if (!map.Contains(x))
+                    equal = false;
+            });
+
+            map.ForEach(x =>
+            {
+                if (!currentMap.Contains(x))
+                    equal = false;
+            });
+
+            if (equal)
+                return;
+
+            HashFileUpdater.UpdateFile(_map.FileName);
+            _map.CreateNewMapWithFile(map);
+            _map.CreateAvailableMap();
         }
 
         public List<WriterDescription> GetDestination(InnerData ev)
@@ -140,13 +152,22 @@ namespace Qoollo.Impl.DistributorModules.Model
             return ret;
         }
 
-        public List<HashMapRecord> GetAllServers()
+        public List<HashMapRecord> GetAllServersForCollector()
         {
             _lock.EnterReadLock();
             var ret = _map.Map.Select(x => x.Clone()).ToList();
             _lock.ExitReadLock();
 
             ret.ForEach(x => x.Prepare(HashFileType.Collector));
+
+            return ret;
+        }
+
+        public List<HashMapRecord> GetHashMap()
+        {
+            _lock.EnterReadLock();
+            var ret = _map.Map.Select(x => x.Clone()).ToList();
+            _lock.ExitReadLock();            
 
             return ret;
         }
@@ -167,7 +188,7 @@ namespace Qoollo.Impl.DistributorModules.Model
             _lock.ExitReadLock();
             return ret;
         }        
-
+        
         public bool IsSomethingHappendInSystem()
         {
             bool ret = false;

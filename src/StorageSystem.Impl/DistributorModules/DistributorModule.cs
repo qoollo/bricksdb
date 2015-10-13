@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Commands;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -23,17 +25,6 @@ namespace Qoollo.Impl.DistributorModules
 {
     internal class DistributorModule : ControlModule
     {
-        private readonly WriterSystemModel _modelOfDbWriters;
-        private readonly DistributorSystemModel _modelOfAnotherDistributors;
-        private readonly QueueConfiguration _queueConfiguration;
-        private readonly DistributorNetModule _distributorNet;
-        private readonly ServerId _localfordb;
-        private readonly ServerId _localforproxy;
-        private readonly GlobalQueueInner _queue;
-        private readonly AsyncTaskModule _asyncTaskModule;
-        private readonly AsyncTasksConfiguration _asyncPing;
-        private readonly AsyncTasksConfiguration _asyncCheck;
-
         public ServerId LocalForDb
         {
             get { return _localfordb; }
@@ -68,6 +59,17 @@ namespace Qoollo.Impl.DistributorModules
             _queue = GlobalQueue.Queue;
         }
 
+        private readonly WriterSystemModel _modelOfDbWriters;
+        private readonly DistributorSystemModel _modelOfAnotherDistributors;
+        private readonly QueueConfiguration _queueConfiguration;
+        private readonly DistributorNetModule _distributorNet;
+        private readonly ServerId _localfordb;
+        private readonly ServerId _localforproxy;
+        private readonly GlobalQueueInner _queue;
+        private readonly AsyncTaskModule _asyncTaskModule;
+        private readonly AsyncTasksConfiguration _asyncPing;
+        private readonly AsyncTasksConfiguration _asyncCheck;
+
         public override void Start()
         {
             _queue.DistributorDistributorQueue.Registrate(_queueConfiguration, Process);
@@ -97,22 +99,7 @@ namespace Qoollo.Impl.DistributorModules
 
         private HashMapResult GetHashMap()
         {
-            return new HashMapResult(_modelOfDbWriters.GetAllServers());
-        }
-
-        private void RestoreServerCommand(RestoreCommand command)
-        {
-            //TODO тоже надо будет выпилить
-            command.CountSends++;
-
-            _distributorNet.ConnectToWriter(command.RestoreServer);
-            _modelOfDbWriters.ServerAvailable(command.RestoreServer);
-
-            if (command.CountSends < 2)
-            {
-                var list = _modelOfAnotherDistributors.GetDistributorList();
-                list.ForEach(x => _distributorNet.SendToDistributor(x, command));
-            }
+            return new HashMapResult(_modelOfDbWriters.GetAllServersForCollector());
         }
 
         private void ServerNotAvailableInner(ServerId server)
@@ -123,26 +110,41 @@ namespace Qoollo.Impl.DistributorModules
 
         private void PingProcess(AsyncData data)
         {
-            var map = _modelOfDbWriters.GetAllServers2();
-            _distributorNet.PingWriters(map, _modelOfDbWriters.ServerAvailable);
+            try
+            {
+                var map = _modelOfDbWriters.GetAllServers2();
+                _distributorNet.PingWriters(map, _modelOfDbWriters.ServerAvailable);
 
-            map = _distributorNet.GetServersByType(typeof (SingleConnectionToProxy));
-            _distributorNet.PingProxy(map);
+                map = _distributorNet.GetServersByType(typeof(SingleConnectionToProxy));
+                _distributorNet.PingProxy(map);
 
-            map = _distributorNet.GetServersByType(typeof (SingleConnectionToDistributor));
-            _distributorNet.PingDistributors(map);
+                map = _distributorNet.GetServersByType(typeof(SingleConnectionToDistributor));
+                _distributorNet.PingDistributors(map);
+
+                //remove old connections after model update
+                var real = _distributorNet.GetServersByType(typeof(SingleConnectionToWriter));
+                real = real.Where(x => !map.Contains(x)).ToList();
+                real.ForEach(x => _distributorNet.RemoveConnection(x));
+            }
+            catch (Exception e)
+            {
+                int t = 0;
+            }
+            
         }
 
         private void CheckRestore(AsyncData data)
         {
-            var map = _modelOfDbWriters.GetAllServers2();
+            var map = _modelOfDbWriters.Servers;
             map.ForEach(x =>
             {
-                var result = _distributorNet.SendToWriter(x, new IsRestoredCommand());
+                var result = _distributorNet.SendToWriter(x, new SetGetRestoreStateCommand(x.RestoreState));
 
-                if (result is IsRestoredResult && ((IsRestoredResult) result).IsRestored)
+                if (result is SetGetRestoreStateResult)
                 {
-                    _modelOfDbWriters.ServerIsRestored(x);
+                    var command = ((SetGetRestoreStateResult)result);
+                    x.UpdateState(command.State);
+                    x.SetInfoMessageList(command.FullState);
                 }
             });
         }
@@ -151,6 +153,98 @@ namespace Qoollo.Impl.DistributorModules
         {
             var servers = _modelOfAnotherDistributors.GetDistributorList();
             AddDistributors(servers);
+        }
+
+        private List<WriterDescription> UpdateWritersAsync(List<WriterDescription> servers, HashFileUpdateCommand command)
+        {
+            var ret = new List<WriterDescription>();
+            servers.ForEach(x =>
+            {
+                var result = _distributorNet.SendToWriter(x,command);
+                if (result is InnerFailResult)
+                {
+                    var message = ((InnerFailResult)result).Description;
+                    x.SetInfoMessage(ServerState.Update, message);
+                    Logger.Logger.Instance.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
+
+                }
+
+                if (!result.IsError)
+                {
+                    ret.Add(x);
+                    x.SetInfoMessage(ServerState.Update, string.Empty);
+                }
+            });
+            return ret;
+        }
+
+        private List<ServerId> UpdateDistributorsAsync(List<ServerId> servers, HashFileUpdateCommand command)
+        {
+            var ret = new List<ServerId>();
+            servers.ForEach(x =>
+            {
+                var result = _distributorNet.SendToDistributor(x, command);
+                if (!result.IsError)
+                    ret.Add(x);
+            });
+            return ret;
+        }
+
+        private void UpdateWritersAndDistributors()
+        {
+            var writers = _modelOfDbWriters.Servers;
+            var map = _modelOfDbWriters.GetHashMap();
+            var command = new HashFileUpdateCommand(map);
+
+            var failedWriters = new List<WriterDescription>();
+            writers.ForEach(x =>
+            {
+                var result = _distributorNet.SendToWriter(x, command);
+                if (result.IsError)
+                {
+                    failedWriters.Add(x);
+                    if (result is InnerFailResult)
+                    {
+                        var message = ((InnerFailResult)result).Description;
+                        x.SetInfoMessage(ServerState.Update, message);
+                        Logger.Logger.Instance.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
+
+                    }
+                }
+                else
+                    x.SetInfoMessage(ServerState.Update, string.Empty);
+            });
+
+            if (failedWriters.Count != 0)
+            {
+                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(_asyncCheck.TimeoutPeriod,
+                    data =>
+                    {
+                        var list = UpdateWritersAsync(failedWriters, command);
+                        failedWriters.RemoveAll(x => list.Contains(x));
+                    }, AsyncTasksNames.UpdateHashFileForWriter, -1), false);
+                _asyncTaskModule.StartTask(AsyncTasksNames.UpdateHashFileForWriter);
+            }
+
+            var distributors = _modelOfAnotherDistributors.GetDistributorList();
+            var failedDistributors = new List<ServerId>();
+            distributors.ForEach(x =>
+            {
+                var result = _distributorNet.SendToDistributor(x, command);
+                if (result.IsError)
+                    failedDistributors.Add(x);
+            });
+
+            if (failedDistributors.Count != 0)
+            {
+                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(_asyncCheck.TimeoutPeriod,
+                    data =>
+                    {
+                        var list = UpdateDistributorsAsync(failedDistributors, command);
+                        failedDistributors.RemoveAll(x => list.Contains(x));
+                    }, AsyncTasksNames.UpdateHashFileForDistributor, -1), false);
+                _asyncTaskModule.StartTask(AsyncTasksNames.UpdateHashFileForDistributor);
+            }
         }
 
         #endregion
@@ -195,30 +289,52 @@ namespace Qoollo.Impl.DistributorModules
             return new SuccessResult();
         }
 
-        private void Process(NetCommand message)
+        private void Process(NetCommand command)
         {
-            if (message is ServerNotAvailableCommand)
-                ServerNotAvailableInner((message as ServerNotAvailableCommand).Server);
+            if (command is ServerNotAvailableCommand)
+                ServerNotAvailableInner((command as ServerNotAvailableCommand).Server);
 
-            else if (message is AddDistributorFromDistributorCommand)
-                AddDistributor(message as AddDistributorFromDistributorCommand);
+            else if (command is AddDistributorFromDistributorCommand)
+                AddDistributor(command as AddDistributorFromDistributorCommand);
+            
+            else if (command is HashFileUpdateCommand)
+                _modelOfDbWriters.UpdateHashViaNet((command as HashFileUpdateCommand).Map);
 
-            else if (message is RestoreCommand)
-                RestoreServerCommand(message as RestoreCommand);
             else
-                Logger.Logger.Instance.ErrorFormat("Not supported command type = {0}", message.GetType());
+                Logger.Logger.Instance.InfoFormat("Not supported command type = {0}", command.GetType());
         }
 
         public RemoteResult ProcessTransaction(Common.Data.TransactionTypes.Transaction transaction)
         {
             _queue.TransactionQueue.Add(transaction);
             return new SuccessResult();
-        }
+        }       
+
+        #endregion
+
+        #region Command from User
 
         public void UpdateModel()
         {
             _modelOfDbWriters.UpdateFromFile();
+            _modelOfDbWriters.UpdateModel();
+
+            _asyncTaskModule.DeleteTask(AsyncTasksNames.UpdateHashFileForDistributor);
+            _asyncTaskModule.DeleteTask(AsyncTasksNames.UpdateHashFileForWriter);
+
+            UpdateWritersAndDistributors();
         }
+
+        public string GetServersState()
+        {
+            return _modelOfDbWriters.Servers.Aggregate(string.Empty,
+                (current, writerDescription) => current + "\n" + writerDescription.StateString);
+        }
+
+        public List<ServerId> GetDistributors()
+        {
+            return _modelOfAnotherDistributors.GetDistributorList();
+        } 
 
         #endregion
 
@@ -279,15 +395,6 @@ namespace Qoollo.Impl.DistributorModules
         {
             var data = new DistributorDataContainer(_modelOfAnotherDistributors.GetDistributorList());
             return new SystemInfoResult(data);
-        }
-
-        #endregion
-
-        #region Test
-
-        public List<ServerId> GetDistributors()
-        {
-            return _modelOfAnotherDistributors.GetDistributorList();
         }
 
         #endregion

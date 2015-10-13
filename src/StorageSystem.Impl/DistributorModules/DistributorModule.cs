@@ -102,21 +102,6 @@ namespace Qoollo.Impl.DistributorModules
             return new HashMapResult(_modelOfDbWriters.GetAllServersForCollector());
         }
 
-        private void RestoreServerCommand(RestoreCommand command)
-        {
-            //TODO тоже надо будет выпилить
-            command.CountSends++;
-
-            _distributorNet.ConnectToWriter(command.RestoreServer);
-            _modelOfDbWriters.ServerAvailable(command.RestoreServer);
-
-            if (command.CountSends < 2)
-            {
-                var list = _modelOfAnotherDistributors.GetDistributorList();
-                list.ForEach(x => _distributorNet.SendToDistributor(x, command));
-            }
-        }
-
         private void ServerNotAvailableInner(ServerId server)
         {
             Logger.Logger.Instance.Debug("Distributor: Server not available " + server);
@@ -311,10 +296,7 @@ namespace Qoollo.Impl.DistributorModules
 
             else if (command is AddDistributorFromDistributorCommand)
                 AddDistributor(command as AddDistributorFromDistributorCommand);
-
-            else if (command is RestoreCommand)
-                RestoreServerCommand(command as RestoreCommand);
-
+            
             else if (command is HashFileUpdateCommand)
                 _modelOfDbWriters.UpdateHashViaNet((command as HashFileUpdateCommand).Map);
 

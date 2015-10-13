@@ -38,10 +38,7 @@ namespace Qoollo.Impl.Modules.Queue
         public QueueWithParam<InnerData> DbInputProcessQueue { get { return _dbInputProcessQueue; } }
 
         private QueueWithParam<NetCommand> _dbDistributorInnerQueue;
-        public QueueWithParam<NetCommand> DbDistributorInnerQueue { get { return _dbDistributorInnerQueue; } }
-
-        private QueueWithParam<NetCommand> _dbDistributorOuterQueue;
-        public QueueWithParam<NetCommand> DbDistributorOuterQueue { get { return _dbDistributorOuterQueue; } }
+        public QueueWithParam<NetCommand> DbDistributorInnerQueue { get { return _dbDistributorInnerQueue; } }        
 
         private QueueWithParam<InnerData> _dbRestoreQueue;
         public QueueWithParam<InnerData> DbRestoreQueue { get { return _dbRestoreQueue; } }
@@ -67,7 +64,6 @@ namespace Qoollo.Impl.Modules.Queue
             _dbInputRollbackQueue = new QueueWithParam<InnerData>();
             _dbInputProcessQueue = new QueueWithParam<InnerData>();
             _dbDistributorInnerQueue = new QueueWithParam<NetCommand>();
-            _dbDistributorOuterQueue = new QueueWithParam<NetCommand>();
             _dbRestoreQueue = new QueueWithParam<InnerData>();
             _transactionQueue = new QueueWithParam<Transaction>();
             _transactionAnswerQueue = new QueueWithParam<Transaction>();
@@ -87,7 +83,6 @@ namespace Qoollo.Impl.Modules.Queue
             _dbInputRollbackQueue.Start();
             _dbInputProcessQueue.Start();
             _dbDistributorInnerQueue.Start();
-            _dbDistributorOuterQueue.Start();
             _dbRestoreQueue.Start();
             _transactionQueue.Start();
             _transactionAnswerQueue.Start();
@@ -106,7 +101,6 @@ namespace Qoollo.Impl.Modules.Queue
                 _dbInputRollbackQueue.Dispose();
                 _dbInputProcessQueue.Dispose();
                 _dbDistributorInnerQueue.Dispose();
-                _dbDistributorOuterQueue.Dispose();
                 _dbRestoreQueue.Dispose();
                 _transactionQueue.Dispose();
                 _transactionAnswerQueue.Dispose();

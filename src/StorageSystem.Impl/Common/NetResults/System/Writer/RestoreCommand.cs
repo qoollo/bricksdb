@@ -14,9 +14,6 @@ namespace Qoollo.Impl.Common.NetResults.System.Writer
         public bool IsModelUpdated { get; private set; }
         
         [DataMember]
-        public int CountSends { get; set; }
-
-        [DataMember]
         public string TableName { get; set; }
 
         public List<ServerId> FailedServers { get; set; } 
@@ -25,7 +22,6 @@ namespace Qoollo.Impl.Common.NetResults.System.Writer
         {
             RestoreServer = server;
             IsModelUpdated = isModelUpdated;
-            CountSends = 0;
             TableName = tableName;
         }
     }

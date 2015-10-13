@@ -65,8 +65,7 @@ namespace Qoollo.Impl.Writer
         {
             _model.Start();
 
-            _queue.DbDistributorInnerQueue.Registrate(new QueueConfiguration(1, 1000), ProcessInner);
-            _queue.DbDistributorOuterQueue.Registrate(new QueueConfiguration(1, 1000), ProcessOuter);
+            _queue.DbDistributorInnerQueue.Registrate(new QueueConfiguration(1, 1000), ProcessInner);            
             _queue.TransactionAnswerQueue.Registrate(_queueConfiguration, ProcessTransaction);
         }
 
@@ -109,7 +108,6 @@ namespace Qoollo.Impl.Writer
                 return ret;
 
             _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, Consts.AllTables));
-            _queue.DbDistributorOuterQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, Consts.AllTables));
 
             return ret;
         }
@@ -122,7 +120,6 @@ namespace Qoollo.Impl.Writer
                 return ret;
 
             _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, tableName));
-            _queue.DbDistributorOuterQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, tableName));
 
             return ret;
         }
@@ -138,7 +135,6 @@ namespace Qoollo.Impl.Writer
             {
                 FailedServers = servers
             });
-            _queue.DbDistributorOuterQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, Consts.AllTables));
 
             return ret;
         }
@@ -154,7 +150,6 @@ namespace Qoollo.Impl.Writer
             {
                 FailedServers = servers
             });
-            _queue.DbDistributorOuterQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, tableName));
 
             return ret;
         }
@@ -259,13 +254,7 @@ namespace Qoollo.Impl.Writer
             }
             else
                 Logger.Logger.Instance.ErrorFormat("Not supported command {0}", command.GetType());
-        }
-
-        private void ProcessOuter(NetCommand command)
-        {
-            if (command is RestoreCommand)
-                _writerNet.SendToDistributor(command);
-        }
+        }        
 
         private void ProcessTransaction(Transaction transaction)
         {

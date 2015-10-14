@@ -55,12 +55,15 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
                 _reader.ProcessData(data);
             }
-            else if (!IsLocalData(data.MetaData))
+            else
             {
                 PerfCounters.WriterCounters.Instance.RestoreCountSend.Increment();
                 PerfCounters.WriterCounters.Instance.RestoreSendPerSec.OperationFinished();
 
-                _db.Delete(data);
+                if (!IsLocalData(data.MetaData))
+                {
+                    _db.Delete(data);
+                }
             }
         }
 

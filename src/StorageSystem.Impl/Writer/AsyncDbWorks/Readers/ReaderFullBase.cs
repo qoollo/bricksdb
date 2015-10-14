@@ -10,10 +10,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
     internal abstract class ReaderFullBase:ControlModule
     {
         private SingleReaderBase _reader;
-        private Action<InnerData> _process;
-        private QueueConfiguration _queueConfiguration;
-        private QueueWithParam<InnerData> _queue;
-        private bool _isBothTables;
+        private readonly Action<InnerData> _process;
+        private readonly QueueConfiguration _queueConfiguration;
+        private readonly QueueWithParam<InnerData> _queue;
+        private readonly bool _isBothTables;
 
         protected ReaderFullBase(Action<InnerData> process,
             QueueConfiguration queueConfiguration,

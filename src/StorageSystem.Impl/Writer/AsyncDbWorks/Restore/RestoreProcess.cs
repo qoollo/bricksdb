@@ -42,12 +42,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private readonly List<KeyValuePair<string, string>> _localHashRange;
         private readonly RestoreReaderFull _reader;
 
-        private void ProcessData(InnerData data)
+        private async void ProcessData(InnerData data)
         {
             data.Transaction.OperationName = OperationName.RestoreUpdate;
             data.Transaction.OperationType = OperationType.Async;
 
-            var result = _writerNet.ProcessSync(_remote, data);
+            var result = await _writerNet.ProcessAsync(_remote, data);
+
 
             if (result is FailNetResult)
             {

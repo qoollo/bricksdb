@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Threading.Tasks;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -50,7 +51,7 @@ namespace Qoollo.Impl.Writer
 
         #endregion
 
-        #region Process        
+        #region Process
 
         public void Process(InnerData data)
         {
@@ -85,6 +86,12 @@ namespace Qoollo.Impl.Writer
         }
 
         #endregion          
+
+        public Task<RemoteResult> ProcessTaskBased(InnerData data)
+        {
+            throw new NotImplementedException();
+        }
+
 
         public Tuple<RemoteResult, SelectSearchResult> SelectQuery(SelectDescription description)
         {

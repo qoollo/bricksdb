@@ -72,6 +72,7 @@ namespace Qoollo.Impl.Sql.Internal
                 _reader.Close();
                 _reader.Dispose();   
             }            
+            _command.Dispose();
             _connection.Dispose();
         }
     }

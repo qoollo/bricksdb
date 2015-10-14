@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Threading.Tasks;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -417,35 +419,110 @@ namespace Qoollo.Impl.Writer.Db
 
         #region Restore
 
+        private void UpdateList(List<MetaData> ids, bool isDeleted, Action<InnerData> process, int threadsCount)
+        {
+            var threads = new Task[threadsCount];
+
+            var sw = new Stopwatch();
+            sw.Start();
+
+            for (int j = 0; j < threadsCount; j++)
+            {
+                int j1 = j;
+                var task = Task.Factory.StartNew(() =>
+                {
+                    try
+                    {
+                        Logger.Logger.Instance.DebugFormat("Start thread {0}", j1);
+                        var list = ids.GetRange(j1 * ids.Count / threadsCount, ids.Count / threadsCount);
+                        //foreach (var metaData in list)
+                        //{
+                        //    ProcessRestoreSingle(metaData, isDeleted, process);
+                        //}
+
+                        var ret = ReadInnerList(list, isDeleted);
+                        //  Logger.Logger.Instance.InfoFormat("Read count = {0}", ret.Count);
+                        foreach (var data in ret)
+                        {
+                            process(data);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Logger.Instance.ErrorFormat("Fail in thread = {0}", e);
+                        throw;
+                    }
+                    Logger.Logger.Instance.DebugFormat("Finish thread {0}", j1);
+                });
+
+                threads[j] = task;
+            }
+
+            Task.WaitAll(threads);
+            sw.Stop();
+
+            Logger.Logger.Instance.InfoFormat("Avg time = {0}", ids.Count / (((double)sw.ElapsedMilliseconds) / 1000));
+
+            for (int j = 0; j < threadsCount; j++)
+            {
+                threads[j].Dispose();
+            }
+        }
+
+                private List<InnerData> ReadInnerList(List<MetaData> ids, bool isDeleted)
+        {
+            var command = _metaDataCommandCreator.ReadWithDeleteAndLocalList(_userCommandCreator.Read(), isDeleted,
+                ids.Select(x => x.Id).ToList());
+
+            var reader = _implModule.CreateReader(command);
+
+            try
+            {
+                reader.Start();
+
+                if (reader.IsFail)
+                {
+                    return new List<InnerData>();
+                }
+                var ret = new List<InnerData>();
+
+                int i = 0;
+                while (reader.IsCanRead)
+                {
+                    reader.ReadNext();
+
+                    TKey tmp;
+                    object value = _userCommandCreator.ReadObjectFromReader(reader, out tmp);
+                    var data = new InnerData(new Transaction(ids[i].Hash, "default"))
+                    {
+                        Data = value == null ? null : _hashCalculater.SerializeValue(value),
+                        MetaData = ids[i],
+                        Key = _hashCalculater.SerializeKey(ids[i].Id),
+                        Transaction = {TableName = TableName}
+                    };
+                    i++;
+                    ret.Add(data);
+                }
+                return ret;
+            }
+            catch (Exception e)
+            {
+            }
+            finally
+            {
+                reader.Dispose();
+            }
+            return new List<InnerData>();
+        }
+
+
         private RemoteResult ProcessRestore(string script, int countElemnts, Action<InnerData> process,
              Func<MetaData, bool> isMine, bool isFirstAsk, ref object lastId, bool isDeleted)
         {
             bool isAllDataRead = true;
             var keys = ReadMetaDataUsingSelect(script, countElemnts, isFirstAsk, ref lastId, isMine, ref isAllDataRead);
 
-            foreach (var key in keys)
-            {
-                var data = new InnerData(new Transaction(key.Hash, "default"));
-
-                data = ReadInner(key.Id, data, isDeleted);
-                if (data.Transaction.IsError)
-                {
-                    Logger.Logger.Instance.Error(data.Transaction.ErrorDescription, "");
-                    return new InnerServerError(data.Transaction.ErrorDescription);
-                }
-
-                if (data.Data == null)
-                {
-                    Logger.Logger.Instance.Warn("Restore error with id = " + key.Id);
-                    continue;
-                }
-
-                data.Key = _hashCalculater.SerializeKey(key.Id);
-                data.Transaction.TableName = TableName;
-                data.MetaData = key;
-
-                process(data);
-            }
+            UpdateList(keys, isDeleted, process, 10);
 
             if (!isAllDataRead)
                 return new SuccessResult();

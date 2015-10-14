@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults;
@@ -88,6 +89,12 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         }
 
         #region Not Implemented
+
+        public Task<RemoteResult> ProcessTaskBased(InnerData data)
+        {
+            throw new NotImplementedException();
+        }
+
 
         public void SendASync(NetCommand command)
         {

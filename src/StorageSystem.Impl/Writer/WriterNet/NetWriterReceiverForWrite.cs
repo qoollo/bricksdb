@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.ServiceModel;
+using System.Threading.Tasks;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults;
@@ -40,6 +41,12 @@ namespace Qoollo.Impl.Writer.WriterNet
         {
             _inputModule.Rollback(data);
         }
+
+        public Task<RemoteResult> ProcessTaskBased(InnerData data)
+        {
+            return Task.FromResult(ProcessSync(data));
+        }
+
 
         public InnerData ReadOperation(InnerData data)
         {

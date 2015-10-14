@@ -26,6 +26,7 @@ namespace Qoollo.Impl.Sql.Internal
                 try
                 {
                     command.ExecuteNonQuery();
+                    command.Dispose();
                     ret = new SuccessResult();
                 }
                 catch (SqlException e)

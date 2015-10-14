@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults.Event;
@@ -40,6 +41,14 @@ namespace Qoollo.Impl.Writer.WriterNet
                 e => new ServerNotAvailable(Server),
                 NetLogHelper.GetLog(data));
         }
+
+        public Task<RemoteResult> ProcessTaskBased(InnerData data)
+        {
+            return SendAsyncFunc<RemoteResult, ICommonNetReceiverWriterForWrite>(
+                api => api.ProcessTaskBased(data), e => new ServerNotAvailable(Server),
+                NetLogHelper.GetLog(data));
+        }
+
 
         #region Not Implemented
 

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -90,6 +92,46 @@ namespace Qoollo.Impl.Writer.WriterNet
             return ret;
 
         }
+
+        public Task<RemoteResult> ProcessAsync(ServerId server, InnerData data)
+        {
+            Logger.Logger.Instance.Debug(string.Format("WriterNetModule: process server = {0}, ev = {1}", server,
+                                                                                      data.Transaction.DataHash));
+
+            var connection = FindServer(server) as SingleConnectionToWriter;
+
+            if (connection == null)
+            {
+                ConnectToWriter(server);
+                connection = FindServer(server) as SingleConnectionToWriter;
+            }
+
+            if (connection == null)
+            {
+                Logger.Logger.Instance.Debug(string.Format(
+                    "WriterNetModule: process server not found  server = {0}, ev = {1}", server,
+                    data.Transaction.DataHash), "restore");
+
+                var ret = new TaskCompletionSource<RemoteResult>();
+                ret.SetResult(new ServerNotFoundResult());
+                return ret.Task;
+            }
+
+            var finalTask = new TaskCompletionSource<RemoteResult>();
+            var res = connection.ProcessTaskBased(data);
+            res.ContinueWith(tsk =>
+            {
+                if (res.Result is FailNetResult)
+                {
+                    RemoveConnection(server);
+                }
+                finalTask.SetResult(res.Result);
+            });
+
+            return finalTask.Task;
+
+        }
+
 
         #endregion
 

@@ -191,6 +191,29 @@ namespace Qoollo.Impl.Sql.Internal
 
         #endregion
 
+        public SqlCommand ReadWithDeleteAndLocalList(SqlCommand userRead, bool isDelete, List<object> keys)
+        {
+            var table = new DataTable();
+            table.Columns.Add("IdTmp", typeof(string));
+
+            foreach (var t in keys)
+                table.Rows.Add(t);
+
+            var pList = new SqlParameter("@list", SqlDbType.Structured)
+            {
+                TypeName = "IdTable",
+                Value = table
+            };
+
+            var command = new SqlCommand(string.Format("select * from ( {0} ) as MetaHelpTable " +
+                                                       " inner join {1} on MetaHelpTable.{5} = {1}.{2}" +
+                                                       " where {1}.{2} in (select IdTmp from @list) and {1}.{4} = {3}", userRead.CommandText,
+                _metaTableName, _keyName, IsDeleted(isDelete), SqlConsts.IsDeleted, _userKeyName));
+
+            command.Parameters.Add(pList);
+            return command;
+        }
+
         public string ReadWithDeleteAndLocal(bool isDelete, bool local)
         {
             if (local)

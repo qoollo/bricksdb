@@ -24,7 +24,7 @@ namespace Qoollo.Impl.Writer.Db.Commands
         Tuple<MetaData, bool> ReadMetaDataFromReader(DbReader<TReader> reader, bool readuserId = true);
         MetaData ReadMetaFromSearchData(SearchData data);
         string ReadWithDeleteAndLocal(bool isDelete, bool local);
-
+        TCommand ReadWithDeleteAndLocalList(TCommand userRead, bool isDelete, List<object> keys);
         TCommand ReadWithDelete(TCommand userRead, bool isDelete, object key);
         TCommand ReadWithDeleteAndLocal(TCommand userRead, bool isDelete, bool local);
 

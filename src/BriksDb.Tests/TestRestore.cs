@@ -376,15 +376,11 @@ namespace Qoollo.Tests
 
             storage2.Build();
             storage2.AddDbModule(new TestInMemoryDbFactory());
-            storage2.Start();
+            storage2.Start();            
 
-            //storage1.Api.Restore(new ServerAddress("localhost", distrServer12), list, false);
-
-            Thread.Sleep(1000);
+            Thread.Sleep(2000);
             Assert.IsTrue(storage1.Api.IsRestoreCompleted());
-
-            Thread.Sleep(1000);
-
+            
             _proxy.Dispose();
             _distr.Dispose();
             storage1.Dispose();

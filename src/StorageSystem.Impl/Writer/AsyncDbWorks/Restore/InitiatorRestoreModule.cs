@@ -33,30 +33,30 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             get
             {
                 Lock.EnterReadLock();
-                var ret = _failServers != null ? new List<ServerId>(_failServers) : new List<ServerId>();
+                var ret = _restoreServers.Where(x => x.IsFailed).Select(x => (ServerId)x).ToList();
                 Lock.ExitReadLock();
                 return ret;
             }
         }
 
         public InitiatorRestoreModule(RestoreModuleConfiguration configuration, WriterNetModule writerNet,
-            AsyncTaskModule asyncTaskModule, RestoreStateHelper stateHelper) : base(writerNet, asyncTaskModule)
+            AsyncTaskModule asyncTaskModule, RestoreStateHelper stateHelper)
+            : base(writerNet, asyncTaskModule)
         {
             Contract.Requires(configuration != null);
             Contract.Requires(stateHelper != null);
             _configuration = configuration;
             _stateHelper = stateHelper;
-            _failServers = new List<ServerId>();
+            _restoreServers = new List<RestoreServer>();
         }
 
-        private List<HashMapRecord> _local;
-        private Dictionary<ServerId, bool> _servers;
+        private List<HashMapRecord> _local;        
         private ServerId _remoteServer;
         private readonly RestoreModuleConfiguration _configuration;
         private readonly RestoreStateHelper _stateHelper;
         private bool _isModelUpdated;
         private string _tableName;
-        private List<ServerId> _failServers;
+        private List<RestoreServer> _restoreServers;
 
         public void Restore(List<HashMapRecord> local, List<ServerId> servers, bool isModelUpdated, string tableName)
         {
@@ -70,16 +70,20 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 _isModelUpdated = isModelUpdated;
                 _tableName = tableName;
                 IsStartNoLock = true;
-                _local = local;                
+                _local = local;
             }
             finally
             {
                 Lock.ExitWriteLock();
             }
 
-
-            _failServers = new List<ServerId>();
-            _servers = servers.Select(x => new { Key = x, Value = false }).ToDictionary(x => x.Key, x => x.Value);
+            //_servers = servers.Select(x => new { Key = x, Value = false }).ToDictionary(x => x.Key, x => x.Value);
+            _restoreServers = servers.Select(x =>
+            {
+                var s = new RestoreServer(x);
+                s.NeedRestoreInitiate();
+                return s;
+            }).ToList();
 
             AsyncTaskModule.AddAsyncTask(
                 new AsyncDataPeriod(_configuration.PeriodRetry, NoAnswerCallback, AsyncTasksNames.RestoreRemote,
@@ -92,15 +96,26 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         public void Restore(List<HashMapRecord> local, List<ServerId> servers, bool isModelUpdated)
         {
-             Restore(local, servers, isModelUpdated, Consts.AllTables);
+            Restore(local, servers, isModelUpdated, Consts.AllTables);
         }
 
         public void UpdateModel(List<ServerId> servers)
         {
             Lock.EnterWriteLock();
-            _failServers.RemoveAll(servers.Contains);
-            if(servers.Contains(_remoteServer))
-                _remoteServer = null;
+
+            _restoreServers.ForEach(x => x.IsFailed = false);
+
+            foreach (var server in servers)
+            {
+                var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
+
+                if (s != null && !Equals(_remoteServer, server))
+                    _restoreServers.Remove(s);
+
+                if (s != null && Equals(_remoteServer, server))
+                    _remoteServer = null;
+            }
+
             Lock.ExitWriteLock();
         }
 
@@ -120,7 +135,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                     result = 1;
                 }
 
-            } while (result == 1);            
+            } while (result == 1);
 
             if (result != -1)
                 AsyncTaskModule.RestartTask(AsyncTasksNames.RestoreRemote);
@@ -128,30 +143,30 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         private int ProcessNextServer()
         {
-            var next = _servers.FirstOrDefault(x => !x.Value);
-            if (next.Equals(default(KeyValuePair<ServerId, bool>)))
+            var nextServer = _restoreServers.FirstOrDefault(x => x.IsNeedCurrentRestore());
+            if (nextServer == null)
                 return -1;
 
-            bool result = WriterNet.ConnectToWriter(next.Key);
+            bool result = WriterNet.ConnectToWriter(nextServer);
 
             Logger.Logger.Instance.Trace(string.Format("Connection result = {0}", result), "restore");
-            var ret = WriterNet.SendToWriter(next.Key,
-                new RestoreCommandWithData(_local[0].ServerId,
-                    _local.ToList(), !next.Key.Equals(_local[0].ServerId) && _isModelUpdated, _tableName));
+            var ret = WriterNet.SendToWriter(nextServer,
+                new RestoreCommandWithData(_local[0].ServerId, _local.ToList(),
+                    !nextServer.Equals(_local[0].ServerId) && _isModelUpdated, _tableName));
 
-            _servers[next.Key] = true;
+            nextServer.IsRestored = true;
 
             if (ret is FailNetResult)
             {
                 Logger.Logger.Instance.InfoFormat(
-                    "Restore command for server: {0} failed with result: {1}", next.Key, ret.Description);
-                AddServerToFailed(next.Key);
+                    "Restore command for server: {0} failed with result: {1}", nextServer, ret.Description);
+                AddServerToFailed(nextServer);
                 return 1;
             }
 
             Lock.EnterWriteLock();
-            _remoteServer = next.Key;
-            _failServers.Remove(_remoteServer);
+            _remoteServer = nextServer;
+            nextServer.IsFailed = false;
             Lock.ExitWriteLock();
 
             return 0;
@@ -162,13 +177,18 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreRemote);
             IsStart = false;
             _stateHelper.FinishRestore(_isModelUpdated);
-            Logger.Logger.Instance.Info("Restore completed");
+            Logger.Logger.Instance.Info("Restore current servers complete");
         }
 
         private void ProcessFailedServers()
-        {            
-            _servers = FailedServers.Select(x => new {Key = x, Value = false}).ToDictionary(x => x.Key, x => x.Value);            
-            AsyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);            
+        {
+            foreach (var server in FailedServers)
+            {
+                var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
+                if (s != null)
+                    s.AfterFailed();
+            }
+            AsyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
         }
 
         #region Period events
@@ -180,7 +200,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         public void PeriodMessageIncome(ServerId server)
         {
             Logger.Logger.Instance.Trace(string.Format("period messge income from {0}", server), "restore");
-                        
+
             if (server.Equals(RestoreServer))
                 AsyncTaskModule.RestartTask(AsyncTasksNames.RestoreRemote);
         }
@@ -190,13 +210,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         /// </summary>
         /// <param name="server"></param>
         public void LastMessageIncome(ServerId server)
-        {            
+        {
             Logger.Logger.Instance.Debug(string.Format("last message income from {0}", server), "restore");
 
             if (server.Equals(RestoreServer))
                 CurrentProcess();
         }
-     
+
         private void NoAnswerCallback(AsyncData async)
         {
             AsyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
@@ -210,13 +230,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 CurrentProcess();
                 return;
             }
-            
+
             var ret = WriterNet.SendToWriter(remoteServer, new RestoreCommandWithData(_local[0].ServerId,
                 _local.ToList(), _isModelUpdated, _tableName));
 
             if (ret is FailNetResult)
             {
-                if (RestoreServer!=null)
+                if (RestoreServer != null)
                     AddServerToFailed(RestoreServer);
                 CurrentProcess();
             }
@@ -229,9 +249,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private void AddServerToFailed(ServerId server)
         {
             Lock.EnterWriteLock();
-            
-            if (!_failServers.Contains(server))
-                _failServers.Add(server);
+
+            var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
+            if (s != null)
+                s.IsFailed = true;
 
             Lock.ExitWriteLock();
         }

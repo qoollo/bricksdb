@@ -168,6 +168,12 @@ namespace Qoollo.Tests.TestWriter
                     var data4 = Data.Where(x => meta4.Exists(w => w.Key == x)).ToList();
                     ret = new TestDbReader(data4, meta4, false, true);
                     break;
+                case "ReadWithDeleteLocalList":
+                    var meta5 = Meta.FindAll(x => command.Keys.Contains(x.Key)).ToList();
+                    meta5.Sort((x, y) => -IntComparer.Compare(x.Key, y.Key));
+                    var data5 = Data.Where(x => meta5.Exists(w => w.Key == x)).ToList();
+                    ret = new TestDbReader(data5, meta5);
+                    break;
             }
 
             _lock.ExitWriteLock();

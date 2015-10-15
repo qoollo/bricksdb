@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Qoollo.Tests.TestWriter
 {
@@ -7,6 +8,8 @@ namespace Qoollo.Tests.TestWriter
         public string Command { get; set; }
 
         public int Key { get; set; }
+
+        public List<int> Keys { get; set; }
 
         public bool Local { get; set; }
 

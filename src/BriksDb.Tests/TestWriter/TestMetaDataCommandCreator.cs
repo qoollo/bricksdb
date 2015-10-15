@@ -72,6 +72,16 @@ namespace Qoollo.Tests.TestWriter
             return string.Format("ReadWithDeleteAndLocal%{0}%{1}", local, isDelete);
         }
 
+        public TestCommand ReadWithDeleteAndLocalList(TestCommand userRead, bool isDelete, List<object> keys)
+        {
+            return new TestCommand
+            {
+                Command = "ReadWithDeleteLocalList",
+                IsDeleted = isDelete,
+                Keys = keys.Select(x => (int) x).ToList()
+            };
+        }
+
         public TestCommand ReadWithDelete(TestCommand userRead, bool idDelete, object key)
         {
             return new TestCommand

@@ -321,7 +321,7 @@ namespace Qoollo.Tests
             net.ConnectToWriter(server1);
             net.ConnectToWriter(server2);
 
-            var ev = new InnerData(new Transaction("", ""))
+            var ev = new InnerData(new Transaction("default", "default"))
             {
                 DistributorData = new DistributorData { Destination = new List<ServerId> { server1 } },
             };
@@ -751,7 +751,8 @@ namespace Qoollo.Tests
             for (int i = 1; i < count + 1; i++)
             {
                 var ev =
-                    new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
+                    new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
+                        "default")
                     {
                         OperationName = OperationName.Create,
                         OperationType = OperationType.Async
@@ -767,7 +768,7 @@ namespace Qoollo.Tests
                 input.ProcessAsync(data);
             }
 
-            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+            Thread.Sleep(TimeSpan.FromMilliseconds(1200));
 
             Assert.AreEqual(count, s1.Value);
             Assert.AreEqual(count, s2.Value);

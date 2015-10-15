@@ -238,6 +238,25 @@ namespace Qoollo.Impl.Sql.Internal
             return SetKeytoCommand(command, key);
         }
 
+        public SqlCommand ReadWithDeleteAndLocal(SqlCommand userRead, bool isDelete, bool local)
+        {
+            if (local)
+                return new SqlCommand(string.Format("select * from ( {0} ) as MetaHelpTable " +
+                                                    " inner join {1} on MetaHelpTable.{5} = {1}.{2}" +
+                                                    " where {1}.{4} = {3}" +
+                                                    " order by {2}", userRead.CommandText, _metaTableName,
+                    _keyName, IsDeleted(isDelete), SqlConsts.IsDeleted, _userKeyName));
+
+            string script = string.Format("select * from ( {0} ) as MetaHelpTable " +
+                                          " inner join {1} on MetaHelpTable.{7} = {1}.{2}" +
+                                          " where {1}.{5} = {4} and {1}.{6} = {3}" +
+                                          " order by {2}", userRead.CommandText,
+                _metaTableName, _keyName, IsDeleted(isDelete), GetLocal(false),
+                 SqlConsts.Local, SqlConsts.IsDeleted, _userKeyName);
+
+            return new SqlCommand(script);
+        }
+
         public SqlCommand CreateSelectCommand(string script, FieldDescription idDescription,
             List<FieldDescription> userParameters)
         {

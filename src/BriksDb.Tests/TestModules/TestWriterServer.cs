@@ -21,6 +21,11 @@ namespace Qoollo.Tests.TestModules
             Interlocked.Add(ref Value, 1);
         }
 
+        public Task<RemoteResult> ProcessTaskBased(InnerData data)
+        {
+            return Task.FromResult(ProcessSync(data));
+        }
+
         public RemoteResult ProcessSync(InnerData data)
         {
             Interlocked.Add(ref Value, 1);

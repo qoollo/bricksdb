@@ -97,7 +97,6 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, mem.Local + mem.Remote);
 
             _writer2.Start();
-
             _writer2.Distributor.Restore(false);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));

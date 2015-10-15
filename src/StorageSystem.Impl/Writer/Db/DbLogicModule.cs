@@ -419,29 +419,21 @@ namespace Qoollo.Impl.Writer.Db
 
         #region Restore
 
-        private void UpdateList(List<MetaData> ids, bool isDeleted, Action<InnerData> process, int threadsCount)
+        private void ReadDataList(List<MetaData> ids, bool isDeleted, Action<InnerData> process, int threadsCount)
         {
             var threads = new Task[threadsCount];
-
-            var sw = new Stopwatch();
-            sw.Start();
 
             for (int j = 0; j < threadsCount; j++)
             {
                 int j1 = j;
                 var task = Task.Factory.StartNew(() =>
-                {
+                {                                        
                     try
                     {
                         Logger.Logger.Instance.DebugFormat("Start thread {0}", j1);
-                        var list = ids.GetRange(j1 * ids.Count / threadsCount, ids.Count / threadsCount);
-                        //foreach (var metaData in list)
-                        //{
-                        //    ProcessRestoreSingle(metaData, isDeleted, process);
-                        //}
 
+                        var list = ids.GetRange(j1 * ids.Count / threadsCount, ids.Count / threadsCount);
                         var ret = ReadInnerList(list, isDeleted);
-                        //  Logger.Logger.Instance.InfoFormat("Read count = {0}", ret.Count);
                         foreach (var data in ret)
                         {
                             process(data);
@@ -459,17 +451,14 @@ namespace Qoollo.Impl.Writer.Db
             }
 
             Task.WaitAll(threads);
-            sw.Stop();
-
-            Logger.Logger.Instance.InfoFormat("Avg time = {0}", ids.Count / (((double)sw.ElapsedMilliseconds) / 1000));
-
+            
             for (int j = 0; j < threadsCount; j++)
             {
                 threads[j].Dispose();
             }
         }
 
-                private List<InnerData> ReadInnerList(List<MetaData> ids, bool isDeleted)
+        private List<InnerData> ReadInnerList(List<MetaData> ids, bool isDeleted)
         {
             var command = _metaDataCommandCreator.ReadWithDeleteAndLocalList(_userCommandCreator.Read(), isDeleted,
                 ids.Select(x => x.Id).ToList());
@@ -485,28 +474,30 @@ namespace Qoollo.Impl.Writer.Db
                     return new List<InnerData>();
                 }
                 var ret = new List<InnerData>();
-
-                int i = 0;
+                
                 while (reader.IsCanRead)
                 {
                     reader.ReadNext();
-
+                    
                     TKey tmp;
                     object value = _userCommandCreator.ReadObjectFromReader(reader, out tmp);
-                    var data = new InnerData(new Transaction(ids[i].Hash, "default"))
+
+                    var meta = ids.Find(x => x.Id.Equals(tmp));
+
+                    var data = new InnerData(new Transaction(meta.Hash, "default"))
                     {
                         Data = value == null ? null : _hashCalculater.SerializeValue(value),
-                        MetaData = ids[i],
-                        Key = _hashCalculater.SerializeKey(ids[i].Id),
+                        MetaData = meta,
+                        Key = _hashCalculater.SerializeKey(tmp),
                         Transaction = {TableName = TableName}
                     };
-                    i++;
                     ret.Add(data);
                 }
                 return ret;
             }
             catch (Exception e)
             {
+                Logger.Logger.Instance.Error(e, "");
             }
             finally
             {
@@ -522,7 +513,7 @@ namespace Qoollo.Impl.Writer.Db
             bool isAllDataRead = true;
             var keys = ReadMetaDataUsingSelect(script, countElemnts, isFirstAsk, ref lastId, isMine, ref isAllDataRead);
 
-            UpdateList(keys, isDeleted, process, 10);
+            ReadDataList(keys, isDeleted, process, 1);
 
             if (!isAllDataRead)
                 return new SuccessResult();

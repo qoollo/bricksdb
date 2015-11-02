@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Qoollo.Impl.Collector.Comparer;
 using Qoollo.Impl.Collector.Load;
 using Qoollo.Impl.Collector.Parser;
@@ -27,8 +28,8 @@ namespace Qoollo.Impl.Collector.Merge
             searchTasks.RemoveAll(x => !x.IsServersAvailbale);
 
             PreLoadPages(searchTasks);
-
-            while (ret.Count < orderSelectTask.UserPage && ! IsFinishMerge(searchTasks))
+            int viewLength = orderSelectTask.UserPage / 2;            
+            while (ret.Count < orderSelectTask.UserPage && !IsFinishMerge(searchTasks))
             {
                 var current = GetCurrent(orderSelectTask, searchTasks, orderType);
 
@@ -40,8 +41,11 @@ namespace Qoollo.Impl.Collector.Merge
 
                 ReadSameValue(orderSelectTask, searchTasks, ret.Last());
 
-                LoadPages(searchTasks);
-                searchTasks.RemoveAll(x => !x.IsServersAvailbale);
+                if (searchTasks.Exists(searchTask => searchTask.Length < viewLength && !searchTask.IsAllDataRead))
+                {
+                    LoadPagesAsync(searchTasks);
+                    searchTasks.RemoveAll(x => !x.IsServersAvailbale);
+                }
             }
 
             return ret;
@@ -52,9 +56,13 @@ namespace Qoollo.Impl.Collector.Merge
         {
             foreach (var searchTask in searchTasks)
             {
-                if (!searchTask.IsAllDataRead && searchTask.Length > 0 &&
-                    DataComparer.Compare(searchTask.GetData(), searchData, orderSelectTask.ScriptDescription) == 0)
-                    searchTask.IncrementPosition();
+                for (int i = 0; i < searchTask.Length;)
+                {
+                    if (DataComparer.Compare(searchTask.GetData(i), searchData, orderSelectTask.ScriptDescription) == 0)
+                        searchTask.RemoveAt(i);
+                    else
+                        i++;
+                }
             }
         }
 
@@ -79,6 +87,20 @@ namespace Qoollo.Impl.Collector.Merge
                     LoadPage(searchTask);
                 }
             }
+        }
+
+        private void LoadPagesAsync(List<SingleServerSearchTask> searchTasks)
+        {
+            var tasks = new List<Task>();
+
+            foreach (var searchTask in searchTasks.Where(searchTask => !searchTask.IsAllDataRead))
+            {
+                searchTask.FindNextLastKey();
+
+                var task = searchTask;
+                tasks.Add(Task.Factory.StartNew(() => LoadPage(task)));
+            }
+            Task.WaitAll(tasks.ToArray());
         }
 
         private bool IsFinishMerge(List<SingleServerSearchTask> searchTasks)

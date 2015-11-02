@@ -5,7 +5,7 @@ using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.Sql.Internal
 {
-    internal class SqlReader:DbReader<SqlDataReader>
+    internal class SqlReader : DbReader<SqlDataReader>
     {
         private SqlCommand _command;
         private readonly RentedElementMonitor<SqlConnection> _connection;
@@ -24,8 +24,20 @@ namespace Qoollo.Impl.Sql.Internal
 
         public override bool IsCanRead
         {
-            get { return _reader.Read(); }
+            get
+            {
+                try
+                {
+                    return _reader.Read();
+                }
+                catch (SqlException e)
+                {
+                    Logger.Logger.Instance.Error(e, "");
+                    return false;
+                }
+            }
         }
+
 
         protected override int CountFieldsInner()
         {
@@ -33,7 +45,7 @@ namespace Qoollo.Impl.Sql.Internal
         }
 
         protected override void ReadNextInner()
-        {            
+        {
         }
 
         protected override object GetValueInner(int index)
@@ -61,7 +73,7 @@ namespace Qoollo.Impl.Sql.Internal
             catch (Exception e)
             {
                 Logger.Logger.Instance.Error(e, "Command = " + _command.CommandText);
-            }            
+            }
 
         }
 
@@ -70,8 +82,8 @@ namespace Qoollo.Impl.Sql.Internal
             if (_reader != null)
             {
                 _reader.Close();
-                _reader.Dispose();   
-            }            
+                _reader.Dispose();
+            }
             _command.Dispose();
             _connection.Dispose();
         }

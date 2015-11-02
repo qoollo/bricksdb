@@ -62,6 +62,22 @@ namespace Qoollo.Impl.Collector.Tasks
             return _data[_dataPos];
         }
 
+        public SearchData GetData(int deep)
+        {
+            if (_dataPos + deep >= _data.Count)
+                return null;
+
+            return _data[_dataPos + deep];
+        }
+
+        public void RemoveAt(int deep)
+        {
+            if (_dataPos + deep >= _data.Count)
+                return;
+
+            _data.RemoveAt(_dataPos + deep);
+        }
+
         public void IncrementPosition()
         {
             _dataPos++;

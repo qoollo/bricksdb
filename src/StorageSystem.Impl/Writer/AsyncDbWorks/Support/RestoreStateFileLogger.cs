@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Net.Security;
 using System.Runtime.Serialization;
+using System.Threading;
 using System.Xml.Serialization;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
@@ -14,16 +13,26 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 {
     internal class RestoreStateFileLogger
     {
+        public string TableName { get; private set; }
+        public bool IsModelUpdate { get; private set; }
         public List<RestoreServer> RestoreServers { get; private set; }
         public RestoreStateHelper StateHelper { get; private set; }
 
-        public RestoreStateFileLogger(string filename, RestoreStateHelper stateHelper,
-            List<RestoreServer> restoreServers) : this(filename)
+        public RestoreStateFileLogger(string filename, RestoreStateHelper stateHelper, string tableName,
+            bool isModelUpdate, List<RestoreServer> restoreServers) : this(filename)
         {
-            Contract.Requires(stateHelper != null);
-            Contract.Requires(restoreServers != null);
+            Contract.Requires(stateHelper != null);            
+            TableName = tableName;
+            IsModelUpdate = isModelUpdate;            
             StateHelper = stateHelper;
             RestoreServers = restoreServers;
+        }
+
+        public RestoreStateFileLogger(string filename, RestoreStateHelper stateHelper)
+            : this(filename)
+        {
+            Contract.Requires(stateHelper != null);
+            StateHelper = stateHelper;
         }
 
         public RestoreStateFileLogger(string filename)
@@ -33,12 +42,80 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         }
 
         private readonly string _filename;
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+
+        public void SetRestoreDate(string tableName, bool isModelUpdate, List<RestoreServer> restoreServers)
+        {
+            _lock.EnterWriteLock();
+
+            TableName = tableName;
+            IsModelUpdate = isModelUpdate;            
+            RestoreServers = restoreServers;
+            
+            _lock.ExitWriteLock();
+        }
 
         public void Save()
         {
+            _lock.EnterWriteLock();
+            if(IsNeedRestore())
+                SaveInner();
+            else
+                RemoveFile();
+            _lock.ExitWriteLock();
+        }
+
+        public bool Load()
+        {
+            _lock.EnterWriteLock();
             try
             {
-                var save = new RestoreSaveHelper(StateHelper.State, RestoreServers);
+                var formatter = new XmlSerializer(typeof (RestoreSaveHelper));
+                var stream = new FileStream(_filename, FileMode.Open);
+                var load = (RestoreSaveHelper) formatter.Deserialize(stream);
+
+                RestoreServers = load.RestoreServers;
+                StateHelper = new RestoreStateHelper(load.State);
+                TableName = load.TableName;
+                IsModelUpdate = load.IsModelUpdate;
+
+                stream.Close();
+
+                return true;
+            }
+            catch (FileNotFoundException e)
+            {
+                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+            }
+            catch (System.Security.SecurityException e)
+            {
+                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+            }
+            catch (DirectoryNotFoundException e)
+            {
+                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+            }
+            catch (IOException e)
+            {
+                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+            return false;
+        }
+
+        public bool IsNeedRestore()
+        {
+            return StateHelper.State != RestoreState.Restored; ;
+        }
+
+        private void SaveInner()
+        {
+            try
+            {
+                var save = new RestoreSaveHelper(StateHelper.State, RestoreServers, IsModelUpdate, TableName);
                 var formatter = new XmlSerializer(save.GetType());
                 var stream = new FileStream(_filename, FileMode.Create);
                 formatter.Serialize(stream, save);
@@ -59,52 +136,40 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             catch (IOException e)
             {
                 Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
-            }
+            }            
         }
 
-        public void Load()
+        private void RemoveFile()
         {
-            try
-            {
-                var formatter = new XmlSerializer(typeof (RestoreSaveHelper));
-                var stream = new FileStream(_filename, FileMode.Open);
-                var save = (RestoreSaveHelper) formatter.Deserialize(stream);
-                RestoreServers = save.RestoreServers;
-                StateHelper = new RestoreStateHelper(save.State);
-                stream.Close();
-            }
-            catch (FileNotFoundException e)
-            {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
-            }
-            catch (System.Security.SecurityException e)
-            {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
-            }
-            catch (DirectoryNotFoundException e)
-            {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
-            }
-            catch (IOException e)
-            {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
-            }
-        }
+            File.Delete(Consts.RestoreHelpFile);
+        }        
     }
 
     [Serializable]
     [DataContract]
     public class RestoreSaveHelper
-    {
+    {        
         public RestoreSaveHelper()
         {
         }
 
-        public RestoreSaveHelper(RestoreState state, IEnumerable<RestoreServer> servers)
+        public RestoreSaveHelper(RestoreState state, IEnumerable<RestoreServer> servers, bool isModelUpdate,
+            string tableName)
         {
+            IsModelUpdate = isModelUpdate;
+            TableName = tableName;
             State = state;
-            RestoreServersSave = servers.Select(x => new RestoreServerSave(x)).ToList();
+            if (servers != null)
+                RestoreServersSave = servers.Select(x => new RestoreServerSave(x)).ToList();
         }
+
+        [DataMember]
+        [XmlAttribute("Is model update")]
+        public bool IsModelUpdate { get; set; }
+        
+        [DataMember]
+        [XmlAttribute("Table name")]
+        public string TableName { get; set; }
 
         [DataMember]
         [XmlAttribute("Restore state")]

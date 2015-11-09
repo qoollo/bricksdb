@@ -75,6 +75,7 @@ namespace Qoollo.Impl.Common.Support
 
         public static TimeSpan OpenTimeout = TimeSpan.FromMilliseconds(100);
         public static TimeSpan SendTimeout = TimeSpan.FromMilliseconds(1000);
+        public static TimeSpan StartRestoreTimeout = TimeSpan.FromMilliseconds(2000);
         public static int UserPage = 200;
         public static int ServerPage = 100;
         public static int CompareFailed = -2;

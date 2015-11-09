@@ -50,7 +50,7 @@ namespace Qoollo.Impl.Writer
             _writerNet = writerNet;
             _queueConfiguration = configuration;
             _dbModuleCollection = dbModuleCollection;
-            _queue = GlobalQueue.Queue;
+            _queue = GlobalQueue.Queue;            
 
             var ping = TimeSpan.FromMinutes(1);
 
@@ -64,6 +64,7 @@ namespace Qoollo.Impl.Writer
         public override void Start()
         {
             _model.Start();
+            _asyncDbWork.SetLocalHash(_model.LocalMap);
 
             _queue.DbDistributorInnerQueue.Registrate(new QueueConfiguration(1, 1000), ProcessInner);            
             _queue.TransactionAnswerQueue.Registrate(_queueConfiguration, ProcessTransaction);
@@ -90,7 +91,8 @@ namespace Qoollo.Impl.Writer
             if (!_asyncDbWork.IsStarted)
             {
                 _model.UpdateModel();
-                _asyncDbWork.UpdateModel(_model.Servers);
+                _asyncDbWork.SetLocalHash(_model.LocalMap);
+                _asyncDbWork.UpdateModel(_model.Servers);                
             }            
         }
 
@@ -215,7 +217,7 @@ namespace Qoollo.Impl.Writer
             }
 
             if (command is HashFileUpdateCommand)
-                return HashFileUpdate(command);
+                return HashFileUpdate(command as HashFileUpdateCommand);
 
             _queue.DbDistributorInnerQueue.Add(command);
             return new SuccessResult();
@@ -233,14 +235,14 @@ namespace Qoollo.Impl.Writer
                 if (comm.FailedServers != null)
                 {
                     var list = _model.Servers.Where(x => comm.FailedServers.Contains(x)).ToList();
-                    _asyncDbWork.Restore(_model.LocalMap, list, comm.IsModelUpdated, comm.TableName);
+                    _asyncDbWork.Restore(list, comm.IsModelUpdated, comm.TableName);
                 }
                 else
                 {
                     var servers = comm.IsModelUpdated
                         ? _model.Servers
                         : _model.Servers.Where(x => !x.Equals(_model.Local));
-                    _asyncDbWork.Restore(_model.LocalMap, servers.ToList(), comm.IsModelUpdated, comm.TableName);
+                    _asyncDbWork.Restore(servers.ToList(), comm.IsModelUpdated, comm.TableName);
                 }
             }
             else if (command is RestoreInProcessCommand)
@@ -262,17 +264,18 @@ namespace Qoollo.Impl.Writer
                 _writerNet.TransactionAnswer(transaction.Distributor, transaction);
         }
 
-        private RemoteResult HashFileUpdate(NetCommand command)
+        private RemoteResult HashFileUpdate(HashFileUpdateCommand command)
         {
             if (_asyncDbWork.IsStarted)
                 return new InnerFailResult("Restore process is started");
 
-            var result = _model.UpdateHashViaNet((command as HashFileUpdateCommand).Map);
+            var result = _model.UpdateHashViaNet(command.Map);
             RemoteResult ret;
 
             if (result == string.Empty)
             {
                 ret = new SuccessResult();
+                _asyncDbWork.SetLocalHash(_model.LocalMap);
                 _asyncDbWork.UpdateModel(_model.Servers);
             }
             else

@@ -4,9 +4,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Qoollo.Client.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Writer.AsyncDbWorks.Support;
 using Qoollo.Tests.Support;
 
 namespace Qoollo.Tests
@@ -346,6 +349,6 @@ namespace Qoollo.Tests
             _writer2.Dispose();
             _distrTest.Dispose();
             distrTest2.Dispose();
-        }
+        }        
     }
 }

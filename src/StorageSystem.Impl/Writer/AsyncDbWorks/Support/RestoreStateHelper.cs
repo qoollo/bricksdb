@@ -12,6 +12,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             _isRestoreFinish = false;
         }
 
+        public RestoreStateHelper(RestoreState state)
+        {
+            _state = state; 
+            _isRestoreFinish = false;
+        }
+
         private bool _isRestoreFinish;
         private RestoreState _state;
 

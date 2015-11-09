@@ -1,15 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace Qoollo.Impl.Common.Server
 {
-    internal class RestoreServer : ServerId
+    [Serializable]
+    [DataContract]
+    public class RestoreServer : ServerId
     {
+        [DataMember]        
         public bool IsNeedRestore { get; set; }
+        [DataMember]        
         public bool IsRestored { get; set; }
+        [DataMember]
         public bool IsFailed { get; set; }
         public bool IsCurrentServer { get; set; }
         public RestoreServer(string remoteHost, int port)
@@ -22,6 +29,10 @@ namespace Qoollo.Impl.Common.Server
             : base(server)
         {
             CommonServer();
+        }
+
+        public RestoreServer():base("default", -1)
+        {
         }
 
         private void CommonServer()

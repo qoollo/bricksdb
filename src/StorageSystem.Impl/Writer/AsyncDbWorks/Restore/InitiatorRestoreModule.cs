@@ -22,7 +22,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             get
             {
                 Lock.EnterReadLock();
-                var server = _remoteServer;
+                var server = _restoreServers.FirstOrDefault(x=>x.IsCurrentServer);
                 Lock.ExitReadLock();
                 return server;
             }
@@ -51,7 +51,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         }
 
         private List<HashMapRecord> _local;        
-        private ServerId _remoteServer;
         private readonly RestoreModuleConfiguration _configuration;
         private readonly RestoreStateHelper _stateHelper;
         private bool _isModelUpdated;
@@ -77,7 +76,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 Lock.ExitWriteLock();
             }
 
-            //_servers = servers.Select(x => new { Key = x, Value = false }).ToDictionary(x => x.Key, x => x.Value);
             _restoreServers = servers.Select(x =>
             {
                 var s = new RestoreServer(x);
@@ -109,11 +107,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             {
                 var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
 
-                if (s != null && !Equals(_remoteServer, server))
+                if(s != null && !s.IsCurrentServer)
                     _restoreServers.Remove(s);
-
-                if (s != null && Equals(_remoteServer, server))
-                    _remoteServer = null;
             }
 
             Lock.ExitWriteLock();
@@ -163,10 +158,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 AddServerToFailed(nextServer);
                 return 1;
             }
-
+            
             Lock.EnterWriteLock();
-            _remoteServer = nextServer;
+                        
+            ChangeCurrentServer();
             nextServer.IsFailed = false;
+            nextServer.IsCurrentServer = true;
+
             Lock.ExitWriteLock();
 
             return 0;
@@ -177,6 +175,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreRemote);
             IsStart = false;
             _stateHelper.FinishRestore(_isModelUpdated);
+            ChangeCurrentServer();
             Logger.Logger.Instance.Info("Restore current servers complete");
         }
 
@@ -189,6 +188,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                     s.AfterFailed();
             }
             AsyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
+        }
+
+        private void ChangeCurrentServer()
+        {
+            var servers = _restoreServers.FirstOrDefault(x => x.IsCurrentServer);
+            if (servers != null)
+                servers.IsCurrentServer = false;
         }
 
         #region Period events

@@ -11,7 +11,7 @@ namespace Qoollo.Impl.Common.Server
         public bool IsNeedRestore { get; set; }
         public bool IsRestored { get; set; }
         public bool IsFailed { get; set; }
-
+        public bool IsCurrentServer { get; set; }
         public RestoreServer(string remoteHost, int port)
             : base(remoteHost, port)
         {
@@ -29,6 +29,7 @@ namespace Qoollo.Impl.Common.Server
             IsNeedRestore = false;
             IsRestored = false;
             IsFailed = false;
+            IsCurrentServer = false;
         }
 
         public void NeedRestoreInitiate()
@@ -41,12 +42,12 @@ namespace Qoollo.Impl.Common.Server
         public void AfterFailed()
         {
             IsNeedRestore = true;
-            IsRestored = false;            
+            IsRestored = false;
         }
 
         public bool IsNeedCurrentRestore()
         {
             return IsNeedRestore && !IsRestored;
-        }
+        }        
     }
 }

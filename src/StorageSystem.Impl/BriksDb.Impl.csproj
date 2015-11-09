@@ -154,6 +154,7 @@
     <Compile Include="Components\CollectorSystem.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\RestoreProcess.cs" />
     <Compile Include="Writer\AsyncDbWorks\Support\AsyncDbHolder.cs" />
+    <Compile Include="Writer\AsyncDbWorks\Support\RestoreStateFileLogger.cs" />
     <Compile Include="Writer\Db\DbLogicCreateAndUpdateHelper.cs" />
     <Compile Include="Writer\WriterNet\NetWriterReceiverForCollector.cs" />
     <Compile Include="Writer\WriterNet\NetWriterReceiverForWrite.cs" />

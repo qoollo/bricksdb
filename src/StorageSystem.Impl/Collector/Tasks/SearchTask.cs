@@ -120,18 +120,35 @@ namespace Qoollo.Impl.Collector.Tasks
             {
                 bool finish = false;
                 while (!_token.IsCancellationRequested && !finish)
-                {
+                {                    
                     SearchState = getState();
 
                     finish = BackgroundLoad(loader, merge);
+                    Logger.Logger.Instance.DebugFormat("Load background data. Result = {0}", finish);
 
                     SearchState = getState();
 
                     if (!_token.IsCancellationRequested && !finish)
                     {
-                        _autoResetEvent.Reset();
+                        _lock.EnterReadLock();
+
+                        bool action = _isStop;
+                        Logger.Logger.Instance.DebugFormat("Stop state pos 1. Value = {0}", _isStop);
+
                         _data.Add(false);
-                        _autoResetEvent.WaitOne();
+
+                        if (!action)
+                            _autoResetEvent.Reset();
+
+                        _lock.ExitReadLock();
+
+                        if (!action)
+                            _autoResetEvent.WaitOne();
+
+                        _lock.EnterReadLock();
+                        finish = _isStop;
+                        Logger.Logger.Instance.DebugFormat("Stop state pos 2. Value = {0}", _isStop);
+                        _lock.ExitReadLock();
                     }
                     else if (finish)
                     {
@@ -144,13 +161,21 @@ namespace Qoollo.Impl.Collector.Tasks
             {
                 Logger.Logger.Instance.Warn(e, "");
             }
+            Logger.Logger.Instance.Info("Finish background merge");
         }
 
         protected abstract bool BackgroundLoad(IDataLoader loader, Func<OrderSelectTask, List<SingleServerSearchTask>, List<SearchData>> merge);
 
+        private bool _isStop = false;
+
         protected override void Dispose(bool isUserCall)
         {
             _token.Cancel();
+
+            _lock.EnterWriteLock();
+            _isStop = true;
+            _lock.ExitWriteLock();
+
             _autoResetEvent.Set();
             base.Dispose(isUserCall);
         }

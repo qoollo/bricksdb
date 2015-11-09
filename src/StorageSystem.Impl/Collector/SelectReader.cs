@@ -113,5 +113,12 @@ namespace Qoollo.Impl.Collector
             if(!_isStart)
                 throw new Exception(Errors.DbReaderNotStarted);
         }
+
+        protected override void Dispose(bool isUserCall)
+        {
+            if (isUserCall)
+                _searchTask.Dispose();
+            base.Dispose(isUserCall);
+        }
     }
 }

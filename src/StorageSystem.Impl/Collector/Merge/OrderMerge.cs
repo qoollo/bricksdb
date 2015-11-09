@@ -28,7 +28,8 @@ namespace Qoollo.Impl.Collector.Merge
             searchTasks.RemoveAll(x => !x.IsServersAvailbale);
 
             PreLoadPages(searchTasks);
-            int viewLength = orderSelectTask.UserPage / 2;            
+            int viewLength = orderSelectTask.UserPage / 2;
+            Logger.Logger.Instance.Debug("Start load data");
             while (ret.Count < orderSelectTask.UserPage && !IsFinishMerge(searchTasks))
             {
                 var current = GetCurrent(orderSelectTask, searchTasks, orderType);
@@ -45,9 +46,10 @@ namespace Qoollo.Impl.Collector.Merge
                 {
                     LoadPagesAsync(searchTasks);
                     searchTasks.RemoveAll(x => !x.IsServersAvailbale);
+                    Logger.Logger.Instance.DebugFormat("Load pages. Servers remain = {0}", searchTasks.Count);
                 }
             }
-
+            Logger.Logger.Instance.DebugFormat("Merge data. Count = {0}", ret.Count);
             return ret;
         }
 

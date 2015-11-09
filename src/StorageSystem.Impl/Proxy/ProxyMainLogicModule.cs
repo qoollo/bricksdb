@@ -35,7 +35,8 @@ namespace Qoollo.Impl.Proxy
             if (dest == null)
             {
                 //конец всего, некуда отправить данные
-                _cache.AddToCache(ev.Transaction.CacheKey, new ServerId("", -1));
+                Logger.Logger.Instance.Debug("Cannot send data to distributor. Data = {0}", ev.Transaction.CacheKey);
+                _cache.AddToCache(ev.Transaction.CacheKey, new ServerId("default", -1));
                 return true;
             }            
 

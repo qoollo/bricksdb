@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
@@ -421,6 +422,7 @@ namespace Qoollo.Impl.Writer.Db
 
         private void ReadDataList(List<MetaData> ids, bool isDeleted, Action<InnerData> process, int threadsCount)
         {
+            threadsCount = Math.Min(ids.Count, threadsCount);
             var threads = new Task[threadsCount];
 
             for (int j = 0; j < threadsCount; j++)
@@ -432,10 +434,13 @@ namespace Qoollo.Impl.Writer.Db
                     {
                         Logger.Logger.Instance.DebugFormat("Start thread {0}", j1);
 
-                        var list = ids.GetRange(j1 * ids.Count / threadsCount, ids.Count / threadsCount);
+                        int start = j1*ids.Count/threadsCount;
+                        int end = (j1+1)*ids.Count/threadsCount;
+                        
+                        var list = ids.GetRange(start, end-start);                        
                         var ret = ReadInnerList(list, isDeleted);
                         foreach (var data in ret)
-                        {
+                        {                            
                             process(data);
                         }
                     }
@@ -513,7 +518,7 @@ namespace Qoollo.Impl.Writer.Db
             bool isAllDataRead = true;
             var keys = ReadMetaDataUsingSelect(script, countElemnts, isFirstAsk, ref lastId, isMine, ref isAllDataRead);
 
-            ReadDataList(keys, isDeleted, process, 1);
+            ReadDataList(keys, isDeleted, process, 10);
 
             if (!isAllDataRead)
                 return new SuccessResult();

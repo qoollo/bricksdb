@@ -93,8 +93,12 @@ namespace Qoollo.Tests.TestWriter
                     DeleteMeta++;
                     break;
                 case "setdatadeleted":
-                    Meta.Find(x => x.Key == command.Key).IsDeleted = true;
-                    Meta.Find(x => x.Key == command.Key).DeleteTime = DateTime.Now;
+                    var find = Meta.FirstOrDefault(x => x.Key == command.Key);
+                    if (find != null)
+                    {
+                        find.IsDeleted = true;
+                        find.DeleteTime = DateTime.Now;
+                    }                    
                     break;
                 case "setdatanotdeleted":
                     Meta.Find(x => x.Key == command.Key).IsDeleted = false;

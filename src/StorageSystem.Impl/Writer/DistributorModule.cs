@@ -14,6 +14,7 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks;
 using Qoollo.Impl.Writer.Db;
 using Qoollo.Impl.Writer.Model;
@@ -50,9 +51,9 @@ namespace Qoollo.Impl.Writer
             _writerNet = writerNet;
             _queueConfiguration = configuration;
             _dbModuleCollection = dbModuleCollection;
-            _queue = GlobalQueue.Queue;            
+            _queue = GlobalQueue.Queue;
 
-            var ping = TimeSpan.FromMinutes(1);
+            var ping = InitInjection.PingPeriod;
 
             if (pingConfiguration != null)
                 ping = pingConfiguration.TimeoutPeriod;

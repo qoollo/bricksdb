@@ -12,8 +12,8 @@ namespace Qoollo.Client.DistributorGate
     public class DistributorApi
     {
         private readonly DistributorSystem _distributorSystem;
-        private DistributorHandler _handler;
-        private DistributorHandlerEmpty _handlerEmpty = new DistributorHandlerEmpty();
+        private readonly DistributorHandler _handler;
+        private readonly DistributorHandlerEmpty _handlerEmpty = new DistributorHandlerEmpty();
         private bool _isBuild;
         private bool _isStarted;
         private bool _isDispose;

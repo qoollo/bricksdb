@@ -19,8 +19,16 @@ namespace Qoollo.Client.WriterGate
 
         List<ServerAddress> FailedServers();
 
+        RequestDescription GetAllState();
+
         RequestDescription InitDb();
 
         RequestDescription InitDb(string name);
+
+        void DisableDelete();
+
+        void EnableDelete();
+
+        void StartDelete();
     }
 }

@@ -156,8 +156,8 @@ namespace Qoollo.Tests
             Assert.IsTrue(File.Exists(hashFileNameWriter2));
             Assert.IsTrue(File.Exists(hashFileNameWriter2 + "1"));
 
-            Assert.AreEqual("FullRestoreNeed", _writer1.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual("FullRestoreNeed", _writer2.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
             
             Assert.AreEqual(3, _writer1.WriterModel.Servers.Count);
             Assert.AreEqual(3, _writer2.WriterModel.Servers.Count);
@@ -247,9 +247,9 @@ namespace Qoollo.Tests
             Assert.IsTrue(File.Exists(hashFileNameWriter3));
             Assert.IsTrue(File.Exists(hashFileNameWriter3 + "1"));
 
-            Assert.AreEqual("FullRestoreNeed", _writer1.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual("FullRestoreNeed", _writer2.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual("FullRestoreNeed", _writer3.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer3.Distributor.GetRestoreRequiredState());
 
             Assert.AreEqual(3, _writer1.WriterModel.Servers.Count);
             Assert.AreEqual(3, _writer2.WriterModel.Servers.Count);

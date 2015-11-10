@@ -24,6 +24,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             get { return Enum.GetName(typeof (RestoreState), _stateHelper.State); }
         }
 
+        public RestoreState RestoreState
+        {
+            get { return _stateHelper.State; }
+        }
+
         public TimeoutModule TimeoutModule { get { return _timeout; } }
 
         internal bool IsNeedRestore
@@ -91,7 +96,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         private RestoreStateHelper _stateHelper;
         private readonly RestoreStateFileLogger _saver;
-
 
         public void SetLocalHash(List<HashMapRecord> localHash)
         {
@@ -176,15 +180,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         #endregion
 
-        public bool IsRestoreComplete()
-        {
-            return !_initiatorRestore.IsStart;
-        }        
-
         public List<ServerId> GetFailedServers()
         {
             return _initiatorRestore.FailedServers;
         }
+
+        public List<RestoreServer> Servers { get { return _initiatorRestore.Servers; } } 
 
         public ServerId GetRestoreServer()
         {

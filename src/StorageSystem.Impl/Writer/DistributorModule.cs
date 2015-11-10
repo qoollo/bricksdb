@@ -85,7 +85,7 @@ namespace Qoollo.Impl.Writer
             servers.ForEach(x => _writerNet.RemoveConnection(x));
         }
 
-        #region public
+        #region to user
 
         public void UpdateModel()
         {
@@ -170,7 +170,7 @@ namespace Qoollo.Impl.Writer
 
         public bool IsRestoreCompleted()
         {
-            return _asyncDbWork.IsRestoreComplete();
+            return !_asyncDbWork.IsStarted;
         }
 
         public List<ServerId> FailedServers()
@@ -183,9 +183,25 @@ namespace Qoollo.Impl.Writer
             return _asyncDbWork.GetRestoreServer().ToString();
         }
 
-        public string GetRestoreRequiredState()
+        public RestoreState GetRestoreRequiredState()
         {
-            return _asyncDbWork.StateString;
+            return _asyncDbWork.RestoreState;
+        }
+
+        public string GetAllState()
+        {
+            string result = string.Empty;            
+            result += string.Format("restore state: {0}\n",
+                Enum.GetName(typeof (RestoreState), GetRestoreRequiredState()));
+            result += string.Format("restore is running: {0}\n", _asyncDbWork.IsStarted);
+            if (_asyncDbWork.IsStarted)
+            {
+                result += string.Format("current server: {0}\n", GetCurrentRestoreServer());
+                result += "servers:\n";
+                result = _asyncDbWork.Servers.Aggregate(result,
+                    (current, server) => current + string.Format("\t{0}\n", server));
+            }
+            return result;
         }
 
         public void DisableDelete()

@@ -8,7 +8,7 @@ namespace Qoollo.Client.WriterGate
 {
     internal class WriterHandler: IWriterApi
     {
-        private WriterSystem _writer;
+        private readonly WriterSystem _writer;
 
         public WriterHandler(WriterSystem writer)
         {
@@ -60,6 +60,11 @@ namespace Qoollo.Client.WriterGate
                 _writer.Distributor.FailedServers().Select(x => new ServerAddress(x.RemoteHost, x.Port)).ToList();
         }
 
+        public RequestDescription GetAllState()
+        {
+            return new RequestDescription(_writer.Distributor.GetAllState());
+        }
+
         public RequestDescription InitDb()
         {
             var result = _writer.DbModule.InitDb();
@@ -70,6 +75,21 @@ namespace Qoollo.Client.WriterGate
         {
             var result = _writer.DbModule.InitDb(name);
             return new RequestDescription(result);
+        }
+
+        public void DisableDelete()
+        {
+            _writer.Distributor.DisableDelete();
+        }
+
+        public void EnableDelete()
+        {
+            _writer.Distributor.EnableDelete();
+        }
+
+        public void StartDelete()
+        {
+            _writer.Distributor.StartDelete();
         }
 
         public RequestDescription AddDbModule(DbFactory factory)

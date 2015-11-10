@@ -766,13 +766,13 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1200));
 
-            Assert.AreEqual("SimpleRestoreNeed", _writer2.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.SimpleRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
 
             _writer2.Distributor.Restore(false);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
-            Assert.AreEqual("Restored", _writer2.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.Restored, _writer2.Distributor.GetRestoreRequiredState());
             Assert.IsTrue(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).IsServerRestored);
 
             Assert.AreEqual(RestoreState.Restored,
@@ -878,9 +878,9 @@ namespace Qoollo.Tests
             Assert.AreEqual(RestoreState.FullRestoreNeed,
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer3).RestoreState);
 
-            Assert.AreEqual("FullRestoreNeed", _writer1.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual("FullRestoreNeed", _writer2.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual("FullRestoreNeed", _writer3.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer3.Distributor.GetRestoreRequiredState());
 
             _writer1.Distributor.Restore(true);
             Thread.Sleep(TimeSpan.FromMilliseconds(1500));
@@ -898,9 +898,9 @@ namespace Qoollo.Tests
             Assert.AreEqual(RestoreState.Restored,
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer3).RestoreState);
 
-            Assert.AreEqual("Restored", _writer1.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual("Restored", _writer2.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual("Restored", _writer3.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.Restored, _writer1.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.Restored, _writer2.Distributor.GetRestoreRequiredState());
+            Assert.AreEqual(RestoreState.Restored, _writer3.Distributor.GetRestoreRequiredState());
 
             _proxy.Dispose();
             _distrTest.Dispose();

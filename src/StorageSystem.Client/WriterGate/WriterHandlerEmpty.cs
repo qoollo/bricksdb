@@ -41,6 +41,11 @@ namespace Qoollo.Client.WriterGate
             throw new Exception(new RequestDescription().ErrorDescription);
         }
 
+        public RequestDescription GetAllState()
+        {
+            return new RequestDescription();
+        }
+
         public RequestDescription InitDb()
         {
             return new RequestDescription();
@@ -49,6 +54,21 @@ namespace Qoollo.Client.WriterGate
         public RequestDescription InitDb(string name)
         {
             return new RequestDescription();
+        }
+
+        public void DisableDelete()
+        {
+            throw new Exception(new RequestDescription().ErrorDescription);
+        }
+
+        public void EnableDelete()
+        {
+            throw new Exception(new RequestDescription().ErrorDescription);
+        }
+
+        public void StartDelete()
+        {
+            throw new Exception(new RequestDescription().ErrorDescription);
         }
 
         public RequestDescription AddDbModule(DbFactory factory)

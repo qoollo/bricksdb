@@ -39,6 +39,17 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
+        public List<RestoreServer> Servers
+        {
+            get
+            {
+                Lock.EnterReadLock();
+                var ret = new List<RestoreServer>(_restoreServers);
+                Lock.ExitReadLock();
+                return ret;
+            }
+        }
+
         public InitiatorRestoreModule(RestoreModuleConfiguration configuration, WriterNetModule writerNet,
             AsyncTaskModule asyncTaskModule, RestoreStateHelper stateHelper, RestoreStateFileLogger saver)
             : base(writerNet, asyncTaskModule)

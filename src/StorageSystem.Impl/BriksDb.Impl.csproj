@@ -152,6 +152,7 @@
     <Compile Include="Common\Commands\ServerNotAvailableCommand.cs" />
     <Compile Include="Common\Support\delegate.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
+    <Compile Include="TestSupport\InitInjection.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\RestoreProcess.cs" />
     <Compile Include="Writer\AsyncDbWorks\Support\AsyncDbHolder.cs" />
     <Compile Include="Common\Server\RestoreServerSave.cs" />

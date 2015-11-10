@@ -108,7 +108,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public bool IsNeedRestore()
         {
-            return StateHelper.State != RestoreState.Restored; ;
+            return StateHelper.State != RestoreState.Restored;
         }
 
         private void SaveInner()
@@ -141,7 +141,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         private void RemoveFile()
         {
-            File.Delete(Consts.RestoreHelpFile);
+            File.Delete(_filename);
         }        
     }
 
@@ -164,19 +164,19 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         }
 
         [DataMember]
-        [XmlAttribute("Is model update")]
+        [XmlAttribute("IsModelUpdate")]
         public bool IsModelUpdate { get; set; }
         
         [DataMember]
-        [XmlAttribute("Table name")]
+        [XmlAttribute("TableName")]
         public string TableName { get; set; }
 
         [DataMember]
-        [XmlAttribute("Restore state")]
+        [XmlAttribute("RestoreState")]
         public RestoreState State { get; set; }
 
         [DataMember]
-        [XmlArray("Restore servers")]
+        [XmlArray("RestoreServers")]
         public List<RestoreServerSave> RestoreServersSave { get; set; }
 
         [XmlIgnore]

@@ -84,14 +84,16 @@ namespace Qoollo.Tests.Support
             _netRc.Start();
             _async.Start();
             Q.Start();
+            Restore.Start();
         }
 
         public void Dispose()
         {
+            Restore.Dispose();
             _netRc.Dispose();
             Q.Dispose();
             Distributor.Dispose();
-            _async.Dispose();            
+            _async.Dispose();
             _net.Dispose();                        
         }
     }

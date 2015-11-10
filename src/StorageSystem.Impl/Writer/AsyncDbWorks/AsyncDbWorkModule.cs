@@ -8,6 +8,7 @@ using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks.Restore;
 using Qoollo.Impl.Writer.AsyncDbWorks.Support;
 using Qoollo.Impl.Writer.AsyncDbWorks.Timeout;
@@ -165,9 +166,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         private RestoreStateFileLogger LoadRestoreStateFromFile()
         {
-            var saver = new RestoreStateFileLogger(Consts.RestoreHelpFile);
+            var saver = new RestoreStateFileLogger(InitInjection.RestoreHelpFile);
             if (!saver.Load())
-                return new RestoreStateFileLogger(Consts.RestoreHelpFile, _stateHelper);
+                return new RestoreStateFileLogger(InitInjection.RestoreHelpFile, _stateHelper);
             
             _stateHelper = saver.StateHelper;
             return saver;

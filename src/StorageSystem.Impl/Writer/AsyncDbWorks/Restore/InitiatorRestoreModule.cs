@@ -87,6 +87,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if (ParametersCheck(local, isModelUpdated, tableName))
                 return;
 
+            _restoreServers = servers;
+
             StartRestore();
         }
 

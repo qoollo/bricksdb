@@ -67,6 +67,7 @@ namespace Qoollo.Impl.Common.Support
         public static string CannotParseQuery = "Unknown command type";
         public static string ScriptError = "Unknown data in query";
         public static string QueryError = "Query read error";
+        public static string NoErrors = "complete";
     }
 
     internal static class Consts

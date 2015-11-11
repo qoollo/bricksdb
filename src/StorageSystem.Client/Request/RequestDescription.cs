@@ -5,7 +5,7 @@ namespace Qoollo.Client.Request
 {
     public class RequestDescription
     {
-        private IRequestDescription _request;
+        private readonly IRequestDescription _request;
         private bool _dataNotFound;
 
         public RequestDescription(UserTransaction userTransaction)

@@ -6,9 +6,9 @@ namespace Qoollo.Client.WriterGate
 {
     internal class WriterHandlerEmpty : IWriterApi
     {
-        public void UpdateModel()
+        public RequestDescription UpdateModel()
         {
-            throw new Exception(new RequestDescription().ErrorDescription);
+            return new RequestDescription();
         }
 
         public RequestDescription Restore(bool isModelUpdated)
@@ -41,9 +41,9 @@ namespace Qoollo.Client.WriterGate
             throw new Exception(new RequestDescription().ErrorDescription);
         }
 
-        public RequestDescription GetAllState()
+        public string GetAllState()
         {
-            return new RequestDescription();
+            return new RequestDescription().ErrorDescription;
         }
 
         public RequestDescription InitDb()
@@ -56,19 +56,19 @@ namespace Qoollo.Client.WriterGate
             return new RequestDescription();
         }
 
-        public void DisableDelete()
+        public RequestDescription DisableDelete()
         {
-            throw new Exception(new RequestDescription().ErrorDescription);
+            return new RequestDescription();
         }
 
-        public void EnableDelete()
+        public RequestDescription EnableDelete()
         {
-            throw new Exception(new RequestDescription().ErrorDescription);
+            return new RequestDescription();
         }
 
-        public void StartDelete()
+        public RequestDescription StartDelete()
         {
-            throw new Exception(new RequestDescription().ErrorDescription);
+            return new RequestDescription();
         }
 
         public RequestDescription AddDbModule(DbFactory factory)

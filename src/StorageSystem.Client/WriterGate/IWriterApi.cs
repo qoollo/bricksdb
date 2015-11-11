@@ -5,7 +5,7 @@ namespace Qoollo.Client.WriterGate
 {
     public interface IWriterApi
     {
-        void UpdateModel();
+        RequestDescription UpdateModel();
 
         RequestDescription Restore(bool isModelUpdated);
 
@@ -19,16 +19,16 @@ namespace Qoollo.Client.WriterGate
 
         List<ServerAddress> FailedServers();
 
-        RequestDescription GetAllState();
+        string GetAllState();
 
         RequestDescription InitDb();
 
         RequestDescription InitDb(string name);
 
-        void DisableDelete();
+        RequestDescription DisableDelete();
 
-        void EnableDelete();
+        RequestDescription EnableDelete();
 
-        void StartDelete();
+        RequestDescription StartDelete();
     }
 }

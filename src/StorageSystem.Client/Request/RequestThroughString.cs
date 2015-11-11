@@ -2,7 +2,7 @@
 {
     internal class RequestThroughString : IRequestDescription
     {
-        private string _string;
+        private readonly string _string;
 
         public RequestThroughString(string s)
         {

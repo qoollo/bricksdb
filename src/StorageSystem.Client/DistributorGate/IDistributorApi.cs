@@ -1,15 +1,17 @@
-﻿using Qoollo.Client.Request;
+﻿using System.Collections.Generic;
+using Qoollo.Client.Request;
+using Qoollo.Client.WriterGate;
 
 namespace Qoollo.Client.DistributorGate
 {
     public interface IDistributorApi
     {
-        RequestDescription GetDistributors();
+        List<ServerAddress> GetDistributors();
 
-        void UpdateModel();
+        RequestDescription UpdateModel();
 
         RequestDescription SayIAmHere(string host, int port);
 
-        RequestDescription GetServersState();
+        string GetServersState();
     }
 }

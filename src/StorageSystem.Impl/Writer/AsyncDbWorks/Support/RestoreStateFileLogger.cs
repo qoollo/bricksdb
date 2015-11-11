@@ -85,7 +85,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             }
             catch (FileNotFoundException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+                Logger.Logger.Instance.DebugFormat(e, "file name = {0}", _filename);
             }
             catch (System.Security.SecurityException e)
             {
@@ -93,7 +93,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             }
             catch (DirectoryNotFoundException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+                Logger.Logger.Instance.DebugFormat(e, "file name = {0}", _filename);
             }
             catch (IOException e)
             {
@@ -108,7 +108,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public bool IsNeedRestore()
         {
-            return StateHelper.State != RestoreState.Restored;
+            return StateHelper.State != RestoreState.Restored && (RestoreServers != null && RestoreServers.Count != 0);
         }
 
         private void SaveInner()

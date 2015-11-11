@@ -314,7 +314,7 @@ namespace Qoollo.Impl.DistributorModules
 
         #region Command from User
 
-        public void UpdateModel()
+        public string UpdateModel()
         {
             _modelOfDbWriters.UpdateFromFile();
             _modelOfDbWriters.UpdateModel();
@@ -323,6 +323,8 @@ namespace Qoollo.Impl.DistributorModules
             _asyncTaskModule.DeleteTask(AsyncTasksNames.UpdateHashFileForWriter);
 
             UpdateWritersAndDistributors();
+
+            return Errors.NoErrors;
         }
 
         public string GetServersState()

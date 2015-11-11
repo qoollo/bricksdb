@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Qoollo.Client.Request;
 using Qoollo.Impl.Common.Server;
@@ -15,9 +16,9 @@ namespace Qoollo.Client.WriterGate
             _writer = writer;
         }
 
-        public void UpdateModel()
-        {
-            _writer.Distributor.UpdateModel();
+        public RequestDescription UpdateModel()
+        {            
+            return new RequestDescription(_writer.Distributor.UpdateModel());
         }
 
         public RequestDescription Restore(bool isModelUpdated)
@@ -60,9 +61,9 @@ namespace Qoollo.Client.WriterGate
                 _writer.Distributor.FailedServers().Select(x => new ServerAddress(x.RemoteHost, x.Port)).ToList();
         }
 
-        public RequestDescription GetAllState()
+        public string GetAllState()
         {
-            return new RequestDescription(_writer.Distributor.GetAllState());
+            return _writer.Distributor.GetAllState();
         }
 
         public RequestDescription InitDb()
@@ -77,19 +78,19 @@ namespace Qoollo.Client.WriterGate
             return new RequestDescription(result);
         }
 
-        public void DisableDelete()
+        public RequestDescription DisableDelete()
         {
-            _writer.Distributor.DisableDelete();
+            return new RequestDescription(_writer.Distributor.DisableDelete());
         }
 
-        public void EnableDelete()
+        public RequestDescription EnableDelete()
         {
-            _writer.Distributor.EnableDelete();
+            return new RequestDescription(_writer.Distributor.EnableDelete());
         }
 
-        public void StartDelete()
+        public RequestDescription StartDelete()
         {
-            _writer.Distributor.StartDelete();
+            return new RequestDescription(_writer.Distributor.StartDelete());
         }
 
         public RequestDescription AddDbModule(DbFactory factory)

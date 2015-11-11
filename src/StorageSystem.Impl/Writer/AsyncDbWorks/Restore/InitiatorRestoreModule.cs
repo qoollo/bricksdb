@@ -22,7 +22,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             get
             {
                 Lock.EnterReadLock();
-                var server = _restoreServers.FirstOrDefault(x=>x.IsCurrentServer);
+                var server = _restoreServers.FirstOrDefault(x => x.IsCurrentServer);
                 Lock.ExitReadLock();
                 return server;
             }

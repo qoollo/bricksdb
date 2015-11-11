@@ -99,7 +99,7 @@
     <Compile Include="TestDistributorClient.cs" />
     <Compile Include="TestProxyAndDistributor.cs" />
     <Compile Include="TestMultCrudAndHash.cs" />
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="TestTransactionLogic.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\StorageSystem.Client\BriksDb.Client.csproj">

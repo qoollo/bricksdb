@@ -87,14 +87,17 @@ namespace Qoollo.Impl.Writer
 
         #region to user
 
-        public void UpdateModel()
+        public string UpdateModel()
         {
             if (!_asyncDbWork.IsStarted)
             {
                 _model.UpdateModel();
                 _asyncDbWork.SetLocalHash(_model.LocalMap);
-                _asyncDbWork.UpdateModel(_model.Servers);                
-            }            
+                _asyncDbWork.UpdateModel(_model.Servers);
+
+                return Errors.NoErrors;
+            }
+            return Errors.RestoreAlreadyStarted;
         }
 
         /// <summary>
@@ -180,7 +183,10 @@ namespace Qoollo.Impl.Writer
 
         public string GetCurrentRestoreServer()
         {
-            return _asyncDbWork.GetRestoreServer().ToString();
+            var server = _asyncDbWork.GetRestoreServer();
+            if (server != null)
+                return server.ToString();
+            return string.Empty;
         }
 
         public RestoreState GetRestoreRequiredState()
@@ -204,19 +210,22 @@ namespace Qoollo.Impl.Writer
             return result;
         }
 
-        public void DisableDelete()
+        public string DisableDelete()
         {
             _asyncDbWork.TimeoutModule.Disable();
+            return Errors.NoErrors;
         }
 
-        public void EnableDelete()
+        public string EnableDelete()
         {
             _asyncDbWork.TimeoutModule.Enable();
+            return Errors.NoErrors;
         }
 
-        public void StartDelete()
+        public string StartDelete()
         {
             _asyncDbWork.TimeoutModule.StartDelete();
+            return Errors.NoErrors;
         }
 
         #endregion

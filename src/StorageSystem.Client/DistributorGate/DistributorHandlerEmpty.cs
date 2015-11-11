@@ -1,18 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
 using Qoollo.Client.Request;
+using Qoollo.Client.WriterGate;
+using Qoollo.Impl.Common.Exceptions;
 
 namespace Qoollo.Client.DistributorGate
 {
     internal class DistributorHandlerEmpty : IDistributorApi
     {
-        public RequestDescription GetDistributors()
+        public List<ServerAddress> GetDistributors()
         {
-            return new RequestDescription();
+            throw new InitializationException("System disposed, or not started");
         }
 
-        public void UpdateModel()
+        public RequestDescription UpdateModel()
         {
-            throw new Exception(new RequestDescription().ErrorDescription);
+            return new RequestDescription();
         }
 
         public RequestDescription SayIAmHere(string host, int port)
@@ -20,9 +23,9 @@ namespace Qoollo.Client.DistributorGate
             return new RequestDescription();
         }
 
-        public RequestDescription GetServersState()
+        public string GetServersState()
         {
-            return new RequestDescription();
+            return new RequestDescription().ErrorDescription;
         }
     }
 }

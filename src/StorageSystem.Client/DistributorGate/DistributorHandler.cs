@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Qoollo.Client.Request;
+using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 
@@ -14,16 +16,15 @@ namespace Qoollo.Client.DistributorGate
             _distributorSystem = distributorSystem;
         }
 
-        public RequestDescription GetDistributors()
+        public List<ServerAddress> GetDistributors()
         {
-            var list = _distributorSystem.Distributor.GetDistributors();
-            var result = list.Aggregate(string.Empty, (current, serverId) => current + string.Format("{0}\n", serverId));
-            return new RequestDescription(result);
+            var list = _distributorSystem.Distributor.GetDistributors();            
+            return list.Select(x => new ServerAddress(x.RemoteHost, x.Port)).ToList();
         }
 
-        public void UpdateModel()
+        public RequestDescription UpdateModel()
         {
-            _distributorSystem.Distributor.UpdateModel();
+            return new RequestDescription(_distributorSystem.Distributor.UpdateModel());
         }
 
         public RequestDescription SayIAmHere(string host, int port)
@@ -32,9 +33,9 @@ namespace Qoollo.Client.DistributorGate
             return new RequestDescription(result);
         }
 
-        public RequestDescription GetServersState()
+        public string GetServersState()
         {
-            return new RequestDescription(_distributorSystem.Distributor.GetServersState());
+            return _distributorSystem.Distributor.GetServersState();
         }
     }
 }

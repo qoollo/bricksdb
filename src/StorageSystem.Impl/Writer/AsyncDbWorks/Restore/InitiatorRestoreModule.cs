@@ -95,7 +95,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         public void RestoreFromFile(List<HashMapRecord> local, List<RestoreServer> servers, bool isModelUpdated,
             string tableName)
         {
-            if (ParametersCheck(local, isModelUpdated, tableName))
+            if (ParametersCheck(local, isModelUpdated, tableName, servers))
                 return;
 
             _restoreServers = servers;
@@ -104,13 +104,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         }
 
         private bool ParametersCheck(List<HashMapRecord> local, bool isModelUpdated, string tableName,
-            IReadOnlyCollection<ServerId> servers = null)
+            IReadOnlyCollection<ServerId> servers)
         {
             Lock.EnterWriteLock();
 
             try
             {
-                if (IsStartNoLock || !((servers == null || servers.Count > 0) && local.Count > 0))
+                if (IsStartNoLock || !(servers.Count > 0 && local.Count > 0))
                     return true;
 
                 _isModelUpdated = isModelUpdated;

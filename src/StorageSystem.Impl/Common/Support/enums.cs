@@ -94,6 +94,8 @@ namespace Qoollo.Impl.Common.Support
         [EnumMemberAttribute]
         FullRestoreNeed = 1,
         [EnumMemberAttribute]
-        SimpleRestoreNeed = 2
+        SimpleRestoreNeed = 2,
+        [EnumMemberAttribute]
+        Default = 3
     }
 }

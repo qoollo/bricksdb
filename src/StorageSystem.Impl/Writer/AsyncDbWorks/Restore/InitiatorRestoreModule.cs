@@ -69,6 +69,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private string _tableName;
         private List<RestoreServer> _restoreServers;
         private readonly RestoreStateFileLogger _saver;
+        private RestoreState _state;
 
         #region Restore start
 
@@ -87,15 +88,46 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             StartRestore();
         }
 
+        public void Restore(List<HashMapRecord> local, List<ServerId> servers, RestoreState state, string tableName)
+        {
+            if (ParametersCheck(local, state, tableName, servers))
+                return;
+
+            _restoreServers = servers.Select(x =>
+            {
+                var s = new RestoreServer(x);
+                s.NeedRestoreInitiate();
+                return s;
+            }).ToList();
+
+            StartRestore();
+        }
+
         public void Restore(List<HashMapRecord> local, List<ServerId> servers, bool isModelUpdated)
         {
             Restore(local, servers, isModelUpdated, Consts.AllTables);
+        }
+
+        public void Restore(List<HashMapRecord> local, List<ServerId> servers, RestoreState state)
+        {
+            Restore(local, servers, state, Consts.AllTables);
         }
 
         public void RestoreFromFile(List<HashMapRecord> local, List<RestoreServer> servers, bool isModelUpdated,
             string tableName)
         {
             if (ParametersCheck(local, isModelUpdated, tableName, servers))
+                return;
+
+            _restoreServers = servers;
+
+            StartRestore();
+        }
+
+        public void RestoreFromFile(List<HashMapRecord> local, List<RestoreServer> servers, RestoreState state,
+            string tableName)
+        {
+            if (ParametersCheck(local, state, tableName, servers))
                 return;
 
             _restoreServers = servers;
@@ -125,9 +157,32 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             return false;
         }
 
+        private bool ParametersCheck(List<HashMapRecord> local, RestoreState state, string tableName,
+            IReadOnlyCollection<ServerId> servers)
+        {
+            Lock.EnterWriteLock();
+
+            try
+            {
+                if (IsStartNoLock || !(servers.Count > 0 && local.Count > 0))
+                    return true;
+
+                _state = state;
+                _isModelUpdated = _state == RestoreState.FullRestoreNeed;
+                _tableName = tableName;
+                IsStartNoLock = true;
+                _local = local;
+            }
+            finally
+            {
+                Lock.ExitWriteLock();
+            }
+            return false;
+        }
+
         private void StartRestore()
         {
-            _saver.SetRestoreDate(_tableName, _isModelUpdated, _restoreServers);
+            _saver.SetRestoreDate(_tableName, _state, _restoreServers);
             Save();
 
             AsyncTaskModule.AddAsyncTask(
@@ -220,7 +275,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         {
             AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreRemote);
             IsStart = false;
-            _stateHelper.FinishRestore(_isModelUpdated);
+            _stateHelper.FinishRestore(_state);
             ChangeCurrentServer();
             Save();
             Logger.Logger.Instance.Info("Restore current servers complete");

@@ -42,14 +42,32 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         }
 
         public void LocalSendState(bool isModelUpdate)
-        {
-            _state = isModelUpdate ? RestoreState.FullRestoreNeed : RestoreState.SimpleRestoreNeed;
-        }
+        {            
+            var state = isModelUpdate ? RestoreState.FullRestoreNeed : RestoreState.SimpleRestoreNeed;
+
+            if (state > _state)
+                _state = state;
+        }        
 
         public void FinishRestore(bool isModelUpdate)
         {
             if (isModelUpdate && _state == RestoreState.FullRestoreNeed ||
                 !isModelUpdate && _state == RestoreState.SimpleRestoreNeed)
+            {
+                _state = RestoreState.Restored;
+                _isRestoreFinish = true;
+            }
+        }
+
+        public void LocalSendState(RestoreState state)
+        {
+            if (state > _state && state != RestoreState.Default)
+                _state = state;
+        }
+
+        public void FinishRestore(RestoreState state)
+        {
+            if (state == _state)
             {
                 _state = RestoreState.Restored;
                 _isRestoreFinish = true;

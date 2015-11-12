@@ -55,10 +55,21 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             _lock.ExitWriteLock();
         }
 
+        public void SetRestoreDate(string tableName, RestoreState state, List<RestoreServer> restoreServers)
+        {
+            _lock.EnterWriteLock();
+
+            TableName = tableName;
+            IsModelUpdate = state == RestoreState.FullRestoreNeed;
+            RestoreServers = restoreServers;
+
+            _lock.ExitWriteLock();
+        }
+
         public void Save()
         {
             _lock.EnterWriteLock();
-            if(IsNeedRestore())
+            if(IsNeedSave())
                 SaveInner();
             else
                 RemoveFile();
@@ -109,6 +120,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         public bool IsNeedRestore()
         {
             return StateHelper.State != RestoreState.Restored && (RestoreServers != null && RestoreServers.Count != 0);
+        }
+
+        private bool IsNeedSave()
+        {
+            return StateHelper.State != RestoreState.Restored;
         }
 
         private void SaveInner()

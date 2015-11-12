@@ -261,14 +261,14 @@ namespace Qoollo.Impl.Writer
                 if (comm.FailedServers != null)
                 {
                     var list = _model.Servers.Where(x => comm.FailedServers.Contains(x)).ToList();
-                    _asyncDbWork.Restore(list, comm.IsModelUpdated, comm.TableName);
+                    _asyncDbWork.Restore(list, comm.IsModelUpdated ? RestoreState.FullRestoreNeed : RestoreState.SimpleRestoreNeed, comm.TableName);
                 }
                 else
                 {
                     var servers = comm.IsModelUpdated
                         ? _model.Servers
                         : _model.Servers.Where(x => !x.Equals(_model.Local));
-                    _asyncDbWork.Restore(servers.ToList(), comm.IsModelUpdated, comm.TableName);
+                    _asyncDbWork.Restore(servers.ToList(), comm.IsModelUpdated ? RestoreState.FullRestoreNeed : RestoreState.SimpleRestoreNeed, comm.TableName);
                 }
             }
             else if (command is RestoreInProcessCommand)

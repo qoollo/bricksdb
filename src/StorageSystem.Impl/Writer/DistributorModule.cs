@@ -278,7 +278,8 @@ namespace Qoollo.Impl.Writer
             else if (command is RestoreCommandWithData)
             {
                 var comm = command as RestoreCommandWithData;
-                _asyncDbWork.RestoreIncome(comm.ServerId, comm.IsModelUpdated, comm.Hash, comm.TableName, _model.LocalMap);
+                _asyncDbWork.RestoreIncome(comm.ServerId, comm.RestoreState == RestoreState.FullRestoreNeed, comm.Hash,
+                    comm.TableName, _model.LocalMap);
             }
             else
                 Logger.Logger.Instance.ErrorFormat("Not supported command {0}", command.GetType());

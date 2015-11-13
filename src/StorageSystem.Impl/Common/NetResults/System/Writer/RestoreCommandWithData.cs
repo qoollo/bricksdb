@@ -3,6 +3,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Common.NetResults.System.Writer
 {
@@ -13,20 +14,21 @@ namespace Qoollo.Impl.Common.NetResults.System.Writer
         public ServerId ServerId { get; private set; }
 
         [DataMember]
-        public List<KeyValuePair<string, string>> Hash { get; private set; }
+        public List<KeyValuePair<string, string>> Hash { get; private set; }        
 
         [DataMember]
-        public bool IsModelUpdated { get; private set; }
+        public RestoreState RestoreState { get; private set; }
 
         [DataMember]
         public string TableName { get; private set; }
 
-        public RestoreCommandWithData(ServerId serverId, List<HashMapRecord> hash, bool isModelUpdated, string tableName)
+        public RestoreCommandWithData(ServerId serverId, List<HashMapRecord> hash, string tableName,
+            RestoreState state)
         {
             TableName = tableName;
             ServerId = new ServerId(serverId);
             Hash = hash.Select(x => new KeyValuePair<string, string>(x.Begin, x.End)).ToList();
-            IsModelUpdated = isModelUpdated;
+            RestoreState = state;
         }
 
         protected RestoreCommandWithData(string tableName)

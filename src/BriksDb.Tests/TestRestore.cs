@@ -28,15 +28,14 @@ namespace Qoollo.Tests
     [TestClass]
     public class TestRestore : TestBase
     {
-        private void CreateRestoreFile(string filename, bool isModelUpdated, string tableName, RestoreState state,
+        private void CreateRestoreFile(string filename, string tableName, RestoreState state,
              List<RestoreServerSave> servers = null)
         {
             using (var writer = new StreamWriter(filename))
             {
                 writer.WriteLine("<?xml version=\"1.0\"?>");
                 writer.WriteLine(
-                    "<RestoreSaveHelper xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" IsModelUpdate=\"{0}\" TableName=\"{1}\" RestoreState=\"{2}\">",
-                    isModelUpdated.ToString().ToLower(),
+                    "<RestoreSaveHelper xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"  TableName=\"{0}\" RestoreState=\"{1}\">",
                     string.IsNullOrEmpty(tableName) ? "AllTablesyNameThatMustntBeUsedAsTableName" : tableName,
                     Enum.GetName(typeof (RestoreState), state));
 
@@ -928,7 +927,7 @@ namespace Qoollo.Tests
             InitInjection.RestoreHelpFileOut = restoreFile1;
             _writer1.Build(storageServer1, "Writer_Restore_TwoServer_RestoreFromFile", 1);
             InitInjection.RestoreHelpFileOut = restoreFile2;
-            CreateRestoreFile(restoreFile2, false, string.Empty, RestoreState.SimpleRestoreNeed,
+            CreateRestoreFile(restoreFile2, string.Empty, RestoreState.SimpleRestoreNeed,
                 new List<RestoreServerSave>
                 {
                     new RestoreServerSave(new RestoreServer("localhost", storageServer1)
@@ -1043,7 +1042,7 @@ namespace Qoollo.Tests
             _writer1.Build(storageServer1, "Writer_Restore_ThreeServers_RestoreFromFile", 1);
 
             InitInjection.RestoreHelpFileOut = restoreFile2;
-            CreateRestoreFile(restoreFile2, false, string.Empty, RestoreState.SimpleRestoreNeed,
+            CreateRestoreFile(restoreFile2, string.Empty, RestoreState.SimpleRestoreNeed,
                new List<RestoreServerSave>
                 {
                     new RestoreServerSave(new RestoreServer("localhost", storageServer1)
@@ -1054,7 +1053,7 @@ namespace Qoollo.Tests
             _writer2.Build(storageServer2, "Writer_Restore_ThreeServers_RestoreFromFile", 1);
 
             InitInjection.RestoreHelpFileOut = restoreFile3;
-            CreateRestoreFile(restoreFile3, false, string.Empty, RestoreState.SimpleRestoreNeed,
+            CreateRestoreFile(restoreFile3, string.Empty, RestoreState.SimpleRestoreNeed,
                new List<RestoreServerSave>
                 {
                     new RestoreServerSave(new RestoreServer("localhost", storageServer1)

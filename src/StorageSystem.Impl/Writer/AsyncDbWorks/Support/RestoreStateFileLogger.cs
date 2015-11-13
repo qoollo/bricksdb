@@ -14,16 +14,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
     internal class RestoreStateFileLogger
     {
         public string TableName { get; private set; }
-        public bool IsModelUpdate { get; private set; }
         public List<RestoreServer> RestoreServers { get; private set; }
         public RestoreStateHelper StateHelper { get; private set; }
 
+        public RestoreState RestoreState { get; private set; }
+
         public RestoreStateFileLogger(string filename, RestoreStateHelper stateHelper, string tableName,
-            bool isModelUpdate, List<RestoreServer> restoreServers) : this(filename)
+            List<RestoreServer> restoreServers) : this(filename)
         {
-            Contract.Requires(stateHelper != null);            
+            Contract.Requires(stateHelper != null);
             TableName = tableName;
-            IsModelUpdate = isModelUpdate;            
             StateHelper = stateHelper;
             RestoreServers = restoreServers;
         }
@@ -44,23 +44,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         private readonly string _filename;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
-        public void SetRestoreDate(string tableName, bool isModelUpdate, List<RestoreServer> restoreServers)
-        {
-            _lock.EnterWriteLock();
-
-            TableName = tableName;
-            IsModelUpdate = isModelUpdate;            
-            RestoreServers = restoreServers;
-            
-            _lock.ExitWriteLock();
-        }
-
         public void SetRestoreDate(string tableName, RestoreState state, List<RestoreServer> restoreServers)
         {
             _lock.EnterWriteLock();
 
             TableName = tableName;
-            IsModelUpdate = state == RestoreState.FullRestoreNeed;
+            RestoreState = state;
             RestoreServers = restoreServers;
 
             _lock.ExitWriteLock();
@@ -88,7 +77,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
                 RestoreServers = load.RestoreServers;
                 StateHelper = new RestoreStateHelper(load.State);
                 TableName = load.TableName;
-                IsModelUpdate = load.IsModelUpdate;
+                RestoreState = load.State;
 
                 stream.Close();
 
@@ -131,7 +120,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         {
             try
             {
-                var save = new RestoreSaveHelper(StateHelper.State, RestoreServers, IsModelUpdate, TableName);
+                var save = new RestoreSaveHelper(StateHelper.State, RestoreServers, TableName);
                 var formatter = new XmlSerializer(save.GetType());
                 var stream = new FileStream(_filename, FileMode.Create);
                 formatter.Serialize(stream, save);
@@ -169,19 +158,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         {
         }
 
-        public RestoreSaveHelper(RestoreState state, IEnumerable<RestoreServer> servers, bool isModelUpdate,
-            string tableName)
-        {
-            IsModelUpdate = isModelUpdate;
+        public RestoreSaveHelper(RestoreState state, IEnumerable<RestoreServer> servers, string tableName)
+        {            
             TableName = tableName;
             State = state;
             if (servers != null)
                 RestoreServersSave = servers.Select(x => new RestoreServerSave(x)).ToList();
         }
-
-        [DataMember]
-        [XmlAttribute("IsModelUpdate")]
-        public bool IsModelUpdate { get; set; }
         
         [DataMember]
         [XmlAttribute("TableName")]

@@ -107,9 +107,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             {
                 Task.Delay(Consts.StartRestoreTimeout).ContinueWith(task =>
                 {
-                    RestoreFromFile(_localHash, _saver.RestoreServers,
-                        _saver.IsModelUpdate ? RestoreState.FullRestoreNeed : RestoreState.SimpleRestoreNeed,
-                        _saver.TableName);
+                    RestoreFromFile(_localHash, _saver.RestoreServers, _saver.RestoreState, _saver.TableName);
                 });
             }
         }

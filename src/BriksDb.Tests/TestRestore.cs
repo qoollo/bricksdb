@@ -1134,5 +1134,97 @@ namespace Qoollo.Tests
 
             proxy.Dispose();
         }
+
+        [TestMethod]
+        public void Writer_Restore_TwoServer_RestoreFromDistributor()
+        {
+            var writer =
+                new HashWriter(new HashMapConfiguration("Writer_Restore_TwoServer_RestoreFromDistributor", HashMapCreationMode.CreateNew, 2, 3,
+                    HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "localhost", storageServer1, 157);
+            writer.SetServer(1, "localhost", storageServer2, 157);
+            writer.Save();
+
+            _distrTest.Build(1, distrServer1, distrServer12, "Writer_Restore_TwoServer_RestoreFromDistributor",
+                TimeSpan.FromMilliseconds(1000), true);
+
+            const string restoreFile1 = "restore1.txt";
+            const string restoreFile2 = "restore2.txt";
+
+            InitInjection.RestoreHelpFileOut = restoreFile1;
+            _writer1.Build(storageServer1, "Writer_Restore_TwoServer_RestoreFromDistributor", 1);
+            InitInjection.RestoreHelpFileOut = restoreFile2;
+            _writer2.Build(storageServer2, "Writer_Restore_TwoServer_RestoreFromDistributor", 1);
+
+            _distrTest.Start();
+            _writer1.Start();
+
+            var list = new List<InnerData>();
+            const int count = 50;
+            for (int i = 1; i < count + 1; i++)
+            {
+                var ev =
+                    new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
+                        "default")
+                    {
+                        OperationName = OperationName.Create,
+                        OperationType = OperationType.Async
+                    })
+                    {
+                        Data = CommonDataSerializer.Serialize(i),
+                        Key = CommonDataSerializer.Serialize(i),
+                        Transaction = { Distributor = new ServerId("localhost", distrServer1) }
+                    };
+                ev.Transaction.TableName = "Int";
+
+                list.Add(ev);
+            }
+
+            foreach (var data in list)
+            {
+                _distrTest.Input.ProcessAsync(data);
+            }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(6000));
+
+            foreach (var data in list)
+            {
+                var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
+                if (tr.State != TransactionState.Complete)
+                {
+                    data.Transaction = new Transaction(data.Transaction);
+                    data.Transaction.ClearError();
+                    _distrTest.Input.ProcessAsync(data);
+                }
+            }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(5000));
+
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+            var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
+
+            if (count > 1)
+            {
+                Assert.AreNotEqual(count, mem.Local);
+                Assert.AreNotEqual(count, mem.Remote);
+            }
+            Assert.AreEqual(count, mem.Local + mem.Remote);
+            Assert.AreEqual(0, mem2.Local + mem2.Remote);
+
+            _writer2.Start();
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(5000));
+
+            Assert.AreEqual(0, mem.Remote);
+            Assert.AreEqual(0, mem2.Remote);
+            Assert.AreEqual(count, mem.Local + mem2.Local);
+            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
+            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+
+            _distrTest.Dispose();
+            _writer1.Dispose();
+            _writer2.Dispose();
+        }
     }
 }

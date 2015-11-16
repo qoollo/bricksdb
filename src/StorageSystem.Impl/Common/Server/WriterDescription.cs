@@ -17,8 +17,15 @@ namespace Qoollo.Impl.Common.Server
         {
             get
             {
-                return _stateInfo.Keys.Contains(ServerState.RestoreInProcess) ||
-                       _stateInfo.Keys.Contains(ServerState.RestoreTransferInProcess);
+                bool result = false;
+                string value;
+                if (_stateInfo.TryGetValue(ServerState.RestoreInProcess, out value))
+                    result = bool.Parse(value);
+
+                if (!result && _stateInfo.TryGetValue(ServerState.RestoreTransferInProcess, out value))
+                    result = bool.Parse(value);
+
+                return result;
             }
         }
 

@@ -80,8 +80,7 @@ namespace Qoollo.Impl.Components
             var cache = new DistributorTimeoutCache(_cacheConfiguration);
             var net = CreateNetModule(_connectionConfiguration);
             var distributor = new DistributorModule(_pingConfig, _checkConfig, _distributorHashConfiguration,
-                new QueueConfiguration(1, 1000), net,
-                _localfordb, _localforproxy, _hashMapConfiguration);
+                new QueueConfiguration(1, 1000), net, _localfordb, _localforproxy, _hashMapConfiguration);
 
             Distributor = distributor;
 

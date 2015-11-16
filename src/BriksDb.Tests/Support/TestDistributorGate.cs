@@ -39,9 +39,10 @@ namespace Qoollo.Tests.Support
             return list.First(x => x.FieldType.FullName == typeof(TRet).ToString()).GetValue(obj) as TRet;
         }
 
-        public void Build(int countReplics, int distrServer1, int distrServer12, string hashFile, TimeSpan asyncCheck = default(TimeSpan))
+        public void Build(int countReplics, int distrServer1, int distrServer12, string hashFile,
+            TimeSpan asyncCheck = default(TimeSpan), bool autoRestoreEnable = false)
         {
-            asyncCheck = asyncCheck == default(TimeSpan) ? TimeSpan.FromMinutes(5) : asyncCheck; 
+            asyncCheck = asyncCheck == default(TimeSpan) ? TimeSpan.FromMinutes(5) : asyncCheck;
             _q = new GlobalQueueInner();
             GlobalQueue.SetQueue(_q);
 
@@ -57,7 +58,7 @@ namespace Qoollo.Tests.Support
                 new ServerId("localhost", distrServer12),
                 new HashMapConfiguration(hashFile,
                     HashMapCreationMode.ReadFromFile,
-                    1, countReplics, HashFileType.Distributor));
+                    1, countReplics, HashFileType.Distributor), autoRestoreEnable);
 
             WriterSystemModel = GetPrivtaeField<WriterSystemModel>(Distributor);
             _dnet.SetDistributor(Distributor);
@@ -71,7 +72,7 @@ namespace Qoollo.Tests.Support
             var netReceive1 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
             var netReceive2 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
             Input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), Main, _tranc);
-            _receiver = new NetDistributorReceiver(Main, Input, Distributor, netReceive1, netReceive2);      
+            _receiver = new NetDistributorReceiver(Main, Input, Distributor, netReceive1, netReceive2);
         }
 
         public void Build(int countReplics, string hashFile)

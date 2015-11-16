@@ -256,7 +256,12 @@ namespace Qoollo.Impl.Writer
 
         private void ProcessInner(NetCommand command)
         {
-            if (command is RestoreCommand)
+            if (command is RestoreFromDistributorCommand)
+            {
+                _asyncDbWork.Restore(_model.Servers.Where(x => !x.Equals(_model.Local)).ToList(),
+                    RestoreState.SimpleRestoreNeed);
+            }
+            else if (command is RestoreCommand)
             {
                 var comm = command as RestoreCommand;
                 Logger.Logger.Instance.Debug(

@@ -150,7 +150,8 @@ namespace Qoollo.Impl.DistributorModules
                 }
             });
 
-            RestoreWriters(servers);
+            if (_autoRestoreEnable)
+                RestoreWriters(servers);
         }
 
         private void RestoreWriters(List<WriterDescription> servers)

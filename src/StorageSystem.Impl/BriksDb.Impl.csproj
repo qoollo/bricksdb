@@ -142,6 +142,7 @@
     <Compile Include="Common\NetResults\Data\SetGetRestoreStateResult.cs" />
     <Compile Include="Common\NetResults\System\Distributor\HashFileUpdateCommand.cs" />
     <Compile Include="Common\NetResults\System\Distributor\SetGetRestoreStateCommand.cs" />
+    <Compile Include="Common\NetResults\System\Writer\RestoreFromDistributorCommand.cs" />
     <Compile Include="Common\Server\RestoreServer.cs" />
     <Compile Include="Common\Support\AggregateResultHelper.cs" />
     <Compile Include="Common\NetResults\Event\HashMapResult.cs" />

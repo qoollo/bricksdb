@@ -53,7 +53,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             {
                 var dictionary = new Dictionary<string, string>
                 {
-                    {ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString()}                    
+                    {ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString()},
+                    {ServerState.RestoreTransferInProcess, _transferRestore.IsStart.ToString()}
                 };
                 if (_initiatorRestore.IsStart)
                 {

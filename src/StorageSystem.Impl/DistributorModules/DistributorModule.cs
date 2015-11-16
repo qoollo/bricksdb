@@ -38,7 +38,7 @@ namespace Qoollo.Impl.DistributorModules
             DistributorNetModule distributorNet,
             ServerId localfordb,
             ServerId localforproxy,
-            HashMapConfiguration hashMapConfiguration)
+            HashMapConfiguration hashMapConfiguration, bool autoRestoreEnable = false)
         {
             Contract.Requires(configuration != null);
             Contract.Requires(queueConfiguration != null);
@@ -55,6 +55,7 @@ namespace Qoollo.Impl.DistributorModules
             _distributorNet = distributorNet;
             _localfordb = localfordb;
             _localforproxy = localforproxy;
+            _autoRestoreEnable = autoRestoreEnable;
             _asyncCheck = asyncCheck;
             _queue = GlobalQueue.Queue;
         }
@@ -69,6 +70,7 @@ namespace Qoollo.Impl.DistributorModules
         private readonly AsyncTaskModule _asyncTaskModule;
         private readonly AsyncTasksConfiguration _asyncPing;
         private readonly AsyncTasksConfiguration _asyncCheck;
+        private readonly bool _autoRestoreEnable;
 
         public override void Start()
         {
@@ -135,8 +137,8 @@ namespace Qoollo.Impl.DistributorModules
 
         private void CheckRestore(AsyncData data)
         {
-            var map = _modelOfDbWriters.Servers;
-            map.ForEach(x =>
+            var servers = _modelOfDbWriters.Servers;
+            servers.ForEach(x =>
             {
                 var result = _distributorNet.SendToWriter(x, new SetGetRestoreStateCommand(x.RestoreState));
 
@@ -147,6 +149,19 @@ namespace Qoollo.Impl.DistributorModules
                     x.SetInfoMessageList(command.FullState);
                 }
             });
+
+            RestoreWriters(servers);
+        }
+
+        private void RestoreWriters(List<WriterDescription> servers)
+        {
+            if (!servers.All(x => x.IsAvailable && !x.IsRestoreInProcess))
+                return;
+            var server = servers.FirstOrDefault(x => x.RestoreState == RestoreState.SimpleRestoreNeed);
+            if (server != null)
+            {
+                _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand());
+            }
         }
 
         private void DistributerPing(AsyncData data)

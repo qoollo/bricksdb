@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Common.Server
@@ -12,7 +11,16 @@ namespace Qoollo.Impl.Common.Server
 
         public bool IsServerRestored { get { return RestoreState == RestoreState.Restored; } }
 
-        public RestoreState RestoreState { get; private set; }        
+        public RestoreState RestoreState { get; private set; }
+
+        public bool IsRestoreInProcess
+        {
+            get
+            {
+                return _stateInfo.Keys.Contains(ServerState.RestoreInProcess) ||
+                       _stateInfo.Keys.Contains(ServerState.RestoreTransferInProcess);
+            }
+        }
 
         public string StateString
         {

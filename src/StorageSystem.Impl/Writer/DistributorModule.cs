@@ -89,7 +89,7 @@ namespace Qoollo.Impl.Writer
 
         public string UpdateModel()
         {
-            if (!_asyncDbWork.IsStarted)
+            if (!_asyncDbWork.IsRestoreStarted)
             {
                 _model.UpdateModel();
                 _asyncDbWork.SetLocalHash(_model.LocalMap);
@@ -162,7 +162,7 @@ namespace Qoollo.Impl.Writer
 
         private string CheckRestoreArguments(string tableName)
         {
-            if (_asyncDbWork.IsStarted)
+            if (_asyncDbWork.IsRestoreStarted)
                 return Errors.RestoreAlreadyStarted;
 
             if (tableName != Consts.AllTables && !_dbModuleCollection.GetDbModules.Exists(x => x.TableName == tableName))
@@ -173,7 +173,7 @@ namespace Qoollo.Impl.Writer
 
         public bool IsRestoreCompleted()
         {
-            return !_asyncDbWork.IsStarted;
+            return !_asyncDbWork.IsRestoreStarted;
         }
 
         public List<ServerId> FailedServers()
@@ -199,14 +199,19 @@ namespace Qoollo.Impl.Writer
             string result = string.Empty;            
             result += string.Format("restore state: {0}\n",
                 Enum.GetName(typeof (RestoreState), GetRestoreRequiredState()));
-            result += string.Format("restore is running: {0}\n", _asyncDbWork.IsStarted);
-            if (_asyncDbWork.IsStarted)
+            result += string.Format("restore is running: {0}\n", _asyncDbWork.IsRestoreStarted);
+            if (_asyncDbWork.IsRestoreStarted)
             {
                 result += string.Format("current server: {0}\n", GetCurrentRestoreServer());
                 result += "servers:\n";
                 result = _asyncDbWork.Servers.Aggregate(result,
                     (current, server) => current + string.Format("\t{0}\n", server));
             }
+
+            result += string.Format("restore transfer is running: {0}\n", _asyncDbWork.IsTransferRestoreStarted);
+            if (_asyncDbWork.IsTransferRestoreStarted)
+                result += _asyncDbWork.GetTransferServer();
+
             return result;
         }
 
@@ -293,7 +298,7 @@ namespace Qoollo.Impl.Writer
 
         private RemoteResult HashFileUpdate(HashFileUpdateCommand command)
         {
-            if (_asyncDbWork.IsStarted)
+            if (_asyncDbWork.IsRestoreStarted)
                 return new InnerFailResult("Restore process is started");
 
             var result = _model.UpdateHashViaNet(command.Map);

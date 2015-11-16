@@ -31,11 +31,19 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             get { return _stateHelper.State != RestoreState.Restored; }
         }
 
-        public bool IsStarted
+        public bool IsRestoreStarted
         {
             get
             {
                 return _initiatorRestore.IsStart;
+            }
+        }
+
+        public bool IsTransferRestoreStarted
+        {
+            get
+            {
+                return _transferRestore.IsStart;
             }
         }
 
@@ -51,7 +59,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                 {
                     var server = _initiatorRestore.RestoreServer;
                     if (server != null)
-                        dictionary.Add(ServerState.RestoreCurrentServers, server.ToString());
+                        dictionary.Add(ServerState.RestoreCurrentServer, server.ToString());
+                }
+                if (_transferRestore.IsStart)
+                {
+                    var server = _transferRestore.RemoteServer;
+                    if (server != null)
+                        dictionary.Add(ServerState.RestoreTransferServer, server.ToString());
                 }
                 return dictionary;
             }
@@ -76,7 +90,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _saver = LoadRestoreStateFromFile();
             _initiatorRestore = new InitiatorRestoreModule(initiatorConfiguration, writerNet, async, _stateHelper,
                 _saver);
-            _transfer = new TransferRestoreModule(transferConfiguration, writerNet, async, 
+            _transferRestore = new TransferRestoreModule(transferConfiguration, writerNet, async, 
                 db, local, queueConfiguration);
             _timeout = new TimeoutModule(writerNet, async, queueConfiguration,
                 db,  timeoutConfiguration);
@@ -84,7 +98,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         }
 
         private readonly InitiatorRestoreModule _initiatorRestore;
-        private readonly TransferRestoreModule _transfer;
+        private readonly TransferRestoreModule _transferRestore;
         private readonly TimeoutModule _timeout;
         
         private List<HashMapRecord> _localHash;
@@ -100,7 +114,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         public override void Start()
         {
             _initiatorRestore.Start();
-            _transfer.Start();
+            _transferRestore.Start();
             _timeout.Start();
 
             if (_saver.IsNeedRestore())
@@ -119,38 +133,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         }
 
         #region Restore process
-
-        //public void Restore(List<ServerId> servers, bool isModelUpdated)
-        //{
-        //    if (_initiatorRestore.IsStart)
-        //        return;
-
-        //    _stateHelper.LocalSendState(isModelUpdated);
-        //    _initiatorRestore.Restore(_localHash, servers, isModelUpdated);
-        //    _saver.Save();
-        //}
-
-        //public void Restore(List<ServerId> servers, bool isModelUpdated, string tableName)
-        //{
-        //    if (_initiatorRestore.IsStart)
-        //        return;
-
-        //    _stateHelper.LocalSendState(isModelUpdated);
-        //    _initiatorRestore.Restore(_localHash, servers, isModelUpdated, tableName);
-        //    _saver.Save();
-        //}
-
-        //private void RestoreFromFile(List<HashMapRecord> local, List<RestoreServer> servers, bool isModelUpdated, string tableName)
-        //{
-        //    if (_initiatorRestore.IsStart)
-        //        return;
-            
-        //    _initiatorRestore.RestoreFromFile(local, servers, isModelUpdated, tableName);            
-        //}
-
+        
         public void RestoreIncome(ServerId server, bool isSystemUpdated, List<KeyValuePair<string, string>> hash, string tableName, List<HashMapRecord> localMap)
         {
-            _transfer.RestoreIncome(server, isSystemUpdated, hash, tableName, localMap);
+            _transferRestore.RestoreIncome(server, isSystemUpdated, hash, tableName, localMap);
         }
 
         public void PeriodMessageIncome(ServerId server)
@@ -175,7 +161,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         #endregion
 
-        #region Restore process 
+        #region Restore start 
 
         public void Restore(List<ServerId> servers, RestoreState state)
         {
@@ -219,6 +205,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             return _initiatorRestore.RestoreServer;
         }
 
+        public ServerId GetTransferServer()
+        {
+            return _transferRestore.RemoteServer;
+        }
+
         public RestoreState DistributorReceive(RestoreState state)
         {
             var old = _stateHelper.State;
@@ -234,7 +225,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         {
             if (isUserCall)
             {                
-                _transfer.Dispose();
+                _transferRestore.Dispose();
                 _initiatorRestore.Dispose();
                 _timeout.Dispose();
             }

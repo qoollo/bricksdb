@@ -28,7 +28,8 @@ namespace Qoollo.Impl.Common.Support
         public static string Update = "Update";
         public static string Restore = "Restore";
         public static string RestoreInProcess = "RestoreInProcess";
-        public static string RestoreCurrentServers = "RestoreCurrentServers";
+        public static string RestoreCurrentServer = "RestoreCurrentServer";
+        public static string RestoreTransferServer = "RestoreTransferServer";
         public static string RestoreSendStatus = "RestoreSendStatus";       
     }
 

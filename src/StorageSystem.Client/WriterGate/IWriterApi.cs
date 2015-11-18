@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using Qoollo.Client.Request;
+using Qoollo.Client.Support;
+using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Client.WriterGate
 {
@@ -7,13 +9,15 @@ namespace Qoollo.Client.WriterGate
     {
         RequestDescription UpdateModel();
 
-        RequestDescription Restore(bool isModelUpdated);
+        RequestDescription Restore();
 
-        RequestDescription Restore(List<ServerAddress> servers, bool isModelUpdated);
+        RequestDescription Restore(RestoreMode mode);
 
-        RequestDescription Restore(bool isModelUpdated, string tableName);
+        RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode);
 
-        RequestDescription Restore(List<ServerAddress> servers, bool isModelUpdated, string tableName);
+        RequestDescription Restore(RestoreMode mode, string tableName);
+
+        RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode, string tableName);
 
         bool IsRestoreCompleted();
 

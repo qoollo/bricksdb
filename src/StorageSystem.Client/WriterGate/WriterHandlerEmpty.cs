@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Qoollo.Client.Request;
+using Qoollo.Client.Support;
+using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Client.WriterGate
 {
@@ -11,22 +13,27 @@ namespace Qoollo.Client.WriterGate
             return new RequestDescription();
         }
 
-        public RequestDescription Restore(bool isModelUpdated)
+        public RequestDescription Restore()
         {
             return new RequestDescription();
         }
 
-        public RequestDescription Restore(List<ServerAddress> servers, bool isModelUpdated)
+        public RequestDescription Restore(RestoreMode mode)
         {
             return new RequestDescription();
         }
 
-        public RequestDescription Restore(bool isModelUpdated, string tableName)
+        public RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode)
         {
             return new RequestDescription();
         }
 
-        public RequestDescription Restore(List<ServerAddress> servers, bool isModelUpdated, string tableName)
+        public RequestDescription Restore(RestoreMode mode, string tableName)
+        {
+            return new RequestDescription();
+        }
+
+        public RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode, string tableName)
         {
             return new RequestDescription();
         }

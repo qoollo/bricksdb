@@ -112,6 +112,7 @@
     <Compile Include="ProxyGate\Handlers\ProxyHandlerEmpty.cs" />
     <Compile Include="ProxyGate\Handlers\ProxyHandlerTuple.cs" />
     <Compile Include="Request\RequestThroughDispose.cs" />
+    <Compile Include="Support\RestoreMode.cs" />
     <Compile Include="WriterGate\WriterHandlerEmpty.cs" />
     <Compile Include="Support\CommonDataProvider.cs" />
     <Compile Include="Support\Consts.cs" />

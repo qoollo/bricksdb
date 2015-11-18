@@ -102,42 +102,56 @@ namespace Qoollo.Impl.Writer
 
         /// <summary>
         /// Start servers recover
-        /// </summary>
-        /// <param name="isModelUpdated">is hash file is new
-        ///     true - need check all data
-        ///     false - check only metatable</param>
-        public string Restore(bool isModelUpdated)
+        /// </summary>        
+        /// <param name="state"></param>
+        public string Restore(RestoreState state)
         {
             var ret = CheckRestoreArguments(Consts.AllTables);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
 
-            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, Consts.AllTables));
+            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, Consts.AllTables, state));
 
             return ret;
         }
 
-        public string Restore(bool isModelUpdated, string tableName)
+        public string Restore()
         {
             var ret = CheckRestoreArguments(Consts.AllTables);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
 
-            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, tableName));
+            var state = _asyncDbWork.RestoreState;
+            if (state == RestoreState.Restored)
+                return Errors.RestoreDefaultStartError;
+
+            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, Consts.AllTables, state));
 
             return ret;
         }
 
-        public string Restore(List<ServerId> servers, bool isModelUpdated)
+        public string Restore(RestoreState state, string tableName)
         {
             var ret = CheckRestoreArguments(Consts.AllTables);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
 
-            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, Consts.AllTables)
+            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, tableName, state));
+
+            return ret;
+        }
+
+        public string Restore(List<ServerId> servers, RestoreState state)
+        {
+            var ret = CheckRestoreArguments(Consts.AllTables);
+
+            if (ret != Errors.RestoreStartedWithoutErrors)
+                return ret;
+
+            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, Consts.AllTables, state)
             {
                 FailedServers = servers
             });
@@ -145,14 +159,14 @@ namespace Qoollo.Impl.Writer
             return ret;
         }
 
-        public string Restore(List<ServerId> servers, bool isModelUpdated, string tableName)
+        public string Restore(List<ServerId> servers, RestoreState state, string tableName)
         {
             var ret = CheckRestoreArguments(tableName);
 
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
 
-            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, isModelUpdated, tableName)
+            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, tableName, state)
             {
                 FailedServers = servers
             });
@@ -271,14 +285,14 @@ namespace Qoollo.Impl.Writer
                 if (comm.FailedServers != null)
                 {
                     var list = _model.Servers.Where(x => comm.FailedServers.Contains(x)).ToList();
-                    _asyncDbWork.Restore(list, comm.IsModelUpdated ? RestoreState.FullRestoreNeed : RestoreState.SimpleRestoreNeed, comm.TableName);
+                    _asyncDbWork.Restore(list, comm.RestoreState, comm.TableName);
                 }
                 else
                 {
-                    var servers = comm.IsModelUpdated
+                    var servers = comm.RestoreState == RestoreState.FullRestoreNeed
                         ? _model.Servers
                         : _model.Servers.Where(x => !x.Equals(_model.Local));
-                    _asyncDbWork.Restore(servers.ToList(), comm.IsModelUpdated ? RestoreState.FullRestoreNeed : RestoreState.SimpleRestoreNeed, comm.TableName);
+                    _asyncDbWork.Restore(servers.ToList(), comm.RestoreState, comm.TableName);
                 }
             }
             else if (command is RestoreInProcessCommand)

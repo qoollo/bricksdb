@@ -236,11 +236,8 @@ namespace Qoollo.Tests
             var dnet = new DistributorNetModule(connection,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
             var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
-                distrconfig,
-                queueconfig, dnet,
-                new ServerId("localhost", distrServer1),
-                new ServerId("localhost", distrServer12),
+                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(2000)), distrconfig, queueconfig, dnet,
+                new ServerId("localhost", distrServer1), new ServerId("localhost", distrServer12),
                 new HashMapConfiguration("TestAsyncPing", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
             dnet.SetDistributor(ddistributor);
 
@@ -250,8 +247,8 @@ namespace Qoollo.Tests
 
             #endregion
 
-            var data1 = new InnerData(new Transaction("", ""));
-            var data2 = new InnerData(new Transaction("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", ""));
+            var data1 = new InnerData(new Transaction("", "default"));
+            var data2 = new InnerData(new Transaction("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "default"));
 
             var dest = ddistributor.GetDestination(data1, false);
             var dest2 = ddistributor.GetDestination(data2, false);
@@ -278,6 +275,7 @@ namespace Qoollo.Tests
             Assert.AreEqual(1, ddistributor.GetDestination(data2, false).Count);
 
             ddistributor.Dispose();
+            GlobalQueue.Queue.Dispose();
         }
 
         #endregion

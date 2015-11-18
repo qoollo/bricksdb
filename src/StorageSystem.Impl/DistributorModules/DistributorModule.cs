@@ -128,9 +128,8 @@ namespace Qoollo.Impl.DistributorModules
                 real = real.Where(x => !map.Contains(x)).ToList();
                 real.ForEach(x => _distributorNet.RemoveConnection(x));
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                int t = 0;
             }
             
         }

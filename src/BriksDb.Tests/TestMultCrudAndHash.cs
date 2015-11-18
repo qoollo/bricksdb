@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
+using Qoollo.Client.Support;
 using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Configurations;
@@ -202,7 +203,7 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
 
             storage2.Start();
-            storage2.Api.Restore(false);
+            storage2.Api.Restore(RestoreMode.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
@@ -300,13 +301,13 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
 
             storage2.Start();
-            storage2.Api.Restore(false, "Int");
+            storage2.Api.Restore(RestoreMode.SimpleRestoreNeed, "Int");
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
             Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
             Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
 
-            storage2.Api.Restore(false, "Int2");
+            storage2.Api.Restore(RestoreMode.SimpleRestoreNeed, "Int2");
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
             Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
@@ -475,7 +476,7 @@ namespace Qoollo.Tests
 
             storage2.Start();
 
-            storage2.Api.Restore(false);
+            storage2.Api.Restore(RestoreMode.SimpleRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
             Assert.AreEqual(count, f1.Db.Local + f2.Db.Local);

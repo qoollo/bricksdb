@@ -58,6 +58,7 @@ namespace Qoollo.Impl.Common.Support
         public static string RestoreFailConnectToDistributor = "Cannot connect to Distributor";
         public static string FailRead = "Fail read";
         public static string RestoreStartedWithoutErrors = "Recover procces started";
+        public static string RestoreDefaultStartError = "Server restored. Type restore mode";
         public static string DataAlreadyExists = "Data already exist";
         public static string TableAlreadyExists = "Table already exist";
         public static string TableDoesNotExists = "Table does not exist";

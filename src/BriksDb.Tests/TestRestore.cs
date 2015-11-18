@@ -129,7 +129,7 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, mem.Local + mem.Remote);
 
             _writer2.Start();
-            _writer2.Distributor.Restore(false);
+            _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
@@ -228,11 +228,11 @@ namespace Qoollo.Tests
             _writer2.Start();
             _writer3.Start();
 
-            _writer2.Distributor.Restore(false);
+            _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(4000));
 
-            _writer3.Distributor.Restore(false);
+            _writer3.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
@@ -345,7 +345,7 @@ namespace Qoollo.Tests
             _writer1.Distributor.UpdateModel();
             _writer2.Distributor.UpdateModel();
 
-            _writer3.Distributor.Restore(true);
+            _writer3.Distributor.Restore(RestoreState.FullRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1400));
 
@@ -398,7 +398,7 @@ namespace Qoollo.Tests
             storage1.AddDbModule(new TestInMemoryDbFactory());
             storage1.Start();
 
-            storage1.Api.Restore(false);
+            storage1.Api.Restore(RestoreMode.SimpleRestoreNeed);
 
             Thread.Sleep(4000);
             Assert.IsFalse(storage1.Api.IsRestoreCompleted());
@@ -474,7 +474,7 @@ namespace Qoollo.Tests
             writer.Save();
 
             storage1.Api.UpdateModel();
-            storage1.Api.Restore(true);
+            storage1.Api.Restore(RestoreMode.FullRestoreNeed);
 
             Thread.Sleep(1000);
 
@@ -600,7 +600,7 @@ namespace Qoollo.Tests
 
             _writer3.Start();
 
-            _writer3.Distributor.Restore(false);
+            _writer3.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
@@ -683,13 +683,13 @@ namespace Qoollo.Tests
             _writer1.Distributor.UpdateModel();
             _writer2.Distributor.UpdateModel();
 
-            _writer3.Distributor.Restore(true);
+            _writer3.Distributor.Restore(RestoreState.FullRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
-            _writer2.Distributor.Restore(true);
+            _writer2.Distributor.Restore(RestoreState.FullRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
-            _writer1.Distributor.Restore(true);
+            _writer1.Distributor.Restore(RestoreState.FullRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
             Assert.AreEqual(0, mem.Remote);
@@ -767,7 +767,7 @@ namespace Qoollo.Tests
 
             Assert.AreEqual(RestoreState.SimpleRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
 
-            _writer2.Distributor.Restore(false);
+            _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
@@ -881,11 +881,11 @@ namespace Qoollo.Tests
             Assert.AreEqual(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
             Assert.AreEqual(RestoreState.FullRestoreNeed, _writer3.Distributor.GetRestoreRequiredState());
 
-            _writer1.Distributor.Restore(true);
+            _writer1.Distributor.Restore(RestoreState.FullRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(1500));
-            _writer2.Distributor.Restore(true);
+            _writer2.Distributor.Restore(RestoreState.FullRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(1500));
-            _writer3.Distributor.Restore(true);
+            _writer3.Distributor.Restore(RestoreState.FullRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(1500));
 
             Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
@@ -1225,6 +1225,212 @@ namespace Qoollo.Tests
             _distrTest.Dispose();
             _writer1.Dispose();
             _writer2.Dispose();
+        }
+
+        [TestMethod]
+        public void Writer_Restore_TwoServer_RestoreWithDefaultMode()
+        {
+            var writer =
+                new HashWriter(new HashMapConfiguration("Writer_Restore_TwoServer_RestoreWithDefaultMode", HashMapCreationMode.CreateNew, 2, 3,
+                    HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "localhost", storageServer1, 157);
+            writer.SetServer(1, "localhost", storageServer2, 157);
+            writer.Save();
+
+            _distrTest.Build(1, distrServer1, distrServer12, "Writer_Restore_TwoServer_RestoreWithDefaultMode",
+                TimeSpan.FromMilliseconds(2000));
+
+            const string restoreFile1 = "restore1.txt";
+            const string restoreFile2 = "restore2.txt";
+
+            InitInjection.RestoreHelpFileOut = restoreFile1;
+            _writer1.Build(storageServer1, "Writer_Restore_TwoServer_RestoreWithDefaultMode", 1);
+            InitInjection.RestoreHelpFileOut = restoreFile2;            
+            _writer2.Build(storageServer2, "Writer_Restore_TwoServer_RestoreWithDefaultMode", 1);
+
+            _distrTest.Start();
+            _writer1.Start();
+
+            var list = new List<InnerData>();
+            const int count = 50;
+            for (int i = 1; i < count + 1; i++)
+            {
+                var ev =
+                    new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
+                        "default")
+                    {
+                        OperationName = OperationName.Create,
+                        OperationType = OperationType.Async
+                    })
+                    {
+                        Data = CommonDataSerializer.Serialize(i),
+                        Key = CommonDataSerializer.Serialize(i),
+                        Transaction = { Distributor = new ServerId("localhost", distrServer1) }
+                    };
+                ev.Transaction.TableName = "Int";
+
+                list.Add(ev);
+            }
+
+            foreach (var data in list)
+            {
+                _distrTest.Input.ProcessAsync(data);
+            }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(6000));
+
+            foreach (var data in list)
+            {
+                var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
+                if (tr.State != TransactionState.Complete)
+                {
+                    data.Transaction = new Transaction(data.Transaction);
+                    data.Transaction.ClearError();
+                    _distrTest.Input.ProcessAsync(data);
+                }
+            }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(5000));
+
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+            var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
+
+            if (count > 1)
+            {
+                Assert.AreNotEqual(count, mem.Local);
+                Assert.AreNotEqual(count, mem.Remote);
+            }
+            Assert.AreEqual(count, mem.Local + mem.Remote);
+
+            _writer2.Start();            
+            Thread.Sleep(TimeSpan.FromMilliseconds(4000));
+            _writer2.Distributor.Restore();
+            Thread.Sleep(TimeSpan.FromMilliseconds(4000));
+
+            Assert.AreEqual(0, mem.Remote);
+            Assert.AreEqual(0, mem2.Remote);
+            Assert.AreEqual(count, mem.Local + mem2.Local);
+            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
+            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+
+            _distrTest.Dispose();
+            _writer1.Dispose();
+            _writer2.Dispose();
+        }
+
+        [TestMethod]
+        public void Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode()
+        {
+            const string fileName = "Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode";
+            var func = new Action<string>(file =>
+            {
+                var writer = new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 2, 3,
+                    HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
+            });
+
+            var func2 = new Action<string>(file =>
+            {
+                var writer = new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 3, 3,
+                    HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.SetServer(2, "localhost", storageServer3, 157);
+                writer.Save();
+            });
+
+            func(fileName);
+            func("1" + fileName);
+            func("2" + fileName);
+            func2("3" + fileName);
+
+            _distrTest.Build(1, distrServer1, distrServer12, fileName, TimeSpan.FromMilliseconds(2000));
+            _writer1.Build(storageServer1, "1" + fileName, 1);
+            _writer2.Build(storageServer2, "2" + fileName, 1);
+            _writer3.Build(storageServer3, "3" + fileName, 1);
+
+            _distrTest.Start();
+            _writer1.Start();
+            _writer2.Start();
+
+            #region hell
+
+            var list = new List<InnerData>();
+            const int count = 50;
+            for (int i = 1; i < count + 1; i++)
+            {
+                var ev =
+                    new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
+                    {
+                        OperationName = OperationName.Create,
+                        OperationType = OperationType.Async
+                    })
+                    {
+                        Data = CommonDataSerializer.Serialize(i),
+                        Key = CommonDataSerializer.Serialize(i),
+                        Transaction = { Distributor = new ServerId("localhost", distrServer1) }
+                    };
+                ev.Transaction.TableName = "Int";
+
+                list.Add(ev);
+            }
+
+            foreach (var data in list)
+            {
+                _distrTest.Input.ProcessAsync(data);
+            }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(5000));
+
+            #endregion
+
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+            var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
+            var mem3 = _writer3.Db.GetDbModules.First() as TestDbInMemory;
+
+            if (count > 1)
+            {
+                Assert.AreNotEqual(count, mem.Local);
+                Assert.AreNotEqual(count, mem.Remote);
+                Assert.AreNotEqual(count, mem2.Local);
+                Assert.AreNotEqual(count, mem2.Remote);
+            }
+            Assert.AreEqual(count, mem.Local + mem2.Local);
+            Assert.AreEqual(0, mem.Remote);
+            Assert.AreEqual(0, mem2.Remote);
+
+            func2(fileName);
+
+            _writer3.Start();
+
+            _distrTest.Distributor.UpdateModel();
+            _writer1.Distributor.UpdateModel();
+            _writer2.Distributor.UpdateModel();            
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(3000));
+            _writer3.Distributor.Restore();
+            Thread.Sleep(TimeSpan.FromMilliseconds(1400));
+
+
+            Assert.AreEqual(0, mem.Remote);
+            Assert.AreEqual(0, mem2.Remote);
+            Assert.AreEqual(0, mem3.Remote);
+            Assert.AreNotEqual(0, mem3.Local);
+            Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
+            Assert.AreEqual(true, _writer1.Restore.IsNeedRestore);
+            Assert.AreEqual(true, _writer2.Restore.IsNeedRestore);
+            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
+
+            _writer1.Dispose();
+            _writer2.Dispose();
+            _writer3.Dispose();
+
+            _distrTest.Dispose();
         }
     }
 }

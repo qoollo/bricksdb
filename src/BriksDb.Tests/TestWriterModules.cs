@@ -11,11 +11,13 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
+using Consts = Qoollo.Client.Support.Consts;
 
 namespace Qoollo.Tests
 {
@@ -162,9 +164,9 @@ namespace Qoollo.Tests
             _writer1.Start();
             _writer2.Start();
 
-            _writer1.Distributor.Restore(false);
+            _writer1.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
-            _writer2.Distributor.Restore(false);
+            _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 

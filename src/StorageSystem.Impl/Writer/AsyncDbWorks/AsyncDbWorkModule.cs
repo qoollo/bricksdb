@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common.HashFile;
@@ -21,14 +20,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
     {        
         public RestoreState RestoreState
         {
-            get { return _stateHelper.State; }
+            get { return _stateHolder.State; }
         }
 
         public TimeoutModule TimeoutModule { get { return _timeout; } }
 
         internal bool IsNeedRestore
         {
-            get { return _stateHelper.State != RestoreState.Restored; }
+            get { return _stateHolder.State != RestoreState.Restored; }
         }
 
         public bool IsRestoreStarted
@@ -87,9 +86,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             Contract.Requires(async != null);
             Contract.Requires(local != null);
 
-            _stateHelper = new RestoreStateHelper(isNeedRestore);
+            _stateHolder = new RestoreStateHolder(isNeedRestore);
             _saver = LoadRestoreStateFromFile();
-            _initiatorRestore = new InitiatorRestoreModule(initiatorConfiguration, writerNet, async, _stateHelper,
+            _initiatorRestore = new InitiatorRestoreModule(initiatorConfiguration, writerNet, async, _stateHolder,
                 _saver);
             _transferRestore = new TransferRestoreModule(transferConfiguration, writerNet, async, 
                 db, local, queueConfiguration);
@@ -104,7 +103,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         
         private List<HashMapRecord> _localHash;
 
-        private RestoreStateHelper _stateHelper;
+        private RestoreStateHolder _stateHolder;
         private readonly RestoreStateFileLogger _saver;
 
         public void SetLocalHash(List<HashMapRecord> localHash)
@@ -130,7 +129,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         public void UpdateModel(List<ServerId> servers)
         {
             _initiatorRestore.UpdateModel(servers);
-            _stateHelper.LocalSendState(true);
+            _stateHolder.LocalSendState(true);
         }
 
         #region Restore process
@@ -154,9 +153,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         {
             var saver = new RestoreStateFileLogger(InitInjection.RestoreHelpFile);
             if (!saver.Load())
-                return new RestoreStateFileLogger(InitInjection.RestoreHelpFile, _stateHelper);
+                return new RestoreStateFileLogger(InitInjection.RestoreHelpFile, _stateHolder);
             
-            _stateHelper = saver.StateHelper;
+            _stateHolder = saver.StateHolder;
             return saver;
         }
 
@@ -169,8 +168,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             if (_initiatorRestore.IsStart)
                 return;
 
-            _stateHelper.LocalSendState(state);
-            _initiatorRestore.Restore(_localHash, servers, _stateHelper.State);
+            _stateHolder.LocalSendState(state);
+            _initiatorRestore.Restore(_localHash, servers, _stateHolder.State);
             _saver.Save();
         }
 
@@ -179,8 +178,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             if (_initiatorRestore.IsStart)
                 return;
 
-            _stateHelper.LocalSendState(state);
-            _initiatorRestore.Restore(_localHash, servers, _stateHelper.State, tableName);
+            _stateHolder.LocalSendState(state);
+            _initiatorRestore.Restore(_localHash, servers, _stateHolder.State, tableName);
             _saver.Save();
         }
 
@@ -189,7 +188,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             if (_initiatorRestore.IsStart)
                 return;
 
-            _initiatorRestore.RestoreFromFile(local, servers, _stateHelper.State, tableName);
+            _initiatorRestore.RestoreFromFile(local, servers, _stateHolder.State, tableName);
         }       
 
         #endregion
@@ -213,13 +212,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         public RestoreState DistributorReceive(RestoreState state)
         {
-            var old = _stateHelper.State;
-            _stateHelper.DistributorSendState(state);
+            var old = _stateHolder.State;
+            _stateHolder.DistributorSendState(state);
                        
-            if (old != _stateHelper.State)
+            if (old != _stateHolder.State)
                 _saver.Save();
             
-            return _stateHelper.State;
+            return _stateHolder.State;
         }
 
         protected override void Dispose(bool isUserCall)

@@ -2,17 +2,17 @@
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 {    
-    internal class RestoreStateHelper
+    internal class RestoreStateHolder
     {
         public RestoreState State { get { return _state; } }
 
-        public RestoreStateHelper(bool isNeedRestore)
+        public RestoreStateHolder(bool isNeedRestore)
         {
             _state = isNeedRestore ? RestoreState.SimpleRestoreNeed : RestoreState.Restored;
             _isRestoreFinish = false;
         }
 
-        public RestoreStateHelper(RestoreState state)
+        public RestoreStateHolder(RestoreState state)
         {
             _state = state; 
             _isRestoreFinish = false;

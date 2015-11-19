@@ -51,20 +51,20 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         }
 
         public InitiatorRestoreModule(RestoreModuleConfiguration configuration, WriterNetModule writerNet,
-            AsyncTaskModule asyncTaskModule, RestoreStateHelper stateHelper, RestoreStateFileLogger saver)
+            AsyncTaskModule asyncTaskModule, RestoreStateHolder stateHolder, RestoreStateFileLogger saver)
             : base(writerNet, asyncTaskModule)
         {
             Contract.Requires(configuration != null);
-            Contract.Requires(stateHelper != null);
+            Contract.Requires(stateHolder != null);
             _configuration = configuration;
-            _stateHelper = stateHelper;
+            _stateHolder = stateHolder;
             _saver = saver;
             _restoreServers = new List<RestoreServer>();
         }
 
         private List<HashMapRecord> _local;        
         private readonly RestoreModuleConfiguration _configuration;
-        private readonly RestoreStateHelper _stateHelper;
+        private readonly RestoreStateHolder _stateHolder;
         private string _tableName;
         private List<RestoreServer> _restoreServers;
         private readonly RestoreStateFileLogger _saver;
@@ -77,12 +77,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if (ParametersCheck(local, state, tableName, servers))
                 return;
 
-            _restoreServers = servers.Select(x =>
-            {
-                var s = new RestoreServer(x);
-                s.NeedRestoreInitiate();
-                return s;
-            }).ToList();
+            _restoreServers = servers.Select(x => new RestoreServer(x)).ToList();
 
             StartRestore();
         }        
@@ -223,7 +218,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         {
             AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreRemote);
             IsStart = false;
-            _stateHelper.FinishRestore(_state);
+            _stateHolder.FinishRestore(_state);
             ChangeCurrentServer();
             Save();
             Logger.Logger.Instance.Info("Restore current servers complete");

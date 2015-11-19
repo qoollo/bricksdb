@@ -307,7 +307,7 @@ namespace Qoollo.Impl.Writer
             }
             else
                 Logger.Logger.Instance.ErrorFormat("Not supported command {0}", command.GetType());
-        }        
+        }
 
         private void ProcessTransaction(Transaction transaction)
         {

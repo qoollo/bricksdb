@@ -15,24 +15,24 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
     {
         public string TableName { get; private set; }
         public List<RestoreServer> RestoreServers { get; private set; }
-        public RestoreStateHelper StateHelper { get; private set; }
+        public RestoreStateHolder StateHolder { get; private set; }
 
         public RestoreState RestoreState { get; private set; }
 
-        public RestoreStateFileLogger(string filename, RestoreStateHelper stateHelper, string tableName,
+        public RestoreStateFileLogger(string filename, RestoreStateHolder stateHolder, string tableName,
             List<RestoreServer> restoreServers) : this(filename)
         {
-            Contract.Requires(stateHelper != null);
+            Contract.Requires(stateHolder != null);
             TableName = tableName;
-            StateHelper = stateHelper;
+            StateHolder = stateHolder;
             RestoreServers = restoreServers;
         }
 
-        public RestoreStateFileLogger(string filename, RestoreStateHelper stateHelper)
+        public RestoreStateFileLogger(string filename, RestoreStateHolder stateHolder)
             : this(filename)
         {
-            Contract.Requires(stateHelper != null);
-            StateHelper = stateHelper;
+            Contract.Requires(stateHolder != null);
+            StateHolder = stateHolder;
         }
 
         public RestoreStateFileLogger(string filename)
@@ -75,7 +75,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
                 var load = (RestoreSaveHelper) formatter.Deserialize(stream);
 
                 RestoreServers = load.RestoreServers;
-                StateHelper = new RestoreStateHelper(load.State);
+                StateHolder = new RestoreStateHolder(load.State);
                 TableName = load.TableName;
                 RestoreState = load.State;
 
@@ -108,19 +108,19 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public bool IsNeedRestore()
         {
-            return StateHelper.State != RestoreState.Restored && (RestoreServers != null && RestoreServers.Count != 0);
+            return StateHolder.State != RestoreState.Restored && (RestoreServers != null && RestoreServers.Count != 0);
         }
 
         private bool IsNeedSave()
         {
-            return StateHelper.State != RestoreState.Restored;
+            return StateHolder.State != RestoreState.Restored;
         }
 
         private void SaveInner()
         {
             try
             {
-                var save = new RestoreSaveHelper(StateHelper.State, RestoreServers, TableName);
+                var save = new RestoreSaveHelper(StateHolder.State, RestoreServers, TableName);
                 var formatter = new XmlSerializer(save.GetType());
                 var stream = new FileStream(_filename, FileMode.Create);
                 formatter.Serialize(stream, save);

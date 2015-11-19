@@ -29,6 +29,7 @@ namespace Qoollo.Impl.Common.Server
             : base(server)
         {
             CommonServer();
+            NeedRestoreInitiate();
         }
 
         public RestoreServer():base("default", -1)
@@ -43,7 +44,7 @@ namespace Qoollo.Impl.Common.Server
             IsCurrentServer = false;
         }
 
-        public void NeedRestoreInitiate()
+        private void NeedRestoreInitiate()
         {
             IsNeedRestore = true;
             IsRestored = false;

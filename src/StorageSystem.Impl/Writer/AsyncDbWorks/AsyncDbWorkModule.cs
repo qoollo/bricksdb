@@ -119,6 +119,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
             if (_saver.IsNeedRestore())
             {
+                //Task.Factory.StartNew(
+                //    () => RestoreFromFile(_localHash, _saver.RestoreServers, _saver.RestoreState, _saver.TableName));
                 Task.Delay(Consts.StartRestoreTimeout).ContinueWith(task =>
                 {
                     RestoreFromFile(_localHash, _saver.RestoreServers, _saver.RestoreState, _saver.TableName);
@@ -127,7 +129,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         }
 
         public void UpdateModel(List<ServerId> servers)
-        {
+        {            
             _initiatorRestore.UpdateModel(servers);
             _stateHolder.LocalSendState(true);
         }

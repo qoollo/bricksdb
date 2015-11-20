@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 {
@@ -13,14 +14,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         {
             get
             {
-                _reader.EnterReadLock();
+                _lock.EnterReadLock();
                 try
                 {
                     return _restoreServers.FirstOrDefault(x => x.IsCurrentServer);
                 }
                 finally
                 {
-                    _reader.ExitReadLock();
+                    _lock.ExitReadLock();
                 }
             }
         }
@@ -29,14 +30,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         {
             get
             {
-                _reader.EnterReadLock();
+                _lock.EnterReadLock();
                 try
                 {
                     return _restoreServers.Where(x => x.IsFailed).Select(x => (ServerId)x).ToList();
                 }
                 finally
                 {
-                    _reader.ExitReadLock();                    
+                    _lock.ExitReadLock();                    
                 }                
             }
         }
@@ -45,14 +46,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         {
             get
             {
-                _reader.EnterReadLock();
+                _lock.EnterReadLock();
                 try
                 {
                     return new List<RestoreServer>(_restoreServers);
                 }
                 finally
                 {
-                    _reader.ExitReadLock();                    
+                    _lock.ExitReadLock();                    
                 }                
             }
         }
@@ -60,11 +61,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         public RestoreProcessController(RestoreStateFileLogger saver)
         {
             _saver = saver;
+            _restoreServers = new List<RestoreServer>();
         }        
 
         private readonly RestoreStateFileLogger _saver;
         private List<RestoreServer> _restoreServers;
-        private readonly ReaderWriterLockSlim _reader = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
         public void SetServers(List<ServerId> servers)
         {
@@ -78,7 +80,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public void UpdateModel(List<ServerId> servers)
         {
-            _reader.EnterWriteLock();
+            _lock.EnterWriteLock();
 
             _restoreServers.ForEach(x => x.IsFailed = false);
 
@@ -89,59 +91,78 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
                 if (s != null && !s.IsCurrentServer)
                     _restoreServers.Remove(s);
             }
-
+            
             Save();
-            _reader.ExitWriteLock();
+            _lock.ExitWriteLock();
+        }
+
+        public void SetRestoreDate(string tableName, RestoreState state)
+        {
+            _saver.SetRestoreDate(tableName, state, _restoreServers);
+            Save();
         }
 
         public RestoreServer NextRestoreServer()
         {
-            _reader.EnterReadLock();
+            _lock.EnterReadLock();
             try
             {
                 return _restoreServers.FirstOrDefault(x => x.IsNeedCurrentRestore());
             }
             finally
             {
-                _reader.ExitReadLock();
+                _lock.ExitReadLock();
             }
         }
 
         public void ProcessFailedServers()
         {
-            _reader.EnterWriteLock();
+            var servers = FailedServers;
+            _lock.EnterWriteLock();
 
-            foreach (var server in FailedServers)
+            foreach (var server in servers)
             {
                 var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
                 if (s != null)
                     s.AfterFailed();
             }
 
-            _reader.ExitWriteLock();
             Save();
+            _lock.ExitWriteLock();            
         }
 
-        public void ChangeCurrentServer()
+        public void SetCurrentServer(RestoreServer server)
         {
-            _reader.EnterWriteLock();
+            _lock.EnterWriteLock();
+
+            server.IsFailed = false;
+            server.IsCurrentServer = true;
+
+            _lock.ExitWriteLock();
+        }
+
+        public void RemoveCurrentServer()
+        {
+            _lock.EnterWriteLock();
 
             var servers = _restoreServers.FirstOrDefault(x => x.IsCurrentServer);
             if (servers != null)
                 servers.IsCurrentServer = false;
 
-            _reader.ExitWriteLock();
+            Save();
+            _lock.ExitWriteLock();
         }
 
         public void AddServerToFailed(ServerId server)
         {
-            _reader.EnterWriteLock();
+            _lock.EnterWriteLock();
 
             var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
             if (s != null)
                 s.IsFailed = true;
+            Save();
 
-            _reader.ExitWriteLock();
+            _lock.ExitWriteLock();
         }
 
         public void Save()

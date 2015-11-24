@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ServiceModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,8 +12,9 @@ using Qoollo.Impl.NetInterfaces.Writer;
 
 namespace Qoollo.Tests.TestModules
 {
-    class TestWriterServer : ICommonNetReceiverWriterForWrite
+    class TestWriterServer : ICommonNetReceiverWriterForWrite, IDisposable
     {
+        public ServiceHost Host;
         public InnerData retData = null;
 
         public int Value = 0;
@@ -54,6 +56,17 @@ namespace Qoollo.Tests.TestModules
         public RemoteResult Ping()
         {
             return new SuccessResult();
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                Host.Close();
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 }

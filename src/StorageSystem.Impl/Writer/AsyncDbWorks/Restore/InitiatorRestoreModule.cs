@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Threading;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.System.Writer;
@@ -116,6 +115,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             AsyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
 
+            _serversController.Save();
             CurrentProcess();
         }
 
@@ -184,9 +184,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private void FinishRestore()
         {
             AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreRemote);
-            IsStart = false;
-            _stateHolder.FinishRestore(_state);
-            _serversController.RemoveCurrentServer();                 
+            IsStart = false;            
+            _serversController.RemoveCurrentServer();
+
+            if (_serversController.IsAllServersRestored())
+            {
+                _stateHolder.FinishRestore(_state);
+                _serversController.FinishRestore();
+            }
+
+           _serversController.Save();
             Logger.Logger.Instance.Info("Restore current servers complete");
         }
 

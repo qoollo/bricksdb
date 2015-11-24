@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Sockets;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Client.Configuration;
@@ -70,9 +69,15 @@ namespace Qoollo.Tests
             writer.SetServer(1, "localhost", storageServer2, 157);
             writer.Save();
 
-            _distrTest.Build(1, distrServer1, distrServer12, "test8");
+            var file1 = "restoreHelp1.txt";
+            var file2 = "restoreHelp2.txt";
+            var file3 = "restoreHelp3.txt";
 
+            InitInjection.RestoreHelpFileOut = file1;
+            _distrTest.Build(1, distrServer1, distrServer12, "test8");
+            InitInjection.RestoreHelpFileOut = file2;
             _writer1.Build(storageServer1, "test8", 1);
+            InitInjection.RestoreHelpFileOut = file3;
             _writer2.Build(storageServer2, "test8", 1);
 
             _distrTest.Start();
@@ -143,6 +148,10 @@ namespace Qoollo.Tests
             _distrTest.Dispose();
             _writer1.Dispose();
             _writer2.Dispose();
+
+            File.Delete(file1);
+            File.Delete(file2);
+            File.Delete(file3);
         }
 
         [TestMethod]
@@ -171,9 +180,18 @@ namespace Qoollo.Tests
                 new AsyncTasksConfiguration(new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
 
+            var file1 = "restoreFile1.txt";
+            var file2 = "restoreFile2.txt";
+            var file3 = "restoreFile3.txt";
+            var file4 = "restoreFile4.txt";
+
+            InitInjection.RestoreHelpFileOut = file1;
             _distrTest.Build(1, distrServer1, distrServer12, "test11");
+            InitInjection.RestoreHelpFileOut = file2;
             _writer1.Build(storageServer1, "test11", 1);
+            InitInjection.RestoreHelpFileOut = file3;
             _writer2.Build(storageServer2, "test11", 1);
+            InitInjection.RestoreHelpFileOut = file4;
             _writer3.Build(storageServer3, "test11", 1);
 
             #endregion
@@ -251,6 +269,11 @@ namespace Qoollo.Tests
             _writer3.Dispose();
 
             proxy.Dispose();
+
+            File.Delete(file1);
+            File.Delete(file2);
+            File.Delete(file3);
+            File.Delete(file4);
         }
 
         [TestMethod]
@@ -283,9 +306,18 @@ namespace Qoollo.Tests
             func("2" + fileName);
             func2("3" + fileName);
 
+            var file1 = "restoreFile1.txt";
+            var file2 = "restoreFile2.txt";
+            var file3 = "restoreFile3.txt";
+            var file4 = "restoreFile4.txt";
+
+            InitInjection.RestoreHelpFileOut = file1;
             _distrTest.Build(1, distrServer1, distrServer12, fileName);
+            InitInjection.RestoreHelpFileOut = file2;
             _writer1.Build(storageServer1, "1" + fileName, 1);
+            InitInjection.RestoreHelpFileOut = file3;
             _writer2.Build(storageServer2, "2" + fileName, 1);
+            InitInjection.RestoreHelpFileOut = file4;
             _writer3.Build(storageServer3, "3" + fileName, 1);
 
             _distrTest.Start();
@@ -364,6 +396,11 @@ namespace Qoollo.Tests
             _writer3.Dispose();
 
             _distrTest.Dispose();
+
+            File.Delete(file1);
+            File.Delete(file2);
+            File.Delete(file3);
+            File.Delete(file4);
         }
 
         [TestMethod]
@@ -562,10 +599,19 @@ namespace Qoollo.Tests
             writer.SetServer(2, "localhost", storageServer3, 157);
             writer.Save();
 
+            var file1 = "restoreFile1.txt";
+            var file2 = "restoreFile2.txt";
+            var file3 = "restoreFile3.txt";
+            var file4 = "restoreFile4.txt";
+
             _proxy.Start();
+            InitInjection.RestoreHelpFileOut = file1;
             _distrTest.Build(2, distrServer1, distrServer12, "Writer_Restore_ThreeServersTwoReplics");
+            InitInjection.RestoreHelpFileOut = file2;
             _writer1.Build(storageServer1, "Writer_Restore_ThreeServersTwoReplics", 2);
+            InitInjection.RestoreHelpFileOut = file3;
             _writer2.Build(storageServer2, "Writer_Restore_ThreeServersTwoReplics", 2);
+            InitInjection.RestoreHelpFileOut = file4;
             _writer3.Build(storageServer3, "Writer_Restore_ThreeServersTwoReplics", 2);
 
             _distrTest.Start();
@@ -619,6 +665,11 @@ namespace Qoollo.Tests
             _writer3.Dispose();
 
             _proxy.Dispose();
+
+            File.Delete(file1);
+            File.Delete(file2);
+            File.Delete(file3);
+            File.Delete(file4);
         }
 
         [TestMethod]
@@ -633,10 +684,19 @@ namespace Qoollo.Tests
             writer.SetServer(1, "localhost", storageServer2, 157);
             writer.Save();
 
+            var file1 = "restoreFile1.txt";
+            var file2 = "restoreFile2.txt";
+            var file3 = "restoreFile3.txt";
+            var file4 = "restoreFile4.txt";
+
             _proxy.Start();
+            InitInjection.RestoreHelpFileOut = file1;
             _distrTest.Build(2, distrServer1, distrServer12, "Writer_Restore_ThreeServersTwoReplics_UpdateModel");
+            InitInjection.RestoreHelpFileOut = file2;
             _writer1.Build(storageServer1, "Writer_Restore_ThreeServersTwoReplics_UpdateModel", 2);
+            InitInjection.RestoreHelpFileOut = file3;
             _writer2.Build(storageServer2, "Writer_Restore_ThreeServersTwoReplics_UpdateModel", 2);
+            InitInjection.RestoreHelpFileOut = file4;
             _writer3.Build(storageServer3, "Writer_Restore_ThreeServersTwoReplics_UpdateModel", 2);
 
             _distrTest.Start();
@@ -710,6 +770,11 @@ namespace Qoollo.Tests
             _writer3.Dispose();
 
             _proxy.Dispose();
+
+            File.Delete(file1);
+            File.Delete(file2);
+            File.Delete(file3);
+            File.Delete(file4);
         }
 
         [TestMethod]
@@ -724,12 +789,19 @@ namespace Qoollo.Tests
             writer.SetServer(1, "localhost", storageServer2, 157);
             writer.Save();
 
+            var file1 = "restoreFile1.txt";
+            var file2 = "restoreFile2.txt";
+            var file3 = "restoreFile3.txt";
+
+            InitInjection.RestoreHelpFileOut = file1;
             _writer1.Build(storageServer1, fileName, 1);
+            InitInjection.RestoreHelpFileOut = file2;
             _writer2.Build(storageServer2, fileName, 1);
 
             _proxy.Start();
             _writer1.Start();
 
+            InitInjection.RestoreHelpFileOut = file3;
             _distrTest.Build(1, distrServer1, distrServer12, fileName, TimeSpan.FromMilliseconds(1000));
             _distrTest.Start();
 
@@ -795,6 +867,10 @@ namespace Qoollo.Tests
             _distrTest.Dispose();
             _writer1.Dispose();
             _writer2.Dispose();
+
+            File.Delete(file1);
+            File.Delete(file2);
+            File.Delete(file3);
         }
 
         [TestMethod]
@@ -833,14 +909,20 @@ namespace Qoollo.Tests
             func(fileName3);
             func2(fileName4);
 
+            var file1 = "restoreFile1.txt";
+            var file2 = "restoreFile2.txt";
+            var file3 = "restoreFile3.txt";
 
+            InitInjection.RestoreHelpFileOut = file1;
             _writer1.Build(storageServer1, fileName2, 1);
+            InitInjection.RestoreHelpFileOut = file2;
             _writer2.Build(storageServer2, fileName3, 1);
 
             _proxy.Start();
             _writer1.Start();
             _writer2.Start();
 
+            InitInjection.RestoreHelpFileOut = file3;
             _distrTest.Build(1, distrServer1, distrServer12, fileName, TimeSpan.FromMilliseconds(1000));
             _distrTest.Start();
 
@@ -907,6 +989,10 @@ namespace Qoollo.Tests
             _writer1.Dispose();
             _writer2.Dispose();
             _writer3.Dispose();
+
+            File.Delete(file1);
+            File.Delete(file2);
+            File.Delete(file3);
         }
 
         [TestMethod]
@@ -1003,6 +1089,9 @@ namespace Qoollo.Tests
             _distrTest.Dispose();
             _writer1.Dispose();
             _writer2.Dispose();
+
+            File.Delete(restoreFile1);
+            File.Delete(restoreFile2);
         }
         
         [TestMethod]
@@ -1095,6 +1184,9 @@ namespace Qoollo.Tests
             _distrTest.Dispose();
             _writer1.Dispose();
             _writer2.Dispose();
+
+            File.Delete(restoreFile1);
+            File.Delete(restoreFile2);
         }
 
         [TestMethod]
@@ -1187,6 +1279,9 @@ namespace Qoollo.Tests
             _distrTest.Dispose();
             _writer1.Dispose();
             _writer2.Dispose();
+
+            File.Delete(restoreFile1);
+            File.Delete(restoreFile2);
         }
 
         [TestMethod]
@@ -1219,9 +1314,18 @@ namespace Qoollo.Tests
             func("2" + fileName);
             func2("3" + fileName);
 
+            var file1 = "restoreFile1.txt";
+            var file2 = "restoreFile1.txt";
+            var file3 = "restoreFile1.txt";
+            var file4 = "restoreFile1.txt";
+
+            InitInjection.RestoreHelpFileOut = file1;
             _distrTest.Build(1, distrServer1, distrServer12, fileName, TimeSpan.FromMilliseconds(2000));
+            InitInjection.RestoreHelpFileOut = file2;
             _writer1.Build(storageServer1, "1" + fileName, 1);
+            InitInjection.RestoreHelpFileOut = file3;
             _writer2.Build(storageServer2, "2" + fileName, 1);
+            InitInjection.RestoreHelpFileOut = file4;
             _writer3.Build(storageServer3, "3" + fileName, 1);
 
             _distrTest.Start();
@@ -1301,6 +1405,11 @@ namespace Qoollo.Tests
             _writer3.Dispose();
 
             _distrTest.Dispose();
+
+            File.Delete(file1);
+            File.Delete(file2);
+            File.Delete(file3);
+            File.Delete(file4);
         }
 
         [TestMethod]
@@ -1398,12 +1507,26 @@ namespace Qoollo.Tests
 
             _writer2.Distributor.Restore(new List<ServerId> {new ServerId("localhost", storageServer1)},
                 RestoreState.SimpleRestoreNeed);
-
             Thread.Sleep(TimeSpan.FromMilliseconds(4000));
 
             _writer3.Distributor.Restore(new List<ServerId> {new ServerId("localhost", storageServer1)},
                 RestoreState.SimpleRestoreNeed);
+            Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
+            Assert.AreEqual(0, mem.Remote);
+            Assert.AreEqual(0, mem2.Remote);
+            Assert.AreEqual(0, mem3.Remote);
+            Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
+            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
+            Assert.AreEqual(RestoreState.SimpleRestoreNeed, _writer2.Restore.RestoreState);
+            Assert.AreEqual(RestoreState.SimpleRestoreNeed, _writer3.Restore.RestoreState);
+
+            _writer2.Distributor.Restore(new List<ServerId> { new ServerId("localhost", storageServer3) },
+                RestoreState.SimpleRestoreNeed);
+            Thread.Sleep(TimeSpan.FromMilliseconds(4000));
+
+            _writer3.Distributor.Restore(new List<ServerId> { new ServerId("localhost", storageServer2) },
+                RestoreState.SimpleRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
             Assert.AreEqual(0, mem.Remote);
@@ -1412,7 +1535,7 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
             Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
             Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
+            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);            
 
             _distrTest.Dispose();
             _writer1.Dispose();

@@ -90,7 +90,7 @@ namespace Qoollo.Tests
 
                 var server1 = new ServerId("localhost", 21181);
                 var netconfig = new ConnectionConfiguration("testService", 1);
-                TestHelper.OpenWriterHost(server1, netconfig);
+                var s = TestHelper.OpenWriterHost(server1, netconfig);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
@@ -112,11 +112,12 @@ namespace Qoollo.Tests
                 transaction = _proxy.GetTransaction(transaction);
                 Assert.IsNotNull(transaction);
                 Assert.AreEqual(TransactionState.DontExist, transaction.State, transaction.ErrorDescription);
+                s.Dispose(); 
             }
             finally
             {
                 _proxy.Dispose();
-                distr.Dispose();
+                distr.Dispose();                        
             }
         }
 
@@ -195,6 +196,10 @@ namespace Qoollo.Tests
                 Assert.AreEqual(1, s1.Value);
                 Assert.AreEqual(2, s2.Value);
                 Assert.AreEqual(1, s3.Value);
+
+                s1.Dispose();
+                s2.Dispose();
+                s3.Dispose();                
             }
             finally
             {
@@ -254,6 +259,7 @@ namespace Qoollo.Tests
             Assert.AreEqual(10, read.Id);
             _proxy.Dispose();
             distr.Dispose();
+            s.Dispose();            
         }
 
         [TestMethod]

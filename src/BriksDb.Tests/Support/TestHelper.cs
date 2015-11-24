@@ -62,6 +62,7 @@ namespace Qoollo.Tests.Support
             var host = new ServiceHost(ret,
                                        new Uri(string.Format("net.tcp://{0}:{1}/{2}", server.RemoteHost, server.Port,
                                                              config.ServiceName)));
+            ret.Host = host;
             var binding = new NetTcpBinding
             {
                 Security = { Mode = SecurityMode.None },

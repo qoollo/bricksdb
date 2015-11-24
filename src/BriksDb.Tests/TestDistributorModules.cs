@@ -226,6 +226,8 @@ namespace Qoollo.Tests
             net.Dispose();
             distributor.Dispose();
             trm.Dispose();
+            s1.Dispose();
+            s2.Dispose();
         }
 
         [TestMethod]
@@ -290,6 +292,8 @@ namespace Qoollo.Tests
 
             net.Dispose();   
             trm.Dispose();
+            s1.Dispose();
+            s2.Dispose();
         }
 
         [TestMethod]
@@ -337,6 +341,9 @@ namespace Qoollo.Tests
 
             GlobalQueue.Queue.Dispose();
             net.Dispose();
+
+            s1.Dispose();
+            s2.Dispose();
         }
 
         [TestMethod]
@@ -534,6 +541,9 @@ namespace Qoollo.Tests
             transaction.Dispose();
             main.Dispose();
             GlobalQueue.Queue.Dispose();
+
+            s1.Dispose();
+            s2.Dispose();
         }
 
         [TestMethod]
@@ -681,6 +691,8 @@ namespace Qoollo.Tests
             dnet.Dispose();
             cache.Dispose();
             tranc.Dispose();
+
+            s.Dispose();            
         }
 
         [TestMethod]
@@ -800,6 +812,9 @@ namespace Qoollo.Tests
             cache.Dispose();
             input.Dispose();
             tranc.Dispose();
+
+            s1.Dispose();
+            s2.Dispose();
         }
 
         [TestMethod]
@@ -907,6 +922,8 @@ namespace Qoollo.Tests
             ddistributor.Dispose();
             dnet.Dispose();
             cache.Dispose();
+
+            s.Dispose();
         }        
     }
 }

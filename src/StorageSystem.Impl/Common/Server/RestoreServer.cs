@@ -61,6 +61,11 @@ namespace Qoollo.Impl.Common.Server
             return IsNeedRestore && !IsRestored;
         }
 
+        public bool IsServerRestored()
+        {
+            return IsRestored && !IsFailed;
+        }
+
         public override string ToString()
         {
             return string.Format("{0}, restored = {1}, failed = {2}",base.ToString(), IsRestored, IsFailed);

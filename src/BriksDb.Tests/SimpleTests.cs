@@ -216,8 +216,8 @@ namespace Qoollo.Tests
         [TestMethod]
         public void AsyncTaskModule_PingServers_AvalilableAfterSomeTime()
         {
-            const int storageServer1 = 22131;
-            const int storageServer2 = 22132;
+            const int storageServer1 = 21132;
+            const int storageServer2 = 22121;
             const int distrServer1 = 22134;
             const int distrServer12 = 23134;
 
@@ -264,9 +264,9 @@ namespace Qoollo.Tests
             Assert.AreEqual(null, dest);
             Assert.AreEqual(null, dest2);
 
-            TestHelper.OpenWriterHost(new ServerId("localhost", storageServer1),
+            var h1 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer1),
                 new ConnectionConfiguration("testService", 10));
-            TestHelper.OpenWriterHost(new ServerId("localhost", storageServer2),
+            var h2 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer2),
                 new ConnectionConfiguration("testService", 10));
 
             Thread.Sleep(TimeSpan.FromMilliseconds(800));
@@ -275,7 +275,10 @@ namespace Qoollo.Tests
             Assert.AreEqual(1, ddistributor.GetDestination(data2, false).Count);
 
             ddistributor.Dispose();
-            GlobalQueue.Queue.Dispose();
+            h1.Dispose();
+            h2.Dispose();
+
+            GlobalQueue.Queue.Dispose();            
         }
 
         #endregion

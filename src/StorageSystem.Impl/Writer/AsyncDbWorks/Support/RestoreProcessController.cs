@@ -80,7 +80,32 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public void SetServers(List<RestoreServer> servers)
         {
-            _restoreServers = servers;
+            if (_restoreServers.Count > 0)
+            {
+                foreach (var server in servers)
+                {
+                    var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
+                    if (s != null && server.IsNeedCurrentRestore() && !s.IsServerRestored())
+                    {
+                        _restoreServers.Remove(s);
+                        _restoreServers.Add(server);
+                    }
+
+                    if (s == null)
+                        _restoreServers.Add(server);
+                }
+
+                for (int i = 0; i < _restoreServers.Count;)
+                {
+                    var s = servers.FirstOrDefault(x => x.Equals(_restoreServers[i]));
+                    if (s == null)
+                        _restoreServers.RemoveAt(i);
+                    else
+                        i++;
+                }
+            }
+            else
+                _restoreServers = servers;
         }
 
         public void UpdateModel(List<ServerId> servers)
@@ -172,8 +197,35 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public void Save()
         {
+       //     if (_saver != null && _restoreServers.Count!=0)
             if (_saver != null)
                 _saver.Save();
+        }
+
+        public bool IsAllServersRestored()
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _restoreServers.All(x => x.IsServerRestored());
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+
+        public void FinishRestore()
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                _restoreServers.Clear();
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
     }
 }

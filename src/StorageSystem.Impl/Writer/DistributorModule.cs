@@ -261,6 +261,21 @@ namespace Qoollo.Impl.Writer
             }).ToList();
         }
 
+        private List<RestoreServer> ServersOnDirectRestore(RestoreCommand command)
+        {
+            var servers = command.RestoreState == RestoreState.FullRestoreNeed
+                ? _model.Servers
+                : _model.Servers.Where(x => !x.Equals(_model.Local));
+
+            return servers.Select(x =>
+            {
+                var ret = new RestoreServer(x);
+                if (command.FailedServers.Contains(x))
+                    ret.NeedRestoreInitiate();
+                return ret;
+            }).ToList();
+        }
+
         public RemoteResult ProcessSend(NetCommand command)
         {
             if (command is SetGetRestoreStateCommand)
@@ -293,9 +308,8 @@ namespace Qoollo.Impl.Writer
                     "restore");
 
                 if (comm.FailedServers != null)
-                {
-                    var list = _model.Servers.Where(x => comm.FailedServers.Contains(x));
-                    _asyncDbWork.Restore(ConvertRestoreServers(list), comm.RestoreState, comm.TableName);
+                {                    
+                    _asyncDbWork.Restore(ServersOnDirectRestore(comm), comm.RestoreState, comm.TableName);
                 }
                 else
                 {

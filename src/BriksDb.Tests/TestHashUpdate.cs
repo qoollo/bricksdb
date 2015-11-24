@@ -53,6 +53,9 @@ namespace Qoollo.Tests
                 Assert.AreEqual(testMessage, reader.ReadLine());
                 Assert.AreEqual(testMessage, reader.ReadLine());
             }
+
+            File.Delete(fileNameWithouPrefix + "1.txt");
+            File.Delete(fileNameWithouPrefix + "2.txt");
         }
 
         [TestMethod]

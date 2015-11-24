@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
@@ -119,11 +120,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
             if (_saver.IsNeedRestore())
             {
-                //Task.Factory.StartNew(
-                //    () => RestoreFromFile(_localHash, _saver.RestoreServers, _saver.RestoreState, _saver.TableName));
                 Task.Delay(Consts.StartRestoreTimeout).ContinueWith(task =>
                 {
-                    RestoreFromFile(_localHash, _saver.RestoreServers, _saver.RestoreState, _saver.TableName);
+                    RestoreFromFile(_localHash, _saver.RestoreServers, _saver.TableName);
                 });
             }
         }
@@ -165,7 +164,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         #region Restore start 
 
-        public void Restore(List<ServerId> servers, RestoreState state)
+        public void Restore(List<RestoreServer> servers, RestoreState state)
         {
             if (_initiatorRestore.IsStart)
                 return;
@@ -175,7 +174,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _saver.Save();
         }
 
-        public void Restore(List<ServerId> servers, RestoreState state, string tableName)
+        public void Restore(List<RestoreServer> servers, RestoreState state, string tableName)
         {
             if (_initiatorRestore.IsStart)
                 return;
@@ -185,7 +184,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _saver.Save();
         }
 
-        private void RestoreFromFile(List<HashMapRecord> local, List<RestoreServer> servers, RestoreState state, string tableName)
+        private void RestoreFromFile(List<HashMapRecord> local, List<RestoreServer> servers, string tableName)
         {
             if (_initiatorRestore.IsStart)
                 return;

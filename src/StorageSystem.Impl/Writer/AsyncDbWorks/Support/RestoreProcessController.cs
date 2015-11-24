@@ -70,7 +70,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public void SetServers(List<ServerId> servers)
         {
-            _restoreServers = servers.Select(x => new RestoreServer(x)).ToList();
+            _restoreServers = servers.Select(x =>
+            {
+                var ret = new RestoreServer(x);
+                ret.NeedRestoreInitiate();
+                return ret;
+            }).ToList();
         }
 
         public void SetServers(List<RestoreServer> servers)

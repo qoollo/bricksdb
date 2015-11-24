@@ -251,6 +251,16 @@ namespace Qoollo.Impl.Writer
 
         #region Commands
 
+        private List<RestoreServer> ConvertRestoreServers(IEnumerable<ServerId> servers)
+        {
+            return servers.Select(x =>
+            {
+                var ret = new RestoreServer(x);
+                ret.NeedRestoreInitiate();
+                return ret;
+            }).ToList();
+        }
+
         public RemoteResult ProcessSend(NetCommand command)
         {
             if (command is SetGetRestoreStateCommand)
@@ -272,7 +282,7 @@ namespace Qoollo.Impl.Writer
         {
             if (command is RestoreFromDistributorCommand)
             {
-                _asyncDbWork.Restore(_model.Servers.Where(x => !x.Equals(_model.Local)).ToList(),
+                _asyncDbWork.Restore(ConvertRestoreServers(_model.Servers.Where(x => !x.Equals(_model.Local))),
                     RestoreState.SimpleRestoreNeed);
             }
             else if (command is RestoreCommand)
@@ -284,15 +294,15 @@ namespace Qoollo.Impl.Writer
 
                 if (comm.FailedServers != null)
                 {
-                    var list = _model.Servers.Where(x => comm.FailedServers.Contains(x)).ToList();
-                    _asyncDbWork.Restore(list, comm.RestoreState, comm.TableName);
+                    var list = _model.Servers.Where(x => comm.FailedServers.Contains(x));
+                    _asyncDbWork.Restore(ConvertRestoreServers(list), comm.RestoreState, comm.TableName);
                 }
                 else
                 {
                     var servers = comm.RestoreState == RestoreState.FullRestoreNeed
                         ? _model.Servers
                         : _model.Servers.Where(x => !x.Equals(_model.Local));
-                    _asyncDbWork.Restore(servers.ToList(), comm.RestoreState, comm.TableName);
+                    _asyncDbWork.Restore(ConvertRestoreServers(servers), comm.RestoreState, comm.TableName);
                 }
             }
             else if (command is RestoreInProcessCommand)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Threading;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Commands;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -70,7 +71,8 @@ namespace Qoollo.Impl.DistributorModules
         private readonly AsyncTaskModule _asyncTaskModule;
         private readonly AsyncTasksConfiguration _asyncPing;
         private readonly AsyncTasksConfiguration _asyncCheck;
-        private readonly bool _autoRestoreEnable;
+        private bool _autoRestoreEnable;
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
         public override void Start()
         {
@@ -149,7 +151,11 @@ namespace Qoollo.Impl.DistributorModules
                 }
             });
 
-            if (_autoRestoreEnable)
+            _lock.EnterReadLock();
+            var autoRestore = _autoRestoreEnable;
+            _lock.ExitReadLock();
+
+            if (autoRestore)
                 RestoreWriters(servers);
         }
 
@@ -351,7 +357,16 @@ namespace Qoollo.Impl.DistributorModules
         public List<ServerId> GetDistributors()
         {
             return _modelOfAnotherDistributors.GetDistributorList();
-        } 
+        }
+
+        public string AutoRestoreSetMode(bool mode)
+        {            
+            _lock.EnterWriteLock();
+            _autoRestoreEnable = mode;
+            _lock.ExitWriteLock();
+
+            return Errors.NoErrors;
+        }
 
         #endregion
 

@@ -37,5 +37,10 @@ namespace Qoollo.Client.DistributorGate
         {
             return _distributorSystem.Distributor.GetServersState();
         }
+
+        public RequestDescription AutoRestoreSetMode(bool mode)
+        {
+            return new RequestDescription(_distributorSystem.Distributor.AutoRestoreSetMode(mode));
+        }
     }
 }

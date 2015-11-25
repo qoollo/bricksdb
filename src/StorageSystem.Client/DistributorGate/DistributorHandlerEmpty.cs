@@ -27,5 +27,10 @@ namespace Qoollo.Client.DistributorGate
         {
             return new RequestDescription().ErrorDescription;
         }
+
+        public RequestDescription AutoRestoreSetMode(bool mode)
+        {
+            return new RequestDescription();
+        }
     }
 }

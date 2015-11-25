@@ -106,57 +106,22 @@ namespace Qoollo.Impl.Writer
         /// <param name="state"></param>
         public string Restore(RestoreState state)
         {
-            var ret = CheckRestoreArguments(Consts.AllTables);
-
-            if (ret != Errors.RestoreStartedWithoutErrors)
-                return ret;
-
-            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, Consts.AllTables, state));
-
-            return ret;
+            return Restore(null, state, Consts.AllTables);
         }
 
         public string Restore()
         {
-            var ret = CheckRestoreArguments(Consts.AllTables);
-
-            if (ret != Errors.RestoreStartedWithoutErrors)
-                return ret;
-
-            var state = _asyncDbWork.RestoreState;
-            if (state == RestoreState.Restored)
-                return Errors.RestoreDefaultStartError;
-
-            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, Consts.AllTables, state));
-
-            return ret;
+            return Restore(null, RestoreState.Default, Consts.AllTables);
         }
 
         public string Restore(RestoreState state, string tableName)
         {
-            var ret = CheckRestoreArguments(Consts.AllTables);
-
-            if (ret != Errors.RestoreStartedWithoutErrors)
-                return ret;
-
-            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, tableName, state));
-
-            return ret;
+            return Restore(null, state, tableName);
         }
 
         public string Restore(List<ServerId> servers, RestoreState state)
         {
-            var ret = CheckRestoreArguments(Consts.AllTables);
-
-            if (ret != Errors.RestoreStartedWithoutErrors)
-                return ret;
-
-            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, Consts.AllTables, state)
-            {
-                FailedServers = servers
-            });
-
-            return ret;
+            return Restore(servers, state, Consts.AllTables);
         }
 
         public string Restore(List<ServerId> servers, RestoreState state, string tableName)
@@ -166,7 +131,15 @@ namespace Qoollo.Impl.Writer
             if (ret != Errors.RestoreStartedWithoutErrors)
                 return ret;
 
-            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, tableName, state)
+            RestoreState st = state;
+            if (state == RestoreState.Default)
+            {
+                st = _asyncDbWork.RestoreState;
+                if (st == RestoreState.Restored)
+                    return Errors.RestoreDefaultStartError;
+            }
+
+            _queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, tableName, st)
             {
                 FailedServers = servers
             });

@@ -13,5 +13,7 @@ namespace Qoollo.Client.DistributorGate
         RequestDescription SayIAmHere(string host, int port);
 
         string GetServersState();
+
+        RequestDescription AutoRestoreSetMode(bool mode);
     }
 }

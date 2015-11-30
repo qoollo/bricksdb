@@ -8,6 +8,10 @@ namespace Qoollo.Impl.Modules.Queue
         private Action<T> _action;
         private QueueConfiguration _configuration;
 
+        public QueueWithParam(string name):base(name)
+        {            
+        }
+
         public void Registrate(QueueConfiguration configuration, Action<T> action)
         {
             Registrate(configuration.ProcessotCount, configuration.MaxSizeQueue, action);

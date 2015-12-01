@@ -25,11 +25,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
             _queue = GlobalQueue.Queue;
 
-            for (int i = 0; i < countReplics; i++)
-            {
-                _tasks.Add(new Task(() => { }));
-                _tasks[i].Start();
-            }
+            SetTasksLength(countReplics);
         }
 
         public void Commit(InnerData data)
@@ -77,6 +73,8 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             var retList = new List<InnerData>();
             var obj = new object();
 
+            CheckCountTasks(data.DistributorData.Destination);
+
             var list = data.DistributorData.Destination.Select((server, i) => _tasks[i].ContinueWith((e) =>
             {
                 var ret = _net.ReadOperation(server, data);
@@ -90,6 +88,22 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             Task.WaitAll(list.ToArray());
 
             return GetData(retList);
+        }
+
+        private void CheckCountTasks(List<ServerId>  servers)
+        {
+            if (_tasks.Count < servers.Count)
+                SetTasksLength(servers.Count - _tasks.Count);
+        }
+
+        private void SetTasksLength(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var task = new Task(() => { });
+                task.Start();
+                _tasks.Add(task);
+            }
         }
 
         private InnerData GetData(List<InnerData> list)

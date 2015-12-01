@@ -56,12 +56,12 @@ namespace Qoollo.Impl.Writer.WriterNet
         [OperationBehavior(TransactionScopeRequired = true)]
         public RemoteResult SendSync(NetCommand command)
         {
-            return _distributor.ProcessSend(command);
+            return _distributor.Execute<NetCommand, RemoteResult>(command);
         }
 
         public void SendASync(NetCommand command)
         {
-            throw new NotImplementedException();
+            _distributor.Execute<NetCommand, RemoteResult>(command);
         }
 
         public RemoteResult Ping()

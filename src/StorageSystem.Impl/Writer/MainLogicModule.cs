@@ -4,6 +4,7 @@ using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
+using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Queue;
@@ -118,7 +119,8 @@ namespace Qoollo.Impl.Writer
 
                 data.Transaction.AddErrorDescription(result.Description);
             }
-            _queue.TransactionAnswerQueue.Add(data.Transaction);
+            _distributor.Execute<Transaction, RemoteResult>(data.Transaction);
+            //_queue.TransactionAnswerQueue.Add(data.Transaction);
 
             if (data.Transaction.OperationType == OperationType.Sync)
                 return result;

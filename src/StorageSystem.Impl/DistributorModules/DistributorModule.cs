@@ -75,11 +75,9 @@ namespace Qoollo.Impl.DistributorModules
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
         public override void Start()
-        {
-            //_queue.DistributorDistributorQueue.Registrate(_queueConfiguration, Process);
+        {            
             RegistrateCommands();
-
-            _queue.DistributorTransactionCallbackQueue.Registrate(_queueConfiguration, ProcessCallbackTransaction);
+      
             _modelOfDbWriters.Start();
 
             _asyncTaskModule.AddAsyncTask(
@@ -116,6 +114,11 @@ namespace Qoollo.Impl.DistributorModules
                 _queue.DistributorDistributorQueue,
                 command => Logger.Logger.Instance.InfoFormat("Not supported command type = {0}", command.GetType()),
                 () => new SuccessResult());
+
+            RegistrateAsync<Common.Data.TransactionTypes.Transaction,
+                Common.Data.TransactionTypes.Transaction, RemoteResult>(
+                    _queue.DistributorTransactionCallbackQueue, ProcessCallbackTransaction,
+                    () => new SuccessResult());
         }
 
         private void ProcessCallbackTransaction(Common.Data.TransactionTypes.Transaction transaction)
@@ -323,10 +326,9 @@ namespace Qoollo.Impl.DistributorModules
             Execute<ServerNotAvailableCommand, RemoteResult>(new ServerNotAvailableCommand(server));
         }
 
-        public RemoteResult ProcessTransaction(Common.Data.TransactionTypes.Transaction transaction)
+        public void ProcessTransaction(Common.Data.TransactionTypes.Transaction transaction)
         {
-            _queue.TransactionQueue.Add(transaction);
-            return new SuccessResult();
+            _queue.TransactionQueue.Add(transaction);            
         }       
 
         #endregion

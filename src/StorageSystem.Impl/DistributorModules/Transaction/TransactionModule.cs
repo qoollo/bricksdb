@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
+using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
@@ -42,9 +44,13 @@ namespace Qoollo.Impl.DistributorModules.Transaction
         #region ControlModule
 
         public override void Start()
-        {
-            _queue.TransactionQueue.Registrate(TransactionAnswerIncome);
+        {            
+            RegistrateAsync<Common.Data.TransactionTypes.Transaction, Common.Data.TransactionTypes.Transaction,
+                RemoteResult>(_queue.TransactionQueue, TransactionAnswerIncome,
+                    () => new SuccessResult());
             _transactionPool.FillPoolUpTo(_transactionPool.MaxElementCount);
+
+            StartAsync();
         }
 
         public void ProcessWithExecutor(InnerData data, TransactionExecutor executor)

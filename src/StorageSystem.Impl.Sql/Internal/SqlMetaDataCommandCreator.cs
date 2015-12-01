@@ -79,8 +79,8 @@ namespace Qoollo.Impl.Sql.Internal
 
         public SqlCommand CreateMetaData(bool remote, string dataHash, object key)
         {
-            var command =  new SqlCommand(string.Format("insert into {0} ({1}, {3}, {4}, {5}, {6})  " +
-                                                "values (@{1}, {2}, 1,'', {7});",
+            var command = new SqlCommand(string.Format("insert into {0} ({1}, {3}, {4}, {5}, {6})  " +
+                                           "values (@{1}, {2}, 1,'', \'{7}\');",
                 _metaTableName, _keyName, GetLocal(remote),
                 SqlConsts.Local, SqlConsts.IsDeleted, SqlConsts.DeleteTime, SqlConsts.Hash, dataHash));
             return SetKeytoCommand(command, key);

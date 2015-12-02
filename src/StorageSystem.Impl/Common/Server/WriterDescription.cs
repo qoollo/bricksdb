@@ -116,7 +116,7 @@ namespace Qoollo.Impl.Common.Server
 
         public void SetInfoMessage(string tag, string message)
         {
-            _stateInfo.AddOrUpdate(tag, message, (s, s1) => s1);
+            _stateInfo.AddOrUpdate(tag, message, (key, oldValue) => message);
         }
 
         public void SetInfoMessageList(Dictionary<string, string> info)

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Qoollo.Client.Request;
+using Qoollo.Client.Support;
 using Qoollo.Client.WriterGate;
 
 namespace Qoollo.Client.DistributorGate
@@ -15,5 +16,7 @@ namespace Qoollo.Client.DistributorGate
         string GetServersState();
 
         RequestDescription AutoRestoreSetMode(bool mode);
+
+        RequestDescription Restore(ServerAddress restoreServer, ServerAddress remoteRestoreServer, RestoreMode mode);
     }
 }

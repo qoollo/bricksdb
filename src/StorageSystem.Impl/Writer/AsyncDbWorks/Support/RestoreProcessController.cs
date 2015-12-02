@@ -197,7 +197,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public void Save()
         {
-       //     if (_saver != null && _restoreServers.Count!=0)
             if (_saver != null)
                 _saver.Save();
         }

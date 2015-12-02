@@ -1,4 +1,6 @@
-﻿namespace Qoollo.Client.WriterGate
+﻿using Qoollo.Impl.Common.Server;
+
+namespace Qoollo.Client.WriterGate
 {
     public class ServerAddress
     {
@@ -14,6 +16,11 @@
         public override string ToString()
         {
             return string.Format("{0}:{1}", Host, Port);
+        }
+
+        internal ServerId ConvertServer()
+        {
+            return new ServerId(Host, Port);
         }
     }
 }

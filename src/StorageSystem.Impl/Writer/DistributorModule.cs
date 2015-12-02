@@ -234,16 +234,16 @@ namespace Qoollo.Impl.Writer
             }).ToList();
         }
 
-        private List<RestoreServer> ServersOnDirectRestore(RestoreCommand command)
+        private List<RestoreServer> ServersOnDirectRestore(RestoreState state, List<ServerId> failedServers)
         {
-            var servers = command.RestoreState == RestoreState.FullRestoreNeed
+            var servers = state == RestoreState.FullRestoreNeed
                 ? _model.Servers
                 : _model.Servers.Where(x => !x.Equals(_model.Local));
 
             return servers.Select(x =>
             {
                 var ret = new RestoreServer(x);
-                if (command.FailedServers.Contains(x))
+                if (failedServers.Contains(x))
                     ret.NeedRestoreInitiate();
                 return ret;
             }).ToList();
@@ -270,8 +270,20 @@ namespace Qoollo.Impl.Writer
         {
             if (command is RestoreFromDistributorCommand)
             {
-                _asyncDbWork.Restore(ConvertRestoreServers(_model.Servers.Where(x => !x.Equals(_model.Local))),
-                    RestoreState.SimpleRestoreNeed);
+                var comm = command as RestoreFromDistributorCommand;
+                var st = comm.RestoreState;
+                if (comm.RestoreState == RestoreState.Default)
+                {
+                    st = _asyncDbWork.RestoreState;
+                    if (st == RestoreState.Restored)
+                        return;
+                }
+
+                if (comm.Server != null)
+                    _asyncDbWork.Restore(ServersOnDirectRestore(st, new List<ServerId> {comm.Server}), st);
+                else
+                    _asyncDbWork.Restore(ConvertRestoreServers(_model.Servers.Where(x => !x.Equals(_model.Local))),
+                        RestoreState.SimpleRestoreNeed);
             }
             else if (command is RestoreCommand)
             {
@@ -281,8 +293,9 @@ namespace Qoollo.Impl.Writer
                     "restore");
 
                 if (comm.FailedServers != null)
-                {                    
-                    _asyncDbWork.Restore(ServersOnDirectRestore(comm), comm.RestoreState, comm.TableName);
+                {
+                    _asyncDbWork.Restore(ServersOnDirectRestore(comm.RestoreState, comm.FailedServers),
+                        comm.RestoreState, comm.TableName);
                 }
                 else
                 {

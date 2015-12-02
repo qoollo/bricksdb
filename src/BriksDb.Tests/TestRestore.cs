@@ -29,7 +29,7 @@ namespace Qoollo.Tests
     public class TestRestore : TestBase
     {
         private void CreateRestoreFile(string filename, string tableName, RestoreState state,
-             List<RestoreServerSave> servers = null)
+            List<RestoreServerSave> servers = null)
         {
             using (var writer = new StreamWriter(filename))
             {
@@ -39,7 +39,7 @@ namespace Qoollo.Tests
                     string.IsNullOrEmpty(tableName) ? "AllTablesyNameThatMustntBeUsedAsTableName" : tableName,
                     Enum.GetName(typeof (RestoreState), state));
 
-                if(servers != null)
+                if (servers != null)
                 {
                     writer.WriteLine("<RestoreServers>");
                     foreach (var server in servers)
@@ -54,7 +54,7 @@ namespace Qoollo.Tests
                     }
                     writer.WriteLine("</RestoreServers>");
                 }
-                writer.WriteLine("</RestoreSaveHelper>");                
+                writer.WriteLine("</RestoreSaveHelper>");
             }
         }
 
@@ -446,11 +446,11 @@ namespace Qoollo.Tests
 
             storage2.Build();
             storage2.AddDbModule(new TestInMemoryDbFactory());
-            storage2.Start();            
+            storage2.Start();
 
             Thread.Sleep(2000);
             Assert.IsTrue(storage1.Api.IsRestoreCompleted());
-            
+
             _proxy.Dispose();
             _distr.Dispose();
             storage1.Dispose();
@@ -851,7 +851,7 @@ namespace Qoollo.Tests
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).RestoreState);
 
             Assert.AreEqual(count, mem.Local + mem2.Local);
-            
+
             for (int i = 0; i < count; i++)
             {
                 var result = _proxy.Int.CreateSync(i + 50, i);
@@ -999,7 +999,8 @@ namespace Qoollo.Tests
         public void Writer_Restore_TwoServer_RestoreFromFile()
         {
             var writer =
-                new HashWriter(new HashMapConfiguration("Writer_Restore_TwoServer_RestoreFromFile", HashMapCreationMode.CreateNew, 2, 3,
+                new HashWriter(new HashMapConfiguration("Writer_Restore_TwoServer_RestoreFromFile",
+                    HashMapCreationMode.CreateNew, 2, 3,
                     HashFileType.Distributor));
             writer.CreateMap();
             writer.SetServer(0, "localhost", storageServer1, 157);
@@ -1039,7 +1040,7 @@ namespace Qoollo.Tests
                     {
                         Data = CommonDataSerializer.Serialize(i),
                         Key = CommonDataSerializer.Serialize(i),
-                        Transaction = { Distributor = new ServerId("localhost", distrServer1) }
+                        Transaction = {Distributor = new ServerId("localhost", distrServer1)}
                     };
                 ev.Transaction.TableName = "Int";
 
@@ -1075,7 +1076,7 @@ namespace Qoollo.Tests
                 Assert.AreNotEqual(count, mem.Remote);
             }
             Assert.AreEqual(count, mem.Local + mem.Remote);
-            
+
             _writer2.Start();
 
             Thread.Sleep(TimeSpan.FromMilliseconds(4000));
@@ -1093,12 +1094,13 @@ namespace Qoollo.Tests
             File.Delete(restoreFile1);
             File.Delete(restoreFile2);
         }
-        
+
         [TestMethod]
         public void Writer_Restore_TwoServer_RestoreFromDistributor()
         {
             var writer =
-                new HashWriter(new HashMapConfiguration("Writer_Restore_TwoServer_RestoreFromDistributor", HashMapCreationMode.CreateNew, 2, 3,
+                new HashWriter(new HashMapConfiguration("Writer_Restore_TwoServer_RestoreFromDistributor",
+                    HashMapCreationMode.CreateNew, 2, 3,
                     HashFileType.Distributor));
             writer.CreateMap();
             writer.SetServer(0, "localhost", storageServer1, 157);
@@ -1133,7 +1135,7 @@ namespace Qoollo.Tests
                     {
                         Data = CommonDataSerializer.Serialize(i),
                         Key = CommonDataSerializer.Serialize(i),
-                        Transaction = { Distributor = new ServerId("localhost", distrServer1) }
+                        Transaction = {Distributor = new ServerId("localhost", distrServer1)}
                     };
                 ev.Transaction.TableName = "Int";
 
@@ -1193,7 +1195,8 @@ namespace Qoollo.Tests
         public void Writer_Restore_TwoServer_RestoreWithDefaultMode()
         {
             var writer =
-                new HashWriter(new HashMapConfiguration("Writer_Restore_TwoServer_RestoreWithDefaultMode", HashMapCreationMode.CreateNew, 2, 3,
+                new HashWriter(new HashMapConfiguration("Writer_Restore_TwoServer_RestoreWithDefaultMode",
+                    HashMapCreationMode.CreateNew, 2, 3,
                     HashFileType.Distributor));
             writer.CreateMap();
             writer.SetServer(0, "localhost", storageServer1, 157);
@@ -1208,7 +1211,7 @@ namespace Qoollo.Tests
 
             InitInjection.RestoreHelpFileOut = restoreFile1;
             _writer1.Build(storageServer1, "Writer_Restore_TwoServer_RestoreWithDefaultMode", 1);
-            InitInjection.RestoreHelpFileOut = restoreFile2;            
+            InitInjection.RestoreHelpFileOut = restoreFile2;
             _writer2.Build(storageServer2, "Writer_Restore_TwoServer_RestoreWithDefaultMode", 1);
 
             _distrTest.Start();
@@ -1228,7 +1231,7 @@ namespace Qoollo.Tests
                     {
                         Data = CommonDataSerializer.Serialize(i),
                         Key = CommonDataSerializer.Serialize(i),
-                        Transaction = { Distributor = new ServerId("localhost", distrServer1) }
+                        Transaction = {Distributor = new ServerId("localhost", distrServer1)}
                     };
                 ev.Transaction.TableName = "Int";
 
@@ -1265,7 +1268,7 @@ namespace Qoollo.Tests
             }
             Assert.AreEqual(count, mem.Local + mem.Remote);
 
-            _writer2.Start();            
+            _writer2.Start();
             Thread.Sleep(TimeSpan.FromMilliseconds(4000));
             _writer2.Distributor.Restore();
             Thread.Sleep(TimeSpan.FromMilliseconds(4000));
@@ -1347,7 +1350,7 @@ namespace Qoollo.Tests
                     {
                         Data = CommonDataSerializer.Serialize(i),
                         Key = CommonDataSerializer.Serialize(i),
-                        Transaction = { Distributor = new ServerId("localhost", distrServer1) }
+                        Transaction = {Distributor = new ServerId("localhost", distrServer1)}
                     };
                 ev.Transaction.TableName = "Int";
 
@@ -1384,7 +1387,7 @@ namespace Qoollo.Tests
 
             _distrTest.Distributor.UpdateModel();
             _writer1.Distributor.UpdateModel();
-            _writer2.Distributor.UpdateModel();            
+            _writer2.Distributor.UpdateModel();
 
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
             _writer3.Distributor.Restore();
@@ -1416,7 +1419,8 @@ namespace Qoollo.Tests
         public void Writer_Restore_ThreeServers_DirectServersForRestore()
         {
             var writer =
-                new HashWriter(new HashMapConfiguration("Writer_Restore_ThreeServers_DirectServersForRestore", HashMapCreationMode.CreateNew, 3, 3,
+                new HashWriter(new HashMapConfiguration("Writer_Restore_ThreeServers_DirectServersForRestore",
+                    HashMapCreationMode.CreateNew, 3, 3,
                     HashFileType.Distributor));
             writer.CreateMap();
             writer.SetServer(0, "localhost", storageServer1, 157);
@@ -1521,11 +1525,11 @@ namespace Qoollo.Tests
             Assert.AreEqual(RestoreState.SimpleRestoreNeed, _writer2.Restore.RestoreState);
             Assert.AreEqual(RestoreState.SimpleRestoreNeed, _writer3.Restore.RestoreState);
 
-            _writer2.Distributor.Restore(new List<ServerId> { new ServerId("localhost", storageServer3) },
+            _writer2.Distributor.Restore(new List<ServerId> {new ServerId("localhost", storageServer3)},
                 RestoreState.SimpleRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(4000));
 
-            _writer3.Distributor.Restore(new List<ServerId> { new ServerId("localhost", storageServer2) },
+            _writer3.Distributor.Restore(new List<ServerId> {new ServerId("localhost", storageServer2)},
                 RestoreState.SimpleRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
@@ -1535,7 +1539,7 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
             Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
             Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);            
+            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
 
             _distrTest.Dispose();
             _writer1.Dispose();
@@ -1554,7 +1558,8 @@ namespace Qoollo.Tests
         public void Writer_Restore_TwoServer_RestoreFromDistributor_EnableCommand()
         {
             var writer =
-                new HashWriter(new HashMapConfiguration("Writer_Restore_TwoServer_RestoreFromDistributor", HashMapCreationMode.CreateNew, 2, 3,
+                new HashWriter(new HashMapConfiguration("Writer_Restore_TwoServer_RestoreFromDistributor",
+                    HashMapCreationMode.CreateNew, 2, 3,
                     HashFileType.Distributor));
             writer.CreateMap();
             writer.SetServer(0, "localhost", storageServer1, 157);
@@ -1591,7 +1596,7 @@ namespace Qoollo.Tests
                     {
                         Data = CommonDataSerializer.Serialize(i),
                         Key = CommonDataSerializer.Serialize(i),
-                        Transaction = { Distributor = new ServerId("localhost", distrServer1) }
+                        Transaction = {Distributor = new ServerId("localhost", distrServer1)}
                     };
                 ev.Transaction.TableName = "Int";
 
@@ -1632,12 +1637,110 @@ namespace Qoollo.Tests
             _writer2.Start();
 
             Thread.Sleep(TimeSpan.FromMilliseconds(5000));
-            
+
             Assert.AreEqual(count, mem.Local + mem.Remote);
             Assert.AreEqual(0, mem2.Local + mem2.Remote);
             Assert.AreEqual(true, _writer2.Restore.IsNeedRestore);
 
             _distrTest.Distributor.AutoRestoreSetMode(true);
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(5000));
+
+            Assert.AreEqual(0, mem.Remote);
+            Assert.AreEqual(0, mem2.Remote);
+            Assert.AreEqual(count, mem.Local + mem2.Local);
+            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
+            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+
+            _distrTest.Dispose();
+            _writer1.Dispose();
+            _writer2.Dispose();
+
+            File.Delete(restoreFile1);
+            File.Delete(restoreFile2);
+        }
+
+        [TestMethod]
+        public void Writer_Restore_TwoServer_RestoreFromDistributorWithCommand()
+        {
+            var writer =
+                new HashWriter(new HashMapConfiguration("Writer_Restore_TwoServer_RestoreFromDistributorWithCommand",
+                    HashMapCreationMode.CreateNew, 2, 3, HashFileType.Distributor));
+            writer.CreateMap();
+            writer.SetServer(0, "localhost", storageServer1, 157);
+            writer.SetServer(1, "localhost", storageServer2, 157);
+            writer.Save();
+
+            _distrTest.Build(1, distrServer1, distrServer12,
+                "Writer_Restore_TwoServer_RestoreFromDistributorWithCommand",
+                TimeSpan.FromMilliseconds(1000));
+
+            const string restoreFile1 = "restore1.txt";
+            const string restoreFile2 = "restore2.txt";
+
+            InitInjection.RestoreHelpFileOut = restoreFile1;
+            _writer1.Build(storageServer1, "Writer_Restore_TwoServer_RestoreFromDistributorWithCommand", 1);
+            InitInjection.RestoreHelpFileOut = restoreFile2;
+            _writer2.Build(storageServer2, "Writer_Restore_TwoServer_RestoreFromDistributorWithCommand", 1);
+
+            _distrTest.Start();
+            _writer1.Start();
+
+            var list = new List<InnerData>();
+            const int count = 50;
+            for (int i = 1; i < count + 1; i++)
+            {
+                var ev =
+                    new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
+                        "default")
+                    {
+                        OperationName = OperationName.Create,
+                        OperationType = OperationType.Async
+                    })
+                    {
+                        Data = CommonDataSerializer.Serialize(i),
+                        Key = CommonDataSerializer.Serialize(i),
+                        Transaction = {Distributor = new ServerId("localhost", distrServer1)}
+                    };
+                ev.Transaction.TableName = "Int";
+
+                list.Add(ev);
+            }
+
+            foreach (var data in list)
+            {
+                _distrTest.Input.ProcessAsync(data);
+            }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(6000));
+
+            foreach (var data in list)
+            {
+                var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
+                if (tr.State != TransactionState.Complete)
+                {
+                    data.Transaction = new Transaction(data.Transaction);
+                    data.Transaction.ClearError();
+                    _distrTest.Input.ProcessAsync(data);
+                }
+            }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(5000));
+
+            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+            var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
+
+            if (count > 1)
+            {
+                Assert.AreNotEqual(count, mem.Local);
+                Assert.AreNotEqual(count, mem.Remote);
+            }
+            Assert.AreEqual(count, mem.Local + mem.Remote);
+            Assert.AreEqual(0, mem2.Local + mem2.Remote);
+
+            _writer2.Start();
+            _distrTest.Distributor.Restore(new ServerId("localhost", storageServer2),
+                new ServerId("localhost", storageServer1), RestoreState.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(5000));
 

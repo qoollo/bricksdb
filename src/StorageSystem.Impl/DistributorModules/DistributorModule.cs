@@ -375,6 +375,19 @@ namespace Qoollo.Impl.DistributorModules
             return Errors.NoErrors;
         }
 
+        public string Restore(ServerId server, ServerId restoreDest, RestoreState state)
+        {
+            if (!_modelOfDbWriters.Servers.Contains(server))
+                return "non existed server";
+
+            var firstOrDefault = _modelOfDbWriters.Servers.FirstOrDefault(x => Equals(x, restoreDest));
+            if ((state == RestoreState.Default && firstOrDefault.RestoreState == RestoreState.Restored))
+                return string.Format("server {0} is in restore mode. Change restore mode", restoreDest);
+            var result = _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand(state, restoreDest));
+
+            return result.IsError ? result.ToString() : Errors.NoErrors;
+        }
+
         #endregion
 
         #region Distributor communication

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Common.Server
@@ -124,6 +125,22 @@ namespace Qoollo.Impl.Common.Server
             {
                 SetInfoMessage(record.Key, record.Value);
             }
-        }    
+
+            ClearInfoMessages(info);
+        }
+
+        private void ClearInfoMessages(Dictionary<string, string> info)
+        {
+            var keys = _stateInfo.Keys.ToList();
+
+            foreach (var key in keys)
+            {
+                if (!info.ContainsKey(key))
+                {
+                    string value;
+                    _stateInfo.TryRemove(key, out value);
+                }
+            }
+        }
     }
 }

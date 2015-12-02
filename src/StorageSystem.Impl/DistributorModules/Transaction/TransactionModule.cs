@@ -94,6 +94,8 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             ProcessReadResult(data, result, data.Transaction.ProxyServerId);
             data.Transaction.PerfTimer.Complete();
             PerfCounters.DistributorCounters.Instance.ProcessPerSec.OperationFinished();
+            if (data.DistributorData.ExecuteTimer != null)
+                data.DistributorData.ExecuteTimer.Value.Complete();
         }
 
         private void ProcessReadResult(InnerData data, InnerData result, ServerId proxyServerId)

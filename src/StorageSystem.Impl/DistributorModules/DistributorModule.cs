@@ -138,7 +138,12 @@ namespace Qoollo.Impl.DistributorModules
 
         private void CheckRestore(AsyncData data)
         {
-            var servers = _modelOfDbWriters.Servers;
+            CheckRestoreInner(true);
+        }
+
+        private void CheckRestoreInner(bool isRestore = false)
+        {
+            var servers = _modelOfDbWriters.GetAllAvailableServers();
             servers.ForEach(x =>
             {
                 var result = _distributorNet.SendToWriter(x, new SetGetRestoreStateCommand(x.RestoreState));
@@ -152,12 +157,13 @@ namespace Qoollo.Impl.DistributorModules
             });
 
             _lock.EnterReadLock();
-            var autoRestore = _autoRestoreEnable;
+            var autoRestore = isRestore && _autoRestoreEnable;
             _lock.ExitReadLock();
 
             if (autoRestore)
                 RestoreWriters(servers);
         }
+
 
         private void RestoreWriters(List<WriterDescription> servers)
         {
@@ -350,6 +356,7 @@ namespace Qoollo.Impl.DistributorModules
 
         public string GetServersState()
         {
+            CheckRestoreInner();
             return _modelOfDbWriters.Servers.Aggregate(string.Empty,
                 (current, writerDescription) => current + "\n" + writerDescription.StateString);
         }

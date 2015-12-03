@@ -171,6 +171,18 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             _lock.ExitWriteLock();
         }
 
+        public void ServerRestored(ServerId server)
+        {
+            _lock.EnterWriteLock();
+
+            var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
+            if (s != null)
+                s.IsRestored = true;
+            Save();
+
+            _lock.ExitWriteLock();
+        }
+
         public void RemoveCurrentServer()
         {
             _lock.EnterWriteLock();

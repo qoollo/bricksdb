@@ -162,9 +162,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 ? RestoreState.SimpleRestoreNeed
                 : _state;
             var ret = WriterNet.SendToWriter(nextServer,
-                new RestoreCommandWithData(_local[0].ServerId, _local.ToList(), _tableName, state));
-
-            nextServer.IsRestored = true;
+                new RestoreCommandWithData(_local[0].ServerId, _local.ToList(), _tableName, state));            
 
             if (ret is FailNetResult)
             {
@@ -218,7 +216,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             Logger.Logger.Instance.Debug(string.Format("last message income from {0}", server), "restore");
 
             if (server.Equals(RestoreServer))
+            {
+                _serversController.ServerRestored(server);
                 CurrentProcess();
+            }
         }
 
         private void NoAnswerCallback(AsyncData async)

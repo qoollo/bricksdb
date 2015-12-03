@@ -197,7 +197,7 @@ namespace Qoollo.Impl.Writer.Db
         {
             var script = _metaDataCommandCreator.ReadWithDeleteAndLocal(isDeleted, local);
             return ProcessRestore(script, countElemnts, process, isMine, isFirstRead, ref lastId, isDeleted);
-        }        
+        }
 
         public override RemoteResult SelectRead(SelectDescription description, out SelectSearchResult searchResult)
         {

@@ -131,6 +131,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         {            
             _initiatorRestore.UpdateModel(servers);
             _stateHolder.LocalSendState(true);
+            _saver.Save();
         }
 
         #region Restore process

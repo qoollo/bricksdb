@@ -99,7 +99,7 @@ namespace Qoollo.Client.ProxyGate.Handlers
             var ret = _api.Read(key, out utr);
 
             result = new RequestDescription(utr);
-
+            
             if (ret == null)
             {
                 result.DataNotFound();

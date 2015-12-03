@@ -113,7 +113,7 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
 
         public StableElementsDynamicConnectionPool(ChannelFactory<TApi> factory, int maxAsyncQueryCount,
             int maxElementCount, int trimPeriod, string name)
-            : base(1, maxElementCount, name, trimPeriod)
+            : base(1, maxElementCount, name, trimPeriod, 10000)
         {
             Contract.Requires(factory != null);
 
@@ -123,7 +123,7 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
 
         public StableElementsDynamicConnectionPool(ChannelFactory<TApi> factory, int maxAsyncQueryCount,
             int maxElementCount, string name)
-            : base(1, maxElementCount, name)
+            : base(1, maxElementCount, name, 10000, 10000)
         {
             Contract.Requires(factory != null);
 

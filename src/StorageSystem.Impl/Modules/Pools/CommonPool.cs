@@ -14,7 +14,7 @@ namespace Qoollo.Impl.Modules.Pools
 
         public CommonPool(CreateElementDelegate<T> createElementDelegate, Func<T, bool> isValidElemetFunc,
             Action<T> destroyElementAction, int maxElemCount, int trimPeriod, string name)
-            : base(1, maxElemCount, name, trimPeriod)
+            : base(1, maxElemCount, name, trimPeriod, 10000)
         {
             Contract.Requires(createElementDelegate != null);
             Contract.Requires(isValidElemetFunc != null);

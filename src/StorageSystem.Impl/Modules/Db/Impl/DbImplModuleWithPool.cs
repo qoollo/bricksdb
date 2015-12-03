@@ -9,8 +9,8 @@ namespace Qoollo.Impl.Modules.Db.Impl
         where TConnection : class
         where TConnectionParam : class
     {
-        private CommonPool<TConnection> _pool;
-        private TConnectionParam _connectionParam;
+        private readonly CommonPool<TConnection> _pool;
+        private readonly TConnectionParam _connectionParam;
 
         protected DbImplModuleWithPool(TConnectionParam connectionParam, int maxCountElementInPool, int trimPeriod)
         {
@@ -23,7 +23,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
 
         public override void Start()
         {
-            _pool.FillPoolUpTo(_pool.MaxElementCount);
+            //_pool.FillPoolUpTo(_pool.MaxElementCount);
         }
 
         protected RentedElementMonitor<TConnection> RentConnection()

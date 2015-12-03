@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.HashFile;
@@ -49,22 +50,28 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             var result = await _writerNet.ProcessAsync(_remote, data);
 
+            ProcessResult(data, result);
+        }
 
-            if (result is FailNetResult)
+        private void ProcessResult(InnerData data, RemoteResult result)
+        {
+            while (result is FailNetResult)
             {
-                Logger.Logger.Instance.InfoFormat("Servers {0} unavailable in recover process", _remote);
+                Logger.Logger.Instance.DebugFormat("Servers {0} unavailable in recover process", _remote);
+                result = _writerNet.ProcessSync(_remote, data);
+            }            
 
-                _reader.ProcessData(data);
-            }
-            else
+            ProcessSuccessResult(data);
+        }
+
+        private void ProcessSuccessResult(InnerData data)
+        {
+            PerfCounters.WriterCounters.Instance.RestoreCountSend.Increment();
+            PerfCounters.WriterCounters.Instance.RestoreSendPerSec.OperationFinished();
+
+            if (!IsLocalData(data.MetaData))
             {
-                PerfCounters.WriterCounters.Instance.RestoreCountSend.Increment();
-                PerfCounters.WriterCounters.Instance.RestoreSendPerSec.OperationFinished();
-
-                if (!IsLocalData(data.MetaData))
-                {
-                    _db.Delete(data);
-                }
+                _db.Delete(data);
             }
         }
 

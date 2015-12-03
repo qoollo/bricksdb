@@ -14,7 +14,7 @@ namespace Qoollo.Impl.Modules.Queue
         {
             _countProcessors = countProcessors;
             _elementCounts = elemenetsCount;
-            _action = action;
+            _action = action;            
         }        
 
         public int Count { get { return _queue.ElementCount; } }

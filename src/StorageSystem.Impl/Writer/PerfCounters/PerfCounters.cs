@@ -1,4 +1,5 @@
-﻿using Qoollo.PerformanceCounters;
+﻿using Qoollo.Impl.PerfCounters;
+using Qoollo.PerformanceCounters;
 
 namespace Qoollo.Impl.Writer.PerfCounters
 {
@@ -27,6 +28,7 @@ namespace Qoollo.Impl.Writer.PerfCounters
         public static void Init(CategoryWrapper wrapper)
         {
             _instance = wrapper.CreateSubCategory<WriterCounters>();
+            ServiceClassesPerfCountersProfiling.Init(_instance);
         }
 
         #endregion

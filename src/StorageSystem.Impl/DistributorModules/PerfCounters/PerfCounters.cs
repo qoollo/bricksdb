@@ -1,4 +1,5 @@
-﻿using Qoollo.PerformanceCounters;
+﻿using Qoollo.Impl.PerfCounters;
+using Qoollo.PerformanceCounters;
 
 namespace Qoollo.Impl.DistributorModules.PerfCounters
 {
@@ -25,6 +26,7 @@ namespace Qoollo.Impl.DistributorModules.PerfCounters
         public static void Init(CategoryWrapper wrapper)
         {
             _instance = wrapper.CreateSubCategory<DistributorCounters>();
+            ServiceClassesPerfCountersProfiling.Init(_instance);
         }
 
         protected override void AfterInit()

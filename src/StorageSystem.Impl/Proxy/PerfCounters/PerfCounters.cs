@@ -1,4 +1,5 @@
-﻿using Qoollo.PerformanceCounters;
+﻿using Qoollo.Impl.PerfCounters;
+using Qoollo.PerformanceCounters;
 
 namespace Qoollo.Impl.Proxy.PerfCounters
 {        
@@ -27,6 +28,7 @@ namespace Qoollo.Impl.Proxy.PerfCounters
         public static void Init(CategoryWrapper wrapper)
         {
             _instance = wrapper.CreateSubCategory<ProxyCounters>();
+            ServiceClassesPerfCountersProfiling.Init(_instance);            
         }
 
         #endregion

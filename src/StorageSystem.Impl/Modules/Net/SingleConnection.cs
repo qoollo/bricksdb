@@ -196,13 +196,3 @@ namespace Qoollo.Impl.Modules.Net
         }
     }
 }
-
-//03.12.2015 16:46:45. ERROR.
-// At StorageAppMain.[StorageSystemLogger.Impl].<no class>::SendFunc.
-// Message: message = process data = 1cbadbf42e33dd38322a868b0aaa099e.
-// Exception: System.ObjectDisposedException: Cannot access a disposed object.
-//Object name: 'StableElementsDynamicConnectionPool`1'.
-//  Source: Qoollo.Turbo
-//  StackTrace:    at Qoollo.Turbo.ObjectPools.BalancingDynamicPoolManager`1.RentElement(Int32 timeout, CancellationToken token, Boolean throwOnUnavail) in c:\bamboo\build-dir\27328513\QOOLLO-TURBO-JOB1\src\Qoollo.Turbo\ObjectPools\BalancingDynamicPoolManager.cs:line 497
-//   at Qoollo.Turbo.ObjectPools.ObjectPoolManager`1.Rent(String memberName, String sourceFilePath, Int32 sourceLineNumber) in c:\bamboo\build-dir\27328513\QOOLLO-TURBO-JOB1\src\Qoollo.Turbo\ObjectPools\ObjectPoolManager.cs:line 40
-//   at Qoollo.Impl.Modules.Net.SingleConnection`1.SendFunc[TResult,TApi](Func`2 func, Func`2 errorRet, String errorLogFromData) in m:\last\service2\subtree\BriksDb\src\StorageSystem.Impl\Modules\Net\SingleConnection.cs:line 54

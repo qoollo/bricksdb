@@ -1,4 +1,5 @@
 ﻿using System;
+using Qoollo.Impl.PerfCounters;
 using Qoollo.Turbo.Threading.QueueProcessing;
 
 namespace Qoollo.Impl.Modules.Queue
@@ -9,7 +10,7 @@ namespace Qoollo.Impl.Modules.Queue
 
         public SingleQueue(string name)
         {
-            Name = name;
+            Name = PoolsProfiler.ConvertStringForCounters(name);
         }
 
         private int _countProcessors;

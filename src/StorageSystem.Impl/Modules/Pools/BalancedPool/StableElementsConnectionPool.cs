@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using System.ServiceModel;
 using System.Threading;
+using Qoollo.Impl.PerfCounters;
 using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.Modules.Pools.BalancedPool
@@ -113,7 +114,7 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
 
         public StableElementsDynamicConnectionPool(ChannelFactory<TApi> factory, int maxAsyncQueryCount,
             int maxElementCount, int trimPeriod, string name)
-            : base(1, maxElementCount, name, trimPeriod, 10000)
+            : base(1, maxElementCount, PoolsProfiler.ConvertStringForCounters(name), trimPeriod, 10000)
         {
             Contract.Requires(factory != null);
 
@@ -123,7 +124,7 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
 
         public StableElementsDynamicConnectionPool(ChannelFactory<TApi> factory, int maxAsyncQueryCount,
             int maxElementCount, string name)
-            : base(1, maxElementCount, name, 10000, 10000)
+            : base(1, maxElementCount, PoolsProfiler.ConvertStringForCounters(name), 10000, 10000)
         {
             Contract.Requires(factory != null);
 

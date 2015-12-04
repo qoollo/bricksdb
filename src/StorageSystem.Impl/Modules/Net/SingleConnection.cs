@@ -22,7 +22,7 @@ namespace Qoollo.Impl.Modules.Net
             _bPool =
                 new StableElementsDynamicConnectionPool<T>(
                     NetConnector.Connect<T>(Server, configuration.ServiceName, timeoutConfiguration),
-                    3, configuration.MaxElementCount, "Connection pool to " + Server);
+                    1, configuration.MaxElementCount, "Connection pool to " + Server);
         }
 
         public bool Connect()
@@ -126,25 +126,25 @@ namespace Qoollo.Impl.Modules.Net
                                 throw new CommunicationException(
                                     "Connection can't be used for communications. Target: " + Server);
 
-                            var res = func(request.API as TApi);
+                            var originalTask = func(request.API as TApi);
                             elem.Dispose();
 
-                            res.ContinueWith(tsk =>
+                            originalTask.ContinueWith(tsk =>
                             {
                                 request.Dispose();
                             }, TaskContinuationOptions.ExecuteSynchronously)
                                 .ContinueWith(tsk =>
                                 {
-                                    if (res.IsCanceled)
+                                    if (originalTask.IsCanceled)
                                         finalTask.SetCanceled();
-                                    else if (res.IsFaulted)
+                                    else if (originalTask.IsFaulted)
                                     {
-                                        Logger.Logger.Instance.ErrorFormat(res.Exception.GetBaseException(),
+                                        Logger.Logger.Instance.ErrorFormat(originalTask.Exception.GetBaseException(),
                                             "Server = {0}, message = {1}", Server, errorLogFromData);
-                                        finalTask.SetResult(errorRet(res.Exception.GetBaseException()));
+                                        finalTask.SetResult(errorRet(originalTask.Exception.GetBaseException()));
                                     }
                                     else
-                                        finalTask.SetResult(res.Result);
+                                        finalTask.SetResult(originalTask.Result);
                                 });
                             needFreeRequest = false;
                         }

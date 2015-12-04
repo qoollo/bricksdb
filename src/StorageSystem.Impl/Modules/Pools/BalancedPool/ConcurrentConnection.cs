@@ -367,21 +367,25 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
                 _isDisposed = true;
 
                 var prevState = ChangeStateSafe(StableConnectionState.Invalid);
-                Contract.Assume(prevState == StableConnectionState.Closed);
 
-                if (_concurrencyTrackSemaphore != null)
-                    _concurrencyTrackSemaphore.Dispose();
+                Contract.Assume(prevState == StableConnectionState.Closed || prevState == StableConnectionState.Invalid);
 
-                try
+                if (prevState == StableConnectionState.Closed)
                 {
-                    if (_channel.State == CommunicationState.Faulted)
-                        _channel.Abort();
-                    _channel.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    Logger.Logger.Instance.Debug(ex, "WCF channel close exception.");
-                }
+                    if (_concurrencyTrackSemaphore != null)
+                        _concurrencyTrackSemaphore.Dispose();
+
+                    try
+                    {
+                        if (_channel.State == CommunicationState.Faulted)
+                            _channel.Abort();
+                        _channel.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Logger.Instance.Debug(ex, "WCF channel close exception.");
+                    }
+                }                
             }
         }
         private void TryFreeAllResources()

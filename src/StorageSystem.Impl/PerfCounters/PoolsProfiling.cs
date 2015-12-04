@@ -13,6 +13,12 @@ namespace Qoollo.Impl.PerfCounters
         {
             Qoollo.Turbo.Profiling.Profiler.SetProfiler(new ServiceClassesProfilerWrapper(ServiceClassesPerfCountersProfiling.Instance, logger));
         }
+
+        public static string ConvertStringForCounters(string value)
+        {
+            value = value.Replace(' ', '_').Replace('.', '_');
+            return value;
+        }
     }
 
     internal class ServiceClassesPerfCountersProfiling : Qoollo.Turbo.Profiling.IProfilingProvider

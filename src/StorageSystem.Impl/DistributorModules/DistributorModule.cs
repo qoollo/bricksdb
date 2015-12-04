@@ -380,7 +380,7 @@ namespace Qoollo.Impl.DistributorModules
             if (!_modelOfDbWriters.Servers.Contains(server))
                 return "non existed server";
 
-            var firstOrDefault = _modelOfDbWriters.Servers.FirstOrDefault(x => Equals(x, restoreDest));
+            var firstOrDefault = _modelOfDbWriters.Servers.FirstOrDefault(x => Equals(x, server));
             if ((state == RestoreState.Default && firstOrDefault.RestoreState == RestoreState.Restored))
                 return string.Format("server {0} is in restore mode. Change restore mode", restoreDest);
             var result = _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand(state, restoreDest));

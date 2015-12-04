@@ -75,10 +75,7 @@ namespace Qoollo.Impl.Writer
                () => new SuccessResult());
 
             RegistrateAsync<RestoreFromDistributorCommand, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue,
-                command =>
-                    _asyncDbWork.Restore(ConvertRestoreServers(_model.Servers.Where(x => !x.Equals(_model.Local))),
-                        RestoreState.SimpleRestoreNeed),
-                () => new SuccessResult());
+                RestoreCommand, () => new SuccessResult());
 
             RegistrateAsync<RestoreCommand, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue,
                 RestoreCommand, () => new SuccessResult());
@@ -230,7 +227,7 @@ namespace Qoollo.Impl.Writer
 
             result += string.Format("restore transfer is running: {0}\n", _asyncDbWork.IsTransferRestoreStarted);
             if (_asyncDbWork.IsTransferRestoreStarted)
-                result += _asyncDbWork.GetTransferServer();
+                result += string.Format("transfert server: {0}\n", _asyncDbWork.GetTransferServer());
 
             return result;
         }
@@ -308,6 +305,23 @@ namespace Qoollo.Impl.Writer
                     : _model.Servers.Where(x => !x.Equals(_model.Local));
                 _asyncDbWork.Restore(ConvertRestoreServers(servers), st, comm.TableName);
             }
+        }
+
+        private void RestoreCommand(RestoreFromDistributorCommand comm)
+        {
+            var st = comm.RestoreState;
+            if (comm.RestoreState == RestoreState.Default)
+            {
+                st = _asyncDbWork.RestoreState;
+                if (st == RestoreState.Restored)
+                    return;
+            }
+
+            if (comm.Server != null)
+                _asyncDbWork.Restore(ServersOnDirectRestore(st, new List<ServerId> { comm.Server }), st);
+            else
+                _asyncDbWork.Restore(ConvertRestoreServers(_model.Servers.Where(x => !x.Equals(_model.Local))),
+                    st);
         }
 
         private void ProcessTransaction(Transaction transaction)

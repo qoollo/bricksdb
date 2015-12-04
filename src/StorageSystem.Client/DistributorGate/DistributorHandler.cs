@@ -47,8 +47,10 @@ namespace Qoollo.Client.DistributorGate
         public RequestDescription Restore(ServerAddress restoreServer, ServerAddress remoteRestoreServer,
             RestoreMode mode)
         {
-            return new RequestDescription(_distributorSystem.Distributor.Restore(restoreServer.ConvertServer(),
-                remoteRestoreServer.ConvertServer(), RestoreModeConverter.Convert(mode)));
+            return
+                new RequestDescription(_distributorSystem.Distributor.Restore(restoreServer.ConvertServer(),
+                    remoteRestoreServer == null ? null : remoteRestoreServer.ConvertServer(),
+                    RestoreModeConverter.Convert(mode)));
         }
     }
 }

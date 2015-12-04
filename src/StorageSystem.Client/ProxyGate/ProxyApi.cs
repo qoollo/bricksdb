@@ -37,7 +37,7 @@ namespace Qoollo.Client.ProxyGate
             var queue = new QueueConfiguration(commonConfiguration.CountThreads, commonConfiguration.QueueSize);
 
             var connection = new ConnectionConfiguration(netConfiguration.WcfServiceName,
-                netConfiguration.CountConnectionsToSingleServer);
+                netConfiguration.CountConnectionsToSingleServer, netConfiguration.TrimPeriod);
             var proxyCacheConfiguration = new ProxyCacheConfiguration(proxyConfiguration.ChangeDistributorTimeoutSec);
             var proxyCacheConfiguration2 = new ProxyCacheConfiguration(proxyConfiguration.SyncOperationsTimeoutSec);
             var netReceiveConfiguration = new NetReceiverConfiguration(netConfiguration.Port, netConfiguration.Host,

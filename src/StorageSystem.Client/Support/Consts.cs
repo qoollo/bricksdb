@@ -17,6 +17,7 @@ namespace Qoollo.Client.Support
 
         public static int CountConnectionsToSingleServer = 10;
         public static string WcfServiceName = "StorageWcfName";
+        public static int TrimPeriod = 10000;
 
         public static TimeSpan AsyncPingTimeout = TimeSpan.FromSeconds(60);
         public static TimeSpan AsyncUpdateTimeout = TimeSpan.FromMinutes(10);

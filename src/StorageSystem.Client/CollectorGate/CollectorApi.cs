@@ -36,8 +36,8 @@ namespace Qoollo.Client.CollectorGate
                 new DistributorHashConfiguration(collectorConfiguration.CountReplics),
                 new HashMapConfiguration(collectorConfiguration.FileWithHashName, HashMapCreationMode.ReadFromFile, 1,
                     collectorConfiguration.CountReplics, HashFileType.Collector),
-                new ConnectionConfiguration(netConfiguration.WcfServiceName,
-                    netConfiguration.CountConnectionsToSingleServer),
+                new ConnectionConfiguration(netConfiguration.WcfServiceName, netConfiguration.CountConnectionsToSingleServer,
+                    netConfiguration.TrimPeriod),
                 new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout, timeoutConfiguration.SendTimeout),
                 new QueueConfiguration(commonConfiguration.CountThreads, commonConfiguration.QueueSize),
                 collectorConfiguration.PageSize, collectorConfiguration.UseHashFile);

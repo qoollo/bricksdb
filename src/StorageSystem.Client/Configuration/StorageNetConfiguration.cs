@@ -26,31 +26,41 @@ namespace Qoollo.Client.Configuration
         /// </summary>
         public int CountConnectionsToSingleServer { get; private set; }
 
+        public int TrimPeriod { get; private set; }
+
         public StorageNetConfiguration( string host, int portForDitributor, int portForCollector,
-            string wcfServiceName, int countConnectionsToSingleServer)
+            string wcfServiceName, int countConnectionsToSingleServer, int trimPeriod)
         {
             Contract.Requires(wcfServiceName != "");
             Contract.Requires(host != "");
             Contract.Requires(portForDitributor != 0);
             Contract.Requires(portForCollector != 0);
-            Contract.Requires(countConnectionsToSingleServer != 0);
+            Contract.Requires(countConnectionsToSingleServer > 0);
+            Contract.Requires(trimPeriod > 0);
 
             PortForCollector = portForCollector;
             Host = host;            
             PortForDitributor = portForDitributor;
             WcfServiceName = wcfServiceName;
             CountConnectionsToSingleServer = countConnectionsToSingleServer;
+            TrimPeriod = trimPeriod;
+        }
+
+        public StorageNetConfiguration(string host, int portForDitributor, int portForCollector,
+            string wcfServiceName, int countConnectionsToSingleServer)
+            : this(host, portForDitributor, portForCollector, wcfServiceName, countConnectionsToSingleServer, Consts.TrimPeriod)
+        {
         }
 
         public StorageNetConfiguration(string host, int portForDitributor, int portForCollector,
             string wcfServiceName)
-            : this(host, portForDitributor, portForCollector, wcfServiceName, Consts.CountConnectionsToSingleServer)
+            : this(host, portForDitributor, portForCollector, wcfServiceName, Consts.CountConnectionsToSingleServer, Consts.TrimPeriod)
         {
         }
 
         public StorageNetConfiguration(string host, int portForDitributor, int portForCollector)
             : this(
-                host, portForDitributor, portForCollector, Consts.WcfServiceName, Consts.CountConnectionsToSingleServer)
+                host, portForDitributor, portForCollector, Consts.WcfServiceName, Consts.CountConnectionsToSingleServer, Consts.TrimPeriod)
         {
         }
     }

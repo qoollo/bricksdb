@@ -5,24 +5,6 @@ namespace Qoollo.Client.Configuration
 {
     public class CollectorNetConfiguration
     {
-        public CollectorNetConfiguration(string wcfServiceName, int countConnectionsToSingleServer)
-        {
-            Contract.Requires(wcfServiceName!="");
-            Contract.Requires(countConnectionsToSingleServer>0);
-            CountConnectionsToSingleServer = countConnectionsToSingleServer;
-            WcfServiceName = wcfServiceName;
-        }
-
-        public CollectorNetConfiguration(string wcfServiceName)
-            :this(wcfServiceName, Consts.CountConnectionsToSingleServer)
-        {            
-        }
-
-        public CollectorNetConfiguration()
-            : this(Consts.WcfServiceName, Consts.CountConnectionsToSingleServer)
-        {
-        }
-
         /// <summary>
         /// Wcf name for service
         /// </summary>
@@ -31,5 +13,31 @@ namespace Qoollo.Client.Configuration
         /// Size of connection pool for each server
         /// </summary>
         public int CountConnectionsToSingleServer { get; private set; }
+
+        public int TrimPeriod { get; private set; }
+        public CollectorNetConfiguration(string wcfServiceName, int countConnectionsToSingleServer, int trimPeriod)
+        {
+            Contract.Requires(wcfServiceName!="");
+            Contract.Requires(countConnectionsToSingleServer>0);
+            Contract.Requires(trimPeriod>0);
+            TrimPeriod = trimPeriod;
+            CountConnectionsToSingleServer = countConnectionsToSingleServer;
+            WcfServiceName = wcfServiceName;
+        }
+
+        public CollectorNetConfiguration(string wcfServiceName, int countConnectionsToSingleServer)
+            : this(wcfServiceName, countConnectionsToSingleServer, Consts.TrimPeriod)
+        {
+        }
+
+        public CollectorNetConfiguration(string wcfServiceName)
+            :this(wcfServiceName, Consts.CountConnectionsToSingleServer, Consts.TrimPeriod)
+        {            
+        }
+
+        public CollectorNetConfiguration()
+            : this(Consts.WcfServiceName, Consts.CountConnectionsToSingleServer, Consts.TrimPeriod)
+        {
+        }        
     }
 }

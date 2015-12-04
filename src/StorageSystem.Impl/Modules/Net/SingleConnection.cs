@@ -22,7 +22,7 @@ namespace Qoollo.Impl.Modules.Net
             _bPool =
                 new StableElementsDynamicConnectionPool<T>(
                     NetConnector.Connect<T>(Server, configuration.ServiceName, timeoutConfiguration),
-                    1, configuration.MaxElementCount, "Connection pool to " + Server);
+                    1, configuration.MaxElementCount, configuration.TrimPeriod, "Connection pool to " + Server);
         }
 
         public bool Connect()

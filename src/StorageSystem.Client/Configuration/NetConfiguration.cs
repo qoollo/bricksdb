@@ -22,27 +22,35 @@ namespace Qoollo.Client.Configuration
         /// </summary>
         public int CountConnectionsToSingleServer { get; private set; }
 
-        public NetConfiguration(string host, int port, string wcfServiceName,
-            int countConnectionsToSingleServer)
+        public int TrimPeriod { get; private set; }
+
+        public NetConfiguration(string host, int port, string wcfServiceName, int countConnectionsToSingleServer, int trimPeriod)
         {
             Contract.Requires(host != "");
             Contract.Requires(wcfServiceName != "");
             Contract.Requires(port!=0);
-            Contract.Requires(countConnectionsToSingleServer != 0);
+            Contract.Requires(countConnectionsToSingleServer > 0);
+            Contract.Requires(trimPeriod > 0);
 
+            TrimPeriod = trimPeriod;
             Host = host;
             Port = port;
             WcfServiceName = wcfServiceName;
             CountConnectionsToSingleServer = countConnectionsToSingleServer;
         }
 
+        public NetConfiguration(string host, int port, string wcfServiceName, int countConnectionsToSingleServer)
+            : this(host, port, wcfServiceName, countConnectionsToSingleServer, Consts.TrimPeriod)
+        {
+        }
+
         public NetConfiguration(string host, int port, string wcfServiceName)
-            :this(host, port, wcfServiceName, Consts.CountConnectionsToSingleServer)
+            :this(host, port, wcfServiceName, Consts.CountConnectionsToSingleServer, Consts.TrimPeriod)
         {
         }
 
         public NetConfiguration(string host, int port)
-            : this(host, port, Consts.WcfServiceName, Consts.CountConnectionsToSingleServer)
+            : this(host, port, Consts.WcfServiceName, Consts.CountConnectionsToSingleServer, Consts.TrimPeriod)
         {
         }
     }

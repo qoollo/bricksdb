@@ -45,7 +45,7 @@ namespace Qoollo.Client.WriterGate
                 netConfiguration.Host,
                 netConfiguration.WcfServiceName);
             var connection = new ConnectionConfiguration(netConfiguration.WcfServiceName,
-                netConfiguration.CountConnectionsToSingleServer);
+                netConfiguration.CountConnectionsToSingleServer, netConfiguration.TrimPeriod);
             var hashMap = new HashMapConfiguration(storageConfiguration.FileWithHashName,
                 HashMapCreationMode.ReadFromFile, 1,
                 storageConfiguration.CountReplics, HashFileType.Writer);

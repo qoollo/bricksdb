@@ -33,7 +33,7 @@ namespace Qoollo.Client.DistributorGate
             var distrHash = new DistributorHashConfiguration(distributorConfiguration.CountReplics);
             var queue = new QueueConfiguration(commonConfiguration.CountThreads, commonConfiguration.QueueSize);
             var connection = new ConnectionConfiguration(netConfiguration.WcfServiceName,
-                netConfiguration.CountConnectionsToSingleServer);
+                netConfiguration.CountConnectionsToSingleServer, netConfiguration.TrimPeriod);
             var distrCache = new DistributorCacheConfiguration(distributorConfiguration.DataAliveTime,
                 distributorConfiguration.DataAliveAfterUpdate);
             var dbNetReceive = new NetReceiverConfiguration(netConfiguration.PortForStorage,

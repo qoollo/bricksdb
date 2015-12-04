@@ -30,16 +30,19 @@ namespace Qoollo.Client.Configuration
         /// </summary>
         public int CountConnectionsToSingleServer { get; private set; }
 
+        public int TrimPeriod { get; private set; }
+
         public DistributorNetConfiguration(string host, int portForProxy, int portForStorage,
-            string wcfServiceName, int countConnectionsToSingleServer)
+            string wcfServiceName, int countConnectionsToSingleServer, int trimPeriod)
         {
             Contract.Requires(host != "");
             Contract.Requires(wcfServiceName != "");
             Contract.Requires(portForProxy != 0);
             Contract.Requires(portForStorage != 0);
-            Contract.Requires(countConnectionsToSingleServer != 0);
+            Contract.Requires(countConnectionsToSingleServer > 0);
+            Contract.Requires(trimPeriod > 0);
 
-
+            TrimPeriod = trimPeriod;
             PortForStorage = portForStorage;
             Host = host;
             PortForProxy = portForProxy;
@@ -47,15 +50,27 @@ namespace Qoollo.Client.Configuration
             CountConnectionsToSingleServer = countConnectionsToSingleServer;
         }
 
+        public DistributorNetConfiguration(string host, int portForProxy, int portForStorage, string wcfServiceName,
+            int countConnectionsToSingleServer) :
+                this(
+                host, portForProxy, portForStorage, wcfServiceName, countConnectionsToSingleServer, Consts.TrimPeriod)
+        {
+
+        }
+
         public DistributorNetConfiguration(string host, int portForProxy, int portForStorage,
             string wcfServiceName) :
-                this(host, portForProxy, portForStorage, wcfServiceName, Consts.CountConnectionsToSingleServer)
+                this(
+                host, portForProxy, portForStorage, wcfServiceName, Consts.CountConnectionsToSingleServer,
+                Consts.TrimPeriod)
         {
 
         }
 
         public DistributorNetConfiguration(string host, int portForProxy, int portForStorage) :
-            this(host, portForProxy, portForStorage, Consts.WcfServiceName, Consts.CountConnectionsToSingleServer)
+            this(
+            host, portForProxy, portForStorage, Consts.WcfServiceName, Consts.CountConnectionsToSingleServer,
+            Consts.TrimPeriod)
         {
 
         }

@@ -10,7 +10,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 {
     internal class NetDistributorReceiverForDb : NetReceiveModule<ICommonNetReceiverForDb>, ICommonNetReceiverForDb
     {        
-        private DistributorModule _distributorModule;
+        private readonly DistributorModule _distributorModule;
 
         public NetDistributorReceiverForDb(DistributorModule distributorModule,
             NetReceiverConfiguration receiverConfiguration)
@@ -22,12 +22,12 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 
         public RemoteResult SendSync(NetCommand command)
         {
-            return _distributorModule.ProcessNetCommand(command);
+            return _distributorModule.Execute<NetCommand, RemoteResult>(command);
         }
 
         public void SendASync(NetCommand command)
         {
-            _distributorModule.ProcessNetCommand(command);
+            _distributorModule.Execute<NetCommand, RemoteResult>(command);
         }
 
         public RemoteResult Ping()

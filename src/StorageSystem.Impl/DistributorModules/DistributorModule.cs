@@ -75,9 +75,9 @@ namespace Qoollo.Impl.DistributorModules
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
         public override void Start()
-        {
-            _queue.DistributorDistributorQueue.Registrate(_queueConfiguration, Process);
-            _queue.DistributorTransactionCallbackQueue.Registrate(_queueConfiguration, ProcessCallbackTransaction);
+        {            
+            RegistrateCommands();
+      
             _modelOfDbWriters.Start();
 
             _asyncTaskModule.AddAsyncTask(
@@ -91,6 +91,34 @@ namespace Qoollo.Impl.DistributorModules
                 false);
 
             _asyncTaskModule.Start();
+
+            StartAsync(_queueConfiguration);
+        }
+
+        private void RegistrateCommands()
+        {
+            RegistrateSync<GetHashMapCommand, RemoteResult>(GetHashMap);
+            RegistrateSync<TakeInfoCommand, RemoteResult>(GetDistributorInfo);
+
+            RegistrateAsync<ServerNotAvailableCommand, NetCommand, RemoteResult>(_queue.DistributorDistributorQueue,
+                ServerNotAvailableInner, () => new SuccessResult());
+
+            RegistrateAsync<AddDistributorFromDistributorCommand, NetCommand, RemoteResult>(
+                _queue.DistributorDistributorQueue,AddDistributor, () => new SuccessResult());
+
+            RegistrateAsync<HashFileUpdateCommand, NetCommand, RemoteResult>(
+                _queue.DistributorDistributorQueue,
+                command => _modelOfDbWriters.UpdateHashViaNet(command.Map), () => new SuccessResult());
+
+            RegistrateAsync<NetCommand, NetCommand, RemoteResult>(
+                _queue.DistributorDistributorQueue,
+                command => Logger.Logger.Instance.InfoFormat("Not supported command type = {0}", command.GetType()),
+                () => new SuccessResult());
+
+            RegistrateAsync<Common.Data.TransactionTypes.Transaction,
+                Common.Data.TransactionTypes.Transaction, RemoteResult>(
+                    _queue.DistributorTransactionCallbackQueue, ProcessCallbackTransaction,
+                    () => new SuccessResult());
         }
 
         private void ProcessCallbackTransaction(Common.Data.TransactionTypes.Transaction transaction)
@@ -106,10 +134,10 @@ namespace Qoollo.Impl.DistributorModules
             return new HashMapResult(_modelOfDbWriters.GetAllServersForCollector());
         }
 
-        private void ServerNotAvailableInner(ServerId server)
+        private void ServerNotAvailableInner(ServerNotAvailableCommand command)
         {
-            Logger.Logger.Instance.Debug("Distributor: Server not available " + server);
-            _modelOfDbWriters.ServerNotAvailable(server);
+            Logger.Logger.Instance.Debug("Distributor: Server not available " + command.Server);
+            _modelOfDbWriters.ServerNotAvailable(command.Server);
         }
 
         private void PingProcess(AsyncData data)
@@ -301,40 +329,12 @@ namespace Qoollo.Impl.DistributorModules
 
         public void ServerNotAvailable(ServerId server)
         {
-            _queue.DistributorDistributorQueue.Add(new ServerNotAvailableCommand(server));
+            Execute<ServerNotAvailableCommand, RemoteResult>(new ServerNotAvailableCommand(server));
         }
 
-        public RemoteResult ProcessNetCommand(NetCommand command)
+        public void ProcessTransaction(Common.Data.TransactionTypes.Transaction transaction)
         {
-            if (command is GetHashMapCommand)
-                return GetHashMap();
-
-            if (command is TakeInfoCommand)
-                return GetDistributorInfo();
-
-            _queue.DistributorDistributorQueue.Add(command);
-            return new SuccessResult();
-        }
-
-        private void Process(NetCommand command)
-        {
-            if (command is ServerNotAvailableCommand)
-                ServerNotAvailableInner((command as ServerNotAvailableCommand).Server);
-
-            else if (command is AddDistributorFromDistributorCommand)
-                AddDistributor(command as AddDistributorFromDistributorCommand);
-            
-            else if (command is HashFileUpdateCommand)
-                _modelOfDbWriters.UpdateHashViaNet((command as HashFileUpdateCommand).Map);
-
-            else
-                Logger.Logger.Instance.InfoFormat("Not supported command type = {0}", command.GetType());
-        }
-
-        public RemoteResult ProcessTransaction(Common.Data.TransactionTypes.Transaction transaction)
-        {
-            _queue.TransactionQueue.Add(transaction);
-            return new SuccessResult();
+            _queue.TransactionQueue.Add(transaction);            
         }       
 
         #endregion

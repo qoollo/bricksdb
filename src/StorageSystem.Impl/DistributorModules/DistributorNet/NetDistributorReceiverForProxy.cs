@@ -42,12 +42,14 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 
         public RemoteResult SendSync(NetCommand command)
         {
-            return _distributorModule.ProcessNetCommand(command);
+            return _distributorModule.Execute<NetCommand, RemoteResult>(command);
+            //return _distributorModule.ProcessNetCommand(command);
         }
 
         public void SendASync(NetCommand command)
         {
-            _distributorModule.ProcessNetCommand(command);
+            _distributorModule.Execute<NetCommand, RemoteResult>(command);
+            //_distributorModule.ProcessNetCommand(command);
         }
 
         public RemoteResult Ping()

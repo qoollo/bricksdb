@@ -19,56 +19,56 @@ namespace Qoollo.Impl.Modules.Queue
 
     internal class GlobalQueueInner:ControlModule
     {
-        private QueueWithParam<InnerData> _proxyInputWriteAndUpdateQueue;
+        private readonly QueueWithParam<InnerData> _proxyInputWriteAndUpdateQueue;
         public QueueWithParam<InnerData> ProxyInputWriteAndUpdateQueue { get { return _proxyInputWriteAndUpdateQueue; } }
 
-        private QueueWithParam<InnerData> _proxyInputOtherQueue;
+        private readonly QueueWithParam<InnerData> _proxyInputOtherQueue;
         public QueueWithParam<InnerData> ProxyInputOtherQueue { get { return _proxyInputOtherQueue; } }
 
-        private QueueWithParam<NetCommand> _proxyDistributorQueue;
+        private readonly QueueWithParam<NetCommand> _proxyDistributorQueue;
         public QueueWithParam<NetCommand> ProxyDistributorQueue { get { return _proxyDistributorQueue; } }
 
-        private QueueWithParam<NetCommand> _distributorDistributorQueue;
+        private readonly QueueWithParam<NetCommand> _distributorDistributorQueue;
         public QueueWithParam<NetCommand> DistributorDistributorQueue { get { return _distributorDistributorQueue; } }
 
-        private QueueWithParam<InnerData> _dbInputRollbackQueue;
+        private readonly QueueWithParam<InnerData> _dbInputRollbackQueue;
         public QueueWithParam<InnerData> DbInputRollbackQueue { get { return _dbInputRollbackQueue; } }
 
-        private QueueWithParam<InnerData> _dbInputProcessQueue;
+        private readonly QueueWithParam<InnerData> _dbInputProcessQueue;
         public QueueWithParam<InnerData> DbInputProcessQueue { get { return _dbInputProcessQueue; } }
 
-        private QueueWithParam<NetCommand> _dbDistributorInnerQueue;
+        private readonly QueueWithParam<NetCommand> _dbDistributorInnerQueue;
         public QueueWithParam<NetCommand> DbDistributorInnerQueue { get { return _dbDistributorInnerQueue; } }        
 
-        private QueueWithParam<InnerData> _dbRestoreQueue;
+        private readonly QueueWithParam<InnerData> _dbRestoreQueue;
         public QueueWithParam<InnerData> DbRestoreQueue { get { return _dbRestoreQueue; } }
 
-        private QueueWithParam<Transaction> _transactionQueue;
+        private readonly QueueWithParam<Transaction> _transactionQueue;
         public QueueWithParam<Transaction> TransactionQueue { get { return _transactionQueue; } }
 
-        private QueueWithParam<Transaction> _transactionAnswerQueue;
+        private readonly QueueWithParam<Transaction> _transactionAnswerQueue;
         public QueueWithParam<Transaction> TransactionAnswerQueue { get { return _transactionAnswerQueue; } }
 
-        private QueueWithParam<Transaction> _distributorTransactionCallbackQueue;
+        private readonly QueueWithParam<Transaction> _distributorTransactionCallbackQueue;
         public QueueWithParam<Transaction> DistributorTransactionCallbackQueue { get { return _distributorTransactionCallbackQueue; } }        
 
-        private QueueWithParam<InnerData> _dbTimeoutQueue;
+        private readonly QueueWithParam<InnerData> _dbTimeoutQueue;
         public QueueWithParam<InnerData> DbTimeoutQueue { get { return _dbTimeoutQueue; } }
 
         public GlobalQueueInner()
         {
-            _proxyInputWriteAndUpdateQueue = new QueueWithParam<InnerData>();
-            _proxyInputOtherQueue = new QueueWithParam<InnerData>();
-            _proxyDistributorQueue = new QueueWithParam<NetCommand>();
-            _distributorDistributorQueue = new QueueWithParam<NetCommand>();
-            _dbInputRollbackQueue = new QueueWithParam<InnerData>();
-            _dbInputProcessQueue = new QueueWithParam<InnerData>();
-            _dbDistributorInnerQueue = new QueueWithParam<NetCommand>();
-            _dbRestoreQueue = new QueueWithParam<InnerData>();
-            _transactionQueue = new QueueWithParam<Transaction>();
-            _transactionAnswerQueue = new QueueWithParam<Transaction>();
-            _distributorTransactionCallbackQueue = new QueueWithParam<Transaction>();
-            _dbTimeoutQueue = new QueueWithParam<InnerData>();
+            _proxyInputWriteAndUpdateQueue = new QueueWithParam<InnerData>("proxyInputWriteAndUpdateQueue");
+            _proxyInputOtherQueue = new QueueWithParam<InnerData>("proxyInputOtherQueue");
+            _proxyDistributorQueue = new QueueWithParam<NetCommand>("proxyDistributorQueue");
+            _distributorDistributorQueue = new QueueWithParam<NetCommand>("distributorDistributorQueue");
+            _dbInputRollbackQueue = new QueueWithParam<InnerData>("dbInputRollbackQueue");
+            _dbInputProcessQueue = new QueueWithParam<InnerData>("dbInputProcessQueue");
+            _dbDistributorInnerQueue = new QueueWithParam<NetCommand>("dbDistributorInnerQueue");
+            _dbRestoreQueue = new QueueWithParam<InnerData>("dbRestoreQueue");
+            _transactionQueue = new QueueWithParam<Transaction>("transactionQueue");
+            _transactionAnswerQueue = new QueueWithParam<Transaction>("transactionAnswerQueue");
+            _distributorTransactionCallbackQueue = new QueueWithParam<Transaction>("distributorTransactionCallbackQueue");
+            _dbTimeoutQueue = new QueueWithParam<InnerData>("dbTimeoutQueue");
         }
 
         public override void Start()

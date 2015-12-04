@@ -93,11 +93,11 @@ namespace Qoollo.Impl.Common.Support
     public enum RestoreState
     {
         [EnumMemberAttribute]
-        Restored = 0,
+        Restored = 0,        
         [EnumMemberAttribute]
-        FullRestoreNeed = 1,
+        SimpleRestoreNeed = 1,
         [EnumMemberAttribute]
-        SimpleRestoreNeed = 2,
+        FullRestoreNeed = 2,
         [EnumMemberAttribute]
         Default = 3
     }

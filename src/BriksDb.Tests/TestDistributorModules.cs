@@ -687,6 +687,7 @@ namespace Qoollo.Tests
             }
             q1.Dispose();
 
+            input.Dispose();
             ddistributor.Dispose();
             dnet.Dispose();
             cache.Dispose();
@@ -919,9 +920,11 @@ namespace Qoollo.Tests
 
             q1.Dispose();
 
+            input.Dispose();
             ddistributor.Dispose();
             dnet.Dispose();
             cache.Dispose();
+            tranc.Dispose();
 
             s.Dispose();
         }        

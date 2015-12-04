@@ -7,6 +7,13 @@ using Qoollo.PerformanceCounters;
 
 namespace Qoollo.Impl.PerfCounters
 {
+    internal static class PoolsProfiler
+    {
+        public static void SetProfiler(Qoollo.Logger.Logger logger)
+        {
+            Qoollo.Turbo.Profiling.Profiler.SetProfiler(new ServiceClassesProfilerWrapper(ServiceClassesPerfCountersProfiling.Instance, logger));
+        }
+    }
 
     internal class ServiceClassesPerfCountersProfiling : Qoollo.Turbo.Profiling.IProfilingProvider
     {

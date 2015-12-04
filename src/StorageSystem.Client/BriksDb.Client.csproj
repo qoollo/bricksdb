@@ -107,6 +107,7 @@
     <Compile Include="PerfCounters\WriterPerfCounters.cs" />
     <Compile Include="PerfCounters\DistributorPerfCounters.cs" />
     <Compile Include="PerfCounters\ProxyPerfCounters.cs" />
+    <Compile Include="Profiler\PoolsProfiler.cs" />
     <Compile Include="ProxyGate\AsyncReadResult.cs" />
     <Compile Include="ProxyGate\Handlers\ProxyHandlerBase.cs" />
     <Compile Include="ProxyGate\Handlers\ProxyHandlerEmpty.cs" />

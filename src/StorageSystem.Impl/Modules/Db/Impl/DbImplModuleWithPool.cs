@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Diagnostics.Contracts;
 using System.Threading;
 using Qoollo.Impl.Modules.Pools;
 using Qoollo.Turbo.ObjectPools;
@@ -11,6 +12,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
     {
         private readonly CommonPool<TConnection> _pool;
         private readonly TConnectionParam _connectionParam;
+        private const int MinElements = 50;
 
         protected DbImplModuleWithPool(TConnectionParam connectionParam, int maxCountElementInPool, int trimPeriod)
         {
@@ -18,12 +20,12 @@ namespace Qoollo.Impl.Modules.Db.Impl
 
             _connectionParam = connectionParam;
             _pool = new CommonPool<TConnection>(CreateElementInner, IsValidElement, DestroyElement, maxCountElementInPool,
-                trimPeriod, "DbPool");
+                trimPeriod, "DbPool", Math.Min(MinElements, maxCountElementInPool));
         }
 
         public override void Start()
-        {
-            //_pool.FillPoolUpTo(_pool.MaxElementCount);
+        {            
+            _pool.FillPoolUpTo(_pool.MinElementCount);
         }
 
         protected RentedElementMonitor<TConnection> RentConnection()

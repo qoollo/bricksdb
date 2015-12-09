@@ -13,8 +13,8 @@ namespace Qoollo.Impl.Modules.Pools
         private Action<T> _destroyElementAction;
 
         public CommonPool(CreateElementDelegate<T> createElementDelegate, Func<T, bool> isValidElemetFunc,
-            Action<T> destroyElementAction, int maxElemCount, int trimPeriod, string name)
-            : base(1, maxElemCount, name, trimPeriod, 10000)
+            Action<T> destroyElementAction, int maxElemCount, int trimPeriod, string name, int minElements)
+            : base(minElements, maxElemCount, name, trimPeriod, 10000)
         {
             Contract.Requires(createElementDelegate != null);
             Contract.Requires(isValidElemetFunc != null);

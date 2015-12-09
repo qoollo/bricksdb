@@ -356,7 +356,9 @@ namespace Qoollo.Impl.DistributorModules
 
         public string GetServersState()
         {
-            CheckRestoreInner();
+            var servers = _modelOfDbWriters.GetAllAvailableServers();
+            if (servers.TrueForAll(x => x.IsAvailable))
+                CheckRestoreInner();
             return _modelOfDbWriters.Servers.Aggregate(string.Empty,
                 (current, writerDescription) => current + "\n" + writerDescription.StateString);
         }

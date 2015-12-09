@@ -81,9 +81,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Qoollo.PerformanceCounters.2.1.0\lib\net45\Qoollo.PerformanceCounters.dll</HintPath>
     </Reference>
-    <Reference Include="Qoollo.Turbo">
-      <HintPath>..\packages\Qoollo.Turbo.2.1.21\lib\net45\Qoollo.Turbo.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Qoollo.Turbo, Version=2.1.25.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Qoollo.Turbo.2.1.25\lib\net45\Qoollo.Turbo.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

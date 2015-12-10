@@ -22,7 +22,8 @@ namespace Qoollo.Impl.Modules.Net
             _bPool =
                 new StableElementsDynamicConnectionPool<T>(
                     NetConnector.Connect<T>(Server, configuration.ServiceName, timeoutConfiguration),
-                    1, configuration.MaxElementCount, configuration.TrimPeriod, "Connection pool to " + Server);
+                    1, configuration.MaxElementCount, configuration.TrimPeriod, "Connection pool to " + Server,
+                    configuration.MaxElementCount);
         }
 
         public bool Connect()
@@ -62,8 +63,9 @@ namespace Qoollo.Impl.Modules.Net
                         using (var request = elem.Element.RunRequest(_bPool.DeadlockTimeout))
                         {
                             if (!request.CanBeUsedForCommunication)
-                                throw new CommunicationException("Connection can't be used for communications. Target: " +
-                                                                 Server);
+                                throw new CommunicationException(
+                                    "Connection can't be used for communications. Target: " +
+                                    Server);
 
                             res = func(request.API as TApi);
                         }

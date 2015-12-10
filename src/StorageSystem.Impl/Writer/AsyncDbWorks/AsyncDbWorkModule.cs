@@ -51,22 +51,24 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         {
             get
             {
-                var dictionary = new Dictionary<string, string>
-                {
-                    {ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString()},
-                    {ServerState.RestoreTransferInProcess, _transferRestore.IsStart.ToString()}
-                };
+                var dictionary = new Dictionary<string, string>();
+
                 if (_initiatorRestore.IsStart)
                 {
                     var server = _initiatorRestore.RestoreServer;
                     if (server != null)
                         dictionary.Add(ServerState.RestoreCurrentServer, server.ToString());
+                    else
+                        dictionary.Add(ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString());
                 }
+
                 if (_transferRestore.IsStart)
                 {
                     var server = _transferRestore.RemoteServer;
                     if (server != null)
                         dictionary.Add(ServerState.RestoreTransferServer, server.ToString());
+                    else
+                        dictionary.Add(ServerState.RestoreTransferInProcess, _transferRestore.IsStart.ToString());
                 }
                 return dictionary;
             }

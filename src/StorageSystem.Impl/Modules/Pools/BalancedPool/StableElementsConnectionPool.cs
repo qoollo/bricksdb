@@ -112,9 +112,8 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
         private volatile bool _isSyncOpen = true;
         public readonly int DeadlockTimeout = 60 * 1000;
 
-        public StableElementsDynamicConnectionPool(ChannelFactory<TApi> factory, int maxAsyncQueryCount,
-            int maxElementCount, int trimPeriod, string name)
-            : base(1, maxElementCount, PoolsProfiler.ConvertStringForCounters(name), trimPeriod, 10000)
+        public StableElementsDynamicConnectionPool(ChannelFactory<TApi> factory, int maxAsyncQueryCount, int maxElementCount, int trimPeriod, string name, int minCount)
+            : base(minCount, maxElementCount, PoolsProfiler.ConvertStringForCounters(name), trimPeriod, 10000)
         {
             Contract.Requires(factory != null);
 
@@ -124,7 +123,7 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
 
         public StableElementsDynamicConnectionPool(ChannelFactory<TApi> factory, int maxAsyncQueryCount,
             int maxElementCount, string name)
-            : base(1, maxElementCount, PoolsProfiler.ConvertStringForCounters(name), 10000, 10000)
+            : base(maxElementCount, maxElementCount, PoolsProfiler.ConvertStringForCounters(name), 10000, 10000)
         {
             Contract.Requires(factory != null);
 
@@ -134,13 +133,13 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
 
         public StableElementsDynamicConnectionPool(ChannelFactory<TApi> factory, int maxAsyncQueryCount,
             int maxElementCount, int trimPeriod)
-            : this(factory, maxAsyncQueryCount, maxElementCount, trimPeriod, null)
+            : this(factory, maxAsyncQueryCount, maxElementCount, trimPeriod, null, maxElementCount)
         {
         }
 
         public StableElementsDynamicConnectionPool(ChannelFactory<TApi> factory, int maxAsyncQueryCount,
             int maxElementCount)
-            : this(factory, maxAsyncQueryCount, maxElementCount, 5 * 60 * 1000, null)
+            : this(factory, maxAsyncQueryCount, maxElementCount, 5 * 60 * 1000, null, maxElementCount)
         {
         }
 

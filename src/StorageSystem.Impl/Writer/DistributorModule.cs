@@ -94,7 +94,7 @@ namespace Qoollo.Impl.Writer
             RegistrateSync<SetGetRestoreStateCommand, SetGetRestoreStateResult>(
                 command => new SetGetRestoreStateResult(
                     _asyncDbWork.DistributorReceive(command.State),
-                    _asyncDbWork.FullState));
+                    GetAllStateDict()));
 
             RegistrateSync<HashFileUpdateCommand, RemoteResult>(HashFileUpdate);
 
@@ -213,23 +213,38 @@ namespace Qoollo.Impl.Writer
 
         public string GetAllState()
         {
-            string result = string.Empty;            
+            string result = string.Empty;
             result += string.Format("restore state: {0}\n",
                 Enum.GetName(typeof (RestoreState), GetRestoreRequiredState()));
-            result += string.Format("restore is running: {0}\n", _asyncDbWork.IsRestoreStarted);
             if (_asyncDbWork.IsRestoreStarted)
             {
                 result += string.Format("current server: {0}\n", GetCurrentRestoreServer());
                 result += "servers:\n";
-                result = _asyncDbWork.Servers.Aggregate(result,
-                    (current, server) => current + string.Format("\t{0}\n", server));
+                result = GetServersList(result);
             }
+            else
+                result += string.Format("restore is running: {0}\n", _asyncDbWork.IsRestoreStarted);
 
-            result += string.Format("restore transfer is running: {0}\n", _asyncDbWork.IsTransferRestoreStarted);
             if (_asyncDbWork.IsTransferRestoreStarted)
                 result += string.Format("transfert server: {0}\n", _asyncDbWork.GetTransferServer());
+            else
+                result += string.Format("restore transfer is running: {0}\n", _asyncDbWork.IsTransferRestoreStarted);
 
             return result;
+        }
+
+        private string GetServersList(string start = "")
+        {
+            return _asyncDbWork.Servers.Aggregate(start,
+                (current, server) => current + string.Format("\t{0}\n", server));
+        }
+
+        private Dictionary<string, string> GetAllStateDict()
+        {
+            var ret = _asyncDbWork.FullState;
+            if (GetRestoreRequiredState() != RestoreState.Restored)
+                ret.Add(ServerState.RestoreServers, GetServersList());
+            return ret;
         }
 
         public string DisableDelete()

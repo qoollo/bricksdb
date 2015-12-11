@@ -68,6 +68,27 @@ namespace Qoollo.Impl.Writer.Db
             return UpdateInner(local, key, value);
         }
 
+        public RemoteResult UpdateRestore(InnerData obj, bool local, Tuple<MetaData, bool> meta, object key, object value)
+        {
+            //No meta, no data
+            if (meta.Item1 == null && meta.Item2)
+                return CreateInner(obj, local, key, value);
+
+            //no meta, data exists
+            if (meta.Item1 == null && !meta.Item2)
+                return CreateMetaUpdateData(obj, local, key, value);
+
+            // meta exists
+            if (meta.Item2)
+                return CreateDataWithoutMetaData(key, value);
+
+            if (meta.Item1.IsDeleted)
+                SetMetadataNotDeleted(key);
+
+            //return UpdateInner(local, key, value);
+            return UpdateMeta(local, key);
+        }
+
         private RemoteResult CreateWhenDataDeleted(bool local, object key, object value)
         {
             var ret = SetMetadataNotDeleted(key);
@@ -130,11 +151,16 @@ namespace Qoollo.Impl.Writer.Db
             var ret = _implModule.ExecuteNonQuery(command);
 
             if (!ret.IsError)
-            {
-                command = _metaDataCommandCreator.UpdateMetaData(local, key);
-                ret = _implModule.ExecuteNonQuery(command);
-            }
+                return UpdateMeta(local, key);
 
+            IsError(ref ret);
+            return ret;
+        }
+
+        private RemoteResult UpdateMeta(bool local, object key)
+        {
+            var command = _metaDataCommandCreator.UpdateMetaData(local, key);
+            var ret = _implModule.ExecuteNonQuery(command);
             IsError(ref ret);
             return ret;
         }

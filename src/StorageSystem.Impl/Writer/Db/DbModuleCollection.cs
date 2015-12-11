@@ -13,7 +13,7 @@ namespace Qoollo.Impl.Writer.Db
 {
     public class DbModuleCollection:DbModule
     {
-        private Dictionary<string, DbModule> _dbModules;
+        private readonly Dictionary<string, DbModule> _dbModules;
 
         public DbModuleCollection()
         {
@@ -94,62 +94,67 @@ namespace Qoollo.Impl.Writer.Db
 
         public RemoteResult InitDb(string name)
         {
-            return CommonMethodHandler(name, (dbModule) => dbModule.InitDb());
+            return CommonMethodHandler(name, dbModule => dbModule.InitDb());
         }        
 
         public override RemoteResult InitDb()
         {
-            return CommonMethodHandler((dbModule) => dbModule.InitDb());
+            return CommonMethodHandler(dbModule => dbModule.InitDb());
         }
 
         public override RemoteResult Create(InnerData obj, bool local)
         {
-            return CommonMethodHandler(obj, (dbModule) => dbModule.Create(obj, local));
+            return CommonMethodHandler(obj, dbModule => dbModule.Create(obj, local));
         }
 
         public override RemoteResult Update(InnerData obj, bool local)
         {
-            return CommonMethodHandler(obj, (dbModule) => dbModule.Update(obj, local));
+            return CommonMethodHandler(obj, dbModule => dbModule.Update(obj, local));
         }
 
         public override RemoteResult Delete(InnerData obj)
         {
-            return CommonMethodHandler(obj, (dbModule) => dbModule.Delete(obj));
+            return CommonMethodHandler(obj, dbModule => dbModule.Delete(obj));
         }
 
         public override RemoteResult DeleteFull(InnerData obj)
         {
-            return CommonMethodHandler(obj, (dbModule) => dbModule.DeleteFull(obj));
+            return CommonMethodHandler(obj, dbModule => dbModule.DeleteFull(obj));
         }        
 
         public override RemoteResult RestoreUpdate(InnerData obj, bool local)
         {
-            return CommonMethodHandler(obj, (dbModule) => dbModule.RestoreUpdate(obj, local));
+            return CommonMethodHandler(obj, dbModule => dbModule.RestoreUpdate(obj, local));
+        }
+
+        public override RemoteResult RestoreUpdatePackage(List<InnerData> obj)
+        {
+            return CommonMethodHandler(obj[0], dbModule => dbModule.RestoreUpdatePackage(obj));
         }
 
         public override RemoteResult CustomOperation(InnerData obj, bool local)
         {
-            return CommonMethodHandler(obj, (dbModule) => dbModule.CustomOperation(obj, local));
+            return CommonMethodHandler(obj, dbModule => dbModule.CustomOperation(obj, local));
         }
 
         public override RemoteResult CreateRollback(InnerData obj, bool local)
         {
-            return CommonMethodHandler(obj, (dbModule) => dbModule.CreateRollback(obj, local));
+            return CommonMethodHandler(obj, dbModule => dbModule.CreateRollback(obj, local));
         }
 
         public override RemoteResult UpdateRollback(InnerData obj, bool local)
         {
-            return CommonMethodHandler(obj, (dbModule) => dbModule.UpdateRollback(obj, local));
+            return CommonMethodHandler(obj, dbModule => dbModule.UpdateRollback(obj, local));
         }
 
         public override RemoteResult DeleteRollback(InnerData obj, bool local)
         {
-            return CommonMethodHandler(obj, (dbModule) => dbModule.DeleteRollback(obj, local));
+            return CommonMethodHandler(obj, dbModule => dbModule.DeleteRollback(obj, local));
         }
 
         public override RemoteResult CustomOperationRollback(InnerData obj, bool local)
         {
-            return CommonMethodHandler(obj, (dbModule) => dbModule.CustomOperationRollback(obj, local));
+            return CommonMethodHandler(obj, dbModule => dbModule.CustomOperationRollback(obj, local));
         }
 
         #endregion

@@ -31,7 +31,7 @@ namespace Qoollo.Impl.Writer
         public override void Start()
         {
             _queue.DbInputRollbackQueue.Registrate(_queueConfiguration, RollbackProcess);
-            _queue.DbInputProcessQueue.Registrate(_queueConfiguration, ProcessInner);
+            _queue.DbInputProcessQueue.Registrate(_queueConfiguration, ProcessQueue);
         }
 
         #region Rollback
@@ -60,6 +60,11 @@ namespace Qoollo.Impl.Writer
             WriterCounters.Instance.IncomePerSec.OperationFinished();
         }
 
+        public RemoteResult ProcessSync(InnerData data)
+        {
+            return ProcessData(data);
+        }
+
         private RemoteResult ProcessData(InnerData data)
         {
             WriterCounters.Instance.TransactionCount.Increment();
@@ -75,15 +80,10 @@ namespace Qoollo.Impl.Writer
             return ret;
         }      
 
-        private void ProcessInner(InnerData data)
-        {
+        private void ProcessQueue(InnerData data)
+        {            
             ProcessData(data);
-        }
-
-        public RemoteResult ProcessSync(InnerData data)
-        {
-            return ProcessData(data);
-        }
+        }        
 
         #endregion          
 
@@ -91,7 +91,6 @@ namespace Qoollo.Impl.Writer
         {
             throw new NotImplementedException();
         }
-
 
         public Tuple<RemoteResult, SelectSearchResult> SelectQuery(SelectDescription description)
         {

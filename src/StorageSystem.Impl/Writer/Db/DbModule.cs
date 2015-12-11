@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -27,6 +28,8 @@ namespace Qoollo.Impl.Writer.Db
         public abstract RemoteResult SelectRead(SelectDescription description, out SelectSearchResult searchResult);
 
         public abstract RemoteResult RestoreUpdate(InnerData obj, bool local);
+
+        public abstract RemoteResult RestoreUpdatePackage(List<InnerData> obj);
 
         public abstract RemoteResult CustomOperation(InnerData obj, bool local);
 

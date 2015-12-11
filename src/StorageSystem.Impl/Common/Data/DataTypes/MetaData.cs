@@ -20,6 +20,6 @@ namespace Qoollo.Impl.Common.Data.DataTypes
         public bool IsDeleted { get; private set; }
         
         public object Id { get; set; }
-        public string Hash { get; private set; }
+        public string Hash { get; private set; }        
     }
 }

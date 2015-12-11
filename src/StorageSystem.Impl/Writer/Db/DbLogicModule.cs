@@ -102,8 +102,7 @@ namespace Qoollo.Impl.Writer.Db
         {
             var timer = WriterCounters.Instance.ReadMetaDataTimer.StartNew();
 
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var script = _metaDataCommandCreator.ReadMetaData(_userCommandCreator.Read(), key);
             var reader = _implModule.CreateReader(script);
@@ -139,6 +138,48 @@ namespace Qoollo.Impl.Writer.Db
             return meta;
         }
 
+        private List<Tuple<MetaData, bool>> ReadMetaData(List<InnerData> obj)
+        {
+            var timer = WriterCounters.Instance.ReadMetaDataTimer.StartNew();
+
+            object keys = obj.Select(DeserializeKey);
+
+            object key = DeserializeKey(obj[0]);
+
+            var script = _metaDataCommandCreator.ReadMetaData(_userCommandCreator.Read(), key);
+            var reader = _implModule.CreateReader(script);
+
+            var meta = new Tuple<MetaData, bool>(null, true);
+            try
+            {
+                reader.Start();
+
+                if (reader.IsFail)
+                {
+                    timer.Complete();
+                    return null;
+                }
+
+                if (reader.IsCanRead)
+                {
+                    reader.ReadNext();
+
+                    meta = _metaDataCommandCreator.ReadMetaDataFromReader(reader);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Logger.Instance.Warn(e, "");
+            }
+            finally
+            {
+                reader.Dispose();
+            }
+
+            timer.Complete();
+            return null;
+        }
+
         public override RemoteResult Create(InnerData obj, bool local)
         {
             object key;
@@ -164,8 +205,7 @@ namespace Qoollo.Impl.Writer.Db
 
         public override RemoteResult Delete(InnerData obj)
         {
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var metaCommand = _metaDataCommandCreator.SetDataDeleted(key);            
             var ret = _implModule.ExecuteNonQuery(metaCommand);
@@ -248,10 +288,14 @@ namespace Qoollo.Impl.Writer.Db
             return ret;
         }
 
+        public override RemoteResult RestoreUpdatePackage(List<InnerData> obj)
+        {
+            throw new NotImplementedException();
+        }
+
         public override RemoteResult CustomOperation(InnerData obj, bool local)
         {
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var connection = _implModule.RentConnectionInner();
             RemoteResult ret;
@@ -272,8 +316,7 @@ namespace Qoollo.Impl.Writer.Db
 
         public override InnerData ReadExternal(InnerData obj)
         {
-            object key;            
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var ret = new InnerData(new Transaction(obj.Transaction))
             {
@@ -344,8 +387,7 @@ namespace Qoollo.Impl.Writer.Db
 
         private RemoteResult CreateRollbackInner(InnerData obj)
         {
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var command = _metaDataCommandCreator.DeleteMetaData(key);
             _implModule.ExecuteNonQuery(command);
@@ -364,8 +406,7 @@ namespace Qoollo.Impl.Writer.Db
 
         public override RemoteResult DeleteRollback(InnerData obj, bool local)
         {
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var metaCommand = _metaDataCommandCreator.SetDataNotDeleted(key);
             return _implModule.ExecuteNonQuery(metaCommand);
@@ -373,8 +414,7 @@ namespace Qoollo.Impl.Writer.Db
 
         public override RemoteResult CustomOperationRollback(InnerData obj, bool local)
         {
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var connection = _implModule.RentConnectionInner();
 
@@ -399,16 +439,16 @@ namespace Qoollo.Impl.Writer.Db
 
         private void DeserializeData(InnerData data, out object key, out object value)
         {
-            DeserializeKey(data, out key);
+            key = DeserializeKey(data);
 
             value = null;
             if (data.Data != null)
                 DeserializeValue(data, out value);
         }
 
-        private void DeserializeKey(InnerData data, out object key)
+        private object DeserializeKey(InnerData data)
         {
-            key = _hashCalculater.DeserializeKey(data.Key);
+            return _hashCalculater.DeserializeKey(data.Key);
         }
 
         private void DeserializeValue(InnerData data, out object value)

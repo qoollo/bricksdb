@@ -91,6 +91,9 @@ namespace Qoollo.Impl.Writer
                     _asyncDbWork.RestoreIncome(comm.ServerId, comm.RestoreState == RestoreState.FullRestoreNeed,
                         comm.Hash, comm.TableName, _model.LocalMap), () => new SuccessResult());
 
+            RegistrateAsync<DeleteCommand, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue, DeleteCommand,
+                () => new SuccessResult());
+
             RegistrateSync<SetGetRestoreStateCommand, SetGetRestoreStateResult>(
                 command => new SetGetRestoreStateResult(
                     _asyncDbWork.DistributorReceive(command.State),
@@ -233,7 +236,7 @@ namespace Qoollo.Impl.Writer
             return result;
         }
 
-        private string GetServersList(string start = "")
+        private string GetServersList(string start = "\n")
         {
             return _asyncDbWork.Servers.Aggregate(start,
                 (current, server) => current + string.Format("\t{0}\n", server));
@@ -268,6 +271,22 @@ namespace Qoollo.Impl.Writer
         #endregion
 
         #region Commands
+
+        private void DeleteCommand(DeleteCommand command)
+        {
+            switch (command.Command.ToLower())
+            {
+                case "disable":
+                    DisableDelete();
+                    break;
+                case "enable":
+                    EnableDelete();
+                    break;
+                case "start":
+                    StartDelete();
+                    break;
+            }
+        }
 
         private List<RestoreServer> ConvertRestoreServers(IEnumerable<ServerId> servers)
         {

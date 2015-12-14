@@ -42,6 +42,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         protected override RemoteResult Read()
         {
+            PerfCounters.WriterCounters.Instance.RestoreCheckCount.Reset();
             if (_tableName == Consts.AllTables)
                 return RestoreAllTables();
 
@@ -78,7 +79,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         }
 
         private RemoteResult RestoreSingleDb()
-        {
+        {            
             var db = GetModule();
 
             var ret = db.AsyncProcess(false, _local, _countElements, _process, _isMine, _isFirstRead, ref _lastId);

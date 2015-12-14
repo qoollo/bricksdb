@@ -282,10 +282,13 @@ namespace Qoollo.Impl.Writer.Db
 
         public override RemoteResult RestoreUpdate(InnerData obj, bool local)
         {
-            //TODO тут переделать как придём к решению о различных копиях
-            var ret =  Update(obj, local);
+            object key;
+            object value;
+            DeserializeData(obj, out key, out value);
 
-            return ret;
+            var meta = ReadMetaData(obj);
+
+            return _createAndUpdate.UpdateRestore(obj, local, meta, key, value);
         }
 
         public override RemoteResult RestoreUpdatePackage(List<InnerData> obj)

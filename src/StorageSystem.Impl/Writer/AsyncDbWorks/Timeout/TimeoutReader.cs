@@ -39,6 +39,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
 
         protected override RemoteResult Read()
         {
+            PerfCounters.WriterCounters.Instance.RestoreCheckCount.Reset();
             GetAnotherData();
 
             return RestoreAllTables();

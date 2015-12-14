@@ -27,12 +27,13 @@ namespace Qoollo.Impl.Common.Support
     {
         public static string Update = "Update";
         public static string Restore = "Restore";
-        public static string RestoreInProcess = "RestoreInProcess";
-        public static string RestoreTransferInProcess = "RestoreTransferInProcess";
-        public static string RestoreCurrentServer = "RestoreCurrentServer";
-        public static string RestoreTransferServer = "RestoreTransferServer";
-        public static string RestoreSendStatus = "RestoreSendStatus";
-        public static string RestoreServers = "RestoreServers";       
+        public static string RestoreInProcess = "InProcess";
+        public static string RestoreTransferInProcess = "Transfer";
+        public static string RestoreTransferLastStart = "TransferTime";
+        public static string RestoreCurrentServer = "CurrentServer";
+        public static string RestoreTransferServer = "TransferServer";
+        public static string RestoreSendStatus = "SendStatus";
+        public static string RestoreServers = "Servers";       
     }
 
     internal static class ModuleNames

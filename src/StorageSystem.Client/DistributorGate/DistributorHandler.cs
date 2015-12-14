@@ -52,5 +52,10 @@ namespace Qoollo.Client.DistributorGate
                     remoteRestoreServer == null ? null : remoteRestoreServer.ConvertServer(),
                     RestoreModeConverter.Convert(mode)));
         }
+
+        public RequestDescription Delete(string mode)
+        {
+            return new RequestDescription(_distributorSystem.Distributor.DeleteMode(mode));
+        }
     }
 }

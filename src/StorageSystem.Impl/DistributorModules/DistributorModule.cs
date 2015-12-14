@@ -154,9 +154,9 @@ namespace Qoollo.Impl.DistributorModules
                 _distributorNet.PingDistributors(map);
 
                 //remove old connections after model update
-                var real = _distributorNet.GetServersByType(typeof(SingleConnectionToWriter));
-                real = real.Where(x => !map.Contains(x)).ToList();
-                real.ForEach(x => _distributorNet.RemoveConnection(x));
+                //var real = _distributorNet.GetServersByType(typeof(SingleConnectionToWriter));
+                //real = real.Where(x => !map.Contains(x)).ToList();
+                //real.ForEach(x => _distributorNet.RemoveConnection(x));
             }
             catch (Exception)
             {
@@ -340,6 +340,19 @@ namespace Qoollo.Impl.DistributorModules
         #endregion
 
         #region Command from User
+
+        public string DeleteMode(string mode)
+        {
+            mode = mode.ToLower();
+            if (mode != "start" && mode != "disable" && mode != "enable" || string.IsNullOrEmpty(mode))
+                return string.Format("Value {0} is not recognized. Use start, disable, enable", mode);
+
+            var servers = _modelOfDbWriters.GetAllAvailableServers();
+            var command = new DeleteCommand(mode);
+            servers.ForEach(x => _distributorNet.SendToWriter(x, command));
+
+            return "Ok";
+        }
 
         public string UpdateModel()
         {

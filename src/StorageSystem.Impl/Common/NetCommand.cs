@@ -18,6 +18,7 @@ namespace Qoollo.Impl.Common
     [KnownType(typeof(SetGetRestoreStateCommand))]    
     [KnownType(typeof(HashFileUpdateCommand))]
     [KnownType(typeof(RestoreFromDistributorCommand))]
+    [KnownType(typeof(DeleteCommand))]
     internal class NetCommand
     {
     }

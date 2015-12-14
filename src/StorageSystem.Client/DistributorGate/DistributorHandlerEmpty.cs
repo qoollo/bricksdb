@@ -38,5 +38,10 @@ namespace Qoollo.Client.DistributorGate
         {
             return new RequestDescription();
         }
+
+        public RequestDescription Delete(string mode)
+        {
+            return new RequestDescription();
+        }
     }
 }

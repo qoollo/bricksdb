@@ -18,5 +18,7 @@ namespace Qoollo.Client.DistributorGate
         RequestDescription AutoRestoreSetMode(bool mode);
 
         RequestDescription Restore(ServerAddress restoreServer, ServerAddress remoteRestoreServer, RestoreMode mode);
+
+        RequestDescription Delete(string mode);
     }
 }

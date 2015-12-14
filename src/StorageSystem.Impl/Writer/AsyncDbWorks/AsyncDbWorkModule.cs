@@ -69,6 +69,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                         dictionary.Add(ServerState.RestoreTransferServer, server.ToString());
                     else
                         dictionary.Add(ServerState.RestoreTransferInProcess, _transferRestore.IsStart.ToString());
+                    if (!string.IsNullOrEmpty(_transferRestore.LastStartedTime))
+                        dictionary.Add(ServerState.RestoreTransferLastStart, _transferRestore.LastStartedTime);
                 }
                 return dictionary;
             }

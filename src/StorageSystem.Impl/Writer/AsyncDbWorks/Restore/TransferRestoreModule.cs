@@ -1,6 +1,8 @@
-﻿using System.CodeDom;
+﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
@@ -25,6 +27,22 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
+        public string LastStartedTime
+        {
+            get
+            {
+                try
+                {
+                    Lock.EnterReadLock();
+                    return _lastDateTime;                    
+                }
+                finally
+                {
+                    Lock.ExitReadLock();
+                }
+            }
+        }
+
         public TransferRestoreModule(RestoreModuleConfiguration configuration, WriterNetModule writerNet,
             AsyncTaskModule asyncTaskModule, DbModuleCollection db, ServerId local,
             QueueConfiguration queueConfiguration)
@@ -39,6 +57,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _configuration = configuration;
             _local = local;
             _queueConfiguration = queueConfiguration;
+            _lastDateTime = string.Empty;
         }
 
         private readonly RestoreModuleConfiguration _configuration;
@@ -47,6 +66,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private ServerId _remoteServer;
         private readonly QueueConfiguration _queueConfiguration;
         private RestoreProcess _restore;
+        private string _lastDateTime;
 
         public void RestoreIncome(ServerId remoteServer, bool isSystemUpdated,
             List<KeyValuePair<string, string>> remoteHashRange, string tableName,
@@ -63,6 +83,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
                 IsStartNoLock = true;
                 _remoteServer = remoteServer;
+                _lastDateTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
             }
             finally
             {

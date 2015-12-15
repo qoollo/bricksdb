@@ -20,8 +20,10 @@ namespace Qoollo.Impl.Writer.Db.Commands
         TCommand SetDataNotDeleted(object key);
 
         TCommand ReadMetaData(TCommand userRead, object key);
+        //TCommand ReadMetaData(TCommand userRead, List<object> key);
 
         Tuple<MetaData, bool> ReadMetaDataFromReader(DbReader<TReader> reader, bool readuserId = true);
+        //Tuple<MetaData, bool, object> ReadMetaDataFromReaderPackage(DbReader<TReader> reader, bool readuserId = true);
         MetaData ReadMetaFromSearchData(SearchData data);
         string ReadWithDeleteAndLocal(bool isDelete, bool local);
         TCommand ReadWithDeleteAndLocalList(TCommand userRead, bool isDelete, List<object> keys);

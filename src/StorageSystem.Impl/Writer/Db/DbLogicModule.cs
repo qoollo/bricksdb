@@ -32,8 +32,7 @@ namespace Qoollo.Impl.Writer.Db
 
         private readonly DbLogicCreateAndUpdateHelper<TCommand, TKey, TValue, TConnection, TReader> _createAndUpdate;
 
-
-        public DbLogicModule(IHashCalculater hashCalc, 
+        public DbLogicModule(IHashCalculater hashCalc,
             IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader> userCommandCreator,
             IMetaDataCommandCreator<TCommand, TReader> metaDataCommandCreator,
             DbImplModule<TCommand, TConnection, TReader> implModule)
@@ -47,7 +46,9 @@ namespace Qoollo.Impl.Writer.Db
             _implModule = implModule;
             _metaDataCommandCreator = metaDataCommandCreator;
 
-            _createAndUpdate = new DbLogicCreateAndUpdateHelper<TCommand, TKey, TValue, TConnection, TReader>(_userCommandCreator, _metaDataCommandCreator, _implModule);
+            _createAndUpdate =
+                new DbLogicCreateAndUpdateHelper<TCommand, TKey, TValue, TConnection, TReader>(_userCommandCreator,
+                    _metaDataCommandCreator, _implModule, hashCalc);
 
 
             var idName = _userCommandCreator.GetKeyName();
@@ -138,47 +139,44 @@ namespace Qoollo.Impl.Writer.Db
             return meta;
         }
 
-        private List<Tuple<MetaData, bool>> ReadMetaData(List<InnerData> obj)
-        {
-            var timer = WriterCounters.Instance.ReadMetaDataTimer.StartNew();
+        //private List<Tuple<MetaData, bool, object>> ReadMetaData(List<InnerData> obj)
+        //{
+        //    var timer = WriterCounters.Instance.ReadMetaDataTimer.StartNew();
 
-            object keys = obj.Select(DeserializeKey);
+        //    object keys = obj.Select(DeserializeKey);
+            
+        //    var script = _metaDataCommandCreator.ReadMetaData(_userCommandCreator.Read(), keys);
+        //    var reader = _implModule.CreateReader(script);
 
-            object key = DeserializeKey(obj[0]);
+        //    var meta = new List<Tuple<MetaData, bool, object>>();
+        //    try
+        //    {
+        //        reader.Start();
 
-            var script = _metaDataCommandCreator.ReadMetaData(_userCommandCreator.Read(), key);
-            var reader = _implModule.CreateReader(script);
+        //        if (reader.IsFail)
+        //        {
+        //            timer.Complete();
+        //            return null;
+        //        }
 
-            var meta = new Tuple<MetaData, bool>(null, true);
-            try
-            {
-                reader.Start();
+        //        while (reader.IsCanRead)
+        //        {
+        //            reader.ReadNext();
+        //            meta.Add(_metaDataCommandCreator.ReadMetaDataFromReaderPackage(reader));
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Logger.Logger.Instance.Warn(e, "");                
+        //    }
+        //    finally
+        //    {
+        //        reader.Dispose();
+        //    }
 
-                if (reader.IsFail)
-                {
-                    timer.Complete();
-                    return null;
-                }
-
-                if (reader.IsCanRead)
-                {
-                    reader.ReadNext();
-
-                    meta = _metaDataCommandCreator.ReadMetaDataFromReader(reader);
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Logger.Instance.Warn(e, "");
-            }
-            finally
-            {
-                reader.Dispose();
-            }
-
-            timer.Complete();
-            return null;
-        }
+        //    timer.Complete();
+        //    return meta;
+        //}
 
         public override RemoteResult Create(InnerData obj, bool local)
         {
@@ -293,7 +291,11 @@ namespace Qoollo.Impl.Writer.Db
 
         public override RemoteResult RestoreUpdatePackage(List<InnerData> obj)
         {
-            throw new NotImplementedException();
+            obj.ForEach(x => RestoreUpdate(x, true));
+            return new SuccessResult();
+
+            //var meta = ReadMetaData(obj);
+            //return _createAndUpdate.UpdateRestorePackage(obj, meta);
         }
 
         public override RemoteResult CustomOperation(InnerData obj, bool local)

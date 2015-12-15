@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
 using Qoollo.Impl.Collector.Parser;
@@ -42,7 +43,7 @@ namespace Qoollo.Impl.Writer
                 data.Transaction.DataHash);
 
             _mainLogicModule.Rollback(data);
-        }
+        }        
 
         public void Rollback(InnerData data)
         {
@@ -83,7 +84,12 @@ namespace Qoollo.Impl.Writer
         private void ProcessQueue(InnerData data)
         {            
             ProcessData(data);
-        }        
+        }
+
+        public RemoteResult ProcessSync(List<InnerData> datas)
+        {
+            throw new NotImplementedException();
+        }
 
         #endregion          
 

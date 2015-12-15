@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.ServiceModel;
 using System.Threading.Tasks;
@@ -34,6 +35,11 @@ namespace Qoollo.Impl.Writer.WriterNet
         public RemoteResult ProcessSync(InnerData data)
         {
             return _inputModule.ProcessSync(data);
+        }
+
+        public RemoteResult ProcessSync(List<InnerData> datas)
+        {
+            return _inputModule.ProcessSync(datas);
         }
 
         [OperationBehavior(TransactionScopeRequired = true)]

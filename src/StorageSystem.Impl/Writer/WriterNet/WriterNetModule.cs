@@ -106,7 +106,7 @@ namespace Qoollo.Impl.Writer.WriterNet
             if (connection == null)
                 return new ServerNotFoundResult();
 
-            var ret = connection.ProcessSync(datas);
+            var ret = connection.ProcessSyncPackage(datas);
 
             if (ret is FailNetResult)
                 RemoveConnection(server);

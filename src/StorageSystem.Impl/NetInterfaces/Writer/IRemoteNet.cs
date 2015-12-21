@@ -20,7 +20,7 @@ namespace Qoollo.Impl.NetInterfaces.Writer
         RemoteResult ProcessSync(InnerData data);
 
         [OperationContract]
-        RemoteResult ProcessSync(List<InnerData> datas);
+        RemoteResult ProcessSyncPackage(List<InnerData> datas);
 
         [OperationContract(IsOneWay = true)]
         void Rollback(InnerData data);

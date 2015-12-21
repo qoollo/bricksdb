@@ -538,7 +538,7 @@ namespace Qoollo.Tests
             var storageNet1 = new StorageNetConfiguration("localhost", storageServer1, 157, "testService", 10);
             var storageConfig = new StorageConfiguration("TestRestore", 1, 10,
                 TimeSpan.FromMilliseconds(10000),
-                TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(1), TimeSpan.FromSeconds(1), false);
+                TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(1), TimeSpan.FromSeconds(1), true);
 
             var factory = new TestInMemoryDbFactory();
             var storage1 = new WriterApi(storageNet1, storageConfig, new CommonConfiguration(1, 10));

@@ -37,9 +37,9 @@ namespace Qoollo.Impl.Writer.WriterNet
             return _inputModule.ProcessSync(data);
         }
 
-        public RemoteResult ProcessSync(List<InnerData> datas)
+        public RemoteResult ProcessSyncPackage(List<InnerData> datas)
         {
-            return _inputModule.ProcessSync(datas);
+            return _inputModule.ProcessSyncPackage(datas);
         }
 
         [OperationBehavior(TransactionScopeRequired = true)]

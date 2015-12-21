@@ -164,7 +164,7 @@ namespace Qoollo.Impl.Writer.Db
         public override InnerData ReadExternal(InnerData obj)
         {
             return CommonMethodHandler(obj, (dbModule) => dbModule.ReadExternal(obj));
-        }        
+        }
 
         public override RemoteResult SelectRead(SelectDescription description, out SelectSearchResult searchResult)
         {
@@ -183,6 +183,11 @@ namespace Qoollo.Impl.Writer.Db
         public override string TableName
         {
             get { throw new NotImplementedException(); }
+        }
+
+        internal override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
+        {
+            throw new NotImplementedException();
         }
 
         public override RemoteResult AsyncProcess(bool isDeleted, bool local, int countElemnts, Action<InnerData> process, Func<MetaData, bool> isMine, bool isFirstRead,

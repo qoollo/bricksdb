@@ -43,10 +43,10 @@ namespace Qoollo.Impl.Writer.WriterNet
                 NetLogHelper.GetLog(data));
         }
 
-        public RemoteResult ProcessSync(List<InnerData> datas)
+        public RemoteResult ProcessSyncPackage(List<InnerData> datas)
         {
             return SendFunc<RemoteResult, ICommonNetReceiverWriterForWrite>(
-                api => api.ProcessSync(datas),
+                api => api.ProcessSyncPackage(datas),
                 e => new ServerNotAvailable(Server),
                 string.Empty);
         }

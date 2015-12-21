@@ -29,9 +29,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
             _queue = GlobalQueue.Queue.DbTimeoutQueue;
             _deleteTimeout = configuration.DeleteTimeout;
 
-            AsyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_configuration.PeriodRetry, PeriodMessage,
-                    AsyncTasksNames.TimeoutDelete, -1), _configuration.IsForceStart);
+            if (_configuration.IsForceStart)
+                AsyncTaskModule.AddAsyncTask(
+                    new AsyncDataPeriod(_configuration.PeriodRetry, PeriodMessage,
+                        AsyncTasksNames.TimeoutDelete, -1), _configuration.IsForceStart);
+
         }
 
         public void Enable(bool forceStart = false)

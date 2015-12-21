@@ -34,7 +34,7 @@ namespace Qoollo.Tests.TestModules
             return new SuccessResult();
         }
 
-        public RemoteResult ProcessSync(List<InnerData> datas)
+        public RemoteResult ProcessSyncPackage(List<InnerData> datas)
         {
             Interlocked.Add(ref Value, datas.Count);
             return new SuccessResult();

@@ -91,7 +91,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 
         #region Not Implemented
 
-        public RemoteResult ProcessSync(List<InnerData> datas)
+        public RemoteResult ProcessSyncPackage(List<InnerData> datas)
         {
             throw new NotImplementedException();
         }

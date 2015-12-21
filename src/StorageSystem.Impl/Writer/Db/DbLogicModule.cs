@@ -228,14 +228,7 @@ namespace Qoollo.Impl.Writer.Db
 
             WriterCounters.Instance.DeleteFullPerSec.OperationFinished();
             return ret;
-        }
-
-        public override RemoteResult AsyncProcess(bool isDeleted, bool local, int countElemnts, Action<InnerData> process,
-            Func<MetaData, bool> isMine, bool isFirstRead, ref object lastId)
-        {
-            var script = _metaDataCommandCreator.ReadWithDeleteAndLocal(isDeleted, local);
-            return ProcessRestore(script, countElemnts, process, isMine, isFirstRead, ref lastId, isDeleted);
-        }
+        }        
 
         public override RemoteResult SelectRead(SelectDescription description, out SelectSearchResult searchResult)
         {
@@ -465,6 +458,19 @@ namespace Qoollo.Impl.Writer.Db
 
         #region Restore
 
+        internal  override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
+        {
+            var script = _metaDataCommandCreator.ReadWithDeleteAndLocal(restoreData.IsDeleted, restoreData.Local);
+            return ProcessRestore(restoreData, script);
+        }
+
+        public override RemoteResult AsyncProcess(bool isDeleted, bool local, int countElemnts, Action<InnerData> process,
+            Func<MetaData, bool> isMine, bool isFirstRead, ref object lastId)
+        {
+            var script = _metaDataCommandCreator.ReadWithDeleteAndLocal(isDeleted, local);
+            return ProcessRestore(script, countElemnts, process, isMine, isFirstRead, ref lastId, isDeleted);
+        }
+
         private void ReadDataList(List<MetaData> ids, bool isDeleted, Action<InnerData> process, int threadsCount)
         {
             threadsCount = Math.Min(ids.Count, threadsCount);
@@ -556,21 +562,6 @@ namespace Qoollo.Impl.Writer.Db
             return new List<InnerData>();
         }
 
-
-        private RemoteResult ProcessRestore(string script, int countElemnts, Action<InnerData> process,
-             Func<MetaData, bool> isMine, bool isFirstAsk, ref object lastId, bool isDeleted)
-        {
-            bool isAllDataRead = true;
-            var keys = ReadMetaDataUsingSelect(script, countElemnts, isFirstAsk, ref lastId, isMine, ref isAllDataRead);
-
-            ReadDataList(keys, isDeleted, process, 10);
-
-            if (!isAllDataRead)
-                return new SuccessResult();
-
-            return new FailNetResult("");
-        }
-
         private FieldDescription PrepareKeyDescription(int countElements, bool isfirstAsk, object lastId)
         {
             var idDescription = _metaDataCommandCreator.GetKeyDescription();
@@ -636,6 +627,50 @@ namespace Qoollo.Impl.Writer.Db
             isAllDataRead = result.IsAllDataRead;
 
             return list;
+        }        
+
+        private RemoteResult ProcessRestore(string script, int countElements, Action<InnerData> process,
+             Func<MetaData, bool> isMine, bool isFirstAsk, ref object lastId, bool isDeleted)
+        {
+            bool isAllDataRead = true;
+            var keys = ReadMetaDataUsingSelect(script, countElements, isFirstAsk, ref lastId, isMine, ref isAllDataRead);
+
+            ReadDataList(keys, isDeleted, process, 10);
+
+            if (!isAllDataRead)
+                return new SuccessResult();
+
+            return new FailNetResult("");
+        }
+
+        private RemoteResult ProcessRestore(RestoreDataContainer restoreData, string script)
+        {
+            bool isAllDataRead = true;
+            var lastId = restoreData.LastId;
+            var keys = ReadMetaDataUsingSelect(script, restoreData.CountElemnts, restoreData.IsFirstRead, ref lastId, restoreData.IsMine, ref isAllDataRead);
+            restoreData.LastId = lastId;
+
+            ReadDataList(keys, restoreData.IsDeleted, restoreData.Process, 10);
+
+            if (!isAllDataRead)
+                return new SuccessResult();
+
+            return new FailNetResult("");
+        }
+
+        private RemoteResult ProcessRestorePackage(RestoreDataContainer restoreData, string script)
+        {
+            bool isAllDataRead = true;
+            var lastId = restoreData.LastId;
+            var keys = ReadMetaDataUsingSelect(script, restoreData.CountElemnts, restoreData.IsFirstRead, ref lastId, restoreData.IsMine, ref isAllDataRead);
+            restoreData.LastId = lastId;
+
+            ReadDataList(keys, restoreData.IsDeleted, restoreData.Process, 10);
+
+            if (!isAllDataRead)
+                return new SuccessResult();
+
+            return new FailNetResult("");
         }
 
         #endregion

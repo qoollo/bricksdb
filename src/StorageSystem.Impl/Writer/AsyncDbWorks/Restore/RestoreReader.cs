@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common;
-using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Writer.AsyncDbWorks.Readers;
@@ -16,19 +15,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private readonly string _tableName;        
         private readonly RestoreDataContainer _restoreData;
 
-        public RestoreReader(string tableName, bool local, Func<MetaData, bool> isMine, DbModuleCollection db,
-            int countElements, Action<InnerData> process)
+        public RestoreReader(string tableName, DbModuleCollection db, RestoreDataContainer restoreData)
         {
             Contract.Requires(db != null);
-            Contract.Requires(process != null);
-            Contract.Requires(countElements > 0);
-            Contract.Requires(isMine != null);
+            Contract.Requires(restoreData != null);
 
-            _tableName = tableName;
+            _tableName = tableName;            
             _holder = new AsyncDbHolder(db.GetDbModules);
 
-            _restoreData = new RestoreDataContainer(false, local, countElements, process, isMine, true);
-            _restoreData.StartNewDb();            
+            _restoreData = restoreData;
+            _restoreData.StartNewDb();
         }
 
         protected override RemoteResult Read()

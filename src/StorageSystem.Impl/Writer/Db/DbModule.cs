@@ -20,10 +20,7 @@ namespace Qoollo.Impl.Writer.Db
 
         public abstract RemoteResult Delete(InnerData obj);
 
-        public abstract RemoteResult DeleteFull(InnerData obj);
-
-        public abstract RemoteResult AsyncProcess(bool isDeleted, bool local, int countElemnts, Action<InnerData> process,
-            Func<MetaData, bool> isMine, bool isFirstRead, ref object lastId);
+        public abstract RemoteResult DeleteFull(InnerData obj);        
 
         internal abstract RemoteResult AsyncProcess(RestoreDataContainer restoreData);
 

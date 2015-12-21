@@ -68,17 +68,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
         {
             if (_reader == null)
             {
-                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, true,
-                    _queue);
-
+                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, _queue);
                 _reader.Start();
             }
             else if (_reader.IsComplete)
             {
                 _reader.Dispose();
-                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, true,
-                    _queue);
-
+                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, _queue);
                 _reader.Start();
             }
         }

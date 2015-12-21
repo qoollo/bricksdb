@@ -7,37 +7,33 @@ using Qoollo.Impl.Modules.Queue;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
 {
-    internal abstract class ReaderFullBase:ControlModule
-    {
-        private SingleReaderBase _reader;
-        private readonly Action<InnerData> _process;
-        private readonly QueueConfiguration _queueConfiguration;
-        private readonly QueueWithParam<InnerData> _queue;
-        private readonly bool _isBothTables;
-
-        protected ReaderFullBase(Action<InnerData> process,
-            QueueConfiguration queueConfiguration,
-            bool isBothTables,
-            QueueWithParam<InnerData> queue)
+    internal abstract class ReaderFullBase <TType>: ControlModule
+    {        
+        protected ReaderFullBase(Action<TType> process, QueueConfiguration queueConfiguration,
+            QueueWithParam<TType> queue)
         {
             Contract.Requires(process != null);
             Contract.Requires(queueConfiguration != null);
             _process = process;
             _queueConfiguration = queueConfiguration;
-            _isBothTables = isBothTables;
             _queue = queue;
         }
 
-        protected abstract SingleReaderBase CreateReader(bool isLocal, int countElements, Action<InnerData> process);
+        private SingleReaderBase _reader;
+        private readonly Action<TType> _process;
+        private readonly QueueConfiguration _queueConfiguration;
+        private readonly QueueWithParam<TType> _queue;
 
-        #region Public 
+        protected abstract SingleReaderBase CreateReader(int countElements);
+
+        #region Public
 
         public bool IsComplete
         {
             get
             {
-                Logger.Logger.Instance.Trace(string.Format("remote = {0}, queue = {1}", _reader.IsFinish,
-                                                           _queue.Count),"restore");
+                Logger.Logger.Instance.Trace(
+                    string.Format("remote = {0}, queue = {1}", _reader.IsFinish, _queue.Count), "restore");
                 return _reader.IsFinish && _queue.Count == 0;
             }
         }
@@ -46,22 +42,21 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
         {
             get
             {
-                Logger.Logger.Instance.Trace(string.Format("remote = {0}, queue = {1}", _reader.IsWait,
-                    _queue.Count), "restore");
+                Logger.Logger.Instance.Trace(string.Format("remote = {0}, queue = {1}", _reader.IsWait, _queue.Count),
+                    "restore");
                 return _reader.IsWait && _queue.Count == 0;
             }
         }
 
         public override void Start()
-        {            
-            //todo 
-            _queue.RegistrateWithStart(_queueConfiguration, (data) =>
+        {
+            _queue.RegistrateWithStart(_queueConfiguration, data =>
             {
                 _process(data);
                 _reader.GetAnotherData();
             });
 
-            _reader = CreateReader(_isBothTables, _queueConfiguration.MaxSizeQueue, data => _queue.Add(data));
+            _reader = CreateReader(_queueConfiguration.MaxSizeQueue);
             _reader.Start();
         }
 
@@ -75,11 +70,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
             Dispose();
         }
 
+        protected Action<TType> ProcessDataWithQueue()
+        {
+            return _queue.Add;
+        }
+
         #endregion
 
         protected override void Dispose(bool isUserCall)
         {
-            if (isUserCall && _reader!=null)
+            if (isUserCall && _reader != null)
             {
                 _reader.Dispose();
             }

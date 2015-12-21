@@ -190,12 +190,6 @@ namespace Qoollo.Impl.Writer.Db
             throw new NotImplementedException();
         }
 
-        public override RemoteResult AsyncProcess(bool isDeleted, bool local, int countElemnts, Action<InnerData> process, Func<MetaData, bool> isMine, bool isFirstRead,
-            ref object lastId)
-        {
-            throw new NotImplementedException();
-        }
-
         #endregion
 
         protected override void Dispose(bool isUserCall)

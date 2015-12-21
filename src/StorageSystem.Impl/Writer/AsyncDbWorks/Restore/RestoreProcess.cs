@@ -18,9 +18,11 @@ using Qoollo.Impl.Writer.WriterNet;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
-    internal class RestoreProcess:ControlModule
+    internal class RestoreProcess : ControlModule
     {
-        public  RestoreReaderFull Reader{get { return _reader; }}
+        public bool IsComplete { get { return _reader.IsComplete; } }
+
+        public bool IsQueueEmpty { get { return _reader.IsQueueEmpty; } }        
 
         public RestoreProcess(List<KeyValuePair<string, string>> remoteHashRange, List<HashMapRecord> localHashRange,
             bool isSystemUpdated, DbModuleCollection db, QueueConfiguration queueConfiguration, string tableName,
@@ -32,7 +34,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _remote = remote;
             _localHashRange = localHashRange.Select(x => new KeyValuePair<string, string>(x.Begin, x.End)).ToList();
             _reader = new RestoreReaderFull(IsNeedSendData, ProcessData, queueConfiguration, db, isSystemUpdated,
-                tableName, GlobalQueue.Queue.DbRestoreQueue);
+                tableName, GlobalQueue.Queue.DbRestoreQueue, false);
             _reader.Start();
         }
 
@@ -42,6 +44,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private readonly ServerId _remote;
         private readonly List<KeyValuePair<string, string>> _localHashRange;
         private readonly RestoreReaderFull _reader;
+
+        public void GetAnotherData()
+        {
+            _reader.GetAnotherData();
+        }
 
         private async void ProcessData(InnerData data)
         {
@@ -59,7 +66,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             {
                 Logger.Logger.Instance.DebugFormat("Servers {0} unavailable in recover process", _remote);
                 result = _writerNet.ProcessSync(_remote, data);
-            }            
+            }
 
             ProcessSuccessResult(data);
         }
@@ -86,9 +93,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private bool IsNeedSendData(MetaData data)
         {
             return _remoteHashRange.Exists(
-                    x =>
-                        HashComparer.Compare(x.Key, data.Hash) <= 0 &&
-                        HashComparer.Compare(data.Hash, x.Value) <= 0);
+                x =>
+                    HashComparer.Compare(x.Key, data.Hash) <= 0 &&
+                    HashComparer.Compare(data.Hash, x.Value) <= 0);
         }
 
         protected override void Dispose(bool isUserCall)

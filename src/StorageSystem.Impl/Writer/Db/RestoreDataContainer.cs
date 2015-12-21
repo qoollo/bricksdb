@@ -15,16 +15,16 @@ namespace Qoollo.Impl.Writer.Db
         public Action<InnerData> Process { get; private set; }
         public Func<MetaData, bool> IsMine { get; private set; }
         public bool IsFirstRead { get; set; }
-        public object LastId { get; set; }        
+        public object LastId { get; set; }
 
-        public RestoreDataContainer(bool isDeleted, bool local, int countElemnts, Action<InnerData> process, Func<MetaData, bool> isMine, bool isFirstRead)
+        public RestoreDataContainer(bool isDeleted, bool local, int countElemnts, Action<InnerData> process, Func<MetaData, bool> isMine, bool usePackage)
         {
             IsDeleted = isDeleted;
             Local = local;
             CountElemnts = countElemnts;
             Process = process;
             IsMine = isMine;
-            IsFirstRead = isFirstRead;
+            IsFirstRead = true;
         }
 
         public void StartNewDb()

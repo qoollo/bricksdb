@@ -458,11 +458,14 @@ namespace Qoollo.Impl.Writer.Db
 
         #region Restore
 
-        internal  override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
+        internal override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
         {
             var script = _metaDataCommandCreator.ReadWithDeleteAndLocal(restoreData.IsDeleted, restoreData.Local);
-            return ProcessRestore(restoreData, script);
-        }        
+            
+            return restoreData.UsePackage
+                ? ProcessRestorePackage(restoreData, script)
+                : ProcessRestore(restoreData, script);
+        }
 
         private void ReadDataList(List<MetaData> ids, bool isDeleted, Action<InnerData> process, int threadsCount)
         {
@@ -573,16 +576,17 @@ namespace Qoollo.Impl.Writer.Db
             return idDescription;
         }
 
-        private List<MetaData> ReadMetaDataUsingSelect(string script, int countElements, bool isfirstAsk, ref object lastId,
-            Func<MetaData, bool> isMine, ref bool isAllDataRead)
+        private List<MetaData> ReadMetaDataUsingSelect(RestoreDataContainer restoreData, string script)
         {
             var list = new List<MetaData>();
-            var idDescription = PrepareKeyDescription(countElements, isfirstAsk, lastId);
+            var idDescription = PrepareKeyDescription(restoreData.CountElemnts, restoreData.IsFirstRead,
+                restoreData.LastId);
             SelectSearchResult result;
 
             int count = 0;
 
-            var select = new SelectDescription(idDescription, script, countElements, new List<FieldDescription>());
+            var select = new SelectDescription(idDescription, script, restoreData.CountElemnts,
+                new List<FieldDescription>());
             var ret = SelectRead(select, out result);
 
             while (!ret.IsError)
@@ -594,15 +598,15 @@ namespace Qoollo.Impl.Writer.Db
 
                     WriterCounters.Instance.RestoreCheckPerSec.OperationFinished();
                     WriterCounters.Instance.RestoreCheckCount.Increment();
-                    if (isMine(meta))
+                    if (restoreData.IsMine(meta))
                     {
                         list.Add(meta);
                         count++;
                     }
 
-                    lastId = meta.Id;
+                    restoreData.LastId = meta.Id;
 
-                    if (count == countElements)
+                    if (count == restoreData.CountElemnts)
                     {
                         exit = true;
                         break;
@@ -612,26 +616,22 @@ namespace Qoollo.Impl.Writer.Db
                 if (result.IsAllDataRead || exit)
                     break;
 
-                idDescription = PrepareKeyDescription(countElements, false, lastId);
-                select = new SelectDescription(idDescription, script, countElements, new List<FieldDescription>());
+                idDescription = PrepareKeyDescription(restoreData.CountElemnts, false, restoreData.LastId);
+                select = new SelectDescription(idDescription, script, restoreData.CountElemnts, new List<FieldDescription>());
                 ret = SelectRead(select, out result);
             }
 
-            isAllDataRead = result.IsAllDataRead;
-
+            restoreData.IsAllDataRead = result.IsAllDataRead;
             return list;
         }                
 
         private RemoteResult ProcessRestore(RestoreDataContainer restoreData, string script)
-        {
-            bool isAllDataRead = true;
-            var lastId = restoreData.LastId;
-            var keys = ReadMetaDataUsingSelect(script, restoreData.CountElemnts, restoreData.IsFirstRead, ref lastId, restoreData.IsMine, ref isAllDataRead);
-            restoreData.LastId = lastId;
+        {                        
+            var keys = ReadMetaDataUsingSelect(restoreData, script);
 
             ReadDataList(keys, restoreData.IsDeleted, restoreData.Process, 10);
 
-            if (!isAllDataRead)
+            if (!restoreData.IsAllDataRead)
                 return new SuccessResult();
 
             return new FailNetResult("");
@@ -639,14 +639,11 @@ namespace Qoollo.Impl.Writer.Db
 
         private RemoteResult ProcessRestorePackage(RestoreDataContainer restoreData, string script)
         {
-            bool isAllDataRead = true;
-            var lastId = restoreData.LastId;
-            var keys = ReadMetaDataUsingSelect(script, restoreData.CountElemnts, restoreData.IsFirstRead, ref lastId, restoreData.IsMine, ref isAllDataRead);
-            restoreData.LastId = lastId;
+            var keys = ReadMetaDataUsingSelect(restoreData, script);
 
             ReadDataList(keys, restoreData.IsDeleted, restoreData.Process, 10);
 
-            if (!isAllDataRead)
+            if (!restoreData.IsAllDataRead)
                 return new SuccessResult();
 
             return new FailNetResult("");

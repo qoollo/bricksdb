@@ -34,5 +34,7 @@ namespace Qoollo.Client.WriterGate
         RequestDescription EnableDelete();
 
         RequestDescription StartDelete();
+
+        RequestDescription RunDelete();
     }
 }

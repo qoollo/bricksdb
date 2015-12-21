@@ -54,16 +54,26 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
             Enable(true);
         }
 
+        public void RunDelete()
+        {
+            RunDeleteInner();
+        }
+
         private void PeriodMessage(AsyncData obj)
         {
+            RunDeleteInner();
+        }
+
+        private void RunDeleteInner()
+        {
             if (_reader == null)
-            {            
+            {
                 _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, true,
                     _queue);
 
                 _reader.Start();
             }
-            else if(_reader.IsComplete)
+            else if (_reader.IsComplete)
             {
                 _reader.Dispose();
                 _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, true,

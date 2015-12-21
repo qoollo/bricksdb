@@ -344,8 +344,8 @@ namespace Qoollo.Impl.DistributorModules
         public string DeleteMode(string mode)
         {
             mode = mode.ToLower();
-            if (mode != "start" && mode != "disable" && mode != "enable" || string.IsNullOrEmpty(mode))
-                return string.Format("Value {0} is not recognized. Use start, disable, enable", mode);
+            if (mode != "start" && mode != "disable" && mode != "enable" && mode != "run" || string.IsNullOrEmpty(mode))
+                return string.Format("Value {0} is not recognized. Use start, disable, enable, run", mode);
 
             var servers = _modelOfDbWriters.GetAllAvailableServers();
             var command = new DeleteCommand(mode);

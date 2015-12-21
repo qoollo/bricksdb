@@ -268,6 +268,12 @@ namespace Qoollo.Impl.Writer
             return Errors.NoErrors;
         }
 
+        public string RunDelete()
+        {
+            _asyncDbWork.TimeoutModule.RunDelete();
+            return Errors.NoErrors;
+        }
+
         #endregion
 
         #region Commands
@@ -284,6 +290,9 @@ namespace Qoollo.Impl.Writer
                     break;
                 case "start":
                     StartDelete();
+                    break;
+                case "run":
+                    RunDelete();
                     break;
             }
         }

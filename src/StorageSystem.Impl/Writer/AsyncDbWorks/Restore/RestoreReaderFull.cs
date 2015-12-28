@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
@@ -7,16 +8,16 @@ using Qoollo.Impl.Writer.Db;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
-    internal class RestoreReaderFull:ReaderFullBase<InnerData>
+    internal class RestoreReaderFull<TType>:ReaderFull<TType>
     {
-        public Action<InnerData> ProcessData
+        public Action<TType> ProcessData
         {
             get { return ProcessDataWithQueue(); }
         }
 
-        public RestoreReaderFull(Func<MetaData, bool> isMine, Action<InnerData> process,
+        public RestoreReaderFull(Func<MetaData, bool> isMine, Action<TType> process,
             QueueConfiguration queueConfiguration, DbModuleCollection db, bool isBothTables, string tableName,
-            QueueWithParam<InnerData> queue, bool usePackage)
+            QueueWithParam<TType> queue, bool usePackage)
             : base(process, queueConfiguration, queue)
         {
             _isMine = isMine;            
@@ -34,8 +35,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         protected override SingleReaderBase CreateReader(int countElements)
         {
+            if (typeof (TType) == typeof (InnerData))
+                return new RestoreReader(_tableName, _db, new RestoreDataContainer(false, _isBothTables, countElements,
+                    ProcessDataWithQueue() as Action<InnerData>, _isMine, _usePackage));
+
             return new RestoreReader(_tableName, _db, new RestoreDataContainer(false, _isBothTables, countElements,
-                ProcessDataWithQueue(), _isMine, _usePackage));
+                    ProcessDataWithQueue() as Action<List<InnerData>>, _isMine, _usePackage));
         }
     }
 }

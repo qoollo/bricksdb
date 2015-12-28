@@ -88,7 +88,7 @@ namespace Qoollo.Impl.Writer
 
         public RemoteResult ProcessSyncPackage(List<InnerData> datas)
         {
-            throw new NotImplementedException();
+            return _mainLogicModule.ProcessPackage(datas);
         }
 
         #endregion          

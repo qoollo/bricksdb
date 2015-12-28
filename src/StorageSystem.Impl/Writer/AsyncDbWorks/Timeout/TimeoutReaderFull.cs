@@ -7,7 +7,7 @@ using Qoollo.Impl.Writer.Db;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
 {
-    internal class TimeoutReaderFull:ReaderFullBase<InnerData>
+    internal class TimeoutReaderFull:ReaderFull<InnerData>
     {
         private readonly Func<MetaData, bool> _isMine;        
         private readonly DbModuleCollection _db;

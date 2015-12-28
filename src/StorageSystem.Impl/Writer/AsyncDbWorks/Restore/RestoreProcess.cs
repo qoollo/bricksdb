@@ -9,10 +9,13 @@ using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.NetResults;
+using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.TestSupport;
+using Qoollo.Impl.Writer.AsyncDbWorks.Readers;
 using Qoollo.Impl.Writer.Db;
 using Qoollo.Impl.Writer.WriterNet;
 
@@ -33,8 +36,15 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _writerNet = writerNet;
             _remote = remote;
             _localHashRange = localHashRange.Select(x => new KeyValuePair<string, string>(x.Begin, x.End)).ToList();
-            _reader = new RestoreReaderFull(IsNeedSendData, ProcessData, queueConfiguration, db, isSystemUpdated,
-                tableName, GlobalQueue.Queue.DbRestoreQueue, false);
+
+            if (InitInjection.RestoreUsePackage)
+                _reader = new RestoreReaderFull<List<InnerData>>(IsNeedSendData, ProcessDataPackage,
+                        queueConfiguration, db, isSystemUpdated, tableName, GlobalQueue.Queue.DbRestorePackageQueue,
+                        true);
+            else
+                _reader = new RestoreReaderFull<InnerData>(IsNeedSendData, ProcessData, queueConfiguration, db,
+                    isSystemUpdated, tableName, GlobalQueue.Queue.DbRestoreQueue, false);
+
             _reader.Start();
         }
 
@@ -43,22 +53,79 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private readonly WriterNetModule _writerNet;
         private readonly ServerId _remote;
         private readonly List<KeyValuePair<string, string>> _localHashRange;
-        private readonly RestoreReaderFull _reader;
+        private readonly ReaderFullBase _reader;
 
         public void GetAnotherData()
         {
             _reader.GetAnotherData();
         }
 
-        private async void ProcessData(InnerData data)
+        private void SetRestoreInfo(InnerData data)
         {
             data.Transaction.OperationName = OperationName.RestoreUpdate;
             data.Transaction.OperationType = OperationType.Async;
+        }
+
+        #region Package data
+
+        private void ProcessDataPackage(List<InnerData> data)
+        {
+            data.ForEach(SetRestoreInfo);
+            var result = _writerNet.ProcessSync(_remote, data);
+
+            ProcessResultPackage(data, result as PackageResult);
+        }
+
+        private void ProcessResultPackage(List<InnerData> data, RemoteResult result)
+        {
+            bool send = false;
+            do
+            {
+                while (result is FailNetResult || send)
+                {
+                    Logger.Logger.Instance.DebugFormat("Servers {0} unavailable in recover process", _remote);
+                    result = _writerNet.ProcessSync(_remote, data);
+                    send = false;
+                }
+                data = ProcessSuccessResult(data, result as PackageResult);
+                send = true;
+            } while (data.Count != 0);
+        }
+
+        private List<InnerData> ProcessSuccessResult(List<InnerData> data, PackageResult resultList)
+        {
+            var results = resultList.Result;
+            var fail = new List<InnerData>();
+            for (int i = 0; i < results.Length; i++)
+            {
+                if (results[i])
+                {                    
+                    PerfCounters.WriterCounters.Instance.RestoreSendPerSec.OperationFinished();
+
+                    if (!IsLocalData(data[i].MetaData))
+                    {
+                        _db.Delete(data[i]);
+                    }
+                }
+                else
+                    fail.Add(data[i]);
+            }
+            PerfCounters.WriterCounters.Instance.RestoreCountSend.IncrementBy(data.Count - fail.Count);
+            return fail;
+        }
+
+        #endregion
+
+        #region Single data
+
+        private async void ProcessData(InnerData data)
+        {
+            SetRestoreInfo(data);
 
             var result = await _writerNet.ProcessAsync(_remote, data);
 
             ProcessResult(data, result);
-        }
+        }        
 
         private void ProcessResult(InnerData data, RemoteResult result)
         {
@@ -81,6 +148,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 _db.Delete(data);
             }
         }
+
+        #endregion
 
         private bool IsLocalData(MetaData data)
         {

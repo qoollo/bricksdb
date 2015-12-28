@@ -12,6 +12,7 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Inner;
+using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Modules.Db.Impl;
 using Qoollo.Impl.NetInterfaces.Data;
@@ -137,46 +138,7 @@ namespace Qoollo.Impl.Writer.Db
 
             timer.Complete();
             return meta;
-        }
-
-        //private List<Tuple<MetaData, bool, object>> ReadMetaData(List<InnerData> obj)
-        //{
-        //    var timer = WriterCounters.Instance.ReadMetaDataTimer.StartNew();
-
-        //    object keys = obj.Select(DeserializeKey);
-            
-        //    var script = _metaDataCommandCreator.ReadMetaData(_userCommandCreator.Read(), keys);
-        //    var reader = _implModule.CreateReader(script);
-
-        //    var meta = new List<Tuple<MetaData, bool, object>>();
-        //    try
-        //    {
-        //        reader.Start();
-
-        //        if (reader.IsFail)
-        //        {
-        //            timer.Complete();
-        //            return null;
-        //        }
-
-        //        while (reader.IsCanRead)
-        //        {
-        //            reader.ReadNext();
-        //            meta.Add(_metaDataCommandCreator.ReadMetaDataFromReaderPackage(reader));
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Logger.Logger.Instance.Warn(e, "");                
-        //    }
-        //    finally
-        //    {
-        //        reader.Dispose();
-        //    }
-
-        //    timer.Complete();
-        //    return meta;
-        //}
+        }        
 
         public override RemoteResult Create(InnerData obj, bool local)
         {
@@ -284,11 +246,13 @@ namespace Qoollo.Impl.Writer.Db
 
         public override RemoteResult RestoreUpdatePackage(List<InnerData> obj)
         {
-            obj.ForEach(x => RestoreUpdate(x, true));
-            return new SuccessResult();
-
-            //var meta = ReadMetaData(obj);
-            //return _createAndUpdate.UpdateRestorePackage(obj, meta);
+            var ret = new bool[obj.Count];
+            for (int i = 0; i < obj.Count; i++)
+            {
+                var result = RestoreUpdate(obj[i], true);
+                ret[i] = !result.IsError;
+            }
+            return new PackageResult(ret);
         }
 
         public override RemoteResult CustomOperation(InnerData obj, bool local)
@@ -510,6 +474,47 @@ namespace Qoollo.Impl.Writer.Db
             }
         }
 
+        private void ReadDataPackage(List<MetaData> ids, bool isDeleted, Action<List<InnerData>> process,
+            int threadsCount)
+        {
+            threadsCount = Math.Min(ids.Count, threadsCount);
+            var threads = new Task[threadsCount];
+
+            for (int j = 0; j < threadsCount; j++)
+            {
+                int j1 = j;
+                var task = Task.Factory.StartNew(() =>
+                {
+                    try
+                    {
+                        Logger.Logger.Instance.DebugFormat("Start thread {0}", j1);
+
+                        int start = j1 * ids.Count / threadsCount;
+                        int end = (j1 + 1) * ids.Count / threadsCount;
+
+                        var list = ids.GetRange(start, end - start);
+                        var ret = ReadInnerList(list, isDeleted);
+                        process(ret);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Logger.Instance.ErrorFormat("Fail in thread = {0}", e);
+                        throw;
+                    }
+                    Logger.Logger.Instance.DebugFormat("Finish thread {0}", j1);
+                });
+
+                threads[j] = task;
+            }
+
+            Task.WaitAll(threads);
+
+            for (int j = 0; j < threadsCount; j++)
+            {
+                threads[j].Dispose();
+            }
+        }
+
         private List<InnerData> ReadInnerList(List<MetaData> ids, bool isDeleted)
         {
             var command = _metaDataCommandCreator.ReadWithDeleteAndLocalList(_userCommandCreator.Read(), isDeleted,
@@ -641,7 +646,7 @@ namespace Qoollo.Impl.Writer.Db
         {
             var keys = ReadMetaDataUsingSelect(restoreData, script);
 
-            ReadDataList(keys, restoreData.IsDeleted, restoreData.Process, 10);
+            ReadDataPackage(keys, restoreData.IsDeleted, restoreData.ProcessPackage, 10);
 
             if (!restoreData.IsAllDataRead)
                 return new SuccessResult();

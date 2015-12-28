@@ -13,6 +13,7 @@ namespace Qoollo.Impl.Writer.Db
         public bool Local { get; private set; }
         public int CountElemnts { get; private set; }
         public Action<InnerData> Process { get; private set; }
+        public Action<List<InnerData>> ProcessPackage { get; private set; }
         public Func<MetaData, bool> IsMine { get; private set; }
         public bool UsePackage { get; private set; }
         public bool IsFirstRead { get; set; }
@@ -26,6 +27,18 @@ namespace Qoollo.Impl.Writer.Db
             Local = local;
             CountElemnts = countElemnts;
             Process = process;
+            IsMine = isMine;
+            UsePackage = usePackage;
+            IsFirstRead = true;
+        }
+
+        public RestoreDataContainer(bool isDeleted, bool local, int countElemnts, Action<List<InnerData>> process,
+            Func<MetaData, bool> isMine, bool usePackage)
+        {
+            IsDeleted = isDeleted;
+            Local = local;
+            CountElemnts = countElemnts;
+            ProcessPackage = process;
             IsMine = isMine;
             UsePackage = usePackage;
             IsFirstRead = true;

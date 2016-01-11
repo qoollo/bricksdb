@@ -12,6 +12,7 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Inner;
+using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Modules.Db.Impl;
 using Qoollo.Impl.NetInterfaces.Data;
@@ -32,8 +33,7 @@ namespace Qoollo.Impl.Writer.Db
 
         private readonly DbLogicCreateAndUpdateHelper<TCommand, TKey, TValue, TConnection, TReader> _createAndUpdate;
 
-
-        public DbLogicModule(IHashCalculater hashCalc, 
+        public DbLogicModule(IHashCalculater hashCalc,
             IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader> userCommandCreator,
             IMetaDataCommandCreator<TCommand, TReader> metaDataCommandCreator,
             DbImplModule<TCommand, TConnection, TReader> implModule)
@@ -47,7 +47,9 @@ namespace Qoollo.Impl.Writer.Db
             _implModule = implModule;
             _metaDataCommandCreator = metaDataCommandCreator;
 
-            _createAndUpdate = new DbLogicCreateAndUpdateHelper<TCommand, TKey, TValue, TConnection, TReader>(_userCommandCreator, _metaDataCommandCreator, _implModule);
+            _createAndUpdate =
+                new DbLogicCreateAndUpdateHelper<TCommand, TKey, TValue, TConnection, TReader>(_userCommandCreator,
+                    _metaDataCommandCreator, _implModule, hashCalc);
 
 
             var idName = _userCommandCreator.GetKeyName();
@@ -102,8 +104,7 @@ namespace Qoollo.Impl.Writer.Db
         {
             var timer = WriterCounters.Instance.ReadMetaDataTimer.StartNew();
 
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var script = _metaDataCommandCreator.ReadMetaData(_userCommandCreator.Read(), key);
             var reader = _implModule.CreateReader(script);
@@ -137,7 +138,7 @@ namespace Qoollo.Impl.Writer.Db
 
             timer.Complete();
             return meta;
-        }
+        }        
 
         public override RemoteResult Create(InnerData obj, bool local)
         {
@@ -164,8 +165,7 @@ namespace Qoollo.Impl.Writer.Db
 
         public override RemoteResult Delete(InnerData obj)
         {
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var metaCommand = _metaDataCommandCreator.SetDataDeleted(key);            
             var ret = _implModule.ExecuteNonQuery(metaCommand);
@@ -190,14 +190,7 @@ namespace Qoollo.Impl.Writer.Db
 
             WriterCounters.Instance.DeleteFullPerSec.OperationFinished();
             return ret;
-        }
-
-        public override RemoteResult AsyncProcess(bool isDeleted, bool local, int countElemnts, Action<InnerData> process,
-            Func<MetaData, bool> isMine, bool isFirstRead, ref object lastId)
-        {
-            var script = _metaDataCommandCreator.ReadWithDeleteAndLocal(isDeleted, local);
-            return ProcessRestore(script, countElemnts, process, isMine, isFirstRead, ref lastId, isDeleted);
-        }
+        }        
 
         public override RemoteResult SelectRead(SelectDescription description, out SelectSearchResult searchResult)
         {
@@ -251,10 +244,20 @@ namespace Qoollo.Impl.Writer.Db
             return _createAndUpdate.UpdateRestore(obj, local, meta, key, value);
         }
 
+        public override RemoteResult RestoreUpdatePackage(List<InnerData> obj)
+        {
+            var ret = new bool[obj.Count];
+            for (int i = 0; i < obj.Count; i++)
+            {
+                var result = RestoreUpdate(obj[i], true);
+                ret[i] = !result.IsError;
+            }
+            return new PackageResult(ret);
+        }
+
         public override RemoteResult CustomOperation(InnerData obj, bool local)
         {
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var connection = _implModule.RentConnectionInner();
             RemoteResult ret;
@@ -275,8 +278,7 @@ namespace Qoollo.Impl.Writer.Db
 
         public override InnerData ReadExternal(InnerData obj)
         {
-            object key;            
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var ret = new InnerData(new Transaction(obj.Transaction))
             {
@@ -347,8 +349,7 @@ namespace Qoollo.Impl.Writer.Db
 
         private RemoteResult CreateRollbackInner(InnerData obj)
         {
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var command = _metaDataCommandCreator.DeleteMetaData(key);
             _implModule.ExecuteNonQuery(command);
@@ -367,8 +368,7 @@ namespace Qoollo.Impl.Writer.Db
 
         public override RemoteResult DeleteRollback(InnerData obj, bool local)
         {
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var metaCommand = _metaDataCommandCreator.SetDataNotDeleted(key);
             return _implModule.ExecuteNonQuery(metaCommand);
@@ -376,8 +376,7 @@ namespace Qoollo.Impl.Writer.Db
 
         public override RemoteResult CustomOperationRollback(InnerData obj, bool local)
         {
-            object key;
-            DeserializeKey(obj, out key);
+            object key = DeserializeKey(obj);
 
             var connection = _implModule.RentConnectionInner();
 
@@ -402,16 +401,16 @@ namespace Qoollo.Impl.Writer.Db
 
         private void DeserializeData(InnerData data, out object key, out object value)
         {
-            DeserializeKey(data, out key);
+            key = DeserializeKey(data);
 
             value = null;
             if (data.Data != null)
                 DeserializeValue(data, out value);
         }
 
-        private void DeserializeKey(InnerData data, out object key)
+        private object DeserializeKey(InnerData data)
         {
-            key = _hashCalculater.DeserializeKey(data.Key);
+            return _hashCalculater.DeserializeKey(data.Key);
         }
 
         private void DeserializeValue(InnerData data, out object value)
@@ -422,6 +421,15 @@ namespace Qoollo.Impl.Writer.Db
         #endregion
 
         #region Restore
+
+        internal override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
+        {
+            var script = _metaDataCommandCreator.ReadWithDeleteAndLocal(restoreData.IsDeleted, restoreData.Local);
+            
+            return restoreData.UsePackage
+                ? ProcessRestorePackage(restoreData, script)
+                : ProcessRestore(restoreData, script);
+        }
 
         private void ReadDataList(List<MetaData> ids, bool isDeleted, Action<InnerData> process, int threadsCount)
         {
@@ -460,6 +468,47 @@ namespace Qoollo.Impl.Writer.Db
 
             Task.WaitAll(threads);
             
+            for (int j = 0; j < threadsCount; j++)
+            {
+                threads[j].Dispose();
+            }
+        }
+
+        private void ReadDataPackage(List<MetaData> ids, bool isDeleted, Action<List<InnerData>> process,
+            int threadsCount)
+        {
+            threadsCount = Math.Min(ids.Count, threadsCount);
+            var threads = new Task[threadsCount];
+
+            for (int j = 0; j < threadsCount; j++)
+            {
+                int j1 = j;
+                var task = Task.Factory.StartNew(() =>
+                {
+                    try
+                    {
+                        Logger.Logger.Instance.DebugFormat("Start thread {0}", j1);
+
+                        int start = j1 * ids.Count / threadsCount;
+                        int end = (j1 + 1) * ids.Count / threadsCount;
+
+                        var list = ids.GetRange(start, end - start);
+                        var ret = ReadInnerList(list, isDeleted);
+                        process(ret);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Logger.Instance.ErrorFormat("Fail in thread = {0}", e);
+                        throw;
+                    }
+                    Logger.Logger.Instance.DebugFormat("Finish thread {0}", j1);
+                });
+
+                threads[j] = task;
+            }
+
+            Task.WaitAll(threads);
+
             for (int j = 0; j < threadsCount; j++)
             {
                 threads[j].Dispose();
@@ -514,21 +563,6 @@ namespace Qoollo.Impl.Writer.Db
             return new List<InnerData>();
         }
 
-
-        private RemoteResult ProcessRestore(string script, int countElemnts, Action<InnerData> process,
-             Func<MetaData, bool> isMine, bool isFirstAsk, ref object lastId, bool isDeleted)
-        {
-            bool isAllDataRead = true;
-            var keys = ReadMetaDataUsingSelect(script, countElemnts, isFirstAsk, ref lastId, isMine, ref isAllDataRead);
-
-            ReadDataList(keys, isDeleted, process, 10);
-
-            if (!isAllDataRead)
-                return new SuccessResult();
-
-            return new FailNetResult("");
-        }
-
         private FieldDescription PrepareKeyDescription(int countElements, bool isfirstAsk, object lastId)
         {
             var idDescription = _metaDataCommandCreator.GetKeyDescription();
@@ -547,16 +581,17 @@ namespace Qoollo.Impl.Writer.Db
             return idDescription;
         }
 
-        private List<MetaData> ReadMetaDataUsingSelect(string script, int countElements, bool isfirstAsk, ref object lastId,
-            Func<MetaData, bool> isMine, ref bool isAllDataRead)
+        private List<MetaData> ReadMetaDataUsingSelect(RestoreDataContainer restoreData, string script)
         {
             var list = new List<MetaData>();
-            var idDescription = PrepareKeyDescription(countElements, isfirstAsk, lastId);
+            var idDescription = PrepareKeyDescription(restoreData.CountElemnts, restoreData.IsFirstRead,
+                restoreData.LastId);
             SelectSearchResult result;
 
             int count = 0;
 
-            var select = new SelectDescription(idDescription, script, countElements, new List<FieldDescription>());
+            var select = new SelectDescription(idDescription, script, restoreData.CountElemnts,
+                new List<FieldDescription>());
             var ret = SelectRead(select, out result);
 
             while (!ret.IsError)
@@ -568,15 +603,15 @@ namespace Qoollo.Impl.Writer.Db
 
                     WriterCounters.Instance.RestoreCheckPerSec.OperationFinished();
                     WriterCounters.Instance.RestoreCheckCount.Increment();
-                    if (isMine(meta))
+                    if (restoreData.IsMine(meta))
                     {
                         list.Add(meta);
                         count++;
                     }
 
-                    lastId = meta.Id;
+                    restoreData.LastId = meta.Id;
 
-                    if (count == countElements)
+                    if (count == restoreData.CountElemnts)
                     {
                         exit = true;
                         break;
@@ -586,14 +621,37 @@ namespace Qoollo.Impl.Writer.Db
                 if (result.IsAllDataRead || exit)
                     break;
 
-                idDescription = PrepareKeyDescription(countElements, false, lastId);
-                select = new SelectDescription(idDescription, script, countElements, new List<FieldDescription>());
+                idDescription = PrepareKeyDescription(restoreData.CountElemnts, false, restoreData.LastId);
+                select = new SelectDescription(idDescription, script, restoreData.CountElemnts, new List<FieldDescription>());
                 ret = SelectRead(select, out result);
             }
 
-            isAllDataRead = result.IsAllDataRead;
-
+            restoreData.IsAllDataRead = result.IsAllDataRead;
             return list;
+        }                
+
+        private RemoteResult ProcessRestore(RestoreDataContainer restoreData, string script)
+        {                        
+            var keys = ReadMetaDataUsingSelect(restoreData, script);
+
+            ReadDataList(keys, restoreData.IsDeleted, restoreData.Process, 10);
+
+            if (!restoreData.IsAllDataRead)
+                return new SuccessResult();
+
+            return new FailNetResult("");
+        }
+
+        private RemoteResult ProcessRestorePackage(RestoreDataContainer restoreData, string script)
+        {
+            var keys = ReadMetaDataUsingSelect(restoreData, script);
+
+            ReadDataPackage(keys, restoreData.IsDeleted, restoreData.ProcessPackage, 10);
+
+            if (!restoreData.IsAllDataRead)
+                return new SuccessResult();
+
+            return new FailNetResult("");
         }
 
         #endregion

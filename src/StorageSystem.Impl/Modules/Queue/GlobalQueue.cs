@@ -1,4 +1,5 @@
-﻿using Qoollo.Impl.Common;
+﻿using System.Collections.Generic;
+using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Configurations;
@@ -43,6 +44,9 @@ namespace Qoollo.Impl.Modules.Queue
         private readonly QueueWithParam<InnerData> _dbRestoreQueue;
         public QueueWithParam<InnerData> DbRestoreQueue { get { return _dbRestoreQueue; } }
 
+        private readonly QueueWithParam<List<InnerData>> _dbRestorePackageQueue;
+        public QueueWithParam<List<InnerData>> DbRestorePackageQueue { get { return _dbRestorePackageQueue; } }
+
         private readonly QueueWithParam<Transaction> _transactionQueue;
         public QueueWithParam<Transaction> TransactionQueue { get { return _transactionQueue; } }
 
@@ -65,6 +69,7 @@ namespace Qoollo.Impl.Modules.Queue
             _dbInputProcessQueue = new QueueWithParam<InnerData>("dbInputProcessQueue");
             _dbDistributorInnerQueue = new QueueWithParam<NetCommand>("dbDistributorInnerQueue");
             _dbRestoreQueue = new QueueWithParam<InnerData>("dbRestoreQueue");
+            _dbRestorePackageQueue = new QueueWithParam<List<InnerData>>("dbRestorePackageQueue");
             _transactionQueue = new QueueWithParam<Transaction>("transactionQueue");
             _transactionAnswerQueue = new QueueWithParam<Transaction>("transactionAnswerQueue");
             _distributorTransactionCallbackQueue = new QueueWithParam<Transaction>("distributorTransactionCallbackQueue");
@@ -84,6 +89,7 @@ namespace Qoollo.Impl.Modules.Queue
             _dbInputProcessQueue.Start();
             _dbDistributorInnerQueue.Start();
             _dbRestoreQueue.Start();
+            _dbRestorePackageQueue.Start();
             _transactionQueue.Start();
             _transactionAnswerQueue.Start();
             _distributorTransactionCallbackQueue.Start();
@@ -102,6 +108,7 @@ namespace Qoollo.Impl.Modules.Queue
                 _dbInputProcessQueue.Dispose();
                 _dbDistributorInnerQueue.Dispose();
                 _dbRestoreQueue.Dispose();
+                _dbRestorePackageQueue.Dispose();
                 _transactionQueue.Dispose();
                 _transactionAnswerQueue.Dispose();
                 _distributorTransactionCallbackQueue.Dispose();

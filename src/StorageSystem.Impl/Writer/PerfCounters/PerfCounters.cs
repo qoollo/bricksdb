@@ -35,34 +35,7 @@ namespace Qoollo.Impl.Writer.PerfCounters
 
         protected override void AfterInit()
         {
-            QueryPerSec.Reset();
-            CreatePerSec.Reset();
-            UpdatePerSec.Reset();
-            ReadPerSec.Reset();
-            DeletePerSec.Reset();
-            RestoreUpdatePerSec.Reset();
-            CustomOperationPerSec.Reset();
-            AverageTimer.Reset();
-            TransactionCount.Reset();
-            ProcessPerSec.Reset();
-            IncomePerSec.Reset();
-            QueryAvgTime.Reset();
-
-            CreateMetaDataTimer.Reset();
-            ReadMetaDataTimer.Reset();
-            CreateTimer.Reset();
-
-            RestoreCountReceive.Reset();
-            RestoreCountSend.Reset();
-            RestoreSendPerSec.Reset();
-
-            DeleteTimeoutPerSec.Reset();
-            DeleteFullPerSec.Reset();
-
-            RestoreCheckCount.Reset();
-            RestoreCheckPerSec.Reset();
-
-            ReadTimer.Reset();
+            ResetAllCounters();
         }
 
         [Counter("TransactionCount", "Общее количество обработанных данных")]
@@ -87,6 +60,9 @@ namespace Qoollo.Impl.Writer.PerfCounters
 
         [Counter("RestoreUpdatePerSec", "Количество обрабатываемых транзакций RestoreUpdate (Per/sec)")]
         public OperationsPerSecondCounter RestoreUpdatePerSec { get; private set; }
+
+        [Counter("RestoreUpdatePerSecPackage", "Количество обрабатываемых транзакций RestoreUpdatePackage (Per/sec)")]
+        public OperationsPerSecondCounter RestoreUpdatePerSecPackage { get; private set; }
 
         [Counter("RestoreSendPerSec", "Количество отправленных RestoreUpdate (Per/sec)")]
         public OperationsPerSecondCounter RestoreSendPerSec { get; private set; }

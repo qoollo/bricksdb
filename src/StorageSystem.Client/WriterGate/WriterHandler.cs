@@ -99,6 +99,11 @@ namespace Qoollo.Client.WriterGate
             return new RequestDescription(_writer.Distributor.StartDelete());
         }
 
+        public RequestDescription RunDelete()
+        {
+            return new RequestDescription(_writer.Distributor.RunDelete());
+        }
+
         public RequestDescription AddDbModule(DbFactory factory)
         {
             var result = _writer.DbModule.AddDbModule(factory.Build());

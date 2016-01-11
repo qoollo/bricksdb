@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common;
-using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Writer.AsyncDbWorks.Readers;
@@ -12,32 +11,20 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class RestoreReader : SingleReaderBase
     {
-        private readonly AsyncDbHolder _holder;
-        private readonly Action<InnerData> _process;
-        private readonly int _countElements;
-        private readonly string _tableName;
-        private readonly Func<MetaData, bool> _isMine;
-        private readonly bool _local;
+        private readonly AsyncDbHolder _holder;        
+        private readonly string _tableName;        
+        private readonly RestoreDataContainer _restoreData;
 
-        private bool _isFirstRead;
-        private object _lastId;
-
-        public RestoreReader(string tableName, bool local, Func<MetaData, bool> isMine, DbModuleCollection db,
-            int countElements, Action<InnerData> process)
+        public RestoreReader(string tableName, DbModuleCollection db, RestoreDataContainer restoreData)
         {
             Contract.Requires(db != null);
-            Contract.Requires(process != null);
-            Contract.Requires(countElements > 0);
-            Contract.Requires(isMine != null);
+            Contract.Requires(restoreData != null);
 
-            _tableName = tableName;
-            _isMine = isMine;
-            _countElements = countElements;
-            _process = process;
+            _tableName = tableName;            
             _holder = new AsyncDbHolder(db.GetDbModules);
-            _local = local;
 
-            StartNewDb();
+            _restoreData = restoreData;
+            _restoreData.StartNewDb();
         }
 
         protected override RemoteResult Read()
@@ -49,18 +36,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             return RestoreSingleDb();
         }
 
-        private void StartNewDb()
-        {
-            _isFirstRead = true;
-            _lastId = null;
-        }
-
         private RemoteResult RestoreAllTables()
         {
             var db = _holder.GetElement;
 
-            var ret = db.AsyncProcess(false, _local, _countElements, _process, _isMine, _isFirstRead, ref _lastId);
-            _isFirstRead = false;
+            var ret = db.AsyncProcess(_restoreData);
+            _restoreData.IsFirstRead = false;            
 
             if (ret is FailNetResult)
             {
@@ -70,7 +51,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 {
                     _holder.Switch();
 
-                    StartNewDb();
+                    _restoreData.StartNewDb();
                     ret = new SuccessResult();
                 }                
             }
@@ -81,9 +62,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private RemoteResult RestoreSingleDb()
         {            
             var db = GetModule();
-
-            var ret = db.AsyncProcess(false, _local, _countElements, _process, _isMine, _isFirstRead, ref _lastId);
-            _isFirstRead = false;
+            var ret = db.AsyncProcess(_restoreData);
+            _restoreData.IsFirstRead = false;
+            
             return ret;
         }
 

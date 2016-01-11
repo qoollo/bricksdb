@@ -29,9 +29,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
             _queue = GlobalQueue.Queue.DbTimeoutQueue;
             _deleteTimeout = configuration.DeleteTimeout;
 
-            AsyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_configuration.PeriodRetry, PeriodMessage,
-                    AsyncTasksNames.TimeoutDelete, -1), _configuration.IsForceStart);
+            if (_configuration.IsForceStart)
+                AsyncTaskModule.AddAsyncTask(
+                    new AsyncDataPeriod(_configuration.PeriodRetry, PeriodMessage,
+                        AsyncTasksNames.TimeoutDelete, -1), _configuration.IsForceStart);
+
         }
 
         public void Enable(bool forceStart = false)
@@ -52,21 +54,27 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
             Enable(true);
         }
 
+        public void RunDelete()
+        {
+            RunDeleteInner();
+        }
+
         private void PeriodMessage(AsyncData obj)
         {
-            if (_reader == null)
-            {            
-                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, true,
-                    _queue);
+            RunDeleteInner();
+        }
 
+        private void RunDeleteInner()
+        {
+            if (_reader == null)
+            {
+                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, _queue);
                 _reader.Start();
             }
-            else if(_reader.IsComplete)
+            else if (_reader.IsComplete)
             {
                 _reader.Dispose();
-                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, true,
-                    _queue);
-
+                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, _queue);
                 _reader.Start();
             }
         }

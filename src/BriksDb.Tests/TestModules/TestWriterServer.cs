@@ -34,6 +34,12 @@ namespace Qoollo.Tests.TestModules
             return new SuccessResult();
         }
 
+        public RemoteResult ProcessSyncPackage(List<InnerData> datas)
+        {
+            Interlocked.Add(ref Value, datas.Count);
+            return new SuccessResult();
+        }
+
         public void Rollback(InnerData data)
         {
             Interlocked.Add(ref Value, -1);

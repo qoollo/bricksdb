@@ -3,7 +3,7 @@ using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.NetResults.Inner;
-using Qoollo.Impl.Common.NetResults.System.Distributor;
+using Qoollo.Impl.Common.NetResults.System.Writer;
 
 namespace Qoollo.Impl.Common
 {
@@ -17,6 +17,7 @@ namespace Qoollo.Impl.Common
     [KnownType(typeof(InnerFailResult))]
     [KnownType(typeof(HashMapResult))]
     [KnownType(typeof(SetGetRestoreStateResult))]    
+    [KnownType(typeof(PackageResult))]    
     public abstract class RemoteResult
     {
         protected RemoteResult(bool result, string description)

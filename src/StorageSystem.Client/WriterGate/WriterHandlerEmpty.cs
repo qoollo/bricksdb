@@ -78,6 +78,11 @@ namespace Qoollo.Client.WriterGate
             return new RequestDescription();
         }
 
+        public RequestDescription RunDelete()
+        {
+            return new RequestDescription();
+        }
+
         public RequestDescription AddDbModule(DbFactory factory)
         {
             return new RequestDescription();

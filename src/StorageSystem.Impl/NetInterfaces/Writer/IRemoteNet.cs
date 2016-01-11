@@ -1,4 +1,5 @@
-﻿using System.ServiceModel;
+﻿using System.Collections.Generic;
+using System.ServiceModel;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -17,6 +18,9 @@ namespace Qoollo.Impl.NetInterfaces.Writer
         
         [OperationContract]
         RemoteResult ProcessSync(InnerData data);
+
+        [OperationContract]
+        RemoteResult ProcessSyncPackage(List<InnerData> datas);
 
         [OperationContract(IsOneWay = true)]
         void Rollback(InnerData data);

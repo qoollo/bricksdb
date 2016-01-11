@@ -93,6 +93,28 @@ namespace Qoollo.Impl.Writer.WriterNet
 
         }
 
+        public RemoteResult ProcessSync(ServerId server, List<InnerData> datas)
+        {            
+            var connection = FindServer(server) as SingleConnectionToWriter;
+
+            if (connection == null)
+            {
+                ConnectToWriter(server);
+                connection = FindServer(server) as SingleConnectionToWriter;
+            }
+
+            if (connection == null)
+                return new ServerNotFoundResult();
+
+            var ret = connection.ProcessSyncPackage(datas);
+
+            if (ret is FailNetResult)
+                RemoveConnection(server);
+
+            return ret;
+
+        }
+
         public Task<RemoteResult> ProcessAsync(ServerId server, InnerData data)
         {
             Logger.Logger.Instance.Debug(string.Format("WriterNetModule: process server = {0}, ev = {1}", server,

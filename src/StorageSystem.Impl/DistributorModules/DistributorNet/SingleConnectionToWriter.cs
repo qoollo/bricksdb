@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -25,7 +26,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
                 api =>api.ProcessSync(data) ,
                 e => new ServerNotAvailable(Server),
                 NetLogHelper.GetLog(data));
-        }        
+        }
 
         public RemoteResult ProcessData(InnerData data)
         {
@@ -89,6 +90,11 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         }
 
         #region Not Implemented
+
+        public RemoteResult ProcessSyncPackage(List<InnerData> datas)
+        {
+            throw new NotImplementedException();
+        }
 
         public Task<RemoteResult> ProcessTaskBased(InnerData data)
         {

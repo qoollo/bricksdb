@@ -17,6 +17,13 @@ namespace Qoollo.Impl.TestSupport
 
         private static TimeSpan _pingPeriodOut = TimeSpan.FromMinutes(1);
         public static TimeSpan PingPeriodOut { get{return _pingPeriodOut;} set { _pingPeriodOut = value; } }
-        internal static TimeSpan PingPeriod { get { return PingPeriodOut; } }
+        internal static TimeSpan PingPeriod { get { return PingPeriodOut; } }        
+
+        public static bool RestoreUsePackage { get; set; }
+
+        static InitInjection()
+        {
+            RestoreUsePackage = false;
+        }
     }
 }

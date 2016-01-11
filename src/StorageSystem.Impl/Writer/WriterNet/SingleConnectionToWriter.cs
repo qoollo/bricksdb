@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -40,6 +41,14 @@ namespace Qoollo.Impl.Writer.WriterNet
                 api => api.ProcessSync(data),
                 e => new ServerNotAvailable(Server),
                 NetLogHelper.GetLog(data));
+        }
+
+        public RemoteResult ProcessSyncPackage(List<InnerData> datas)
+        {
+            return SendFunc<RemoteResult, ICommonNetReceiverWriterForWrite>(
+                api => api.ProcessSyncPackage(datas),
+                e => new ServerNotAvailable(Server),
+                string.Empty);
         }
 
         public Task<RemoteResult> ProcessTaskBased(InnerData data)

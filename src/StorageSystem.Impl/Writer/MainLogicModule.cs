@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
@@ -34,7 +35,7 @@ namespace Qoollo.Impl.Writer
 
         public RemoteResult Process(InnerData data)
         {
-            Logger.Logger.Instance.DebugFormat("Process hash = {0}", data.Transaction.CacheKey);
+            Logger.Logger.Instance.TraceFormat("Process hash = {0}", data.Transaction.CacheKey);
             RemoteResult ret = null;
             var local = GetLocal(data);
 
@@ -59,6 +60,21 @@ namespace Qoollo.Impl.Writer
                 case OperationName.Update:
                     ret = CheckResult(data, _db.Update(data, local));
                     WriterCounters.Instance.UpdatePerSec.OperationFinished();
+                    break;
+            }
+
+            return ret;
+        }
+
+        public RemoteResult ProcessPackage(List<InnerData> datas)
+        {
+            RemoteResult ret = null;
+            switch (datas[0].Transaction.OperationName)
+            {
+                case OperationName.RestoreUpdate:
+                    ret = _db.RestoreUpdatePackage(datas);
+                    WriterCounters.Instance.RestoreUpdatePerSec.OperationFinished();
+                    WriterCounters.Instance.RestoreCountReceive.IncrementBy(datas.Count);
                     break;
             }
 

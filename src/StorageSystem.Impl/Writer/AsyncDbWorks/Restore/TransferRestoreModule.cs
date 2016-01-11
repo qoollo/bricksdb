@@ -104,10 +104,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if (_restore == null)
                 return;
 
-            Logger.Logger.Instance.Debug(
-                string.Format("Async complete = {0}, start = {1}", _restore.Reader.IsComplete, IsStart), "restore");
+            Logger.Logger.Instance.Debug(string.Format("Async complete = {0}, start = {1}",
+                _restore.IsComplete, IsStart), "restore");
 
-            if (_restore.Reader.IsComplete && IsStart)
+            if (_restore.IsComplete && IsStart)
             {
                 AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreLocal);
 
@@ -117,8 +117,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
             else
             {
-                if (_restore.Reader.IsQueueEmpty && IsStart)
-                    _restore.Reader.GetAnotherData();
+                if (_restore.IsQueueEmpty && IsStart)
+                    _restore.GetAnotherData();
 
                 WriterNet.SendToWriter(_remoteServer, new RestoreInProcessCommand(_local));
             }

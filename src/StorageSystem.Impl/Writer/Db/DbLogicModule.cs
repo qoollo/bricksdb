@@ -147,6 +147,8 @@ namespace Qoollo.Impl.Writer.Db
             DeserializeData(obj, out key, out value);
 
             var meta = ReadMetaData(obj);
+            if (meta == null)
+                return new InnerFailResult(Errors.TimeoutExpired, false);
 
             return _createAndUpdate.Create(obj, local, meta, key, value);
 
@@ -159,6 +161,8 @@ namespace Qoollo.Impl.Writer.Db
             DeserializeData(obj, out key, out value);
 
             var meta = ReadMetaData(obj);
+            if (meta == null)
+                return new InnerFailResult(Errors.TimeoutExpired, false);
 
             return _createAndUpdate.Update(obj, local, meta, key, value);
         }        
@@ -240,6 +244,8 @@ namespace Qoollo.Impl.Writer.Db
             DeserializeData(obj, out key, out value);
 
             var meta = ReadMetaData(obj);
+            if (meta == null)
+                return new InnerFailResult(Errors.TimeoutExpired, false);
 
             return _createAndUpdate.UpdateRestore(obj, local, meta, key, value);
         }
@@ -340,6 +346,9 @@ namespace Qoollo.Impl.Writer.Db
         public override RemoteResult CreateRollback(InnerData obj, bool local)
         {
             var meta = ReadMetaData(obj);
+
+            if (meta == null)
+                return new InnerFailResult(Errors.TimeoutExpired, false);
 
             if (meta.Item1 == null || meta.Item1.IsDeleted)
                 return new SuccessResult();

@@ -34,8 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Concierge">
-      <HintPath>..\packages\Concierge.1.0.5.2\lib\net40\Concierge.dll</HintPath>
+    <Reference Include="Concierge, Version=1.0.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Concierge.1.0.8.0\lib\net40\Concierge.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="CsvHelper">
       <HintPath>..\packages\CsvHelper.2.13.0.0\lib\net40-client\CsvHelper.dll</HintPath>
@@ -62,6 +63,10 @@
     <Compile Include="Commands\CollectorCommand.cs" />
     <Compile Include="Commands\WriterCommand.cs" />
     <Compile Include="BenchmarkTest.cs" />
+    <Compile Include="ConciergeInstaller.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ConciergeSamples\SampleProgram.cs" />
     <Compile Include="csv\CsvFileProcessor.cs" />
     <Compile Include="Executor\BenchmarkExecutor.cs" />
     <Compile Include="Commands\CommandBase.cs" />
@@ -82,10 +87,6 @@
     <Compile Include="Send\ReaderAdapter.cs" />
     <Compile Include="Statistics\AvgMetric.cs" />
     <Compile Include="Statistics\BenchmarkMetrics.cs" />
-    <Compile Include="ConciergeInstaller.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="ConciergeSamples\SampleProgram.cs" />
     <Compile Include="Send\Interfaces\IDataAdapter.cs" />
     <Compile Include="DataGenerator\IDataGenerator.cs" />
     <Compile Include="KeyGenerator.cs" />

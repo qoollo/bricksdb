@@ -34,8 +34,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Qoollo.Turbo">
-      <HintPath>..\packages\Qoollo.Turbo.2.1.25\lib\net45\Qoollo.Turbo.dll</HintPath>
+    <Reference Include="Qoollo.Turbo, Version=2.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Qoollo.Turbo.2.2.0\lib\net45\Qoollo.Turbo.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />

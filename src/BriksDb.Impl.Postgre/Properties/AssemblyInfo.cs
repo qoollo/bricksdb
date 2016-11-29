@@ -5,24 +5,14 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("StorageSystem.Impl")]
+[assembly: AssemblyTitle("BriksDb.Impl.Postgre")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("StorageSystem.Impl")]
-[assembly: AssemblyCopyright("Copyright ©  2013")]
+[assembly: AssemblyProduct("BriksDb.Impl.Postgre")]
+[assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
-[assembly: InternalsVisibleTo("Qoollo.")]
-[assembly: InternalsVisibleTo("Qoollo.Tests")]
-[assembly: InternalsVisibleTo("Qoollo.Client")]
-[assembly: InternalsVisibleTo("Qoollo.Impl.Sql")]
-[assembly: InternalsVisibleTo("Qoollo.Impl.Postgre")]
-[assembly: InternalsVisibleTo("Qoollo.Impl.Sqlite")]
-[assembly: InternalsVisibleTo("Qoollo.HashFileGenerator")]
-[assembly: InternalsVisibleTo("Qoollo.ConsoleTest")]
-[assembly: InternalsVisibleTo("Qoollo.BenchmarkTool")]
-[assembly: InternalsVisibleTo("Qoollo.Benchmark")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
@@ -30,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("7b2184b4-ec6b-45e3-a513-9f536be332c0")]
+[assembly: Guid("b8d44353-71f6-4f6f-a244-bd3a1ea2298d")]
 
 // Version information for an assembly consists of the following four values:
 //

@@ -52,14 +52,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Internal\PostgreMetaDataCommandCreator.cs" />
     <Compile Include="Internal\PostgreReader.cs" />
     <Compile Include="Internal\PostgreUserCommandCreatorInner.cs" />
+    <Compile Include="Internal\PostgreConsts.cs" />
     <Compile Include="PostgreConnectionParams.cs" />
     <Compile Include="Internal\PostgreDbModule.cs" />
+    <Compile Include="PostgreDbFactory.cs" />
     <Compile Include="PostgrelUserCommandCreator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\StorageSystem.Client\BriksDb.Client.csproj">
+      <Project>{1BE55462-F506-45B7-AD6D-C29F36CE68E0}</Project>
+      <Name>BriksDb.Client</Name>
+    </ProjectReference>
     <ProjectReference Include="..\StorageSystem.Impl\BriksDb.Impl.csproj">
       <Project>{1A78E244-B4B2-419E-B247-8532B3AFDA87}</Project>
       <Name>BriksDb.Impl</Name>

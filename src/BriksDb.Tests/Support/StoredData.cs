@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Qoollo.Tests.Support
 {
     [Serializable]
-    class StoredData
+    public class StoredData
     {
         public int Id { get; set; }
 

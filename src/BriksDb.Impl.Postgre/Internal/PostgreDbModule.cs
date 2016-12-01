@@ -11,7 +11,7 @@ using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.Postgre.Internal
 {
-    class PostgreDbModule : DbImplModuleWithPool<NpgsqlConnection, PostgreConnectionParams, NpgsqlCommand, NpgsqlDataReader>
+    internal class PostgreDbModule : DbImplModuleWithPool<NpgsqlConnection, PostgreConnectionParams, NpgsqlCommand, NpgsqlDataReader>
     {
         public PostgreDbModule(PostgreConnectionParams connectionParam, int maxCountElementInPool, int trimPeriod)
             : base(connectionParam, maxCountElementInPool, trimPeriod)

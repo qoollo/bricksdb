@@ -1,8 +1,14 @@
 ﻿using System;
 using System.Text;
 using System.Collections.Generic;
+using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Qoollo.Client.Support;
+using Qoollo.Impl.Common.Data.DataTypes;
+using Qoollo.Impl.Common.Data.Support;
+using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashFile;
+using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Postgre;
 using Qoollo.Tests.Support;
@@ -12,9 +18,10 @@ namespace Qoollo.Tests
     [TestClass]
     public class PostgreTest
     {
-        private const string ConnectionString = @"Provider=PostgreSQL OLE DB Provider;
-                                                    Data Source=10.5.6.112;
-                                                    location=postgres; User ID=myUsername;password=myPassword;timeout=1000;";
+        private const string ConnectionString = "Server=10.5.6.112;" +
+                                                "Port=5432;" +
+                                                "Database=postgres;" +
+                                                "User Id=postgres;";
         private TestWriterGate _writer1;
 
         [TestInitialize]
@@ -22,6 +29,7 @@ namespace Qoollo.Tests
         {
             _writer1 = new TestWriterGate();
         }
+
         [TestMethod]
         public void TestPostgreMethod1()
         {
@@ -33,8 +41,33 @@ namespace Qoollo.Tests
             writer.Save();
 
             _writer1.Build(157, "TestPostgreMethod1", 1);
-            _writer1.Db.AddDbModule(new PostgreDbFactory<int, StoredData>(new StoredDataDataProvider(),
-                new StoredDataCommandCreator(), new PostgreConnectionParams(ConnectionString, 1, 1), false).Build());
+            var provider = new StoredDataDataProvider();
+
+            _writer1.Db.AddDbModule(new PostgreDbFactory<int, StoredData>(provider,
+                new StoredDataCommandCreator(), new PostgreConnectionParams(ConnectionString, 1, 1), false)
+                .Build());
+
+            TestHelper.OpenDistributorHostForDb(new ServerId("localhost", 22188),
+                new ConnectionConfiguration("testService", 10));
+
+            _writer1.Start();
+
+            var data = new StoredData(1);
+
+            var ev = new InnerData(new Transaction(provider.CalculateHashFromKey(data.Id), "")
+            {
+                OperationName = OperationName.Create,
+                TableName = "TestStored"
+            })
+            {
+                Data = CommonDataSerializer.Serialize(data),
+                Key = CommonDataSerializer.Serialize(data.Id),
+                Transaction = {Distributor = new ServerId("localhost", 22188)}
+            };
+
+            var result  = _writer1.Input.ProcessSync(ev);
+
+            _writer1.Dispose();
         }
     }
 }

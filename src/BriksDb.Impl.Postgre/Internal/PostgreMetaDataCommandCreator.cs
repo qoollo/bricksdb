@@ -131,8 +131,8 @@ namespace Qoollo.Impl.Postgre.Internal
         {
             var command = new NpgsqlCommand(
                 string.Format(
-                    "select {0}.{3}, {0}.{4}, {0}.{5}, {0}.{1} as 'MetaId', HelpTable.{6} as 'UserId', {0}.{7} " +
-                    " from ( {2} ) as HelpTable right join {0} on HelpTable.{6} = {0}.{1} " +
+                    "select {0}.{3}, {0}.{4}, {0}.{5}, {0}.{1} as MetaId, HelpTable.\"{6}\" as UserId, {0}.{7} " +
+                    " from ( {2} ) as HelpTable right join {0} on HelpTable.\"{6}\" = {0}.{1} " +
                     " where {0}.{1} = @{1}",
                     _metaTableName, _keyName, userRead.CommandText, PostgreConsts.Local, PostgreConsts.IsDeleted,
                     PostgreConsts.DeleteTime, _userKeyName, PostgreConsts.Hash));

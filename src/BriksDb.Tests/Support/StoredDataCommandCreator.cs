@@ -37,10 +37,10 @@ namespace Qoollo.Tests.Support
 
         public override NpgsqlCommand Create(int key, StoredData value)
         {
-            var command = new NpgsqlCommand("insert into TestStored(id) values(@id) ");
+            var command = new NpgsqlCommand("insert into \"TestStored\"(\"Id\") values(@id) ");
             command.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, key);
 
-            return new NpgsqlCommand();
+            return command;
         }
 
         public override NpgsqlCommand Update(int key, StoredData value)
@@ -55,7 +55,7 @@ namespace Qoollo.Tests.Support
 
         public override NpgsqlCommand Read()
         {
-            return new NpgsqlCommand("select id from TestStored");
+            return new NpgsqlCommand("select \"Id\" from public.\"TestStored\"");
         }
 
         public override StoredData ReadObjectFromSearchData(List<Tuple<object, string>> fields)

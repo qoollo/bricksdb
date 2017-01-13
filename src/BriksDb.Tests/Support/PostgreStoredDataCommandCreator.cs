@@ -8,7 +8,7 @@ using Qoollo.Impl.Postgre;
 
 namespace Qoollo.Tests.Support
 {
-    public class StoredDataCommandCreator:PostgreUserCommandCreator<int, StoredData>
+    public class PostgreStoredDataCommandCreator: PostgreUserCommandCreator<int, StoredData>
     {
         public override bool CreateDb(NpgsqlConnection connection)
         {
@@ -37,7 +37,7 @@ namespace Qoollo.Tests.Support
 
         public override NpgsqlCommand Create(int key, StoredData value)
         {
-            var command = new NpgsqlCommand("insert into \"TestStored\"(\"Id\") values(@id) ");
+            var command = new NpgsqlCommand("insert into TestStored(Id) values(@id) ");
             command.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, key);
 
             return command;
@@ -55,7 +55,7 @@ namespace Qoollo.Tests.Support
 
         public override NpgsqlCommand Read()
         {
-            return new NpgsqlCommand("select \"Id\" from public.\"TestStored\"");
+            return new NpgsqlCommand("select Id from TestStored");
         }
 
         public override StoredData ReadObjectFromSearchData(List<Tuple<object, string>> fields)

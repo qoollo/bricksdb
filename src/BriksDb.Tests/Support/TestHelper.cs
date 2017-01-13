@@ -99,5 +99,10 @@ namespace Qoollo.Tests.Support
         {
             return new SearchData(new List<Tuple<object, string>> { new Tuple<object, string>(data, "") }, data);
         }
+
+        public static string Quote(this string str)
+        {
+            return "\"" + str + "\"";
+        }
     }
 }

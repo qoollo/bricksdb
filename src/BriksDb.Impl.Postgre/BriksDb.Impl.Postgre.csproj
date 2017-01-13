@@ -55,6 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Internal\PostgreHelper.cs" />
     <Compile Include="Internal\PostgreMetaDataCommandCreator.cs" />
     <Compile Include="Internal\PostgreReader.cs" />
     <Compile Include="Internal\PostgreUserCommandCreatorInner.cs" />

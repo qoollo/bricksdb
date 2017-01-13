@@ -68,76 +68,80 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public NpgsqlCommand InitMetaDataDb(string idInit)
         {
-            return new NpgsqlCommand(string.Format("create table {1} ({0} primary key not null, " +
-                                                "{2} integer not null, " +
-                                                "{3} integer not null, " +
-                                                "{4} timestamp, " +
-                                                "{5} varchar (32)); " +
-                                                "CREATE INDEX [SearchMetadata] ON {1} USING btree " +
-                                                "({3}, {2}); "
-                , idInit, _metaTableName, PostgreConsts.Local, PostgreConsts.IsDeleted, PostgreConsts.DeleteTime, PostgreConsts.Hash));
+            var result = new NpgsqlCommand();
+            result.CommandText = $@"CREATE TABLE {_metaTableName} 
+                                    (
+                                        {idInit} PRIMARY KEY NOT NULL,
+                                        {PostgreConsts.Local} INTEGER NOT NULL,
+                                        {PostgreConsts.IsDeleted} INTEGER NOT NULL,
+                                        {PostgreConsts.DeleteTime} TIMESTAMP,
+                                        {PostgreConsts.Hash} VARCHAR(32)
+                                    );
+                                    CREATE INDEX {_metaTableName + "_SearchMetadataIndex"} ON {_metaTableName} USING btree ({PostgreConsts.IsDeleted}, {PostgreConsts.Local});";
+
+            return result;
         }
 
         public NpgsqlCommand CreateMetaData(bool remote, string dataHash, object key)
         {
-            var command = new NpgsqlCommand(string.Format("insert into {0} ({1}, {3}, {4}, {5}, {6})  " +
-                                           "values (@{1}, {2}, 1, NULL, \'{7}\');",
-                _metaTableName, _keyName, GetLocal(remote),
-                PostgreConsts.Local, PostgreConsts.IsDeleted, PostgreConsts.DeleteTime, PostgreConsts.Hash, dataHash));
-            return SetKeytoCommand(command, key);
+            var result = new NpgsqlCommand();
+            result.CommandText = 
+                $@"INSERT INTO {_metaTableName} ({_keyName}, {PostgreConsts.Local}, {PostgreConsts.IsDeleted}, {PostgreConsts.DeleteTime}, {PostgreConsts.Hash})
+                   VALUES                       (@{_keyName}, {GetLocal(remote)},   {IsDeleted(false)},        NULL,                      '{dataHash}')";
+
+            return SetKeytoCommand(result, key);
         }
 
         public NpgsqlCommand DeleteMetaData(object key)
         {
-            var command = new NpgsqlCommand(string.Format("delete from {0} " +
-                                               "where {1} = @{1};", _metaTableName, _keyName));
+            var command = new NpgsqlCommand($@"DELETE FROM {_metaTableName} 
+                                               WHERE {_keyName} = @{_keyName};");
             return SetKeytoCommand(command, key);
         }
 
         public NpgsqlCommand UpdateMetaData(bool local, object key)
         {
-            var command = new NpgsqlCommand(string.Format("update {0} " +
-                                                          "set {3} = {1} " +
-                                                          "where {2} = @{2};",
-                _metaTableName, GetLocal(local), _keyName, PostgreConsts.Local));
+            var command = new NpgsqlCommand($@"UPDATE {_metaTableName} 
+                                               SET {PostgreConsts.Local} = {GetLocal(local)} 
+                                               WHERE {_keyName} = @{_keyName};");
             return SetKeytoCommand(command, key);
         }
 
-        //TODO
         public NpgsqlCommand SetDataDeleted(object key)
         {
-            var command = new NpgsqlCommand(string.Format("update {0} " +
-                                                          "set {2} = 0," +
-                                                          "{3} = @time " +
-                                                          "where {1} = @{1};",
-                _metaTableName, _keyName, PostgreConsts.IsDeleted, PostgreConsts.DeleteTime));
+            var command = new NpgsqlCommand($@"UPDATE {_metaTableName} 
+                                               SET {PostgreConsts.IsDeleted} = {IsDeleted(true)},
+                                                   {PostgreConsts.DeleteTime} = @time 
+                                               WHERE {_keyName} = @{_keyName};");
 
             command.Parameters.Add("@time", NpgsqlDbType.Timestamp);
-            command.Parameters["@time"].Value = DateTime.Now.ToString("u");
+            command.Parameters["@time"].Value = DateTime.UtcNow.ToString("u");
             return SetKeytoCommand(command, key);
         }
 
         public NpgsqlCommand SetDataNotDeleted(object key)
         {
-            var command = new NpgsqlCommand(string.Format("update {0} " +
-                                                          "set {2} = 1 " +
-                                                          "where {1} = @{1};",
-                _metaTableName, _keyName, PostgreConsts.IsDeleted));
+            var command = new NpgsqlCommand($@"UPDATE {_metaTableName} 
+                                               SET {PostgreConsts.IsDeleted} = {IsDeleted(false)} 
+                                               WHERE {_keyName} = @{_keyName};");
 
             return SetKeytoCommand(command, key);
         }
 
         public NpgsqlCommand ReadMetaData(NpgsqlCommand userRead, object key)
         {
-            var command = new NpgsqlCommand(
-                string.Format(
-                    "select {0}.{3}, {0}.{4}, {0}.{5}, {0}.{1} as MetaId, HelpTable.\"{6}\" as UserId, {0}.{7} " +
-                    " from ( {2} ) as HelpTable right join {0} on HelpTable.\"{6}\" = {0}.{1} " +
-                    " where {0}.{1} = @{1}",
-                    _metaTableName, _keyName, userRead.CommandText, PostgreConsts.Local, PostgreConsts.IsDeleted,
-                    PostgreConsts.DeleteTime, _userKeyName, PostgreConsts.Hash));
+            var result = new NpgsqlCommand();
+            result.CommandText = $@"SELECT {_metaTableName}.{PostgreConsts.Local}, 
+                                           {_metaTableName}.{PostgreConsts.IsDeleted},
+                                           {_metaTableName}.{PostgreConsts.DeleteTime},
+                                           {_metaTableName}.{_keyName} AS MetaId,
+                                           UserScriptResult.{_userKeyName} AS UserId,
+                                           {_metaTableName}.{PostgreConsts.Hash}
+                                    FROM ( {userRead.CommandText} ) AS UserScriptResult
+                                    INNER JOIN {_metaTableName} ON UserScriptResult.{_userKeyName} = {_metaTableName}.{_keyName}
+                                    WHERE {_metaTableName}.{_keyName} = @{_keyName}";
 
-            return SetKeytoCommand(command, key);
+            return SetKeytoCommand(result, key);
         }
 
         //TODO
@@ -207,13 +211,13 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public NpgsqlCommand ReadWithDelete(NpgsqlCommand userRead, bool isDelete, object key)
         {
-            var command = new NpgsqlCommand(string.Format("select * from ( {0} ) as MetaHelpTable " +
-                                                          " inner join {1} on MetaHelpTable.{5} = {1}.{2}" +
-                                                          " where {1}.{2} = @{2} and {1}.{4} = {3}",
-                userRead.CommandText, _metaTableName, _keyName, IsDeleted(isDelete), PostgreConsts.IsDeleted,
-                _userKeyName));
+            var result = new NpgsqlCommand();
+            result.CommandText = $@"SELECT * FROM ( {userRead.CommandText} ) AS UserScriptResult
+                                             INNER JOIN {_metaTableName} ON UserScriptResult.{_userKeyName} = {_metaTableName}.{_keyName}
+                                             WHERE {_metaTableName}.{_keyName} = @{_keyName} AND {_metaTableName}.{PostgreConsts.IsDeleted} = {IsDeleted(isDelete)}";
 
-            return SetKeytoCommand(command, key);
+
+            return SetKeytoCommand(result, key);
         }
 
         public NpgsqlCommand ReadWithDeleteAndLocal(NpgsqlCommand userRead, bool isDelete, bool local)

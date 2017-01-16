@@ -68,7 +68,7 @@ namespace Qoollo.Impl.Sql.Internal
                                                 "{2} int not null, " +
                                                 "{3} int not null, " +
                                                 "{4} datetime," +
-                                                "{5} varchar (20)); " +
+                                                "{5} varchar (32)); " +
                                                 "CREATE NONCLUSTERED INDEX [NonClusteredIndex-20140609-052749] ON [dbo].{1} " +
                                                 "([{3}] ASC, " +
                                                 "[{2}] ASC " +

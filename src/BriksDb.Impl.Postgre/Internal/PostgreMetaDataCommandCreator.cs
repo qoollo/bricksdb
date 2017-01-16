@@ -158,7 +158,7 @@ namespace Qoollo.Impl.Postgre.Internal
             {
                 bool l = GetLocalBack((int)local);
                 bool i = GetLocalBack((int)isDeleted);
-                DateTime? t = deleteTime is DBNull ? (DateTime?)null : (DateTime)deleteTime;
+                DateTime? t = (deleteTime == null || (deleteTime is DBNull)) ? (DateTime?)null : (DateTime)deleteTime;
 
                 meta = new MetaData(l, t, i, (string)hash);
             }
@@ -173,7 +173,6 @@ namespace Qoollo.Impl.Postgre.Internal
             return new Tuple<MetaData, bool>(meta, data);
         }
 
-        //TODO
         public MetaData ReadMetaFromSearchData(SearchData data)
         {
             object local = data.Fields.Find(x => x.Item2.ToLower() == PostgreConsts.Local.ToLower()).Item1;
@@ -188,7 +187,7 @@ namespace Qoollo.Impl.Postgre.Internal
             {
                 bool l = GetLocalBack((int)local);
                 bool i = GetLocalBack((int)isDeleted);
-                DateTime? t = deleteTime is DBNull ? (DateTime?)null : (DateTime)deleteTime;
+                DateTime? t = (deleteTime == null || (deleteTime is DBNull)) ? (DateTime?)null : (DateTime)deleteTime;
 
                 meta = new MetaData(l, t, i, (string)hash)
                 {
@@ -201,20 +200,41 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public string ReadWithDeleteAndLocal(bool isDelete, bool local)
         {
-            throw new NotImplementedException();
+            if (local)
+            {
+                return $@"SELECT * FROM {_metaTableName}
+                          WHERE {_metaTableName}.{PostgreConsts.IsDeleted} = {IsDeleted(isDelete)}
+                          ORDER BY {_keyName}";
+            }
+            else
+            {
+                return $@"SELECT * FROM {_metaTableName}
+                          WHERE {_metaTableName}.{PostgreConsts.Local} = {GetLocal(false)} AND 
+                                {_metaTableName}.{PostgreConsts.IsDeleted} = {IsDeleted(isDelete)}
+                          ORDER BY {_keyName}";
+            }
         }
 
         public NpgsqlCommand ReadWithDeleteAndLocalList(NpgsqlCommand userRead, bool isDelete, List<object> keys)
         {
-            throw new NotImplementedException();
+            NpgsqlCommand result = new NpgsqlCommand();
+
+            result.CommandText = $@"SELECT * FROM ( {userRead.CommandText} ) AS UserScriptResult
+                                    INNER JOIN {_metaTableName} ON UserScriptResult.{_userKeyName} = {_metaTableName}.{_keyName}
+                                    WHERE {_metaTableName}.{_keyName} = ANY(@list) AND
+                                          {_metaTableName}.{PostgreConsts.IsDeleted} = {IsDeleted(isDelete)}";
+
+            result.Parameters.Add("@list", NpgsqlDbType.Array | _keyType).Value = keys.ToArray();
+            return result;
         }
 
         public NpgsqlCommand ReadWithDelete(NpgsqlCommand userRead, bool isDelete, object key)
         {
             var result = new NpgsqlCommand();
             result.CommandText = $@"SELECT * FROM ( {userRead.CommandText} ) AS UserScriptResult
-                                             INNER JOIN {_metaTableName} ON UserScriptResult.{_userKeyName} = {_metaTableName}.{_keyName}
-                                             WHERE {_metaTableName}.{_keyName} = @{_keyName} AND {_metaTableName}.{PostgreConsts.IsDeleted} = {IsDeleted(isDelete)}";
+                                    INNER JOIN {_metaTableName} ON UserScriptResult.{_userKeyName} = {_metaTableName}.{_keyName}
+                                    WHERE {_metaTableName}.{_keyName} = @{_keyName} AND 
+                                          {_metaTableName}.{PostgreConsts.IsDeleted} = {IsDeleted(isDelete)}";
 
 
             return SetKeytoCommand(result, key);
@@ -222,40 +242,95 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public NpgsqlCommand ReadWithDeleteAndLocal(NpgsqlCommand userRead, bool isDelete, bool local)
         {
-            if (local)
-                return new NpgsqlCommand(string.Format("select * from ( {0} ) as MetaHelpTable " +
-                                                       " inner join {1} on MetaHelpTable.{5} = {1}.{2}" +
-                                                       " where {1}.{4} = {3}" +
-                                                       " order by {2}",
-                    userRead.CommandText, _metaTableName, _keyName, IsDeleted(isDelete), PostgreConsts.IsDeleted,
-                    _userKeyName));
+            NpgsqlCommand result = new NpgsqlCommand();
 
-            return new NpgsqlCommand(string.Format("select * from ( {0} ) as MetaHelpTable " +
-                                                   " inner join {1} on MetaHelpTable.{7} = {1}.{2}" +
-                                                   " where {1}.{5} = {4} and {1}.{6} = {3}" +
-                                                   " order by {2}",
-                userRead.CommandText, _metaTableName, _keyName, IsDeleted(isDelete), GetLocal(false),
-                PostgreConsts.Local, PostgreConsts.IsDeleted, _userKeyName));
+            if (local)
+            {
+                result.CommandText = $@"SELECT * FROM ( {userRead.CommandText} ) AS UserScriptResult
+                                        INNER JOIN {_metaTableName} ON UserScriptResult.{_userKeyName} = {_metaTableName}.{_keyName}
+                                        WHERE {_metaTableName}.{PostgreConsts.IsDeleted} = {IsDeleted(isDelete)}
+                                        ORDER BY {_keyName}";
+            }
+            else
+            {
+                result.CommandText = $@"SELECT * FROM ( {userRead.CommandText} ) AS UserScriptResult
+                                        INNER JOIN {_metaTableName} ON UserScriptResult.{_userKeyName} = {_metaTableName}.{_keyName}
+                                        WHERE {_metaTableName}.{PostgreConsts.IsDeleted} = {IsDeleted(isDelete)} AND
+                                              {_metaTableName}.{PostgreConsts.Local} = {GetLocal(false)}
+                                        ORDER BY {_keyName}";
+            }
+
+            return result;
         }
 
+
+        // TODO
+        private NpgsqlCommand CreateSelectCommandInner(string script, FieldDescription idDescription,
+            List<FieldDescription> userParameters, bool useUserScript = false)
+        {
+            var command = new NpgsqlCommand(script);
+            var name = idDescription.FieldName == _keyName ? _userKeyName : idDescription.FieldName;
+
+            if (!useUserScript || !idDescription.IsFirstAsk)
+            {
+                var dbtype = _handler.GetFieldsDescription().Find(x => x.Item1.ToLower() == name.ToLower());
+                command.Parameters.Add("@" + idDescription.FieldName, dbtype.Item3);
+                command.Parameters["@" + idDescription.FieldName].Value = idDescription.Value;
+            }
+
+            foreach (var parameter in userParameters)
+            {
+                if (parameter.UserType >= 0 && parameter.UserType <= 34 &&
+                    (idDescription.IsFirstAsk || parameter.FieldName.ToLower() != idDescription.FieldName.ToLower()))
+                {
+                    command.Parameters.Add("@" + parameter.FieldName, (NpgsqlDbType)parameter.UserType);
+                    command.Parameters["@" + parameter.FieldName].Value = parameter.Value;
+                }
+            }
+
+            return command;
+        }
+
+        // TODO
         public NpgsqlCommand CreateSelectCommand(string script, FieldDescription idDescription, List<FieldDescription> userParameters)
         {
-            throw new NotImplementedException();
+            //string nquery = _scriptParser.CreateOrderScript(script, idDescription);
+            string nquery = script;
+            return CreateSelectCommandInner(nquery, idDescription, userParameters);
         }
 
         public NpgsqlCommand CreateSelectCommand(SelectDescription description)
         {
-            throw new NotImplementedException();
+            if (!description.UseUserScript)
+                return CreateSelectCommand(description.Script, description.IdDescription, description.UserParametrs);
+
+            return CreateSelectCommandInner(description.Script, description.IdDescription, description.UserParametrs, true);
         }
 
         public NpgsqlCommand CreateSelectCommand(NpgsqlCommand script, FieldDescription idDescription, List<FieldDescription> userParameters)
         {
-            throw new NotImplementedException();
+            return CreateSelectCommand(script.CommandText, idDescription, userParameters);
         }
 
         public List<Tuple<object, string>> SelectProcess(DbReader<NpgsqlDataReader> reader)
         {
-            throw new NotImplementedException();
+            var fields = new List<Tuple<object, string>>();
+
+            for (int i = 0; i < reader.CountFields(); i++)
+            {
+                var name = reader.Reader.GetName(i);
+                int lastPointIndex = name.LastIndexOf('.');
+                if (lastPointIndex >= 0)
+                    name = name.Substring(lastPointIndex + 1);
+
+                var value = reader.GetValue(i);
+                if (value is DBNull) value = null;
+
+
+                fields.Add(new Tuple<object, string>(value, name));
+            }
+
+            return fields;
         }
 
         public Dictionary<string, Type> GetFieldsDescription()

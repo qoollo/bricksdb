@@ -12,6 +12,7 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Postgre;
 using Qoollo.Tests.Support;
+using System.Linq;
 
 namespace Qoollo.Tests
 {
@@ -89,12 +90,21 @@ namespace Qoollo.Tests
             writer.SetServer(0, "localhost", 157, 157);
             writer.Save();
         }
+        private static HashWriter CreateHashFileForTwoWriters(string testName)
+        {
+            var writer = new HashWriter(new HashMapConfiguration(testName, HashMapCreationMode.CreateNew, 2, 1, HashFileType.Writer));
+            writer.CreateMap();
+            writer.SetServer(0, "localhost", 157, 157);
+            writer.SetServer(1, "localhost", 158, 158);
+            writer.Save();
+            return writer;
+        }
 
-        private static TestWriterGate CreatePostgreWriter(string testName)
+        private static TestWriterGate CreatePostgreWriter(string testName, int id = 0)
         {
             var writer = new TestWriterGate();
-            writer.Build(157, testName, 1);
-    
+            writer.Build(157 + id, testName, 1);
+
             writer.Db.AddDbModule(new PostgreDbFactory<int, StoredData>(_storedDataProvider,
                 new PostgreStoredDataCommandCreator(), new PostgreConnectionParams(ConnectionString, 1, 1), false)
                 .Build());
@@ -147,11 +157,11 @@ namespace Qoollo.Tests
         private static InnerData ReadRequest(int key, ServerId distributorServerId = null)
         {
             return new InnerData(new Transaction(_storedDataProvider.CalculateHashFromKey(key), "")
-            { 
+            {
                 OperationName = OperationName.Read,
                 TableName = TableName,
             })
-            { 
+            {
                 Data = null,
                 Key = CommonDataSerializer.Serialize(key),
                 Transaction = { Distributor = distributorServerId ?? CreateUniqueServerId() }
@@ -302,6 +312,59 @@ namespace Qoollo.Tests
                 }
 
                 writer.Dispose();
+            }
+        }
+
+
+        [TestMethod]
+        public void Postgre_Restore_Stuff_Test()
+        {
+            CreateHashFileForTwoWriters(nameof(Postgre_Restore_Stuff_Test));
+            //var writer1 = CreatePostgreWriter(nameof(Postgre_Restore_Stuff_Test), 0);
+            var writer2 = CreatePostgreWriter(nameof(Postgre_Restore_Stuff_Test), 1);
+            TestProxy.TestNetDistributorForProxy distrib;
+            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            {
+                writer2.Start();
+
+                for (int i = 1; i < 100; i++)
+                {
+                    var data = new StoredData(i);
+                    var createRequest = CreateRequest(data);
+                    var result = writer2.Input.ProcessSync(createRequest);
+                    Assert.IsFalse(result.IsError);
+                }
+
+                List<int> idsToRestore = new List<int>();
+                using (var connection = new Npgsql.NpgsqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    using (var cmd = connection.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT Meta_Id FROM metatable_teststored WHERE meta_local = 1";
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                                idsToRestore.Add(reader.GetInt32(0));
+                        }
+                    }
+                }
+
+                List<InnerData> readedForRestore = new List<InnerData>(); 
+                Action<List<InnerData>> procesor = data =>
+                    {
+                        lock (readedForRestore)
+                            readedForRestore.AddRange(data);
+                    };
+
+                var restoreResult = writer2.Db.GetDbModules[1].AsyncProcess(
+                    new Impl.Writer.Db.RestoreDataContainer(false, false, 100, procesor, meta => true, true));
+
+                Assert.IsTrue(!restoreResult.IsError || restoreResult.Description == "");
+                Assert.AreEqual(idsToRestore.Count, readedForRestore.Count);
+                Assert.IsTrue(readedForRestore.Select(o => CommonDataSerializer.Deserialize<int>(o.Key)).All(o => idsToRestore.Contains(o)));
+
+                writer2.Dispose();
             }
         }
     }

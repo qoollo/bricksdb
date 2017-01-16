@@ -5,7 +5,7 @@ namespace Qoollo.Impl.Common.Data.DataTypes
 {    
     public class MetaData
     {
-        public MetaData(bool isLocal, DateTime deleteTime, bool isDeleted, string hash)
+        public MetaData(bool isLocal, DateTime? deleteTime, bool isDeleted, string hash)
         {
             IsDeleted = isDeleted;
             DeleteTime = deleteTime;
@@ -21,7 +21,7 @@ namespace Qoollo.Impl.Common.Data.DataTypes
         public object Value { get; set; }
         public bool IsLocal { get; private set; }
 
-        public DateTime DeleteTime { get; private set; }
+        public DateTime? DeleteTime { get; private set; }
         
         public bool IsDeleted { get; private set; }
         

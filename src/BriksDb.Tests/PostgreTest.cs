@@ -317,11 +317,63 @@ namespace Qoollo.Tests
 
 
         [TestMethod]
-        public void Postgre_Restore_Stuff_Test()
+        public void Postgre_Restore_Single_Test()
         {
-            CreateHashFileForTwoWriters(nameof(Postgre_Restore_Stuff_Test));
-            //var writer1 = CreatePostgreWriter(nameof(Postgre_Restore_Stuff_Test), 0);
-            var writer2 = CreatePostgreWriter(nameof(Postgre_Restore_Stuff_Test), 1);
+            CreateHashFileForTwoWriters(nameof(Postgre_Restore_Single_Test));
+            //var writer1 = CreatePostgreWriter(nameof(Postgre_Restore_Single_Test), 0);
+            var writer2 = CreatePostgreWriter(nameof(Postgre_Restore_Single_Test), 1);
+            TestProxy.TestNetDistributorForProxy distrib;
+            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            {
+                writer2.Start();
+
+                for (int i = 1; i < 100; i++)
+                {
+                    var data = new StoredData(i);
+                    var createRequest = CreateRequest(data);
+                    var result = writer2.Input.ProcessSync(createRequest);
+                    Assert.IsFalse(result.IsError);
+                }
+
+                List<int> idsToRestore = new List<int>();
+                using (var connection = new Npgsql.NpgsqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    using (var cmd = connection.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT Meta_Id FROM metatable_teststored WHERE meta_local = 1";
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                                idsToRestore.Add(reader.GetInt32(0));
+                        }
+                    }
+                }
+
+                List<InnerData> readedForRestore = new List<InnerData>();
+                Action<InnerData> procesor = data =>
+                {
+                    lock (readedForRestore)
+                        readedForRestore.Add(data);
+                };
+
+                var restoreResult = writer2.Db.GetDbModules[1].AsyncProcess(
+                    new Impl.Writer.Db.RestoreDataContainer(false, false, 100, procesor, meta => true, usePackage: false));
+
+                Assert.IsTrue(!restoreResult.IsError || restoreResult.Description == "");
+                Assert.AreEqual(idsToRestore.Count, readedForRestore.Count);
+                Assert.IsTrue(readedForRestore.Select(o => CommonDataSerializer.Deserialize<int>(o.Key)).All(o => idsToRestore.Contains(o)));
+
+                writer2.Dispose();
+            }
+        }
+
+        [TestMethod]
+        public void Postgre_Restore_Package_Test()
+        {
+            CreateHashFileForTwoWriters(nameof(Postgre_Restore_Package_Test));
+            //var writer1 = CreatePostgreWriter(nameof(Postgre_Restore_Package_Test), 0);
+            var writer2 = CreatePostgreWriter(nameof(Postgre_Restore_Package_Test), 1);
             TestProxy.TestNetDistributorForProxy distrib;
             using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
             {
@@ -358,7 +410,7 @@ namespace Qoollo.Tests
                     };
 
                 var restoreResult = writer2.Db.GetDbModules[1].AsyncProcess(
-                    new Impl.Writer.Db.RestoreDataContainer(false, false, 100, procesor, meta => true, true));
+                    new Impl.Writer.Db.RestoreDataContainer(false, false, 100, procesor, meta => true, usePackage: true));
 
                 Assert.IsTrue(!restoreResult.IsError || restoreResult.Description == "");
                 Assert.AreEqual(idsToRestore.Count, readedForRestore.Count);

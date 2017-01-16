@@ -71,7 +71,7 @@ namespace Qoollo.Impl.Postgre.Internal
             var result = new NpgsqlCommand();
             result.CommandText = $@"CREATE TABLE {_metaTableName} 
                                     (
-                                        {idInit} PRIMARY KEY NOT NULL,
+                                        {_keyName} PRIMARY KEY NOT NULL,
                                         {PostgreConsts.Local} INTEGER NOT NULL,
                                         {PostgreConsts.IsDeleted} INTEGER NOT NULL,
                                         {PostgreConsts.DeleteTime} TIMESTAMP,

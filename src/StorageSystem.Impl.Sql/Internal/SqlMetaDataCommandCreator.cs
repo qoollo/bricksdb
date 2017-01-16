@@ -74,7 +74,7 @@ namespace Qoollo.Impl.Sql.Internal
                                                 "[{2}] ASC " +
                                                 " )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF," +
                                                 " ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY] "
-                , idInit, _metaTableName, SqlConsts.Local, SqlConsts.IsDeleted, SqlConsts.DeleteTime, SqlConsts.Hash));
+                , _keyName, _metaTableName, SqlConsts.Local, SqlConsts.IsDeleted, SqlConsts.DeleteTime, SqlConsts.Hash));
         }
 
         public SqlCommand CreateMetaData(bool remote, string dataHash, object key)

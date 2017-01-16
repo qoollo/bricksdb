@@ -18,12 +18,14 @@ namespace Qoollo.Impl.Postgre.Internal
         private string _metaTableName = "MetaTable";
 
         private NpgsqlDbType _keyType;
+        private readonly PostgreScriptParser _scriptParser;
 
         private readonly UserCommandsHandler<NpgsqlCommand, NpgsqlDbType, NpgsqlConnection, TKey, TValue, NpgsqlDataReader> _handler;
 
         public PostgreMetaDataCommandCreator(
             IUserCommandCreator<NpgsqlCommand, NpgsqlConnection, TKey, TValue, NpgsqlDataReader> userCommandCreator)
         {
+            _scriptParser = new PostgreScriptParser();
             _handler =
                 new UserCommandsHandler<NpgsqlCommand, NpgsqlDbType, NpgsqlConnection, TKey, TValue, NpgsqlDataReader>(
                     userCommandCreator, this);
@@ -294,8 +296,8 @@ namespace Qoollo.Impl.Postgre.Internal
         // TODO
         public NpgsqlCommand CreateSelectCommand(string script, FieldDescription idDescription, List<FieldDescription> userParameters)
         {
-            //string nquery = _scriptParser.CreateOrderScript(script, idDescription);
-            string nquery = script;
+            string nquery = _scriptParser.CreateOrderScript(script, idDescription);
+
             return CreateSelectCommandInner(nquery, idDescription, userParameters);
         }
 

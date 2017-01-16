@@ -60,6 +60,7 @@
     <Compile Include="Internal\PostgreReader.cs" />
     <Compile Include="Internal\PostgreUserCommandCreatorInner.cs" />
     <Compile Include="Internal\PostgreConsts.cs" />
+    <Compile Include="Internal\PostgreScriptParser.cs" />
     <Compile Include="PostgreConnectionParams.cs" />
     <Compile Include="Internal\PostgreDbModule.cs" />
     <Compile Include="PostgreDbFactory.cs" />

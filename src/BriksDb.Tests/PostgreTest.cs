@@ -116,6 +116,34 @@ namespace Qoollo.Tests
             };
         }
 
+        private static InnerData UpdateRequest(StoredData data, ServerId distributorServerId = null)
+        {
+            return new InnerData(new Transaction(_storedDataProvider.CalculateHashFromKey(data.Id), "")
+            {
+                OperationName = OperationName.Update,
+                TableName = TableName
+            })
+            {
+                Data = CommonDataSerializer.Serialize(data),
+                Key = CommonDataSerializer.Serialize(data.Id),
+                Transaction = { Distributor = distributorServerId ?? CreateUniqueServerId() }
+            };
+        }
+
+        private static InnerData DeleteRequest(int id, ServerId distributorServerId = null)
+        {
+            return new InnerData(new Transaction(_storedDataProvider.CalculateHashFromKey(id), "")
+            {
+                OperationName = OperationName.Delete,
+                TableName = TableName
+            })
+            {
+                Data = null,
+                Key = CommonDataSerializer.Serialize(id),
+                Transaction = { Distributor = distributorServerId ?? CreateUniqueServerId() }
+            };
+        }
+
         private static InnerData ReadRequest(int key, ServerId distributorServerId = null)
         {
             return new InnerData(new Transaction(_storedDataProvider.CalculateHashFromKey(key), "")
@@ -137,7 +165,7 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_Create_Read_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_Create_Read_Test));
-            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            //TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
 
             writer.Start();
 
@@ -154,6 +182,127 @@ namespace Qoollo.Tests
             Assert.AreEqual(data.Id, CommonDataSerializer.Deserialize<StoredData>(resultRead.Data).Id);
 
             writer.Dispose();
+        }
+
+        [TestMethod]
+        public void Postgre_Create_Update_Read_Test()
+        {
+            CreateHashFileForSingleWriter(nameof(Postgre_Create_Update_Read_Test));
+            var writer = CreatePostgreWriter(nameof(Postgre_Create_Update_Read_Test));
+            //TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+
+            writer.Start();
+
+            var data = new StoredData(1);
+            var createRequest = CreateRequest(data);
+            var result = writer.Input.ProcessSync(createRequest);
+            Assert.IsFalse(result.IsError);
+
+            var updateData = new StoredData(1);
+            var updateRequest = UpdateRequest(updateData);
+            var updateResult = writer.Input.ProcessSync(updateRequest);
+            Assert.IsFalse(updateResult.IsError);
+
+            var readRequest = ReadRequest(data.Id);
+            var resultRead = writer.Input.ReadOperation(readRequest);
+            Assert.IsFalse(resultRead.Transaction.IsError);
+            Assert.IsNotNull(resultRead.Data);
+            Assert.AreEqual(data.Id, CommonDataSerializer.Deserialize<StoredData>(resultRead.Data).Id);
+
+            writer.Dispose();
+        }
+
+        [TestMethod]
+        public void Postgre_Create_Delete_Test()
+        {
+            CreateHashFileForSingleWriter(nameof(Postgre_Create_Delete_Test));
+            var writer = CreatePostgreWriter(nameof(Postgre_Create_Delete_Test));
+            //TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+
+            writer.Start();
+
+            var data = new StoredData(1);
+            var createRequest = CreateRequest(data);
+            var result = writer.Input.ProcessSync(createRequest);
+            Assert.IsFalse(result.IsError);
+
+            var deleteRequest = DeleteRequest(data.Id);
+            var deleteResult = writer.Input.ProcessSync(deleteRequest);
+            Assert.IsFalse(deleteResult.IsError);
+
+            var readRequest = ReadRequest(data.Id);
+            var resultRead = writer.Input.ReadOperation(readRequest);
+            Assert.IsFalse(resultRead.Transaction.IsError);
+            Assert.IsNull(resultRead.Data);
+
+            var deleteRequest2 = DeleteRequest(data.Id);
+            var deleteResult2 = writer.Db.DeleteFull(deleteRequest);
+            Assert.IsFalse(deleteResult2.IsError);
+
+            var readRequest2 = ReadRequest(data.Id);
+            var resultRead2 = writer.Input.ReadOperation(readRequest);
+            Assert.IsFalse(resultRead2.Transaction.IsError);
+            Assert.IsNull(resultRead2.Data);
+
+            writer.Dispose();
+        }
+
+
+        [TestMethod]
+        public void Postgre_CRUD_Multiple_Test()
+        {
+            CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
+            var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
+            TestProxy.TestNetDistributorForProxy distrib;
+            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            {
+                writer.Start();
+
+                for (int i = 1; i < 100; i++)
+                {
+                    var data = new StoredData(i);
+                    var createRequest = CreateRequest(data);
+                    var result = writer.Input.ProcessSync(createRequest);
+                    Assert.IsFalse(result.IsError);
+                }
+
+                for (int i = 99; i >= 1; i--)
+                {
+                    var readRequest = ReadRequest(i);
+                    var resultRead = writer.Input.ReadOperation(readRequest);
+                    Assert.IsFalse(resultRead.Transaction.IsError);
+                    Assert.IsNotNull(resultRead.Data);
+                    Assert.AreEqual(i, CommonDataSerializer.Deserialize<StoredData>(resultRead.Data).Id);
+                }
+
+                for (int i = 1; i < 100; i++)
+                {
+                    var updateData = new StoredData(i);
+                    var updateRequest = UpdateRequest(updateData);
+                    var updateResult = writer.Input.ProcessSync(updateRequest);
+                    Assert.IsFalse(updateResult.IsError);
+                }
+
+                for (int i = 1; i < 100; i += 2)
+                {
+                    var deleteRequest = DeleteRequest(i);
+                    var deleteResult = writer.Input.ProcessSync(deleteRequest);
+                    Assert.IsFalse(deleteResult.IsError);
+                }
+
+                for (int i = 1; i < 100; i++)
+                {
+                    var readRequest = ReadRequest(i);
+                    var resultRead = writer.Input.ReadOperation(readRequest);
+                    Assert.IsFalse(resultRead.Transaction.IsError);
+                    if ((i % 2) == 1)
+                        Assert.IsNull(resultRead.Data);
+                    else
+                        Assert.IsNotNull(resultRead.Data);
+                }
+
+                writer.Dispose();
+            }
         }
     }
 }

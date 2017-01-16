@@ -144,7 +144,7 @@ namespace Qoollo.Impl.Postgre.Internal
             return SetKeytoCommand(result, key);
         }
 
-        //TODO
+
         public Tuple<MetaData, bool> ReadMetaDataFromReader(DbReader<NpgsqlDataReader> reader, bool readuserId = true)
         {
             object local = reader.GetValue(PostgreConsts.Local);
@@ -154,11 +154,11 @@ namespace Qoollo.Impl.Postgre.Internal
 
             MetaData meta = null;
 
-            if (!(local is DBNull || isDeleted is DBNull || deleteTime is DBNull))
+            if (!(local is DBNull || isDeleted is DBNull))
             {
                 bool l = GetLocalBack((int)local);
                 bool i = GetLocalBack((int)isDeleted);
-                var t = (DateTime)deleteTime;
+                DateTime? t = deleteTime is DBNull ? (DateTime?)null : (DateTime)deleteTime;
 
                 meta = new MetaData(l, t, i, (string)hash);
             }
@@ -184,11 +184,11 @@ namespace Qoollo.Impl.Postgre.Internal
 
             MetaData meta = null;
 
-            if (!(local is DBNull || isDeleted is DBNull || deleteTime is DBNull))
+            if (!(local is DBNull || isDeleted is DBNull))
             {
                 bool l = GetLocalBack((int)local);
                 bool i = GetLocalBack((int)isDeleted);
-                var t = (DateTime)deleteTime;
+                DateTime? t = deleteTime is DBNull ? (DateTime?)null : (DateTime)deleteTime;
 
                 meta = new MetaData(l, t, i, (string)hash)
                 {

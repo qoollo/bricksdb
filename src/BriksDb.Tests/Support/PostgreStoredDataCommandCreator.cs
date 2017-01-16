@@ -75,8 +75,8 @@ namespace Qoollo.Tests.Support
 
         public override StoredData ReadObjectFromReader(NpgsqlDataReader reader, out int key)
         {
-            key = 1;
-            return new StoredData(1);
+            key = reader.GetInt32(reader.GetOrdinal("Id"));
+            return new StoredData(key);
         }
     }
 }

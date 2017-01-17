@@ -17,5 +17,7 @@
         public static string IsDeleted = "Meta_IsDeleted";
         public static string DeleteTime = "Meta_DeleteTime";
         public static string Hash = "Meta_Hash";
+
+        public static readonly string OrderByRegEx = @"(?<=\W)(ORDER\s+BY)\s+(.+?(?=\sASC|\sDESC|\sLIMIT|$))(?:\s+(ASC|DESC))?(?=$|\s)";
     }
 }

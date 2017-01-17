@@ -10,23 +10,146 @@ namespace Qoollo.Impl.Postgre.Internal
 {
     internal class PostgreScriptParser : ScriptParser
     {
+        #region ============ Common helpers ===========
+        internal static int IndexOfWholePhrase(string str, string word, int startIndex = 0, bool ignoreCase = true)
+        {
+            if (startIndex < 0)
+                startIndex = 0;
+
+            if (word.IndexOf(' ') > 0)
+            {
+                // use regexp for spaces
+                string input = startIndex <= 0 ? str : str.Substring(startIndex);
+                string pattern = @"(?:^|\W)" + word.Replace(" ", @"\s+") + @"(?:$|\W)";
+                RegexOptions options = ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None;
+
+                var match = Regex.Match(input, pattern, options);
+                if (!match.Success)
+                    return -1;
+                if (match.Index == 0)
+                    return startIndex;
+                return match.Index + startIndex + 1;
+            }
+            else
+            {
+                StringComparison comparsionType = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
+                int index = startIndex - 1;
+                while (true)
+                {
+                    index = str.IndexOf(word, index + 1, comparsionType);
+                    if (index < 0)
+                        return -1;
+
+                    if (index == 0 || !char.IsLetterOrDigit(str[index - 1]))
+                        if (index + word.Length >= str.Length || !char.IsLetterOrDigit(str[index + word.Length]))
+                            return index;
+                }
+            }
+        }
+
+        internal static int LastIndexOfWholePhrase(string str, string word, int startIndex = -1, bool ignoreCase = true)
+        {
+            if (startIndex < 0)
+                startIndex = str.Length - 1;
+
+            if (word.IndexOf(' ') > 0)
+            {
+                // use regexp for spaces
+                string input = startIndex >= str.Length - 1 ? str : str.Substring(0, startIndex + 1);
+                string pattern = @"(?:^|\W)" + word.Replace(" ", @"\s+") + @"(?:$|\W)";
+                RegexOptions options = ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None;
+                options |= RegexOptions.RightToLeft;
+                var match = Regex.Match(input, pattern, options);
+                if (!match.Success)
+                    return -1;
+                if (match.Index == 0)
+                    return 0;
+                return match.Index + 1;
+            }
+            else
+            {
+                StringComparison comparsionType = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
+                int index = startIndex + 1;
+                while (true)
+                {
+                    index = str.LastIndexOf(word, index - 1, comparsionType);
+                    if (index < 0)
+                        return -1;
+
+                    if (index == 0 || !char.IsLetterOrDigit(str[index - 1]))
+                        if (index + word.Length >= str.Length || !char.IsLetterOrDigit(str[index + word.Length]))
+                            return index;
+                }
+            }
+        }
+        #endregion
+
+        #region ========= ORDER BY helpers =============
+
+        internal class OrderByInfo
+        {
+            public static OrderByInfo Create(string script)
+            {
+                OrderByInfo result = new OrderByInfo() { Script = script };
+                var match = Regex.Match(script, PostgreConsts.OrderByRegEx, RegexOptions.IgnoreCase);
+                if (!match.Success)
+                    return result;
+
+                // Look for last match
+                while (true)
+                {
+                    var nextMatch = match.NextMatch();
+                    if (nextMatch == null || !nextMatch.Success)
+                        break;
+                    match = nextMatch;
+                }
+
+                // Order by should be after FROM
+                int indexOfFrom = script.IndexOf(PostgreConsts.From, StringComparison.OrdinalIgnoreCase);
+                if (indexOfFrom >= 0 && match.Index < indexOfFrom)
+                    return result;
+
+                result.OrderByStart = match.Groups[0].Index;
+                result.OrderByLength = match.Groups[0].Length;
+                result.OrderKeysStart = match.Groups[2].Index;
+                result.OrderKeysLength = match.Groups[2].Length;
+                result.OrderType = ScriptType.OrderAsc;
+                if (match.Groups[3].Success)
+                    if (string.Equals(match.Groups[3].Value, PostgreConsts.Desc, StringComparison.OrdinalIgnoreCase))
+                        result.OrderType = ScriptType.OrderDesc;
+
+                return result;
+            }
+
+            public string Script { get; private set; }
+            public int OrderByStart { get; private set; }
+            public int OrderByLength { get; private set; }
+            public ScriptType OrderType { get; private set; }
+            public bool IsOrdered { get { return OrderType != ScriptType.Unknown; } }
+            public int OrderKeysStart { get; private set; }
+            public int OrderKeysLength { get; private set; }
+
+            public string OrderByClause => IsOrdered ? Script.Substring(OrderByStart, OrderByLength) : null;
+            public string KeysSubstring => IsOrdered ? Script.Substring(OrderKeysStart, OrderKeysLength) : null;
+        }
+
+
+        private static OrderByInfo GetOrderByInfo(string script)
+        {
+            return OrderByInfo.Create(script);
+        }
+
+
+        #endregion
+
         #region Public
 
         public override ScriptType ParseQueryType(string script)
         {
-            throw new NotImplementedException();
-            //var query = script.ToLower();
-
-            //if (query.Contains(SqlConsts.OrderBy))
-            //{
-            //    if (query.Contains(SqlConsts.Asc))
-            //        return ScriptType.OrderAsc;
-            //    if (query.Contains(SqlConsts.Desc))
-            //        return ScriptType.OrderDesc;
-
-            //    return ScriptType.OrderAsc;
-            //}
-            //return ScriptType.Unknown;
+            var orderByInfo = GetOrderByInfo(script);
+            return orderByInfo.OrderType;
         }
 
         public override Tuple<FieldDescription, string> PrepareOrderScript(string script, int pageSize, IUserCommandsHandler handler)

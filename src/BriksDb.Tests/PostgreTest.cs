@@ -402,7 +402,7 @@ namespace Qoollo.Tests
                     }
                 }
 
-                List<InnerData> readedForRestore = new List<InnerData>(); 
+                List<InnerData> readedForRestore = new List<InnerData>();
                 Action<List<InnerData>> procesor = data =>
                     {
                         lock (readedForRestore)
@@ -418,6 +418,102 @@ namespace Qoollo.Tests
 
                 writer2.Dispose();
             }
+        }
+
+
+        [TestMethod]
+        public void Postgre_IndexOfPhrase_Test()
+        {
+            int index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("SOMEWHERE WHERE a > 10", "where");
+            Assert.IsTrue(index == 10);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("WHERE WHERE a > 10", "where", 1);
+            Assert.IsTrue(index == 6);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("WHERE WHERE a > 10", "where");
+            Assert.IsTrue(index == 0);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("ONWHERE FarWHERE a > 10 Where", "where");
+            Assert.IsTrue(index > 10);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("SORDER BY Order By Morder", "order by");
+            Assert.IsTrue(index == 10);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("ORDER BY Order By Morder", "order by", 1);
+            Assert.IsTrue(index == 9);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("Order By Order By", "order by");
+            Assert.IsTrue(index == 0);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("Order By Morder", "order by");
+            Assert.IsTrue(index == 0);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("SORDER BY MORDER BYS Order    By", "order by");
+            Assert.IsTrue(index == 21);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase(@"1ORDER BY Order   
+                                                                                    By", "order by");
+            Assert.IsTrue(index == 10);
+
+
+            // ==============
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("SOMEWHERE WHERE a > 10 SOMEWHERE", "where");
+            Assert.IsTrue(index == 10);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("WHERE WHERE a > 10", "where", 9);
+            Assert.IsTrue(index == 0);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("WHERE WHERE a > 10", "where");
+            Assert.IsTrue(index == 6);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("Where a > 10 FarWHERE ONWHERE", "where");
+            Assert.IsTrue(index == 0);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("SORDER BY Order By Morder", "order by");
+            Assert.IsTrue(index == 10);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("ORDER BY Order By Morder", "order by", 12);
+            Assert.IsTrue(index == 0);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("Order By Order By", "order by");
+            Assert.IsTrue(index == 9);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("Morder Order By", "order by");
+            Assert.IsTrue(index == 7);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("Order    By SORDER BY MORDER BYS ", "order by");
+            Assert.IsTrue(index == 0);
+
+            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase(@"1ORDER BY Order   
+                                                                                    By", "order by");
+            Assert.IsTrue(index == 10);
+        }
+
+        [TestMethod]
+        public void Postgre_OrderByDetection_Test()
+        {
+            var info = Impl.Postgre.Internal.PostgreScriptParser.OrderByInfo.Create("SELECT * FROM Table ORDER BY Id DESC ");
+            Assert.IsTrue(info.IsOrdered);
+            Assert.IsTrue(info.OrderType == ScriptType.OrderDesc);
+            Assert.AreEqual("ORDER BY Id DESC", info.OrderByClause);
+
+            info = Impl.Postgre.Internal.PostgreScriptParser.OrderByInfo.Create("SELECT * FROM Table ORDER BY Id");
+            Assert.IsTrue(info.IsOrdered);
+            Assert.IsTrue(info.OrderType == ScriptType.OrderAsc);
+
+            info = Impl.Postgre.Internal.PostgreScriptParser.OrderByInfo.Create("SELECT * FROM Table ORDER BY dasc");
+            Assert.IsTrue(info.IsOrdered);
+            Assert.IsTrue(info.OrderType == ScriptType.OrderAsc);
+
+            info = Impl.Postgre.Internal.PostgreScriptParser.OrderByInfo.Create("SELECT * FROM Table ORDER BY Id, Str ASC LIMIT 100");
+            Assert.IsTrue(info.IsOrdered);
+            Assert.IsTrue(info.OrderType == ScriptType.OrderAsc);
+
+            info = Impl.Postgre.Internal.PostgreScriptParser.OrderByInfo.Create("SELECT Id, (SELECT TOP 1 Str FROM BB ORDER BY Id2 ASC) AS Ololo FROM Table ORDER BY Id DESC");
+            Assert.IsTrue(info.IsOrdered);
+            Assert.IsTrue(info.OrderType == ScriptType.OrderDesc);
+            Assert.AreEqual("ORDER BY Id DESC", info.OrderByClause);
         }
     }
 }

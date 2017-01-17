@@ -70,6 +70,11 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public NpgsqlCommand InitMetaDataDb(string idInit)
         {
+            idInit = idInit.TrimStart();
+            int indexOfSpace = idInit.IndexOf(' ');
+            if (indexOfSpace > 0)
+                idInit = _keyName + idInit.Substring(indexOfSpace);
+
             var result = new NpgsqlCommand();
             result.CommandText = $@"CREATE TABLE {_metaTableName} 
                                     (

@@ -705,7 +705,8 @@ namespace Qoollo.Impl.Postgre.Internal
             public string Format()
             {
                 StringBuilder builder = new StringBuilder(100);
-                builder.Append(PreSelectPart.ToString()).AppendLine(" ");
+                if (PreSelectPart.TokenCount > 0)
+                    builder.Append(PreSelectPart.ToString()).AppendLine(" ");
                 if (With != null)
                     builder.Append(With.ToString()).AppendLine(" ");
                 builder.Append(Select.ToString()).AppendLine(" ");
@@ -717,7 +718,8 @@ namespace Qoollo.Impl.Postgre.Internal
                     builder.Append(GroupBy.ToString()).AppendLine(" ");
                 if (OrderBy != null)
                     builder.Append(OrderBy.ToString()).AppendLine(" ");
-                builder.Append(PostSelectPart.ToString());
+                if (PostSelectPart.TokenCount > 0)
+                    builder.Append(PostSelectPart.ToString());
 
                 return builder.ToString();
             }

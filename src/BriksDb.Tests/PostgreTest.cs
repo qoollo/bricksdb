@@ -515,5 +515,29 @@ namespace Qoollo.Tests
             Assert.IsTrue(info.OrderType == ScriptType.OrderDesc);
             Assert.AreEqual("ORDER BY Id DESC", info.OrderByClause);
         }
+
+        [TestMethod]
+        public void Postgre_Lexer_Test()
+        {
+            var parseRes = Impl.Postgre.Internal.PostgreScriptParser.TokenizedScript.Parse(
+                "SELECT Id FROM A a JOIN b b ON a.Id=b.Id WHERE Id > 10 AND Id > '1''1' ORDER  BY Id DESC");
+
+            Assert.IsNotNull(parseRes);
+            Assert.AreEqual(32, parseRes.Tokens.Count);
+        }
+
+        [TestMethod]
+        public void Postgre_Parser_Test()
+        {
+            var parseRes = Impl.Postgre.Internal.PostgreScriptParser.SelectScript.Parse(
+                @"DECLARE stuff;
+                    WITH Ololo AS (SELECT * FROM Test)
+                    SELECT Id 
+                    FROM A a JOIN b b ON a.Id=b.Id 
+                    WHERE Id > 10 AND Id > '1''1' 
+                    ORDER  BY Id DESC");
+
+            Assert.IsNotNull(parseRes);
+        }
     }
 }

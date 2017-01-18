@@ -490,31 +490,6 @@ namespace Qoollo.Tests
             Assert.IsTrue(index == 10);
         }
 
-        [TestMethod]
-        public void Postgre_OrderByDetection_Test()
-        {
-            var info = Impl.Postgre.Internal.PostgreScriptParser.OrderByInfo.Create("SELECT * FROM Table ORDER BY Id DESC ");
-            Assert.IsTrue(info.IsOrdered);
-            Assert.IsTrue(info.OrderType == ScriptType.OrderDesc);
-            Assert.AreEqual("ORDER BY Id DESC", info.OrderByClause);
-
-            info = Impl.Postgre.Internal.PostgreScriptParser.OrderByInfo.Create("SELECT * FROM Table ORDER BY Id");
-            Assert.IsTrue(info.IsOrdered);
-            Assert.IsTrue(info.OrderType == ScriptType.OrderAsc);
-
-            info = Impl.Postgre.Internal.PostgreScriptParser.OrderByInfo.Create("SELECT * FROM Table ORDER BY dasc");
-            Assert.IsTrue(info.IsOrdered);
-            Assert.IsTrue(info.OrderType == ScriptType.OrderAsc);
-
-            info = Impl.Postgre.Internal.PostgreScriptParser.OrderByInfo.Create("SELECT * FROM Table ORDER BY Id, Str ASC LIMIT 100");
-            Assert.IsTrue(info.IsOrdered);
-            Assert.IsTrue(info.OrderType == ScriptType.OrderAsc);
-
-            info = Impl.Postgre.Internal.PostgreScriptParser.OrderByInfo.Create("SELECT Id, (SELECT TOP 1 Str FROM BB ORDER BY Id2 ASC) AS Ololo FROM Table ORDER BY Id DESC");
-            Assert.IsTrue(info.IsOrdered);
-            Assert.IsTrue(info.OrderType == ScriptType.OrderDesc);
-            Assert.AreEqual("ORDER BY Id DESC", info.OrderByClause);
-        }
 
         [TestMethod]
         public void Postgre_Lexer_Test()
@@ -538,6 +513,9 @@ namespace Qoollo.Tests
                     ORDER  BY Id DESC");
 
             Assert.IsNotNull(parseRes);
+
+            var fromatted = parseRes.Format();
+            Assert.IsNotNull(fromatted);
         }
     }
 }

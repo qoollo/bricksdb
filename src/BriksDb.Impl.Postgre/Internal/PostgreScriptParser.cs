@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Support;
+using System.Text;
 
 namespace Qoollo.Impl.Postgre.Internal
 {
@@ -650,68 +651,81 @@ namespace Qoollo.Impl.Postgre.Internal
             public OrderByClause OrderBy { get; private set; }
 
             public TokenizedScriptPart PostSelectPart { get; private set; }
-        }
 
 
-        #endregion
-
-        #region ========= ORDER BY helpers =============
-
-        internal class OrderByInfo
-        {
-            public static OrderByInfo Create(string script)
+            public SelectScript RemovePreAndPostSelectPart()
             {
-                OrderByInfo result = new OrderByInfo() { Script = script };
-                var match = Regex.Match(script, PostgreConsts.OrderByRegEx, RegexOptions.IgnoreCase);
-                if (!match.Success)
-                    return result;
-
-                // Look for last match
-                while (true)
+                return new SelectScript()
                 {
-                    var nextMatch = match.NextMatch();
-                    if (nextMatch == null || !nextMatch.Success)
-                        break;
-                    match = nextMatch;
-                }
-
-                // Order by should be after FROM
-                int indexOfFrom = script.IndexOf(PostgreConsts.From, StringComparison.OrdinalIgnoreCase);
-                if (indexOfFrom >= 0 && match.Index < indexOfFrom)
-                    return result;
-
-                result.OrderByStart = match.Groups[0].Index;
-                result.OrderByLength = match.Groups[0].Length;
-                result.OrderKeysStart = match.Groups[2].Index;
-                result.OrderKeysLength = match.Groups[2].Length;
-                result.OrderType = ScriptType.OrderAsc;
-                if (match.Groups[3].Success)
-                    if (string.Equals(match.Groups[3].Value, PostgreConsts.Desc, StringComparison.OrdinalIgnoreCase))
-                        result.OrderType = ScriptType.OrderDesc;
-
-                return result;
+                    TokenizedScript = this.TokenizedScript,
+                    PreSelectPart = new TokenizedScriptPart(new TokenizedScript(), 0, 0),
+                    With = this.With,
+                    Select = this.Select,
+                    From = this.From,
+                    Where = this.Where,
+                    GroupBy = this.GroupBy,
+                    OrderBy = this.OrderBy,
+                    PostSelectPart = new TokenizedScriptPart(new TokenizedScript(), 0, 0)
+                };
             }
 
-            public string Script { get; private set; }
-            public int OrderByStart { get; private set; }
-            public int OrderByLength { get; private set; }
-            public ScriptType OrderType { get; private set; }
-            public bool IsOrdered { get { return OrderType != ScriptType.Unknown; } }
-            public int OrderKeysStart { get; private set; }
-            public int OrderKeysLength { get; private set; }
+            public SelectScript RemoveWith()
+            {
+                return new SelectScript()
+                {
+                    TokenizedScript = this.TokenizedScript,
+                    PreSelectPart = this.PreSelectPart,
+                    With = null,
+                    Select = this.Select,
+                    From = this.From,
+                    Where = this.Where,
+                    GroupBy = this.GroupBy,
+                    OrderBy = this.OrderBy,
+                    PostSelectPart = this.PostSelectPart
+                };
+            }
 
-            public string OrderByClause => IsOrdered ? Script.Substring(OrderByStart, OrderByLength) : null;
-            public string KeysSubstring => IsOrdered ? Script.Substring(OrderKeysStart, OrderKeysLength) : null;
-        }
+            public SelectScript RemoveOrderBy()
+            {
+                return new SelectScript()
+                {
+                    TokenizedScript = this.TokenizedScript,
+                    PreSelectPart = this.PreSelectPart,
+                    With = this.With,
+                    Select = this.Select,
+                    From = this.From,
+                    Where = this.Where,
+                    GroupBy = this.GroupBy,
+                    OrderBy = null,
+                    PostSelectPart = this.PostSelectPart
+                };
+            }
 
 
-        private static OrderByInfo GetOrderByInfo(string script)
-        {
-            return OrderByInfo.Create(script);
+            public string Format()
+            {
+                StringBuilder builder = new StringBuilder(100);
+                builder.Append(PreSelectPart.ToString()).AppendLine(" ");
+                if (With != null)
+                    builder.Append(With.ToString()).AppendLine(" ");
+                builder.Append(Select.ToString()).AppendLine(" ");
+                if (From != null)
+                    builder.Append(From.ToString()).AppendLine(" ");
+                if (Where != null)
+                    builder.Append(Where.ToString()).AppendLine(" ");
+                if (GroupBy != null)
+                    builder.Append(GroupBy.ToString()).AppendLine(" ");
+                if (OrderBy != null)
+                    builder.Append(OrderBy.ToString()).AppendLine(" ");
+                builder.Append(PostSelectPart.ToString());
+
+                return builder.ToString();
+            }
         }
 
 
         #endregion
+
 
         #region Public
 
@@ -950,36 +964,20 @@ namespace Qoollo.Impl.Postgre.Internal
         }
         */
 
-        public string CutOrderby(ref string script)
-        {
-            throw new NotImplementedException();
-            //if (script.IndexOf(SqlConsts.From, System.StringComparison.Ordinal) >
-            //    script.IndexOf(SqlConsts.OrderBy, System.StringComparison.Ordinal))
-            //    return script;
-
-            //int pos = script.IndexOf(SqlConsts.OrderBy, System.StringComparison.Ordinal);
-            //var order = script.Substring(pos, script.Length - pos);
-            //script = script.Remove(pos);
-
-            //return order;
-        }
 
         public string CreateOrderScript(string script, FieldDescription idDescription)
         {
+            var parsedScript = SelectScript.Parse(script);
+            if (parsedScript.OrderBy == null)
+                throw new ArgumentException("Original script should be ordered");
+
+            OrderType orderType = parsedScript.OrderBy.Keys[0].OrderType;
+            if (orderType == OrderType.Asc)
+                return OrderAsc(parsedScript.RemoveOrderBy(), idDescription);
+            if (orderType == OrderType.Desc)
+                return OrderDesc(parsedScript.RemoveOrderBy(), idDescription);
+
             return script;
-
-            //var type = ParseQueryType(script);
-            //CutOrderby(ref script);
-
-            //switch (type)
-            //{
-            //    case ScriptType.OrderAsc:
-            //        return OrderAsc(script, idDescription);
-
-            //    case ScriptType.OrderDesc:
-            //        return OrderDesc(script, idDescription);
-            //}
-            //return "";
         }
         /*
         private static string CutDeclare(ref string script)
@@ -1038,74 +1036,81 @@ namespace Qoollo.Impl.Postgre.Internal
         #endregion
 
         #region Order
-            /*
-        private string OrderAsc(string script, FieldDescription idDescription)
+        
+        private string OrderAsc(SelectScript script, FieldDescription idDescription)
         {
-            string declare = CutDeclare(ref script);
+            string compareType = idDescription.IsFirstAsk ? ">=" : ">";
 
-            var nquery = SqlConsts.Select + " * ";
-
-            nquery = AddPageToSelect(nquery);
-            nquery = nquery.Replace("@" + Consts.Page, (idDescription.PageSize).ToString());
-
-            if (!WithExists(script))
-                return
-                        string.Format("{0} ; {1} from ( {2} ) as HelpTable " +
-                                      " where HelpTable.{3} {4} @{5} order by HelpTable.{3}",
-                            declare, nquery, script, idDescription.AsFieldName,
-                            idDescription.IsFirstAsk ? ">=" : ">", idDescription.FieldName);
-
-            string withName = GetTableNameWhenWith(script);
-            script = CutSelectWhenWith(script);
-
-            return
-                string.Format("{0} ; {2} {1} from {6} as HelpTable " +
-                              " where HelpTable.{3} {4} @{5} order by HelpTable.{3}",
-                    declare, nquery, script, idDescription.AsFieldName,
-                    idDescription.IsFirstAsk ? ">=" : ">", idDescription.FieldName, withName);
-        }
-
-        private string OrderDesc(string script, FieldDescription idDescription)
-        {
-            string declare = CutDeclare(ref script);
-            var nquery = SqlConsts.Select + " * ";
-
-            nquery = AddPageToSelect(nquery);
-            nquery = nquery.Replace("@" + Consts.Page, (idDescription.PageSize).ToString());
-
-            if (!WithExists(script))
+            if (script.With == null)
             {
-                if (idDescription.IsFirstAsk)
-                    nquery =
-                            string.Format("{0} ; {1} from ( {3} ) as HelpTable order by HelpTable.{2} desc",
-                                declare, nquery, idDescription.AsFieldName, script);
-                else
-                    nquery =
-                            string.Format("{0} ; {1} from ( {3} ) as HelpTable " +
-                                          " where  HelpTable.{2} < @{4} order by HelpTable.{2} desc ",
-                                declare, nquery, idDescription.AsFieldName, script, idDescription.FieldName);
+                var mainScript = script.RemovePreAndPostSelectPart();
 
-                return nquery;
+                return $@"{script.PreSelectPart.ToString()} ;
+                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
+                              WHERE UserSearchTable.{idDescription.AsFieldName} {compareType} @{idDescription.FieldName}
+                              ORDER BY UserSearchTable.{idDescription.AsFieldName}
+                              LIMIT {idDescription.PageSize}";
             }
-
-            string withName = GetTableNameWhenWith(script);
-            script = CutSelectWhenWith(script);
-
-            if (idDescription.IsFirstAsk)
-                nquery =
-                        string.Format("{0} ; {3} {1} from {4} as HelpTable order by HelpTable.{2} desc",
-                            declare, nquery, idDescription.AsFieldName, script, withName);
             else
-                nquery = string.Format("{0} ; {3} {1} from {5} as HelpTable " +
-                                      " where HelpTable.{2} < @{4} order by HelpTable.{2} desc",
-                            declare, nquery, idDescription.AsFieldName, script, idDescription.FieldName, withName);
+            {
+                var mainScript = script.RemovePreAndPostSelectPart().RemoveWith();
 
-            return nquery;
+                return $@"{script.PreSelectPart.ToString()} ;
+                              {script.With.ToString()}
+                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
+                              WHERE UserSearchTable.{idDescription.AsFieldName} {compareType} @{idDescription.FieldName}
+                              ORDER BY UserSearchTable.{idDescription.AsFieldName}
+                              LIMIT {idDescription.PageSize}";
+            }
         }
-        */
-        #endregion
 
-        //option(Recompile)
+        private string OrderDesc(SelectScript script, FieldDescription idDescription)
+        {
+            if (script.With == null)
+            {
+                var mainScript = script.RemovePreAndPostSelectPart();
+
+                if (idDescription.IsFirstAsk)
+                {
+                    return $@"{script.PreSelectPart.ToString()} ;
+                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
+                              ORDER BY UserSearchTable.{idDescription.AsFieldName} DESC
+                              LIMIT {idDescription.PageSize}";
+                }
+                else
+                {
+                    return $@"{script.PreSelectPart.ToString()} ;
+                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
+                              WHERE UserSearchTable.{idDescription.AsFieldName} < @{idDescription.FieldName}
+                              ORDER BY UserSearchTable.{idDescription.AsFieldName} DESC
+                              LIMIT {idDescription.PageSize}";
+                }
+            }
+            else
+            {
+                var mainScript = script.RemovePreAndPostSelectPart().RemoveWith();
+
+                if (idDescription.IsFirstAsk)
+                {
+                    return $@"{script.PreSelectPart.ToString()} ;
+                              {script.With.ToString()}
+                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
+                              ORDER BY UserSearchTable.{idDescription.AsFieldName} DESC
+                              LIMIT {idDescription.PageSize}";
+                }
+                else
+                {
+                    return $@"{script.PreSelectPart.ToString()} ;
+                              {script.With.ToString()}
+                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
+                              WHERE UserSearchTable.{idDescription.AsFieldName} < @{idDescription.FieldName}
+                              ORDER BY UserSearchTable.{idDescription.AsFieldName} DESC
+                              LIMIT {idDescription.PageSize}";
+                }
+            }
+        }
+        
+        #endregion
     }
 }
  

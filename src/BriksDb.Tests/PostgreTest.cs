@@ -494,23 +494,25 @@ namespace Qoollo.Tests
         [TestMethod]
         public void Postgre_Lexer_Test()
         {
-            var parseRes = Impl.Postgre.Internal.PostgreScriptParser.TokenizedScript.Parse(
+            var parseRes = Impl.Postgre.Internal.ScriptParsing.TokenizedScript.Parse(
                 "SELECT Id FROM A a JOIN b b ON a.Id=b.Id WHERE Id > 10 AND Id > '1''1' ORDER  BY Id DESC");
 
             Assert.IsNotNull(parseRes);
-            Assert.AreEqual(32, parseRes.Tokens.Count);
+            Assert.AreEqual(23, parseRes.Tokens.Count);
         }
 
         [TestMethod]
         public void Postgre_Parser_Test()
         {
-            var parseRes = Impl.Postgre.Internal.PostgreScriptParser.SelectScript.Parse(
+            var parseRes = Impl.Postgre.Internal.ScriptParsing.PostgreSelectScript.Parse(
                 @"DECLARE stuff;
                     WITH Ololo AS (SELECT * FROM Test)
                     SELECT Id 
                     FROM A a JOIN b b ON a.Id=b.Id 
                     WHERE Id > 10 AND Id > '1''1' 
-                    ORDER  BY Id DESC");
+                    ORDER  BY Id DESC
+                    LIMIT 10
+                    OFFSET 10");
 
             Assert.IsNotNull(parseRes);
 

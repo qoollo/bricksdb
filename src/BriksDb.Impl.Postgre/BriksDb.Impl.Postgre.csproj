@@ -58,6 +58,8 @@
     <Compile Include="Internal\PostgreHelper.cs" />
     <Compile Include="Internal\PostgreMetaDataCommandCreator.cs" />
     <Compile Include="Internal\PostgreReader.cs" />
+    <Compile Include="Internal\ScriptParsing\Lexer.cs" />
+    <Compile Include="Internal\ScriptParsing\Parser.cs" />
     <Compile Include="PostgreScriptParsingException.cs" />
     <Compile Include="Internal\PostgreUserCommandCreatorInner.cs" />
     <Compile Include="Internal\PostgreConsts.cs" />

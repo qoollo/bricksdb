@@ -421,75 +421,6 @@ namespace Qoollo.Tests
         }
 
 
-        [TestMethod]
-        public void Postgre_IndexOfPhrase_Test()
-        {
-            int index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("SOMEWHERE WHERE a > 10", "where");
-            Assert.IsTrue(index == 10);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("WHERE WHERE a > 10", "where", 1);
-            Assert.IsTrue(index == 6);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("WHERE WHERE a > 10", "where");
-            Assert.IsTrue(index == 0);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("ONWHERE FarWHERE a > 10 Where", "where");
-            Assert.IsTrue(index > 10);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("SORDER BY Order By Morder", "order by");
-            Assert.IsTrue(index == 10);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("ORDER BY Order By Morder", "order by", 1);
-            Assert.IsTrue(index == 9);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("Order By Order By", "order by");
-            Assert.IsTrue(index == 0);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("Order By Morder", "order by");
-            Assert.IsTrue(index == 0);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase("SORDER BY MORDER BYS Order    By", "order by");
-            Assert.IsTrue(index == 21);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.IndexOfWholePhrase(@"1ORDER BY Order   
-                                                                                    By", "order by");
-            Assert.IsTrue(index == 10);
-
-
-            // ==============
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("SOMEWHERE WHERE a > 10 SOMEWHERE", "where");
-            Assert.IsTrue(index == 10);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("WHERE WHERE a > 10", "where", 9);
-            Assert.IsTrue(index == 0);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("WHERE WHERE a > 10", "where");
-            Assert.IsTrue(index == 6);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("Where a > 10 FarWHERE ONWHERE", "where");
-            Assert.IsTrue(index == 0);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("SORDER BY Order By Morder", "order by");
-            Assert.IsTrue(index == 10);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("ORDER BY Order By Morder", "order by", 12);
-            Assert.IsTrue(index == 0);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("Order By Order By", "order by");
-            Assert.IsTrue(index == 9);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("Morder Order By", "order by");
-            Assert.IsTrue(index == 7);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase("Order    By SORDER BY MORDER BYS ", "order by");
-            Assert.IsTrue(index == 0);
-
-            index = Impl.Postgre.Internal.PostgreScriptParser.LastIndexOfWholePhrase(@"1ORDER BY Order   
-                                                                                    By", "order by");
-            Assert.IsTrue(index == 10);
-        }
-
 
         [TestMethod]
         public void Postgre_Lexer_Test()
@@ -507,14 +438,35 @@ namespace Qoollo.Tests
             var parseRes = Impl.Postgre.Internal.ScriptParsing.PostgreSelectScript.Parse(
                 @"DECLARE stuff;
                     WITH Ololo AS (SELECT * FROM Test)
-                    SELECT Id 
+                    SELECT *, Id AS ""Id"", Ololo, 1 + 2 AS Calc
                     FROM A a JOIN b b ON a.Id=b.Id 
                     WHERE Id > 10 AND Id > '1''1' 
                     ORDER  BY Id DESC
                     LIMIT 10
-                    OFFSET 10");
+                    OFFSET 10;");
 
             Assert.IsNotNull(parseRes);
+            Assert.AreEqual("DECLARE stuff;", parseRes.PreSelectPart.ToString());
+            Assert.IsNotNull(parseRes.With);
+            Assert.AreEqual("WITH Ololo AS (SELECT * FROM Test)", parseRes.With.ToString());
+            Assert.IsNotNull(parseRes.Select);
+            Assert.AreEqual(@"SELECT *, Id AS ""Id"", Ololo, 1 + 2 AS Calc", parseRes.Select.ToString());
+            Assert.AreEqual(4, parseRes.Select.Keys.Count);
+            Assert.AreEqual("Id", parseRes.Select.Keys[1].GetKeyName());
+            Assert.IsNotNull(parseRes.From);
+            Assert.AreEqual("FROM A a JOIN b b ON a.Id=b.Id", parseRes.From.ToString());
+            Assert.IsNotNull(parseRes.Where);
+            Assert.AreEqual("WHERE Id > 10 AND Id > '1''1'", parseRes.Where.ToString());
+            Assert.IsNotNull(parseRes.OrderBy);
+            Assert.AreEqual("ORDER  BY Id DESC", parseRes.OrderBy.ToString());
+            Assert.AreEqual(1, parseRes.OrderBy.Keys.Count);
+            Assert.AreEqual("Id", parseRes.OrderBy.Keys[0].GetNormalizedKeyName());
+            Assert.AreEqual(OrderType.Desc, parseRes.OrderBy.Keys[0].OrderType);
+            Assert.IsNotNull(parseRes.Limit);
+            Assert.AreEqual("LIMIT 10", parseRes.Limit.ToString());
+            Assert.IsNotNull(parseRes.Offset);
+            Assert.AreEqual("OFFSET 10", parseRes.Offset.ToString());
+            Assert.AreEqual(";", parseRes.PostSelectPart.ToString());
 
             var fromatted = parseRes.Format();
             Assert.IsNotNull(fromatted);

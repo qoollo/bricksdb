@@ -62,6 +62,33 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             }
         }
 
+        protected static TokenizedScriptPart UnwrapBraces(TokenizedScriptPart src)
+        {
+            int depth = 0;
+            while (src.TokenCount - depth * 2 > 2)
+            {
+                if (src[depth].Type != TokenType.OpenBrace || src[src.TokenCount - depth - 1].Type != TokenType.CloseBrace)
+                    break;
+                depth++;
+            }
+
+            if (depth == 0)
+                return src;
+
+            return new TokenizedScriptPart(src.Script, src.StartToken + depth, src.TokenCount - 2 * depth);
+        }
+
+        protected static string RemoveDoubleQuotes(string str)
+        {
+            if (str.Length < 3)
+                return str;
+
+            if (str[0] == '\"' && str[str.Length - 1] == '\"')
+                return str.Substring(1, str.Length - 2);
+
+            return str;
+        }
+
         protected static void SkipUntil(TokenizedScript script, ref int tokenIndex, ISet<TokenType> untilTypes, int maxIndex = int.MaxValue, bool skipInitial = false)
         {
             if (skipInitial && tokenIndex < script.Tokens.Count)
@@ -82,14 +109,6 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             }
         }
 
-        protected static T ParseSimple<T>(T elem, TokenizedScript script, ref int tokenIndex, ISet<TokenType> untilTypes) where T: ScriptElement
-        {
-            int startToken = tokenIndex;
-            SkipUntil(script, ref tokenIndex, untilTypes, skipInitial: true);
-            elem.Content = new TokenizedScriptPart(script, startToken, tokenIndex - startToken);
-            return elem;
-        }
-
         protected static T ParseSimple<T>(T elem, TokenType tokenValidation, TokenizedScript script, ref int tokenIndex, ISet<TokenType> untilTypes) where T : ScriptElement
         {
             if (script.Tokens[tokenIndex].Type != tokenValidation)
@@ -98,6 +117,10 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             int startToken = tokenIndex;
             SkipUntil(script, ref tokenIndex, untilTypes, skipInitial: true);
             elem.Content = new TokenizedScriptPart(script, startToken, tokenIndex - startToken);
+
+            if (elem.Content.TokenCount <= 1)
+                throw new PostgreScriptParsingException($"{tokenValidation} should be followed by keys: '{script.GetContextString(startToken)}'");
+
             return elem;
         }
 
@@ -148,14 +171,160 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
         private WithClause() { }
     }
 
+
+    internal class SelectKeyElement : ScriptElement
+    {
+        private static readonly HashSet<TokenType> s_untilType = new HashSet<TokenType>()
+            {
+                TokenType.Comma,
+                TokenType.Semicolon,
+                TokenType.FROM,
+                TokenType.WHERE,
+                TokenType.GROUP_BY,
+                TokenType.HAVING,
+                TokenType.WINDOW,
+                TokenType.UNION,
+                TokenType.INTERSECT,
+                TokenType.EXCEPT,
+                TokenType.ORDER_BY,
+                TokenType.LIMIT,
+                TokenType.OFFSET,
+                TokenType.FETCH,
+                TokenType.FOR,
+            };
+
+        public static SelectKeyElement Parse(TokenizedScript script, ref int tokenIndex)
+        {
+            if (tokenIndex == 0)
+                throw new ArgumentException("SELECT keys should follow after SELECT clause");
+
+            SelectKeyElement result = new SelectKeyElement();
+            int startToken = tokenIndex;
+            SkipUntil(script, ref tokenIndex, s_untilType);
+            result.Content = new TokenizedScriptPart(script, startToken, tokenIndex - startToken);
+
+            if (result.Content.TokenCount == 0)
+                throw new PostgreScriptParsingException($"SELECT key should be presented: '{script.GetContextString(startToken)}'");
+
+            int indexOfAs = -1;
+            int indexOfAsInsideScript = -1;
+            for (int i = result.Content.TokenCount - 1; i >= 0; i--)
+            {
+                if (result.Content[i].Type == TokenType.AS)
+                {
+                    indexOfAs = i;
+                    indexOfAsInsideScript = i + result.Content.StartToken;
+                    break;
+                }
+            }
+
+            if (indexOfAs >= 0)
+            {
+                if (indexOfAs == 0)
+                    throw new PostgreScriptParsingException($"AS inside SELECT cannot be the first token: '{script.GetContextString(indexOfAsInsideScript)}'");
+                if (indexOfAs == result.Content.TokenCount - 1)
+                    throw new PostgreScriptParsingException($"AS inside SELECT cannot be the last token: '{script.GetContextString(indexOfAsInsideScript)}'");
+
+                result.KeyExpression = new TokenizedScriptPart(script, result.Content.StartToken, indexOfAs);
+                result.AsExpression = new TokenizedScriptPart(script, result.Content.StartToken + indexOfAs + 1, result.Content.TokenCount - indexOfAs - 1);
+            }
+            else
+            {
+                result.KeyExpression = new TokenizedScriptPart(script, result.Content.StartToken, result.Content.TokenCount);
+            }
+
+            // IsCalculatable
+            var noBraces = UnwrapBraces(result.KeyExpression);
+            if (noBraces.TokenCount == 0)
+                throw new PostgreScriptParsingException($"SELECT key should have non-empty expression: '{script.GetContextString(startToken)}'");
+
+            result.IsCalculatable = noBraces.TokenCount != 1;
+            
+            // IsStar
+            result.IsStar = result.Content.TokenCount == 1 && result.Content[0].Content.ToString() == "*";
+
+            return result;
+        }
+
+        private SelectKeyElement() { }
+
+        public TokenizedScriptPart KeyExpression { get; private set; }
+        public TokenizedScriptPart AsExpression { get; private set; }
+        public bool IsCalculatable { get; private set; }
+        public bool IsStar { get; private set; }
+
+        public string GetKeyName()
+        {
+            if (AsExpression.TokenCount > 0)
+                return RemoveDoubleQuotes(AsExpression.ToString());
+
+            return RemoveDoubleQuotes(UnwrapBraces(KeyExpression).ToString());
+        }
+    }
+
+
     internal class SelectClause : ScriptElement
     {
         public static SelectClause Parse(TokenizedScript script, ref int tokenIndex)
         {
-            return ParseSimple(new SelectClause(), TokenType.SELECT, script, ref tokenIndex, SelectCommonStopTokens.s_untilType);
+            if (script.Tokens[tokenIndex].Type != TokenType.SELECT)
+                throw new ArgumentException();
+
+            SelectClause result = new SelectClause();
+            int startToken = tokenIndex;
+            SkipUntil(script, ref tokenIndex, SelectCommonStopTokens.s_untilType, skipInitial: true);
+            result.Content = new TokenizedScriptPart(script, startToken, tokenIndex - startToken);
+
+            if (result.Content.TokenCount <= 1)
+                throw new PostgreScriptParsingException($"SELECT should be followed by keys: '{script.GetContextString(startToken)}'");
+
+
+            int keyStart = startToken + 1;
+
+            if (keyStart < script.TokenCount && script[keyStart].Type == TokenType.ALL)
+            {
+                keyStart++; // Skip ALL
+            }
+            else if (keyStart < script.TokenCount && script[keyStart].Type == TokenType.DISTINCT)
+            {
+                result.IsDistinct = true;
+                keyStart++; // Skip DISTINCT
+
+                if (keyStart < script.TokenCount && script[keyStart].Type == TokenType.ON)
+                {
+                    keyStart++; // Skip ON
+                    if (keyStart >= script.TokenCount || script[keyStart].Type != TokenType.OpenBrace)
+                        throw new PostgreScriptParsingException($"Open brace expected after DISTINCT ON: '{script.GetContextString(keyStart)}'");
+                    SkipInsideBrace(script, ref keyStart); // Skip braces
+                }
+            }
+
+            // Parse keys
+            
+            int keyIndex = keyStart;
+            while (keyIndex < result.Content.StartToken + result.Content.TokenCount)
+            {
+                var key = SelectKeyElement.Parse(script, ref keyIndex);
+                result._keys.Add(key);
+                if (keyIndex >= result.Content.StartToken + result.Content.TokenCount)
+                    break;
+
+                if (script.Tokens[keyIndex].Type != TokenType.Comma)
+                    throw new PostgreScriptParsingException($"Comma expected when parsing SELECT keys: '{script.GetContextString(keyIndex)}'");
+
+                keyIndex++;
+            }
+
+
+            return result;
         }
 
+
+        private readonly List<SelectKeyElement> _keys = new List<SelectKeyElement>();
         private SelectClause() { }
+
+        public bool IsDistinct { get; private set; }
+        public IReadOnlyList<SelectKeyElement> Keys { get { return _keys; } }
     }
 
     internal class FromClause : ScriptElement
@@ -190,7 +359,7 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
 
 
 
-    internal class OrderByKey : ScriptElement
+    internal class OrderByKeyElement : ScriptElement
     {
         private static readonly HashSet<TokenType> s_untilType = new HashSet<TokenType>()
             {
@@ -212,17 +381,20 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
         };
 
 
-        public static OrderByKey Parse(TokenizedScript script, ref int tokenIndex)
+        public static OrderByKeyElement Parse(TokenizedScript script, ref int tokenIndex)
         {
             if (tokenIndex == 0)
                 throw new ArgumentException("ORDER BY keys should follow after ORDER BY");
             if (script[tokenIndex - 1].Type != TokenType.ORDER_BY && script[tokenIndex - 1].Type != TokenType.Comma)
                 throw new PostgreScriptParsingException($"ORDER BY keys should follow after ORDER BY: '{script.GetContextString(tokenIndex)}'");
 
-            OrderByKey result = new OrderByKey();
+            OrderByKeyElement result = new OrderByKeyElement();
             int startToken = tokenIndex;
             SkipUntil(script, ref tokenIndex, s_untilType);
             result.Content = new TokenizedScriptPart(script, startToken, tokenIndex - startToken);
+
+            if (result.Content.TokenCount == 0)
+                throw new PostgreScriptParsingException($"ORDER BY key should be presented: '{script.GetContextString(startToken)}'");
 
             if (result.Content.Tokens.Any(o => o.Type == TokenType.ASC))
                 result.OrderType = OrderType.Asc;
@@ -232,22 +404,19 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             int keyNameStart = startToken;
             int keyNameEnd = keyNameStart;
             SkipUntil(script, ref keyNameEnd, s_untilKeyExpr, maxIndex: tokenIndex);
-            result.KeyNameExpression = new TokenizedScriptPart(script, keyNameStart, keyNameEnd - keyNameStart);
+            result.KeyExpression = new TokenizedScriptPart(script, keyNameStart, keyNameEnd - keyNameStart);
 
             return result;
         }
 
-        private OrderByKey() { }
+        private OrderByKeyElement() { }
 
-        public TokenizedScriptPart KeyNameExpression { get; private set; }
+        public TokenizedScriptPart KeyExpression { get; private set; }
         public OrderType OrderType { get; private set; }
 
         public string GetNormalizedKeyName()
         {
-            string result = KeyNameExpression.ToString();
-            if (result.Length > 2 && result[0] == '(' && result[result.Length - 1] == ')')
-                result = result.Substring(1, result.Length - 2);
-            return result;
+            return RemoveDoubleQuotes(UnwrapBraces(KeyExpression).ToString());
         }
     }
 
@@ -264,13 +433,16 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             SkipUntil(script, ref tokenIndex, SelectCommonStopTokens.s_untilType, skipInitial: true);
             result.Content = new TokenizedScriptPart(script, startToken, tokenIndex - startToken);
 
+            if (result.Content.TokenCount <= 1)
+                throw new PostgreScriptParsingException($"ORDER BY should be followed by keys: '{script.GetContextString(startToken)}'");
+
 
             // Parse keys
             int keyStart = startToken + 1;
             int keyIndex = keyStart;
             while (keyIndex < result.Content.StartToken + result.Content.TokenCount)
             {
-                var key = OrderByKey.Parse(script, ref keyIndex);
+                var key = OrderByKeyElement.Parse(script, ref keyIndex);
                 result._keys.Add(key);
                 if (keyIndex >= result.Content.StartToken + result.Content.TokenCount)
                     break;
@@ -288,10 +460,10 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
         }
 
 
-        private List<OrderByKey> _keys = new List<OrderByKey>();
+        private List<OrderByKeyElement> _keys = new List<OrderByKeyElement>();
         private OrderByClause() { }
 
-        public IReadOnlyList<OrderByKey> Keys { get { return _keys; } }
+        public IReadOnlyList<OrderByKeyElement> Keys { get { return _keys; } }
     }
 
 

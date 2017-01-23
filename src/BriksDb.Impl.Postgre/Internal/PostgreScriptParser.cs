@@ -33,6 +33,30 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public override Tuple<FieldDescription, string> PrepareOrderScript(string script, int pageSize, IUserCommandsHandler handler)
         {
+            var parsedScript = PostgreSelectScript.Parse(script);
+            if (parsedScript.OrderBy == null || parsedScript.OrderBy.Keys.Count != 1)
+                return null;
+
+            string orderByKeyName = parsedScript.OrderBy.Keys[0].GetNormalizedKeyName();
+
+            var dbFieldDesc = handler.GetDbFieldsDescription().FirstOrDefault(x => string.Compare(x.Item1, orderByKeyName, true) == 0);
+            if (dbFieldDesc == null)
+                return null;
+
+            var resultField = new FieldDescription(orderByKeyName, dbFieldDesc.Item2);
+
+
+            return new Tuple<FieldDescription, string>(resultField, script);
+
+
+            //if (key != null)
+            //{
+            //    var ere = handler.GetDbFieldsDescription();
+            //    var field = handler.GetDbFieldsDescription().FirstOrDefault(x => x.Item1.ToLower() == key);
+            //    if (field != null)
+            //        return new KeyValuePair<string, Type>(key, field.Item2);
+            //}
+
             throw new NotImplementedException();
             //var query = script.ToLower();
 

@@ -135,6 +135,16 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             if (unwrapped.TokenCount % 2 != 1)
                 return false;
 
+            if (unwrapped.TokenCount == 1)
+            {
+                if (unwrapped[0].Type != TokenType.Unspecific && unwrapped[0].Type != TokenType.DoubleQuoteString)
+                    return false;
+                double number = 0;
+                if (unwrapped[0].Type == TokenType.Unspecific && double.TryParse(unwrapped[0].Content.ToString(), out number)) // Numbers is not a column name
+                    return false;
+                return true;
+            }
+
             for (int i = 0; i < unwrapped.TokenCount - 1; i += 2)
             {
                 if (unwrapped[i].Type != TokenType.Unspecific && unwrapped[i].Type != TokenType.DoubleQuoteString)
@@ -582,7 +592,7 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             ScriptElement.SkipUntil(script, ref tokenIndex, s_untilType);
             result.PreSelectPart = new TokenizedScriptPart(script, 0, tokenIndex);
             if (tokenIndex == script.Tokens.Count)
-                return result;
+                throw new PostgreScriptParsingException($"SELECT clause not found inside query: '{script.GetContextString(0)}'");
 
             if (script.Tokens[tokenIndex].Type == TokenType.WITH)
                 result.With = WithClause.Parse(script, ref tokenIndex);

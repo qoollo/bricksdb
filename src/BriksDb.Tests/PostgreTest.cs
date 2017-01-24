@@ -13,6 +13,16 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Postgre;
 using Qoollo.Tests.Support;
 using System.Linq;
+using Qoollo.Tests.TestCollector;
+using Qoollo.Impl.Collector.Parser;
+using Qoollo.Tests.TestWriter;
+using Qoollo.Impl.Collector.Merge;
+using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.Collector.Model;
+using Qoollo.Impl.Collector.Distributor;
+using Qoollo.Impl.Collector.Background;
+using Qoollo.Impl.Collector;
+using Qoollo.Impl.Postgre.Internal;
 
 namespace Qoollo.Tests
 {
@@ -473,12 +483,13 @@ namespace Qoollo.Tests
 
 
             var parseRes2 = Impl.Postgre.Internal.ScriptParsing.PostgreSelectScript.Parse(
-                @"  SELECT (1 + 2) AS ""Field"", (public.""Table"".""Id""), Table.Id
+                @"  SELECT (1 + 2) AS ""Field"", (public.""Table"".""Id""), Table.Id, 1 AS One
                     From ""Table""");
 
-            Assert.AreEqual(3, parseRes2.Select.Keys.Count);
+            Assert.AreEqual(4, parseRes2.Select.Keys.Count);
             Assert.IsFalse(parseRes2.Select.Keys[1].IsCalculatable);
             Assert.AreEqual("Id", parseRes2.Select.Keys[1].GetKeyName());
+            Assert.IsTrue(parseRes2.Select.Keys[3].IsCalculatable);
         }
 
 
@@ -522,6 +533,106 @@ namespace Qoollo.Tests
 
                 writer.Dispose();
             }
+        }
+
+
+        [TestMethod]
+        public void Postgre_Collector_Test()
+        {
+            var server1 = new ServerId("", 1);
+            var server2 = new ServerId("", 2);
+            var server3 = new ServerId("", 3);
+            const int pageSize = 5;
+            var writer = new HashWriter(new HashMapConfiguration("TestCollector", HashMapCreationMode.CreateNew, 3, 3, HashFileType.Writer));
+            writer.CreateMap();
+            writer.SetServer(0, server1.RemoteHost, server1.Port, 157);
+            writer.SetServer(1, server2.RemoteHost, server2.Port, 157);
+            writer.SetServer(2, server3.RemoteHost, server3.Port, 157);
+            writer.Save();
+
+            var loader = new TestDataLoader(pageSize);
+            var parser = new PostgreScriptParser();
+            parser.SetCommandsHandler(
+                new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
+                    new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
+
+            var merge = new OrderMerge(loader, parser);
+            var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+
+            var distributor =
+                new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
+                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
+                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+            var back = new BackgroundModule(new QueueConfiguration(5, 10));
+
+            var searchModule = new SearchTaskModule("Test", merge, loader, distributor, back, parser);
+
+            #region hell
+
+            loader.Data.Add(server1, new List<SearchData>
+            {
+                TestHelper.CreateData(1),
+                TestHelper.CreateData(2),
+                TestHelper.CreateData(4),
+                TestHelper.CreateData(5),
+                TestHelper.CreateData(6),
+                TestHelper.CreateData(7),
+                TestHelper.CreateData(8),
+            });
+
+            loader.Data.Add(server2, new List<SearchData>
+            {
+                TestHelper.CreateData(4),
+                TestHelper.CreateData(5),
+                TestHelper.CreateData(6),
+                TestHelper.CreateData(7),
+                TestHelper.CreateData(8),
+                TestHelper.CreateData(9),
+                TestHelper.CreateData(10),
+                TestHelper.CreateData(11),
+            });
+
+            loader.Data.Add(server3, new List<SearchData>
+            {
+                TestHelper.CreateData(2),
+                TestHelper.CreateData(3),
+                TestHelper.CreateData(5),
+                TestHelper.CreateData(7),
+                TestHelper.CreateData(8),
+                TestHelper.CreateData(9),
+                TestHelper.CreateData(10),
+                TestHelper.CreateData(11),
+                TestHelper.CreateData(12),
+                TestHelper.CreateData(13),
+            });
+
+            #endregion
+
+            async.Start();
+            searchModule.Start();
+            distributor.Start();
+            merge.Start();
+            back.Start();
+
+            var reader = searchModule.CreateReader($"SELECT Id FROM {TableName} ORDER BY Id asc");
+            reader.Start();
+
+            const int count = 13;
+            for (int i = 0; i < count; i++)
+            {
+                Assert.IsTrue(reader.IsCanRead);
+
+                reader.ReadNext();
+
+                Assert.AreEqual(i + 1, reader.GetValue(0));
+            }
+            reader.ReadNext();
+            Assert.IsFalse(reader.IsCanRead);
+
+            reader.Dispose();
+
+            async.Dispose();
+            back.Dispose();
         }
     }
 }

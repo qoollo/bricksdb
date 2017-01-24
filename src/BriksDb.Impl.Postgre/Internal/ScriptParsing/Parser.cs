@@ -124,6 +124,52 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             return elem;
         }
 
+        protected static bool IsTableColumnName(TokenizedScriptPart part, out bool isQualified)
+        {
+            isQualified = false;
+
+            var unwrapped = UnwrapBraces(part);
+
+            if (unwrapped.TokenCount == 0)
+                return false;
+            if (unwrapped.TokenCount % 2 != 1)
+                return false;
+
+            for (int i = 0; i < unwrapped.TokenCount - 1; i += 2)
+            {
+                if (unwrapped[i].Type != TokenType.Unspecific && unwrapped[i].Type != TokenType.DoubleQuoteString)
+                    return false;
+                if (unwrapped[i + 1].Type != TokenType.Point)
+                    return false;
+            }
+
+            if (unwrapped[unwrapped.TokenCount - 1].Type != TokenType.Unspecific && unwrapped[unwrapped.TokenCount - 1].Type != TokenType.DoubleQuoteString)
+                return false;
+
+            isQualified = unwrapped.TokenCount > 1;
+            return true;
+        }
+        protected static bool IsTableColumnName(TokenizedScriptPart part)
+        {
+            bool tmp = false;
+            return IsTableColumnName(part, out tmp);
+        }
+
+        protected static string GetTableColumnName(TokenizedScriptPart part)
+        {
+            var unwrapped = UnwrapBraces(part);
+            var lastToken = unwrapped[unwrapped.TokenCount - 1];
+            if (lastToken.Type == TokenType.DoubleQuoteString)
+                return RemoveDoubleQuotes(lastToken.Content.ToString());
+
+            var tokenString = lastToken.Content.ToString();
+            int lastIndexOfPoint = tokenString.LastIndexOf('.');
+            if (lastIndexOfPoint >= 0)
+                return tokenString.Substring(lastIndexOfPoint + 1);
+
+            return tokenString;
+        }
+
 
         protected ScriptElement()
         {
@@ -193,6 +239,7 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
                 TokenType.FOR,
             };
 
+
         public static SelectKeyElement Parse(TokenizedScript script, ref int tokenIndex)
         {
             if (tokenIndex == 0)
@@ -232,16 +279,16 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             {
                 result.KeyExpression = new TokenizedScriptPart(script, result.Content.StartToken, result.Content.TokenCount);
             }
+            
+            // IsStar
+            result.IsStar = result.Content.TokenCount == 1 && result.Content[0].Content.ToString() == "*";
 
-            // IsCalculatable
+            // IsTableColumnKey
             var noBraces = UnwrapBraces(result.KeyExpression);
             if (noBraces.TokenCount == 0)
                 throw new PostgreScriptParsingException($"SELECT key should have non-empty expression: '{script.GetContextString(startToken)}'");
 
-            result.IsCalculatable = noBraces.TokenCount != 1;
-            
-            // IsStar
-            result.IsStar = result.Content.TokenCount == 1 && result.Content[0].Content.ToString() == "*";
+            result.IsTableColumn = IsTableColumnName(noBraces) && !result.IsStar;
 
             return result;
         }
@@ -250,13 +297,28 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
 
         public TokenizedScriptPart KeyExpression { get; private set; }
         public TokenizedScriptPart AsExpression { get; private set; }
-        public bool IsCalculatable { get; private set; }
         public bool IsStar { get; private set; }
+        public bool IsTableColumn { get; private set; }
+        public bool IsCalculatable { get { return !IsTableColumn && !IsStar; } }
+
+        public string GetTableColumnName()
+        {
+            if (!IsTableColumn)
+                return null;
+
+            return GetTableColumnName(KeyExpression);
+        }
 
         public string GetKeyName()
         {
             if (AsExpression.TokenCount > 0)
                 return RemoveDoubleQuotes(AsExpression.ToString());
+
+            if (IsStar)
+                return KeyExpression.ToString();
+
+            if (IsTableColumn)
+                return GetTableColumnName();
 
             return RemoveDoubleQuotes(UnwrapBraces(KeyExpression).ToString());
         }
@@ -381,6 +443,7 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
         };
 
 
+
         public static OrderByKeyElement Parse(TokenizedScript script, ref int tokenIndex)
         {
             if (tokenIndex == 0)
@@ -406,6 +469,10 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             SkipUntil(script, ref keyNameEnd, s_untilKeyExpr, maxIndex: tokenIndex);
             result.KeyExpression = new TokenizedScriptPart(script, keyNameStart, keyNameEnd - keyNameStart);
 
+            bool isTableQualified = false;
+            result.IsKeyName = IsTableColumnName(result.KeyExpression, out isTableQualified);
+            result.IsTableQualified = isTableQualified;
+
             return result;
         }
 
@@ -413,9 +480,16 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
 
         public TokenizedScriptPart KeyExpression { get; private set; }
         public OrderType OrderType { get; private set; }
+        public bool IsKeyName { get; private set; }
+        public bool IsTableQualified { get; private set; }
+        public bool IsCalculatable { get { return !IsKeyName; } }
 
-        public string GetNormalizedKeyName()
+
+        public string GetKeyName()
         {
+            if (IsKeyName)
+                return GetTableColumnName(KeyExpression);
+
             return RemoveDoubleQuotes(UnwrapBraces(KeyExpression).ToString());
         }
     }

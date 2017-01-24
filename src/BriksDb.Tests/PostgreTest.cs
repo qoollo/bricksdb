@@ -460,7 +460,7 @@ namespace Qoollo.Tests
             Assert.IsNotNull(parseRes.OrderBy);
             Assert.AreEqual("ORDER  BY Id DESC", parseRes.OrderBy.ToString());
             Assert.AreEqual(1, parseRes.OrderBy.Keys.Count);
-            Assert.AreEqual("Id", parseRes.OrderBy.Keys[0].GetNormalizedKeyName());
+            Assert.AreEqual("Id", parseRes.OrderBy.Keys[0].GetKeyName());
             Assert.AreEqual(OrderType.Desc, parseRes.OrderBy.Keys[0].OrderType);
             Assert.IsNotNull(parseRes.Limit);
             Assert.AreEqual("LIMIT 10", parseRes.Limit.ToString());
@@ -470,6 +470,58 @@ namespace Qoollo.Tests
 
             var fromatted = parseRes.Format();
             Assert.IsNotNull(fromatted);
+
+
+            var parseRes2 = Impl.Postgre.Internal.ScriptParsing.PostgreSelectScript.Parse(
+                @"  SELECT (1 + 2) AS ""Field"", (public.""Table"".""Id""), Table.Id
+                    From ""Table""");
+
+            Assert.AreEqual(3, parseRes2.Select.Keys.Count);
+            Assert.IsFalse(parseRes2.Select.Keys[1].IsCalculatable);
+            Assert.AreEqual("Id", parseRes2.Select.Keys[1].GetKeyName());
+        }
+
+
+
+        [TestMethod]
+        public void Postgre_SelectQuery_Test()
+        {
+            CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
+            var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
+            TestProxy.TestNetDistributorForProxy distrib;
+            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            {
+                writer.Start();
+
+                for (int i = 1; i < 100; i++)
+                {
+                    var data = new StoredData(i);
+                    var createRequest = CreateRequest(data);
+                    var result = writer.Input.ProcessSync(createRequest);
+                    Assert.IsFalse(result.IsError);
+                }
+
+
+                var selectDesc = new Impl.Collector.Parser.SelectDescription(
+                    new Impl.Collector.Parser.FieldDescription("id", typeof(int))
+                    {
+                        Value = 1000
+                    },
+                    $"SELECT id FROM {TableName} ORDER BY Id DESC",
+                    200,
+                    new List<Impl.Collector.Parser.FieldDescription>())
+                {
+                    TableName = TableName
+                };
+
+
+                var selectResult = writer.Input.SelectQuery(selectDesc);
+                Assert.IsNotNull(selectResult);
+                Assert.IsFalse(selectResult.Item1.IsError);
+                Assert.AreEqual(99, selectResult.Item2.Data.Count);
+
+                writer.Dispose();
+            }
         }
     }
 }

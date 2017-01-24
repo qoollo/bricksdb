@@ -37,12 +37,14 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
     internal enum TokenType
     {
         Unspecific,
+
         OpenBrace,
         CloseBrace,
         Comma,
         Semicolon,
         SingleQuoteString,
         DoubleQuoteString,
+        Point,
 
         WITH,
         SELECT,
@@ -99,6 +101,7 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             [")"] = TokenType.CloseBrace,
             [","] = TokenType.Comma,
             [";"] = TokenType.Semicolon,
+            ["."] = TokenType.Point,
             ["WITH"] = TokenType.WITH,
             ["SELECT"] = TokenType.SELECT,
             ["FROM"] = TokenType.FROM,

@@ -41,14 +41,12 @@ namespace Qoollo.Impl.Postgre
 
         public override ScriptParser GetParser()
         {
-            //var parser = new SqlScriptParser();
-            //parser.SetCommandsHandler(
-            //    new UserCommandsHandler<SqlCommand, SqlDbType, SqlConnection, TKey, TValue, SqlDataReader>(
-            //        _userCommandCreator, new SqlMetaDataCommandCreator<TKey, TValue>(_userCommandCreator)));
+            var parser = new PostgreScriptParser();
+            parser.SetCommandsHandler(
+                new UserCommandsHandler<NpgsqlCommand, NpgsqlTypes.NpgsqlDbType, NpgsqlConnection, TKey, TValue, NpgsqlDataReader>(
+                    _userCommandCreator, new PostgreMetaDataCommandCreator<TKey, TValue>(_userCommandCreator)));
 
-            //return parser;
-            //TODO
-            throw new NotImplementedException();
+            return parser;
         }
     }
 }

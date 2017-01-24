@@ -271,7 +271,6 @@ namespace Qoollo.Impl.Postgre.Internal
         }
 
 
-        // TODO
         private NpgsqlCommand CreateSelectCommandInner(string script, FieldDescription idDescription,
             List<FieldDescription> userParameters, bool useUserScript = false)
         {
@@ -287,7 +286,7 @@ namespace Qoollo.Impl.Postgre.Internal
 
             foreach (var parameter in userParameters)
             {
-                if (parameter.UserType >= 0 && parameter.UserType <= 34 &&
+                if (parameter.UserType >= 0 && parameter.UserType <= 39 &&
                     (idDescription.IsFirstAsk || parameter.FieldName.ToLower() != idDescription.FieldName.ToLower()))
                 {
                     command.Parameters.Add("@" + parameter.FieldName, (NpgsqlDbType)parameter.UserType);
@@ -298,7 +297,6 @@ namespace Qoollo.Impl.Postgre.Internal
             return command;
         }
 
-        // TODO
         public NpgsqlCommand CreateSelectCommand(string script, FieldDescription idDescription, List<FieldDescription> userParameters)
         {
             string nquery = _scriptParser.CreateOrderScript(script, idDescription);

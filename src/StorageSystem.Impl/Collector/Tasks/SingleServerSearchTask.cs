@@ -16,6 +16,7 @@ namespace Qoollo.Impl.Collector.Tasks
         public object LastKey { get; private set; }
 
         public FieldDescription IdDescription { get; private set; }
+        public List<FieldDescription> OrderKeyDescriptions { get; set; }
         public ServerId ServerId { get; private set; }
         private readonly List<SearchData> _data;
         private int _dataPos;

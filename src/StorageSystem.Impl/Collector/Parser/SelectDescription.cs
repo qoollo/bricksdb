@@ -20,6 +20,9 @@ namespace Qoollo.Impl.Collector.Parser
         public FieldDescription IdDescription { get; private set; }
 
         [DataMember]
+        public List<FieldDescription> OrderKeyDescriptions { get; set; }
+
+        [DataMember]
         public string Script { get; private set; }
 
         [DataMember]

@@ -27,6 +27,7 @@ namespace Qoollo.Impl.Collector.Parser
         public string AsFieldName { get; set; }
 
         public Type SystemFieldType { get; private set; }
+
         [DataMember]
         public object Value { get; set; }
         [DataMember]
@@ -35,5 +36,7 @@ namespace Qoollo.Impl.Collector.Parser
         public bool IsFirstAsk { get; set; }
         [DataMember]        
         public int UserType { get; set; }
+        [DataMember]
+        public bool ContainsCalculatedField { get; set; }
     }
 }

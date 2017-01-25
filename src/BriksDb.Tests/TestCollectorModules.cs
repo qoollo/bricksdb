@@ -154,7 +154,8 @@ namespace Qoollo.Tests
 
             var loader = new TestDataLoader(pageSize);
 
-            var merge = new OrderMerge(loader, new TestIntParser());
+            //TODO set null
+            var merge = new OrderMerge(loader, new TestIntParser(), null);
             var server1 = new ServerId("", 1);
             var server2 = new ServerId("", 2);
             var server3 = new ServerId("", 3);
@@ -251,14 +252,14 @@ namespace Qoollo.Tests
             parser.SetCommandsHandler(
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
-
-            var merge = new OrderMerge(loader, parser);
+            var serversModel = new CollectorModel(new DistributorHashConfiguration(1),
+                new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
+                    HashFileType.Writer));
+            var merge = new OrderMerge(loader, parser, serversModel);
             var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
 
             var distributor =
-                new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                new DistributorModule(serversModel, async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
             var back = new BackgroundModule(new QueueConfiguration(5, 10));
 
             var searchModule = new SearchTaskModule("Test", merge, loader, distributor, back, parser);
@@ -350,12 +351,13 @@ namespace Qoollo.Tests
             parser.SetCommandsHandler(
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
-            var merge = new OrderMerge(loader, parser);
+            var serversModel = new CollectorModel(new DistributorHashConfiguration(1),
+                new HashMapConfiguration("TestCollector2", HashMapCreationMode.ReadFromFile, 1, 1,
+                    HashFileType.Writer));
+            var merge = new OrderMerge(loader, parser, serversModel);
             var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
             var distributor =
-                new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration("TestCollector2", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                new DistributorModule(serversModel, async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
             var back = new BackgroundModule(new QueueConfiguration(5, 10));
 
             var searchModule = new SearchTaskModule("Test", merge, loader, distributor, back, parser);
@@ -447,12 +449,13 @@ namespace Qoollo.Tests
             parser.SetCommandsHandler(
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
-            var merge = new OrderMerge(loader, parser);
+            var serversModel = new CollectorModel(new DistributorHashConfiguration(1),
+                new HashMapConfiguration("TestCollector3", HashMapCreationMode.ReadFromFile, 1, 1,
+                    HashFileType.Distributor));
+            var merge = new OrderMerge(loader, parser, serversModel);
             var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
             var distributor =
-                new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration("TestCollector3", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Distributor)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                new DistributorModule(serversModel, async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
             var back = new BackgroundModule(new QueueConfiguration(5, 10));
 
             var searchModule = new SearchTaskModule("Test", merge, loader, distributor, back, parser);
@@ -544,12 +547,13 @@ namespace Qoollo.Tests
             parser.SetCommandsHandler(
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
-            var merge = new OrderMerge(loader, parser);
+            var serversModel = new CollectorModel(new DistributorHashConfiguration(1),
+                new HashMapConfiguration("TestCollector4", HashMapCreationMode.ReadFromFile, 1, 1,
+                    HashFileType.Writer));
+            var merge = new OrderMerge(loader, parser, serversModel);
             var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
             var distributor =
-                new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration("TestCollector4", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                new DistributorModule(serversModel, async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
             var back = new BackgroundModule(new QueueConfiguration(5, 10));
 
             var searchModule = new SearchTaskModule("", merge, loader, distributor, back, parser);
@@ -658,10 +662,11 @@ namespace Qoollo.Tests
 
             var storage = new WriterApi(storageNet, storageConfig, common);
             var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+            var serversModel = new CollectorModel(new DistributorHashConfiguration(1),
+                new HashMapConfiguration("TestCollectorNet", HashMapCreationMode.ReadFromFile, 1, 1,
+                    HashFileType.Collector));
             var distributor =
-                new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration("TestCollectorNet", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Collector)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                new DistributorModule(serversModel, async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
 
             var net = new CollectorNetModule(new ConnectionConfiguration("testService", 10),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout), distributor);
@@ -675,7 +680,7 @@ namespace Qoollo.Tests
             parser.SetCommandsHandler(
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
-            var merge = new OrderMerge(loader, parser);
+            var merge = new OrderMerge(loader, parser, serversModel);
 
             var searchModule = new SearchTaskModule("Int", merge, loader, distributor, back, parser);
 

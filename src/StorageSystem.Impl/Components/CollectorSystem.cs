@@ -54,8 +54,8 @@ namespace Qoollo.Impl.Components
         {
             var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
 
-            var distributor = new DistributorModule(
-                new CollectorModel(_distributorHashConfiguration, _hashMapConfiguration, _useHashFile), async,
+            var serversModel = new CollectorModel(_distributorHashConfiguration, _hashMapConfiguration, _useHashFile);
+            var distributor = new DistributorModule(serversModel, async,
                 new AsyncTasksConfiguration(TimeSpan.FromSeconds(10)));
 
             var net = new CollectorNetModule(_connectionConfiguration, _connectionTimeoutConfiguration, distributor);
@@ -65,7 +65,7 @@ namespace Qoollo.Impl.Components
             var back = new BackgroundModule(_queueConfiguration);
             var loader = new DataLoader(net, _serverPageSize, back);
 
-            var searchModule = new SearchTaskCommonModule(loader, distributor, back);
+            var searchModule = new SearchTaskCommonModule(loader, distributor, back, serversModel);
             CreateApi = searchModule.CreateApi;
             Distributor = distributor;
 

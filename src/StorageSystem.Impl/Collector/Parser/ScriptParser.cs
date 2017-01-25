@@ -5,7 +5,7 @@ using Qoollo.Impl.Common.Data.Support;
 
 namespace Qoollo.Impl.Collector.Parser
 {
-    public  abstract class ScriptParser
+    public abstract class ScriptParser
     {
         private IUserCommandsHandler _commandsHandler;
 
@@ -42,5 +42,7 @@ namespace Qoollo.Impl.Collector.Parser
                 searchTask.SetLastKey(value);         
             }
         }
+
+        public abstract List<FieldDescription> GetOrderKeys(string script);
     }
 }

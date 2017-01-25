@@ -3,6 +3,7 @@ using Qoollo.Impl.Collector.Background;
 using Qoollo.Impl.Collector.Distributor;
 using Qoollo.Impl.Collector.Load;
 using Qoollo.Impl.Collector.Merge;
+using Qoollo.Impl.Collector.Model;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Modules;
 
@@ -10,17 +11,19 @@ namespace Qoollo.Impl.Collector
 {
     internal class SearchTaskCommonModule:ControlModule
     {
-        private Dictionary<string, SearchTaskModule> _apis; 
-        private DistributorModule _distributor;
-        private IDataLoader _dataLoader;
-        private BackgroundModule _backgroundModule;
+        private readonly Dictionary<string, SearchTaskModule> _apis; 
+        private readonly DistributorModule _distributor;
+        private readonly IDataLoader _dataLoader;
+        private readonly BackgroundModule _backgroundModule;
+        private readonly CollectorModel _serversModel;
 
         public SearchTaskCommonModule(IDataLoader dataLoader, DistributorModule distributor,
-            BackgroundModule backgroundModule)
+            BackgroundModule backgroundModule, CollectorModel serversModel)
         {
             _dataLoader = dataLoader;
             _distributor = distributor;
             _backgroundModule = backgroundModule;
+            _serversModel = serversModel;
             _apis = new Dictionary<string, SearchTaskModule>();
         }
 
@@ -29,7 +32,7 @@ namespace Qoollo.Impl.Collector
             if (_apis.ContainsKey(tableName))
                 return null;
 
-            var merge = new OrderMerge(_dataLoader, scriptParser);
+            var merge = new OrderMerge(_dataLoader, scriptParser, _serversModel);
 
             var api = new SearchTaskModule(tableName, merge, _dataLoader, _distributor, 
                 _backgroundModule, scriptParser);

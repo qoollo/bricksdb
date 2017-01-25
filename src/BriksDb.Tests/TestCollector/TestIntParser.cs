@@ -29,5 +29,10 @@ namespace Qoollo.Tests.TestCollector
         {
             return new Tuple<FieldDescription, string>(new FieldDescription("", typeof(int)), script);
         }
+
+        public override List<FieldDescription> GetOrderKeys(string script)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

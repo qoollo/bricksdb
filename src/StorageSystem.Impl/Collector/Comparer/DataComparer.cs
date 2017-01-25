@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Support;
@@ -22,6 +23,18 @@ namespace Qoollo.Impl.Collector.Comparer
 
             if (description.SystemFieldType == typeof (DateTime))
                 return DateTimeComparer.Compare(value1, value2);
+
+            return Consts.CompareFailed;
+        }
+
+        public static int Compare(SearchData data1, SearchData data2, List<FieldDescription> descriptions)
+        {
+            foreach (var fieldDescription in descriptions)
+            {
+                var result = Compare(data1, data2, fieldDescription);
+                if (result != 0)
+                    return result;
+            }
 
             return Consts.CompareFailed;
         }

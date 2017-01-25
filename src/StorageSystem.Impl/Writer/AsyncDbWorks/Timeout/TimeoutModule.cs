@@ -86,7 +86,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
         }
 
         private bool IsMine(MetaData data)
-        {            
+        {
+            if (!data.DeleteTime.HasValue)
+                return true;
             return DateTime.Now - data.DeleteTime >= _deleteTimeout;
         }
 

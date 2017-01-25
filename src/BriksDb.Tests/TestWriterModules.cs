@@ -67,7 +67,7 @@ namespace Qoollo.Tests
             writer.SetServer(1, "localhost", 11011, 157);
             writer.Save();
 
-            _writer1.Build(157, "TestLocalAndRemote", 1);            
+            _writer1.Build(157, "TestLocalAndRemote", 1);
 
             var list = new List<InnerData>();
             const int count = 100;

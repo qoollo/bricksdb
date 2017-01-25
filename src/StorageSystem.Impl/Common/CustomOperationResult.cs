@@ -1,4 +1,4 @@
-﻿namespace Qoollo.Impl.Sql
+﻿namespace Qoollo.Impl.Common
 {
     public class CustomOperationResult
     {

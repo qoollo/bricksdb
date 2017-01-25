@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BriksDb.Client", "StorageSystem.Client\BriksDb.Client.csproj", "{1BE55462-F506-45B7-AD6D-C29F36CE68E0}"
 EndProject
@@ -25,6 +25,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BriksDb.RedisInterface", "BriksDb.RedisInterface\BriksDb.RedisInterface.csproj", "{B60B2666-0473-46DC-A81E-DD64A8A7E01B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BriksDb.Benchmark", "BriksDb.Benchmark\BriksDb.Benchmark.csproj", "{01157353-60EE-4AC6-AAEB-6D7C19B10564}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BriksDb.Impl.Postgre", "BriksDb.Impl.Postgre\BriksDb.Impl.Postgre.csproj", "{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -122,14 +124,30 @@ Global
 		{01157353-60EE-4AC6-AAEB-6D7C19B10564}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01157353-60EE-4AC6-AAEB-6D7C19B10564}.Release|Any CPU.Build.0 = Release|Any CPU
 		{01157353-60EE-4AC6-AAEB-6D7C19B10564}.Release|x86.ActiveCfg = Release|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.Debug|x86.Build.0 = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.DebugRC|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.DebugRC|Any CPU.Build.0 = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.DebugRC|x86.ActiveCfg = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.DebugRC|x86.Build.0 = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.DebugSC|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.DebugSC|Any CPU.Build.0 = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.DebugSC|x86.ActiveCfg = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.DebugSC|x86.Build.0 = Debug|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.Release|x86.ActiveCfg = Release|Any CPU
+		{B8D44353-71F6-4F6F-A244-BD3A1EA2298D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C68567CF-D547-4AAF-8C63-36B503D21539} = {6CF86FFF-901E-499E-8D73-B70E7D2C96FC}
-		{01157353-60EE-4AC6-AAEB-6D7C19B10564} = {6CF86FFF-901E-499E-8D73-B70E7D2C96FC}
 		{B60B2666-0473-46DC-A81E-DD64A8A7E01B} = {6CF86FFF-901E-499E-8D73-B70E7D2C96FC}
+		{01157353-60EE-4AC6-AAEB-6D7C19B10564} = {6CF86FFF-901E-499E-8D73-B70E7D2C96FC}
 	EndGlobalSection
 	GlobalSection(NDepend) = preSolution
 		Project = ".\StorageSystem.ndproj"

@@ -48,7 +48,7 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public void SetKeyName(string keyName)
         {
-            _keyName = "Meta_" + keyName;
+            _keyName = "Meta_" + keyName.UnQuote();
             _userKeyName = keyName;
             var descr = _handler.GetFieldsDescription();
             _keyType = descr.Find(x => x.Item1 == keyName).Item3;
@@ -56,8 +56,7 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public void SetTableName(List<string> tableName)
         {
-            _metaTableName = tableName.Aggregate(_metaTableName + "_", (current, result) => current + result + "_");
-            _metaTableName = _metaTableName.Remove(_metaTableName.Length - 1);
+            _metaTableName = _metaTableName + "_" + string.Join("_", tableName.Select(o => o.UnQuote()));
         }
 
         public NpgsqlCommand SetKeytoCommand(NpgsqlCommand command, object key)
@@ -182,11 +181,11 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public MetaData ReadMetaFromSearchData(SearchData data)
         {
-            object local = data.Fields.Find(x => x.Item2.ToLower() == PostgreConsts.Local.ToLower()).Item1;
-            object isDeleted = data.Fields.Find(x => x.Item2.ToLower() == PostgreConsts.IsDeleted.ToLower()).Item1;
-            object deleteTime = data.Fields.Find(x => x.Item2.ToLower() == PostgreConsts.DeleteTime.ToLower()).Item1;
-            object hash = data.Fields.Find(x => x.Item2.ToLower() == PostgreConsts.Hash.ToLower()).Item1;
-            object id = data.Fields.Find(x => x.Item2.ToLower() == _keyName.ToLower()).Item1;
+            object local = data.Fields.Find(x => string.Equals(x.Item2, PostgreConsts.Local, StringComparison.OrdinalIgnoreCase)).Item1;
+            object isDeleted = data.Fields.Find(x => string.Equals(x.Item2, PostgreConsts.IsDeleted, StringComparison.OrdinalIgnoreCase)).Item1;
+            object deleteTime = data.Fields.Find(x => string.Equals(x.Item2, PostgreConsts.DeleteTime, StringComparison.OrdinalIgnoreCase)).Item1;
+            object hash = data.Fields.Find(x => string.Equals(x.Item2, PostgreConsts.Hash, StringComparison.OrdinalIgnoreCase)).Item1;
+            object id = data.Fields.Find(x => string.Equals(x.Item2, _keyName, StringComparison.OrdinalIgnoreCase)).Item1;
 
             MetaData meta = null;
 

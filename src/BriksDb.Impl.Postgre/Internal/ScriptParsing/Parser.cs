@@ -78,6 +78,10 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             return new TokenizedScriptPart(src.Script, src.StartToken + depth, src.TokenCount - 2 * depth);
         }
 
+        protected static bool IsDoubleQuoted(string str)
+        {
+            return str.Length >= 3 && str[0] == '\"' && str[str.Length - 1] == '\"';
+        }
         protected static string RemoveDoubleQuotes(string str)
         {
             if (str.Length < 3)
@@ -170,7 +174,7 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             var unwrapped = UnwrapBraces(part);
             var lastToken = unwrapped[unwrapped.TokenCount - 1];
             if (lastToken.Type == TokenType.DoubleQuoteString)
-                return RemoveDoubleQuotes(lastToken.Content.ToString());
+                return lastToken.Content.ToString();
 
             var tokenString = lastToken.Content.ToString();
             int lastIndexOfPoint = tokenString.LastIndexOf('.');
@@ -178,6 +182,17 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
                 return tokenString.Substring(lastIndexOfPoint + 1);
 
             return tokenString;
+        }
+
+        protected static string NormalizeName(string name)
+        {
+            if (IsDoubleQuoted(name))
+                return RemoveDoubleQuotes(name);
+            return name.ToLower();
+        }
+        protected static string NormalizeName(string name, bool normalizeCondition)
+        {
+            return normalizeCondition ? NormalizeName(name) : name;
         }
 
 
@@ -311,26 +326,26 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
         public bool IsTableColumn { get; private set; }
         public bool IsCalculatable { get { return !IsTableColumn && !IsStar; } }
 
-        public string GetTableColumnName()
+        public string GetTableColumnName(bool normalize = true)
         {
             if (!IsTableColumn)
                 return null;
 
-            return GetTableColumnName(KeyExpression);
+            return NormalizeName(GetTableColumnName(KeyExpression), normalize);
         }
 
-        public string GetKeyName()
+        public string GetKeyName(bool normalize = true)
         {
             if (AsExpression.TokenCount > 0)
-                return RemoveDoubleQuotes(AsExpression.ToString());
+                return NormalizeName(AsExpression.ToString(), normalize);
 
             if (IsStar)
                 return KeyExpression.ToString();
 
             if (IsTableColumn)
-                return GetTableColumnName();
+                return GetTableColumnName(normalize);
 
-            return RemoveDoubleQuotes(UnwrapBraces(KeyExpression).ToString());
+            return NormalizeName(UnwrapBraces(KeyExpression).ToString(), normalize);
         }
     }
 
@@ -495,12 +510,12 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
         public bool IsCalculatable { get { return !IsKeyName; } }
 
 
-        public string GetKeyName()
+        public string GetKeyName(bool normalize = true)
         {
             if (IsKeyName)
-                return GetTableColumnName(KeyExpression);
+                return NormalizeName(GetTableColumnName(KeyExpression), normalize);
 
-            return RemoveDoubleQuotes(UnwrapBraces(KeyExpression).ToString());
+            return NormalizeName(UnwrapBraces(KeyExpression).ToString(), normalize);
         }
     }
 

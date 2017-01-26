@@ -470,7 +470,7 @@ namespace Qoollo.Tests
             Assert.IsNotNull(parseRes.OrderBy);
             Assert.AreEqual("ORDER  BY Id DESC", parseRes.OrderBy.ToString());
             Assert.AreEqual(1, parseRes.OrderBy.Keys.Count);
-            Assert.AreEqual("Id", parseRes.OrderBy.Keys[0].GetKeyName());
+            Assert.AreEqual("id", parseRes.OrderBy.Keys[0].GetKeyName());
             Assert.AreEqual(OrderType.Desc, parseRes.OrderBy.Keys[0].OrderType);
             Assert.IsNotNull(parseRes.Limit);
             Assert.AreEqual("LIMIT 10", parseRes.Limit.ToString());
@@ -489,6 +489,8 @@ namespace Qoollo.Tests
             Assert.AreEqual(4, parseRes2.Select.Keys.Count);
             Assert.IsFalse(parseRes2.Select.Keys[1].IsCalculatable);
             Assert.AreEqual("Id", parseRes2.Select.Keys[1].GetKeyName());
+            Assert.AreEqual("id", parseRes2.Select.Keys[2].GetKeyName());
+            Assert.AreEqual("one", parseRes2.Select.Keys[3].GetKeyName());
             Assert.IsTrue(parseRes2.Select.Keys[3].IsCalculatable);
         }
 

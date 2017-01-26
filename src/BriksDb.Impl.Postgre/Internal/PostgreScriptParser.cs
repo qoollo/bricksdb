@@ -111,7 +111,7 @@ namespace Qoollo.Impl.Postgre.Internal
                 return null;
 
             string keyName = handler.GetKeyName();
-            FieldDescription keyDescription = new FieldDescription(keyName, handler.GetDbFieldsDescription().First(x => x.Item1 == keyName).Item2);
+            FieldDescription keyDescription = new FieldDescription(keyName, handler.GetDbFieldsDescription().First(x => string.Compare(x.Item1, keyName, true) == 0).Item2);
             
             // Star presented
             if (parsedScript.Select.Keys.Any(o => o.IsStar))

@@ -143,9 +143,9 @@ namespace Qoollo.Impl.Postgre.Internal
 
             OrderType orderType = parsedScript.OrderBy.Keys[0].OrderType;
             if (orderType == OrderType.Asc)
-                return OrderAsc(parsedScript.RemoveOrderBy(), idDescription);
+                return OrderAsc(parsedScript, idDescription);
             if (orderType == OrderType.Desc)
-                return OrderDesc(parsedScript.RemoveOrderBy(), idDescription);
+                return OrderDesc(parsedScript, idDescription);
 
             return script;
         }
@@ -157,75 +157,69 @@ namespace Qoollo.Impl.Postgre.Internal
         
         private string OrderAsc(PostgreSelectScript script, FieldDescription idDescription)
         {
-            string compareType = idDescription.IsFirstAsk ? ">=" : ">";
+            StringBuilder result = new StringBuilder(script.Script.Length);
+            var mainScript = script.RemovePreAndPostSelectPart();
 
-            if (script.With == null)
+            if (script.PreSelectPart.TokenCount > 0)
+                result.Append(script.PreSelectPart.ToString()).AppendLine(" ;");
+
+            if (script.With != null)
             {
-                var mainScript = script.RemovePreAndPostSelectPart();
-
-                return $@"{script.PreSelectPart.ToString()} ;
-                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
-                              WHERE UserSearchTable.{idDescription.AsFieldName} {compareType} @{idDescription.FieldName}
-                              ORDER BY UserSearchTable.{idDescription.AsFieldName}
-                              LIMIT {idDescription.PageSize}";
+                mainScript = mainScript.RemoveWith();
+                result.AppendLine(script.With.ToString());
             }
+
+            result.AppendLine($"SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable");
+
+            if (idDescription.IsFirstAsk)
+                result.AppendLine($"WHERE UserSearchTable.{idDescription.AsFieldName} >= @{idDescription.FieldName}");
             else
-            {
-                var mainScript = script.RemovePreAndPostSelectPart().RemoveWith();
+                result.AppendLine($"WHERE UserSearchTable.{idDescription.AsFieldName} > @{idDescription.FieldName}");
 
-                return $@"{script.PreSelectPart.ToString()} ;
-                              {script.With.ToString()}
-                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
-                              WHERE UserSearchTable.{idDescription.AsFieldName} {compareType} @{idDescription.FieldName}
-                              ORDER BY UserSearchTable.{idDescription.AsFieldName}
-                              LIMIT {idDescription.PageSize}";
+            // Conditionally apply ORDER BY if user script ordered differently
+            if (script.OrderBy == null ||
+                script.OrderBy.Keys[0].OrderType != OrderType.Asc ||
+                string.Compare(script.OrderBy.Keys[0].GetKeyName(), idDescription.AsFieldName, true) != 0)
+            {
+                result.AppendLine($"ORDER BY UserSearchTable.{idDescription.AsFieldName} ASC");
             }
+
+            result.AppendLine($"LIMIT {idDescription.PageSize}");
+
+            return result.ToString();
         }
 
         private string OrderDesc(PostgreSelectScript script, FieldDescription idDescription)
         {
-            if (script.With == null)
-            {
-                var mainScript = script.RemovePreAndPostSelectPart();
+            StringBuilder result = new StringBuilder(script.Script.Length);
+            var mainScript = script.RemovePreAndPostSelectPart();
 
-                if (idDescription.IsFirstAsk)
-                {
-                    return $@"{script.PreSelectPart.ToString()} ;
-                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
-                              ORDER BY UserSearchTable.{idDescription.AsFieldName} DESC
-                              LIMIT {idDescription.PageSize}";
-                }
-                else
-                {
-                    return $@"{script.PreSelectPart.ToString()} ;
-                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
-                              WHERE UserSearchTable.{idDescription.AsFieldName} < @{idDescription.FieldName}
-                              ORDER BY UserSearchTable.{idDescription.AsFieldName} DESC
-                              LIMIT {idDescription.PageSize}";
-                }
-            }
-            else
-            {
-                var mainScript = script.RemovePreAndPostSelectPart().RemoveWith();
+            if (script.PreSelectPart.TokenCount > 0)
+                result.Append(script.PreSelectPart.ToString()).AppendLine(" ;");
 
-                if (idDescription.IsFirstAsk)
-                {
-                    return $@"{script.PreSelectPart.ToString()} ;
-                              {script.With.ToString()}
-                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
-                              ORDER BY UserSearchTable.{idDescription.AsFieldName} DESC
-                              LIMIT {idDescription.PageSize}";
-                }
-                else
-                {
-                    return $@"{script.PreSelectPart.ToString()} ;
-                              {script.With.ToString()}
-                              SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable
-                              WHERE UserSearchTable.{idDescription.AsFieldName} < @{idDescription.FieldName}
-                              ORDER BY UserSearchTable.{idDescription.AsFieldName} DESC
-                              LIMIT {idDescription.PageSize}";
-                }
+            if (script.With != null)
+            {
+                mainScript = mainScript.RemoveWith();
+                result.AppendLine(script.With.ToString());
             }
+
+            result.AppendLine($"SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable");
+
+            if (!idDescription.IsFirstAsk)
+                result.AppendLine($"WHERE UserSearchTable.{idDescription.AsFieldName} < @{idDescription.FieldName}");
+
+
+            // Conditionally apply ORDER BY if user script ordered differently
+            if (script.OrderBy == null ||
+                script.OrderBy.Keys[0].OrderType != OrderType.Desc ||
+                string.Compare(script.OrderBy.Keys[0].GetKeyName(), idDescription.AsFieldName, true) != 0)
+            {
+                result.AppendLine($"ORDER BY UserSearchTable.{idDescription.AsFieldName} DESC");
+            }
+
+            result.AppendLine($"LIMIT {idDescription.PageSize}");
+
+            return result.ToString();
         }
         
         #endregion

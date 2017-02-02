@@ -107,7 +107,7 @@ namespace Qoollo.Impl.Postgre.Internal
         public override Tuple<FieldDescription, string> PrepareKeyScript(string script, IUserCommandsHandler handler)
         {
             var parsedScript = PostgreSelectScript.Parse(script);
-            if (parsedScript.OrderBy == null || parsedScript.OrderBy.Keys.Count != 1)
+            if (parsedScript.OrderBy == null)
                 return null;
 
             string keyName = handler.GetKeyName();

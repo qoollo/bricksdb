@@ -23,5 +23,30 @@ namespace Qoollo.Impl.Postgre.Internal
 
             return str.Substring(1, str.Length - 1);
         }
+
+        public static string NormalizeName(string name)
+        {
+            if (IsQuoted(name))
+                return name.Substring(1, name.Length - 1);
+            return name.ToLower();
+        }
+
+        public static bool AreNamesEqual(string name1, string name2)
+        {
+            bool quoted1 = IsQuoted(name1);
+            bool quoted2 = IsQuoted(name2);
+
+            if (!quoted1 && !quoted2)
+                return string.Equals(name1, name2, StringComparison.OrdinalIgnoreCase);
+
+            if (quoted1 && quoted2)
+            {
+                if (name1.Length != name2.Length)
+                    return false;
+                return string.Compare(name1, 1, name2, 1, name1.Length - 2) == 0;
+            }
+
+            return NormalizeName(name1) == NormalizeName(name2);
+        }
     }
 }

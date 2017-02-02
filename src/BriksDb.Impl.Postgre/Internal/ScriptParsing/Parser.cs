@@ -552,9 +552,6 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
                 keyIndex++;
             }
 
-            if (result.Keys.Count != 1)
-                throw new PostgreScriptParsingException($"Only single key inside ORDER BY is supported: '{result.Content.ToString()}'");
-
             return result;
         }
 

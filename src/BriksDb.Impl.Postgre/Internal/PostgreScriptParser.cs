@@ -129,6 +129,11 @@ namespace Qoollo.Impl.Postgre.Internal
             return new Tuple<FieldDescription, string>(keyDescription, modifiedScript);
         }
 
+        public override List<FieldDescription> GetOrderKeys(string script)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
 
 

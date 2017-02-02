@@ -609,7 +609,7 @@ namespace Qoollo.Tests
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
-            var merge = new OrderMerge(loader, parser);
+            var merge = new OrderMerge(loader, parser, null);
             var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
 
             var distributor =

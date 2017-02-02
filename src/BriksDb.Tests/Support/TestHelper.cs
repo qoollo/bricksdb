@@ -78,7 +78,7 @@ namespace Qoollo.Tests.Support
             return ret;
         }
 
-        public static TestNetDistributorForProxy OpenDistributorHostForDb(ServerId server, ConnectionConfiguration config)
+        public static IDisposable OpenDistributorHostForDb(ServerId server, ConnectionConfiguration config, out TestNetDistributorForProxy distributor)
         {
             var ret = new TestNetDistributorForProxy();
             var host = new ServiceHost(ret,
@@ -92,12 +92,24 @@ namespace Qoollo.Tests.Support
 
             host.Open();
 
+            distributor = ret;
+            return host;
+        }
+        public static TestNetDistributorForProxy OpenDistributorHostForDb(ServerId server, ConnectionConfiguration config)
+        {
+            TestNetDistributorForProxy ret = null;
+            OpenDistributorHostForDb(server, config, out ret);
             return ret;
         }
 
         public static SearchData CreateData(int data)
         {
             return new SearchData(new List<Tuple<object, string>> { new Tuple<object, string>(data, "") }, data);
+        }
+
+        public static string Quote(this string str)
+        {
+            return "\"" + str + "\"";
         }
     }
 }

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 using Qoollo.Impl.Common;
 
-namespace Qoollo.Impl.Sql
+namespace Qoollo.Impl.Postgre
 {
-    public abstract class SqlUserCommandCreator<TKey, TValue>
+    public abstract class PostgreUserCommandCreator<TKey, TValue>
     {
         /// <summary>
         /// Init Db
@@ -14,7 +14,7 @@ namespace Qoollo.Impl.Sql
         /// <param name="connection">Dont close connection</param>
         /// <returns>False - if was error
         /// Is db exists - return True</returns>
-        public abstract bool CreateDb(SqlConnection connection);
+        public abstract bool CreateDb(NpgsqlConnection connection);
 
         /// <summary>
         /// Get primary key name
@@ -41,13 +41,13 @@ namespace Qoollo.Impl.Sql
         /// <returns></returns>
         public abstract void GetFieldsDescription(DataTable dataTable);
 
-        public abstract SqlCommand Create(TKey key, TValue value);
+        public abstract NpgsqlCommand Create(TKey key, TValue value);
 
-        public abstract SqlCommand Update(TKey key, TValue value);
+        public abstract NpgsqlCommand Update(TKey key, TValue value);
 
-        public abstract SqlCommand Delete(TKey key);
+        public abstract NpgsqlCommand Delete(TKey key);
 
-        public abstract SqlCommand Read();
+        public abstract NpgsqlCommand Read();
 
         /// <summary>
         /// Read object
@@ -55,7 +55,7 @@ namespace Qoollo.Impl.Sql
         /// <param name="reader"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        public abstract TValue ReadObjectFromReader(SqlDataReader reader, out TKey key);
+        public abstract TValue ReadObjectFromReader(NpgsqlDataReader reader, out TKey key);
 
         public abstract TValue ReadObjectFromSearchData(List<Tuple<object, string>> fields);
 
@@ -67,7 +67,7 @@ namespace Qoollo.Impl.Sql
         /// <param name="value"></param>
         /// <param name="description"></param>
         /// <returns></returns>
-        public abstract CustomOperationResult CustomOperation(SqlConnection connection, TKey key, byte[] value,
+        public abstract CustomOperationResult CustomOperation(NpgsqlConnection connection, TKey key, byte[] value,
             string description);
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace Qoollo.Impl.Sql
         /// <param name="value"></param>
         /// <param name="description"></param>
         /// <returns></returns>
-        public abstract CustomOperationResult CustomOperationRollback(SqlConnection connection, TKey key,
+        public abstract CustomOperationResult CustomOperationRollback(NpgsqlConnection connection, TKey key,
             byte[] value, string description);
     }
 }

@@ -121,6 +121,7 @@
     <Compile Include="Collector\Tasks\OrderSelectTask.cs" />
     <Compile Include="Collector\Tasks\SearchTask.cs" />
     <Compile Include="Collector\Tasks\SingleServerSearchTask.cs" />
+    <Compile Include="Common\CustomOperationResult.cs" />
     <Compile Include="Common\Data\DataTypes\DistributorData.cs" />
     <Compile Include="Common\Data\DataTypes\InnerData.cs" />
     <Compile Include="Common\Data\DataTypes\MetaData.cs" />

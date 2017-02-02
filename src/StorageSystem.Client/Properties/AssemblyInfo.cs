@@ -14,6 +14,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: InternalsVisibleTo("Qoollo.Impl.Sql")]
+[assembly: InternalsVisibleTo("Qoollo.Impl.Postgre")]
 [assembly: InternalsVisibleTo("Qoollo.Impl.Sqlite")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 

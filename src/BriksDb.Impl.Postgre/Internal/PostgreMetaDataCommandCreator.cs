@@ -271,7 +271,7 @@ namespace Qoollo.Impl.Postgre.Internal
 
 
         private NpgsqlCommand CreateSelectCommandInner(string script, FieldDescription idDescription,
-            List<FieldDescription> userParameters, bool useUserScript = false)
+            List<FieldDescription> userParameters, bool useUserScript = false, List<FieldDescription> orderKeyParameters = null)
         {
             var command = new NpgsqlCommand(script);
             var name = idDescription.FieldName == _keyName ? _userKeyName : idDescription.FieldName;
@@ -293,27 +293,49 @@ namespace Qoollo.Impl.Postgre.Internal
                 }
             }
 
+            if (orderKeyParameters!= null)
+                foreach (var parameter in orderKeyParameters)
+                {
+                    if (parameter.UserType >= 0 && parameter.UserType <= 39 &&
+                        (idDescription.IsFirstAsk ||
+                         !PostgreHelper.AreNamesEqual(parameter.FieldName, idDescription.FieldName)))
+                    {
+                        command.Parameters.Add("@" + parameter.FieldName, (NpgsqlDbType) parameter.UserType);
+                        command.Parameters["@" + parameter.FieldName].Value = parameter.Value;
+                    }
+                }
+
             return command;
         }
 
-        public NpgsqlCommand CreateSelectCommand(string script, FieldDescription idDescription, List<FieldDescription> userParameters)
+        public NpgsqlCommand CreateSelectCommand(string script, FieldDescription idDescription, List<FieldDescription> userParameters,
+            List<FieldDescription> keysParameters)
         {
             string nquery = _scriptParser.CreateOrderScript(script, idDescription);
 
             return CreateSelectCommandInner(nquery, idDescription, userParameters);
         }
 
+        public NpgsqlCommand CreateSelectCommand(string script, FieldDescription idDescription,
+            List<FieldDescription> userParameters)
+        {
+            string nquery = _scriptParser.CreateOrderScript(script, idDescription);
+            return CreateSelectCommandInner(nquery, idDescription, userParameters);
+        }
+
         public NpgsqlCommand CreateSelectCommand(SelectDescription description)
         {
             if (!description.UseUserScript)
-                return CreateSelectCommand(description.Script, description.IdDescription, description.UserParametrs);
+                return CreateSelectCommand(description.Script, description.IdDescription,
+                    description.UserParametrs, description.OrderKeyDescriptions);
 
-            return CreateSelectCommandInner(description.Script, description.IdDescription, description.UserParametrs, true);
+            return CreateSelectCommandInner(description.Script, description.IdDescription, description.UserParametrs,
+                true, description.OrderKeyDescriptions);
         }
 
         public NpgsqlCommand CreateSelectCommand(NpgsqlCommand script, FieldDescription idDescription, List<FieldDescription> userParameters)
         {
-            return CreateSelectCommand(script.CommandText, idDescription, userParameters);
+            return CreateSelectCommand(script.CommandText, idDescription, userParameters, new List<FieldDescription>());
         }
 
         public List<Tuple<object, string>> SelectProcess(DbReader<NpgsqlDataReader> reader)
@@ -329,7 +351,6 @@ namespace Qoollo.Impl.Postgre.Internal
 
                 var value = reader.GetValue(i);
                 if (value is DBNull) value = null;
-
 
                 fields.Add(new Tuple<object, string>(value, name));
             }

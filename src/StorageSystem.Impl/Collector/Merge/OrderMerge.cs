@@ -83,7 +83,7 @@ namespace Qoollo.Impl.Collector.Merge
             _logger.Debug("Start load data");
             while (ret.Count < orderSelectTask.UserPage && !IsFinishMerge(searchTasks))
             {
-                var current = GetCurrent(orderSelectTask, searchTasks, orderType);
+                var current = GetCurrent(keys, searchTasks, orderType);
 
                 if (ret.Count == 0 ||
                     DataComparer.Compare(current.GetData(), ret.Last(), keys) != 0)
@@ -91,7 +91,7 @@ namespace Qoollo.Impl.Collector.Merge
 
                 current.IncrementPosition();
 
-                ReadSameValue(orderSelectTask, searchTasks, ret.Last());
+                ReadSameValue(searchTasks, ret.Last(), keys);
 
                 if (searchTasks.Exists(searchTask => searchTask.Length < viewLength && !searchTask.IsAllDataRead))
                 {
@@ -104,19 +104,24 @@ namespace Qoollo.Impl.Collector.Merge
             return ret;
         }
 
-        private void ReadSameValue(OrderSelectTask orderSelectTask, List<SingleServerSearchTask> searchTasks,
-            SearchData searchData)
+        private void ReadSameValue(List<SingleServerSearchTask> searchTasks, SearchData searchData, List<FieldDescription> keys)
         {
             foreach (var searchTask in searchTasks)
             {
                 for (int i = 0; i < searchTask.Length;)
                 {
-                    if (DataComparer.Compare(searchTask.GetData(i), searchData, orderSelectTask.ScriptDescription) == 0)
+                    if (DataComparer.Compare(searchTask.GetData(i), searchData, keys) == 0)
                         searchTask.RemoveAt(i);
                     else
                         i++;
                 }
             }
+        }
+
+        private void ReadSameValue(OrderSelectTask orderSelectTask, List<SingleServerSearchTask> searchTasks,
+            SearchData searchData)
+        {
+            ReadSameValue(searchTasks, searchData, new List<FieldDescription> {orderSelectTask.ScriptDescription});
         }
 
         private void PreLoadPages(List<SingleServerSearchTask> searchTasks)
@@ -150,21 +155,27 @@ namespace Qoollo.Impl.Collector.Merge
         private SingleServerSearchTask GetCurrent(OrderSelectTask orderSelectTask,
             List<SingleServerSearchTask> searchTasks, OrderType orderType)
         {
+            return GetCurrent(new List<FieldDescription> {orderSelectTask.ScriptDescription}, searchTasks, orderType);
+        }
+
+        private SingleServerSearchTask GetCurrent(List<FieldDescription> keys,
+            List<SingleServerSearchTask> searchTasks, OrderType orderType)
+        {
             SingleServerSearchTask current = searchTasks.FirstOrDefault(x => !(x.IsAllDataRead && x.Length == 0));
 
             if (current == null)
                 return null;
 
-            foreach (var searchTask in searchTasks) 
+            foreach (var searchTask in searchTasks)
             {
-                if (searchTask.IsAllDataRead && searchTask.Length==0)
+                if (searchTask.IsAllDataRead && searchTask.Length == 0)
                     continue;
 
                 if (orderType == OrderType.Desc &&
-                    DataComparer.Compare(current.GetData(), searchTask.GetData(), orderSelectTask.ScriptDescription) < 0)
+                    DataComparer.Compare(current.GetData(), searchTask.GetData(), keys) < 0)
                     current = searchTask;
                 if (orderType == OrderType.Asc &&
-                    DataComparer.Compare(current.GetData(), searchTask.GetData(), orderSelectTask.ScriptDescription) > 0)
+                    DataComparer.Compare(current.GetData(), searchTask.GetData(), keys) > 0)
                     current = searchTask;
             }
 

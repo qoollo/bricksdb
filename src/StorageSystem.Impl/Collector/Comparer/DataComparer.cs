@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Support;
@@ -10,8 +11,8 @@ namespace Qoollo.Impl.Collector.Comparer
     {
         public static int Compare(SearchData data1, SearchData data2, FieldDescription description)
         {
-            object value1 = data1.Key;
-            object value2 = data2.Key;
+            object value1 = data1.Fields.First(x => x.Item2.ToLower() == description.AsFieldName.ToLower()).Item1;
+            object value2 = data2.Fields.First(x => x.Item2.ToLower() == description.AsFieldName.ToLower()).Item1;
 
             if (description.SystemFieldType == typeof (int) ||
                 description.SystemFieldType == typeof (Int16) ||

@@ -162,7 +162,6 @@ namespace Qoollo.Impl.Postgre.Internal
 
         #endregion
 
-
         #region New Select
 
 
@@ -174,19 +173,33 @@ namespace Qoollo.Impl.Postgre.Internal
 
             OrderType orderType = parsedScript.OrderBy.Keys[0].OrderType;
             if (orderType == OrderType.Asc)
-                return OrderAsc(parsedScript, idDescription);
+                return OrderAsc(parsedScript, idDescription, new List<FieldDescription> {idDescription});
             if (orderType == OrderType.Desc)
-                return OrderDesc(parsedScript, idDescription);
+                return OrderDesc(parsedScript, idDescription, new List<FieldDescription> { idDescription });
 
             return script;
         }
 
+        public string CreateOrderScript(string script, FieldDescription idDescription, List<FieldDescription> keys)
+        {
+            var parsedScript = PostgreSelectScript.Parse(script);
+            if (parsedScript.OrderBy == null)
+                throw new ArgumentException("Original script should be ordered");
+
+            OrderType orderType = parsedScript.OrderBy.Keys[0].OrderType;
+            if (orderType == OrderType.Asc)
+                return OrderAsc(parsedScript, idDescription, keys);
+            if (orderType == OrderType.Desc)
+                return OrderDesc(parsedScript, idDescription, keys);
+
+            return script;
+        }
 
         #endregion
 
         #region Order
-        
-        private string OrderAsc(PostgreSelectScript script, FieldDescription idDescription)
+
+        private string OrderAsc(PostgreSelectScript script, FieldDescription idDescription, List<FieldDescription> keys)
         {
             StringBuilder result = new StringBuilder(script.Script.Length);
             var mainScript = script.RemovePreAndPostSelectPart();
@@ -202,17 +215,33 @@ namespace Qoollo.Impl.Postgre.Internal
 
             result.AppendLine($"SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable");
 
-            if (idDescription.IsFirstAsk)
-                result.AppendLine($"WHERE UserSearchTable.{idDescription.AsFieldName} >= @{idDescription.FieldName}");
-            else
-                result.AppendLine($"WHERE UserSearchTable.{idDescription.AsFieldName} > @{idDescription.FieldName}");
+            string where = " WHERE ";
+            for (int i = 0; i < keys.Count; i++)
+            {
+                if (i != 0)
+                    where += " and ";
+
+                if (idDescription.IsFirstAsk)
+                    where += $" ( UserSearchTable.{keys[i].AsFieldName} >= @{keys[i].FieldName} ) \n ";
+                else
+                    where += $" ( UserSearchTable.{keys[i].AsFieldName} > @{keys[i].FieldName} ) \n ";
+            }
+            result.Append(where);
 
             // Conditionally apply ORDER BY if user script ordered differently
             if (script.OrderBy == null ||
                 script.OrderBy.Keys[0].OrderType != OrderType.Asc ||
                 string.Compare(script.OrderBy.Keys[0].GetKeyName(), idDescription.AsFieldName, true) != 0)
             {
-                result.AppendLine($"ORDER BY UserSearchTable.{idDescription.AsFieldName} ASC");
+                string order = " ORDER BY ";
+                for (int i = 0; i < keys.Count; i++)
+                {
+                    if (i != 0)
+                        order += ", ";
+
+                    order += $" UserSearchTable.{idDescription.AsFieldName} ";
+                }
+                result.Append($" {order} ASC ");
             }
 
             result.AppendLine($"LIMIT {idDescription.PageSize}");
@@ -220,7 +249,7 @@ namespace Qoollo.Impl.Postgre.Internal
             return result.ToString();
         }
 
-        private string OrderDesc(PostgreSelectScript script, FieldDescription idDescription)
+        private string OrderDesc(PostgreSelectScript script, FieldDescription idDescription, List<FieldDescription> keys)
         {
             StringBuilder result = new StringBuilder(script.Script.Length);
             var mainScript = script.RemovePreAndPostSelectPart();
@@ -236,23 +265,38 @@ namespace Qoollo.Impl.Postgre.Internal
 
             result.AppendLine($"SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable");
 
-            if (!idDescription.IsFirstAsk)
-                result.AppendLine($"WHERE UserSearchTable.{idDescription.AsFieldName} < @{idDescription.FieldName}");
+            string where = " WHERE ";
+            for (int i = 0; i < keys.Count; i++)
+            {
+                if (i != 0 && !idDescription.IsFirstAsk)
+                    where += " and ";
 
+                if (!idDescription.IsFirstAsk)
+                    where += $" ( UserSearchTable.{keys[i].AsFieldName} < @{keys[i].FieldName} ) \n ";
+            }
+            result.Append(where);
 
             // Conditionally apply ORDER BY if user script ordered differently
             if (script.OrderBy == null ||
                 script.OrderBy.Keys[0].OrderType != OrderType.Desc ||
                 string.Compare(script.OrderBy.Keys[0].GetKeyName(), idDescription.AsFieldName, true) != 0)
             {
-                result.AppendLine($"ORDER BY UserSearchTable.{idDescription.AsFieldName} DESC");
+                string order = " ORDER BY ";
+                for (int i = 0; i < keys.Count; i++)
+                {
+                    if (i != 0)
+                        order += ", ";
+
+                    order += $" UserSearchTable.{idDescription.AsFieldName} ";
+                }
+                result.Append($" {order} DESC ");
             }
 
             result.AppendLine($"LIMIT {idDescription.PageSize}");
 
             return result.ToString();
         }
-        
+
         #endregion
     }
 }

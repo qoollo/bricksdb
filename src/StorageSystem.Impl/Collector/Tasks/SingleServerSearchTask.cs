@@ -13,7 +13,7 @@ namespace Qoollo.Impl.Collector.Tasks
         public bool IsAllDataRead { get; private set; }
         public bool IsServersAvailbale { get; private set; }
 
-        public object LastKey { get; private set; }
+//        public object LastKey { get; private set; }
 
         public FieldDescription IdDescription { get; private set; }
         public List<FieldDescription> OrderKeyDescriptions { get; set; }
@@ -98,16 +98,15 @@ namespace Qoollo.Impl.Collector.Tasks
 
         #region Page work
 
-        public void SetLastKey(object key)
-        {
-            LastKey = key;
-            IdDescription.Value = LastKey;
-        }
-
         public void FindNextLastKey()
         {
-            LastKey = _data.Last().Key;
-            IdDescription.Value = LastKey;
+            //TODO check
+            IdDescription.Value = _data.Last().Key;
+            foreach (var description in OrderKeyDescriptions)
+            {
+                var value = _data.Last().Fields.First(x => x.Item2.ToLower() == description.AsFieldName.ToLower()).Item1;
+                description.Value = value;
+            }
         }
 
         #endregion

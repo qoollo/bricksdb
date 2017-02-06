@@ -38,6 +38,7 @@ namespace Qoollo.Impl.Postgre.Internal
             if (parsedScript.OrderBy == null || parsedScript.OrderBy.Keys.Count != 1)
                 return null;
 
+            var containsCalc = parsedScript.OrderBy.Keys.Any(x => x.IsCalculatable);
             // Order By key
             OrderByKeyElement orderByKey = parsedScript.OrderBy.Keys[0];
             string orderByKeyName = orderByKey.GetKeyName();
@@ -77,7 +78,8 @@ namespace Qoollo.Impl.Postgre.Internal
             {
                 var resultField = new FieldDescription(orderByKeyName, dbFieldDesc.Item2)
                 {
-                    AsFieldName = selectKey.GetKeyName()
+                    AsFieldName = selectKey.GetKeyName(),
+                    ContainsCalculatedField = containsCalc
                 };
                 return new Tuple<FieldDescription, string>(resultField, script);
             }
@@ -86,7 +88,8 @@ namespace Qoollo.Impl.Postgre.Internal
             {
                 var resultField = new FieldDescription(orderByKeyName, dbFieldDesc.Item2)
                 {
-                    AsFieldName = orderByKeyName
+                    AsFieldName = orderByKeyName,
+                    ContainsCalculatedField = containsCalc
                 };
                 return new Tuple<FieldDescription, string>(resultField, script);
             }
@@ -99,7 +102,8 @@ namespace Qoollo.Impl.Postgre.Internal
 
                 var resultField = new FieldDescription(orderByKeyName, dbFieldDesc.Item2)
                 {
-                    AsFieldName = orderByKeyName
+                    AsFieldName = orderByKeyName,
+                    ContainsCalculatedField = containsCalc
                 };
                 return new Tuple<FieldDescription, string>(resultField, modifiedScript);
             }

@@ -43,6 +43,11 @@ namespace Qoollo.Impl.Collector.Parser
             }
         }
 
-        public abstract List<FieldDescription> GetOrderKeys(string script);
+        public List<FieldDescription> GetOrderKeysInner(string script)
+        {
+            return GetOrderKeys(script, _commandsHandler);
+        }
+
+        public abstract List<FieldDescription> GetOrderKeys(string script, IUserCommandsHandler handler);
     }
 }

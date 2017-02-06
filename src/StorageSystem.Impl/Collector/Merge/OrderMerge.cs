@@ -67,7 +67,7 @@ namespace Qoollo.Impl.Collector.Merge
         {
             var ret = new List<SearchData>();
             var keys = new List<FieldDescription> {orderSelectTask.ScriptDescription};
-            var keysDescriptions = _scriptParser.GetOrderKeys(searchTasks.First().Script);
+            var keysDescriptions = _scriptParser.GetOrderKeysInner(searchTasks.First().Script);
             if (keysDescriptions.Count != 1)
             {
                 searchTasks.ForEach(x => x.OrderKeyDescriptions = keysDescriptions);

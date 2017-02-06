@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -129,9 +130,30 @@ namespace Qoollo.Impl.Postgre.Internal
             return new Tuple<FieldDescription, string>(keyDescription, modifiedScript);
         }
 
-        public override List<FieldDescription> GetOrderKeys(string script)
+        public override List<FieldDescription> GetOrderKeys(string script, IUserCommandsHandler handler)
         {
-            throw new NotImplementedException();
+            var result = new List<FieldDescription>();
+
+            var parsedScript = PostgreSelectScript.Parse(script);
+            var allFields = handler.GetDbFieldsDescription();
+
+            foreach (var element in parsedScript.OrderBy.Keys)
+            {
+                if (element.IsCalculatable)
+                {
+                    if (element.GetKeyName() == "count")
+                    {
+                        result.Add(new FieldDescription(element.GetKeyName(), typeof (Int64)));
+                    }
+                }
+                else
+                {
+                    result.Add(new FieldDescription(element.GetKeyName(),
+                        allFields.First(x => string.Compare(x.Item1, element.GetKeyName(), true) == 0).Item2));
+                }
+            }
+
+            return result;
         }
 
         #endregion

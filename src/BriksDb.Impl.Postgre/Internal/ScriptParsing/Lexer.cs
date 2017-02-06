@@ -70,7 +70,9 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
         AS,
         ALL,
         DISTINCT,
-        ON
+        ON,
+
+        COUNT,
     }
 
 
@@ -125,6 +127,7 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             ["ALL"] = TokenType.ALL,
             ["DISTINCT"] = TokenType.DISTINCT,
             ["ON"] = TokenType.ON,
+            ["COUNT"] = TokenType.COUNT,
         };
 
         public static TokenizedScript Parse(string script)

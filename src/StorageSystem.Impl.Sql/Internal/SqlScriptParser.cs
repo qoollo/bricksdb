@@ -70,7 +70,7 @@ namespace Qoollo.Impl.Sql.Internal
             return new Tuple<FieldDescription, string>(description, query);
         }
 
-        public override List<FieldDescription> GetOrderKeys(string script)
+        public override List<FieldDescription> GetOrderKeys(string script, IUserCommandsHandler handler)
         {
             throw new NotImplementedException();
         }

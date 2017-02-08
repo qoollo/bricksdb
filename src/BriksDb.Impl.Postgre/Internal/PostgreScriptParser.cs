@@ -13,6 +13,88 @@ namespace Qoollo.Impl.Postgre.Internal
 {
     internal class PostgreScriptParser : ScriptParser
     {
+        #region Helpers
+
+        private struct ScriptKeyDescription
+        {
+            public ScriptKeyDescription(string normalizedKeyName, OrderByKeyElement orderByKey, SelectKeyElement selectKey, Tuple<string, Type> dbFieldDesc)
+            {
+                NormalizedKeyName = normalizedKeyName;
+                OrderByKey = orderByKey;
+                SelectKey = selectKey;
+                DbFieldDesc = dbFieldDesc;
+            }
+
+            public string NormalizedKeyName { get; }
+            public OrderByKeyElement OrderByKey { get; }
+            public SelectKeyElement SelectKey { get; }
+            public Tuple<string, Type> DbFieldDesc { get; }
+            public Type KeyType => DbFieldDesc?.Item2;
+            public bool IsCalculatable => OrderByKey.IsCalculatable || (SelectKey != null && SelectKey.IsCalculatable);
+        }
+
+
+        private static ScriptKeyDescription GetKeyDescription(PostgreSelectScript parsedScript, List<Tuple<string, Type>> dbFieldDescs, OrderByKeyElement orderByKey)
+        {
+            string orderByKeyName = orderByKey.GetKeyName();
+
+            // Search for select Key
+            SelectKeyElement selectKey = null;
+            if (orderByKey.IsTableQualified)
+            {
+                selectKey = parsedScript.Select.Keys.FirstOrDefault(o => o.IsTableColumn && PostgreHelper.AreNamesEqual(o.GetTableColumnName(), true, orderByKeyName, true));
+            }
+            else
+            {
+                selectKey = parsedScript.Select.Keys.FirstOrDefault(o => PostgreHelper.AreNamesEqual(o.GetKeyName(), true, orderByKeyName, true));
+                if (selectKey == null)
+                    selectKey = parsedScript.Select.Keys.FirstOrDefault(o => o.IsTableColumn && PostgreHelper.AreNamesEqual(o.GetTableColumnName(), true, orderByKeyName, true));
+            }
+
+            // Search for Field Description
+            Tuple<string, Type> dbFieldDesc = null;
+            if (selectKey != null && selectKey.IsTableColumn)
+            {
+                var columnName = selectKey.GetTableColumnName();
+                dbFieldDesc = dbFieldDescs.FirstOrDefault(x => PostgreHelper.AreNamesEqual(x.Item1, false, columnName, true));
+            }
+            else
+            {
+                dbFieldDesc = dbFieldDescs.FirstOrDefault(x => PostgreHelper.AreNamesEqual(x.Item1, false, orderByKeyName, true));
+            }
+
+            return new ScriptKeyDescription(orderByKeyName, orderByKey, selectKey, dbFieldDesc);
+        }
+
+        private static FieldDescription CreateFieldDesc(PostgreSelectScript parsedScript, ScriptKeyDescription keyDesc)
+        {
+            if (!keyDesc.IsCalculatable)
+            {
+                var resultField = new FieldDescription(keyDesc.NormalizedKeyName, keyDesc.KeyType);
+
+                if (keyDesc.SelectKey != null)
+                    resultField.AsFieldName = keyDesc.SelectKey.GetKeyName();
+                else
+                    resultField.AsFieldName = keyDesc.NormalizedKeyName;
+
+                return resultField;
+            }
+            else
+            {
+                if (keyDesc.NormalizedKeyName.IndexOf("count", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return new FieldDescription(keyDesc.NormalizedKeyName, typeof(long));
+                }
+                else
+                {
+                    throw new Exception($"Calculatable ORDER BY keys can only be named with Count and should habe BIGINT Type. Key: {keyDesc.NormalizedKeyName}");
+                }
+            }
+        }
+
+        #endregion
+
+
         #region Public
 
         public override ScriptType ParseQueryType(string script)
@@ -32,81 +114,54 @@ namespace Qoollo.Impl.Postgre.Internal
             }
         }
 
+        private static bool CheckCalculatableFileds(PostgreSelectScript parsedScript, List<Tuple<string, Type>> dbFieldDescs)
+        {
+            bool result = false;
+            foreach (var orderByKey in parsedScript.OrderBy.Keys)
+            {
+                var curOrderByDesc = GetKeyDescription(parsedScript, dbFieldDescs, orderByKey);
+                if (curOrderByDesc.IsCalculatable)
+                {
+                    result = true;
+                    if (curOrderByDesc.SelectKey == null)
+                        throw new Exception($"Calculatable key should always be a part of SELECT statement. Field: {curOrderByDesc.NormalizedKeyName}");
+                }
+            }
+            return result;
+        }
+
         public override Tuple<FieldDescription, string> PrepareOrderScript(string script, int pageSize, IUserCommandsHandler handler)
         {
+            string outputScript = script;
             var parsedScript = PostgreSelectScript.Parse(script);
             if (parsedScript.OrderBy == null || parsedScript.OrderBy.Keys.Count != 1)
                 return null;
 
-            var containsCalc = parsedScript.OrderBy.Keys.Any(x => x.IsCalculatable);
+            var allFields = handler.GetDbFieldsDescription();
+
             // Order By key
             OrderByKeyElement orderByKey = parsedScript.OrderBy.Keys[0];
-            string orderByKeyName = orderByKey.GetKeyName();
+            var keyDesc = GetKeyDescription(parsedScript, allFields, orderByKey);
 
-            // Search for select Key
-            SelectKeyElement selectKey = null;
-            if (orderByKey.IsTableQualified)
-            {
-                selectKey = parsedScript.Select.Keys.FirstOrDefault(o => o.IsTableColumn && PostgreHelper.AreNamesEqual(o.GetTableColumnName(), true, orderByKeyName, true));
-            }
-            else
-            {
-                selectKey = parsedScript.Select.Keys.FirstOrDefault(o => PostgreHelper.AreNamesEqual(o.GetKeyName(), true, orderByKeyName, true));
-                if (selectKey == null)
-                    selectKey = parsedScript.Select.Keys.FirstOrDefault(o => o.IsTableColumn && PostgreHelper.AreNamesEqual(o.GetTableColumnName(), true, orderByKeyName, true));
-            }
+            // Contains calculatable fields
+            bool containsCalculatable = CheckCalculatableFileds(parsedScript, allFields);
 
-            // Search for Field Description
-            Tuple<string, Type> dbFieldDesc = null;
-            var allFields = handler.GetDbFieldsDescription();
-            if (selectKey != null && selectKey.IsTableColumn)
-            {
-                var columnName = selectKey.GetTableColumnName();
-                dbFieldDesc = allFields.FirstOrDefault(x => PostgreHelper.AreNamesEqual(x.Item1, false, columnName, true));
-            }
-            else
-            {
-                dbFieldDesc = allFields.FirstOrDefault(x => PostgreHelper.AreNamesEqual(x.Item1, false, orderByKeyName, true));
-            }
 
             // Db field not found
-            if (dbFieldDesc == null)
+            if (keyDesc.DbFieldDesc == null && !keyDesc.IsCalculatable)
                 return null;
 
-            // Select key is presented
-            if (selectKey != null)
-            {
-                var resultField = new FieldDescription(orderByKeyName, dbFieldDesc.Item2)
-                {
-                    AsFieldName = selectKey.GetKeyName(),
-                    ContainsCalculatedField = containsCalc
-                };
-                return new Tuple<FieldDescription, string>(resultField, script);
-            }
-            // Select key not found, but '*' presented
-            else if (parsedScript.Select.Keys.Any(o => o.IsStar))
-            {
-                var resultField = new FieldDescription(orderByKeyName, dbFieldDesc.Item2)
-                {
-                    AsFieldName = orderByKeyName,
-                    ContainsCalculatedField = containsCalc
-                };
-                return new Tuple<FieldDescription, string>(resultField, script);
-            }
-            // Select key not found: we should update query
-            else
+            // Key not found as a part of selection process: we should update query
+            if (keyDesc.SelectKey == null && !parsedScript.Select.Keys.Any(o => o.IsStar))
             {
                 var lastSelectKeyToken = parsedScript.Select.Keys.Last().Content.Tokens.Last();
                 int lastSelectKeyPos = lastSelectKeyToken.Content.StartIndex + lastSelectKeyToken.Content.Length;
-                string modifiedScript = script.Insert(lastSelectKeyPos, $", {orderByKey.KeyExpression.ToString()}");
-
-                var resultField = new FieldDescription(orderByKeyName, dbFieldDesc.Item2)
-                {
-                    AsFieldName = orderByKeyName,
-                    ContainsCalculatedField = containsCalc
-                };
-                return new Tuple<FieldDescription, string>(resultField, modifiedScript);
+                outputScript = script.Insert(lastSelectKeyPos, $", {orderByKey.KeyExpression.ToString()}");
             }
+
+            var resultField = CreateFieldDesc(parsedScript, keyDesc);
+            resultField.ContainsCalculatedField = containsCalculatable;
+            return new Tuple<FieldDescription, string>(resultField, outputScript);
         }
 
         public override Tuple<FieldDescription, string> PrepareKeyScript(string script, IUserCommandsHandler handler)
@@ -141,22 +196,10 @@ namespace Qoollo.Impl.Postgre.Internal
             var parsedScript = PostgreSelectScript.Parse(script);
             var allFields = handler.GetDbFieldsDescription();
 
-            foreach (var element in parsedScript.OrderBy.Keys)
+            foreach (var orderByKey in parsedScript.OrderBy.Keys)
             {
-                string elementKeyName = element.GetKeyName();
-
-                if (element.IsCalculatable)
-                {
-                    if (elementKeyName == "count")
-                    {
-                        result.Add(new FieldDescription(elementKeyName, typeof(long)));
-                    }
-                }
-                else
-                {
-                    result.Add(new FieldDescription(elementKeyName,
-                        allFields.First(x => PostgreHelper.AreNamesEqual(x.Item1, false, elementKeyName, true)).Item2));
-                }
+                var keyDesc = GetKeyDescription(parsedScript, allFields, orderByKey);
+                result.Add(CreateFieldDesc(parsedScript, keyDesc));
             }
 
             return result;
@@ -217,33 +260,27 @@ namespace Qoollo.Impl.Postgre.Internal
 
             result.AppendLine($"SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable");
 
-            string where = " WHERE ";
-            for (int i = 0; i < keys.Count; i++)
+            if (!idDescription.IsFirstAsk)
             {
-                if (i != 0)
-                    where += " and ";
-
-                if (idDescription.IsFirstAsk)
-                    where += $" ( UserSearchTable.{keys[i].AsFieldName} >= @{keys[i].FieldName} ) \n ";
-                else
-                    where += $" ( UserSearchTable.{keys[i].AsFieldName} > @{keys[i].FieldName} ) \n ";
-            }
-            result.Append(where);
-
-            // Conditionally apply ORDER BY if user script ordered differently
-            if (script.OrderBy == null ||
-                script.OrderBy.Keys[0].OrderType != OrderType.Asc ||
-                !PostgreHelper.AreNamesEqual(script.OrderBy.Keys[0].GetKeyName(), true, idDescription.AsFieldName, true))
-            {
-                string order = " ORDER BY ";
+                result.Append("WHERE ");
                 for (int i = 0; i < keys.Count; i++)
                 {
                     if (i != 0)
-                        order += ", ";
+                        result.Append(" AND ");
 
-                    order += $" UserSearchTable.{idDescription.AsFieldName} ";
+                    if (i == keys.Count - 1)
+                        result.AppendLine($"( UserSearchTable.{keys[i].AsFieldName} > @{keys[i].FieldName} )"); // Only last order key should be larger
+                    else
+                        result.AppendLine($"( UserSearchTable.{keys[i].AsFieldName} >= @{keys[i].FieldName} )");
                 }
-                result.Append($" {order} ASC ");
+            }
+
+            // Conditionally apply ORDER BY if user script ordered differently
+            if (script.OrderBy == null || script.OrderBy.Keys.Count != keys.Count ||
+                !script.OrderBy.Keys.Zip(keys, (a, b) => PostgreHelper.AreNamesEqual(a.GetKeyName(), true, b.AsFieldName, true)).All(o => o))
+            {
+                string order = string.Join(", ", keys.Select(o => $"UserSearchTable.{o.AsFieldName} ASC"));
+                result.Append("ORDER BY ").AppendLine(order);
             }
 
             result.AppendLine($"LIMIT {idDescription.PageSize}");
@@ -267,31 +304,27 @@ namespace Qoollo.Impl.Postgre.Internal
 
             result.AppendLine($"SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable");
 
-            string where = " WHERE ";
-            for (int i = 0; i < keys.Count; i++)
+            if (!idDescription.IsFirstAsk)
             {
-                if (i != 0 && !idDescription.IsFirstAsk)
-                    where += " and ";
-
-                if (!idDescription.IsFirstAsk)
-                    where += $" ( UserSearchTable.{keys[i].AsFieldName} < @{keys[i].FieldName} ) \n ";
-            }
-            result.Append(where);
-
-            // Conditionally apply ORDER BY if user script ordered differently
-            if (script.OrderBy == null ||
-                script.OrderBy.Keys[0].OrderType != OrderType.Desc ||
-                !PostgreHelper.AreNamesEqual(script.OrderBy.Keys[0].GetKeyName(), true, idDescription.AsFieldName, true))
-            {
-                string order = " ORDER BY ";
+                result.Append("WHERE ");
                 for (int i = 0; i < keys.Count; i++)
                 {
                     if (i != 0)
-                        order += ", ";
+                        result.Append(" AND ");
 
-                    order += $" UserSearchTable.{idDescription.AsFieldName} ";
+                    if (i == keys.Count - 1)
+                        result.AppendLine($"( UserSearchTable.{keys[i].AsFieldName} < @{keys[i].FieldName} )"); // Only last order key should be less
+                    else
+                        result.AppendLine($"( UserSearchTable.{keys[i].AsFieldName} <= @{keys[i].FieldName} )");
                 }
-                result.Append($" {order} DESC ");
+            }
+
+            // Conditionally apply ORDER BY if user script ordered differently
+            if (script.OrderBy == null || script.OrderBy.Keys.Count != keys.Count ||
+                !script.OrderBy.Keys.Zip(keys, (a, b) => PostgreHelper.AreNamesEqual(a.GetKeyName(), true, b.AsFieldName, true)).All(o => o))
+            {
+                string order = string.Join(", ", keys.Select(o => $"UserSearchTable.{o.AsFieldName} DESC"));
+                result.Append("ORDER BY ").AppendLine(order);
             }
 
             result.AppendLine($"LIMIT {idDescription.PageSize}");

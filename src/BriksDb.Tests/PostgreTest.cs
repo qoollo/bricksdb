@@ -590,6 +590,55 @@ namespace Qoollo.Tests
 
 
         [TestMethod]
+        public void Postgre_SelectQuery_MultiOrder_Test()
+        {
+            CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
+            var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
+            TestProxy.TestNetDistributorForProxy distrib;
+            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            {
+                writer.Start();
+
+                for (int i = 1; i < 100; i++)
+                {
+                    var data = new StoredData(i);
+                    var createRequest = CreateRequest(data);
+                    var result = writer.Input.ProcessSync(createRequest);
+                    Assert.IsFalse(result.IsError);
+                }
+
+
+                var selectDesc = new Impl.Collector.Parser.SelectDescription(
+                    new Impl.Collector.Parser.FieldDescription("id", typeof(int))
+                    {
+                        Value = 1000
+                    },
+                    $"SELECT Id, (CASE WHEN id > 10 THEN 1 ELSE 2 END) AS Test FROM {TableName} ORDER BY Test DESC, Id DESC",
+                    200,
+                    new List<Impl.Collector.Parser.FieldDescription>())
+                {
+                    TableName = TableName,
+                    OrderKeyDescriptions = new List<FieldDescription>()
+                    {
+                        new FieldDescription("test", typeof(int)) { AsFieldName = "test" },
+                        new FieldDescription("id", typeof(int)) {AsFieldName = "id" }
+                    }
+                };
+
+
+                var selectResult = writer.Input.SelectQuery(selectDesc);
+                Assert.IsNotNull(selectResult);
+                Assert.IsFalse(selectResult.Item1.IsError);
+                Assert.AreEqual(99, selectResult.Item2.Data.Count);
+                Assert.AreEqual(10, (int)selectResult.Item2.Data[0].Key);
+                Assert.AreEqual(99, (int)selectResult.Item2.Data[10].Key);
+
+                writer.Dispose();
+            }
+        }
+
+
+        [TestMethod]
         public void Postgre_Collector_Test()
         {
             var server1 = new ServerId("", 1);

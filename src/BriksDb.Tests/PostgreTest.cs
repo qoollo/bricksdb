@@ -624,39 +624,39 @@ namespace Qoollo.Tests
 
             loader.Data.Add(server1, new List<SearchData>
             {
-                TestHelper.CreateData(1),
-                TestHelper.CreateData(2),
-                TestHelper.CreateData(4),
-                TestHelper.CreateData(5),
-                TestHelper.CreateData(6),
-                TestHelper.CreateData(7),
-                TestHelper.CreateData(8),
+                TestHelper.CreateData(1, "Id"),
+                TestHelper.CreateData(2, "Id"),
+                TestHelper.CreateData(4, "Id"),
+                TestHelper.CreateData(5, "Id"),
+                TestHelper.CreateData(6, "Id"),
+                TestHelper.CreateData(7, "Id"),
+                TestHelper.CreateData(8, "Id"),
             });
 
             loader.Data.Add(server2, new List<SearchData>
             {
-                TestHelper.CreateData(4),
-                TestHelper.CreateData(5),
-                TestHelper.CreateData(6),
-                TestHelper.CreateData(7),
-                TestHelper.CreateData(8),
-                TestHelper.CreateData(9),
-                TestHelper.CreateData(10),
-                TestHelper.CreateData(11),
+                TestHelper.CreateData(4, "Id"),
+                TestHelper.CreateData(5, "Id"),
+                TestHelper.CreateData(6, "Id"),
+                TestHelper.CreateData(7, "Id"),
+                TestHelper.CreateData(8, "Id"),
+                TestHelper.CreateData(9, "Id"),
+                TestHelper.CreateData(10, "Id"),
+                TestHelper.CreateData(11, "Id"),
             });
 
             loader.Data.Add(server3, new List<SearchData>
             {
-                TestHelper.CreateData(2),
-                TestHelper.CreateData(3),
-                TestHelper.CreateData(5),
-                TestHelper.CreateData(7),
-                TestHelper.CreateData(8),
-                TestHelper.CreateData(9),
-                TestHelper.CreateData(10),
-                TestHelper.CreateData(11),
-                TestHelper.CreateData(12),
-                TestHelper.CreateData(13),
+                TestHelper.CreateData(2, "Id"),
+                TestHelper.CreateData(3, "Id"),
+                TestHelper.CreateData(5, "Id"),
+                TestHelper.CreateData(7, "Id"),
+                TestHelper.CreateData(8, "Id"),
+                TestHelper.CreateData(9, "Id"),
+                TestHelper.CreateData(10, "Id"),
+                TestHelper.CreateData(11, "Id"),
+                TestHelper.CreateData(12, "Id"),
+                TestHelper.CreateData(13, "Id"),
             });
 
             #endregion

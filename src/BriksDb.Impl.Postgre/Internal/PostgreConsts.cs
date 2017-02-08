@@ -13,9 +13,9 @@
         public static string With = "with";
         public static string As = "as";
 
-        public static string Local = "Meta_Local";
-        public static string IsDeleted = "Meta_IsDeleted";
-        public static string DeleteTime = "Meta_DeleteTime";
-        public static string Hash = "Meta_Hash";
+        public static string Local = "meta_local";
+        public static string IsDeleted = "meta_isdeleted";
+        public static string DeleteTime = "meta_deletetime";
+        public static string Hash = "meta_hash";
     }
 }

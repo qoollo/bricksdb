@@ -48,7 +48,7 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public void SetKeyName(string keyName)
         {
-            _keyName = "Meta_" + keyName.UnQuote();
+            _keyName = PostgreHelper.NormalizeName("Meta_" + keyName.UnQuote());
             _userKeyName = keyName;
             var descr = _handler.GetFieldsDescription();
             _keyType = descr.Find(x => x.Item1 == keyName).Item3;
@@ -181,11 +181,11 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public MetaData ReadMetaFromSearchData(SearchData data)
         {
-            object local = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, PostgreConsts.Local)).Item1;
-            object isDeleted = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, PostgreConsts.IsDeleted)).Item1;
-            object deleteTime = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, PostgreConsts.DeleteTime)).Item1;
-            object hash = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, PostgreConsts.Hash)).Item1;
-            object id = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, _keyName)).Item1;
+            object local = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, true, PostgreConsts.Local, true)).Item1;
+            object isDeleted = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, true, PostgreConsts.IsDeleted, true)).Item1;
+            object deleteTime = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, true, PostgreConsts.DeleteTime, true)).Item1;
+            object hash = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, true, PostgreConsts.Hash, true)).Item1;
+            object id = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, true, _keyName, true)).Item1;
 
             MetaData meta = null;
 
@@ -274,11 +274,11 @@ namespace Qoollo.Impl.Postgre.Internal
             List<FieldDescription> userParameters, bool useUserScript = false, List<FieldDescription> orderKeyParameters = null)
         {
             var command = new NpgsqlCommand(script);
-            var name = idDescription.FieldName == _keyName ? _userKeyName : idDescription.FieldName;
+            var name = idDescription.FieldName == _keyName ? PostgreHelper.NormalizeName(_userKeyName) : idDescription.FieldName;
 
             if (!useUserScript || !idDescription.IsFirstAsk)
             {
-                var dbtype = _handler.GetFieldsDescription().Find(x => PostgreHelper.AreNamesEqual(x.Item1, name));
+                var dbtype = _handler.GetFieldsDescription().Find(x => PostgreHelper.AreNamesEqual(x.Item1, false, name, true));
                 command.Parameters.Add("@" + idDescription.FieldName, dbtype.Item3);
                 command.Parameters["@" + idDescription.FieldName].Value = idDescription.Value;
             }
@@ -286,7 +286,7 @@ namespace Qoollo.Impl.Postgre.Internal
             foreach (var parameter in userParameters)
             {
                 if (parameter.UserType >= 0 && parameter.UserType <= 39 &&
-                    (idDescription.IsFirstAsk || !PostgreHelper.AreNamesEqual(parameter.FieldName, idDescription.FieldName)))
+                    (idDescription.IsFirstAsk || !PostgreHelper.AreNamesEqual(parameter.FieldName, false, idDescription.FieldName, true)))
                 {
                     command.Parameters.Add("@" + parameter.FieldName, (NpgsqlDbType)parameter.UserType);
                     command.Parameters["@" + parameter.FieldName].Value = parameter.Value;
@@ -298,7 +298,7 @@ namespace Qoollo.Impl.Postgre.Internal
                 {
                     if (parameter.UserType >= 0 && parameter.UserType <= 39 &&
                         (idDescription.IsFirstAsk ||
-                         !PostgreHelper.AreNamesEqual(parameter.FieldName, idDescription.FieldName)))
+                         !PostgreHelper.AreNamesEqual(parameter.FieldName, false, idDescription.FieldName, true)))
                     {
                         command.Parameters.Add("@" + parameter.FieldName, (NpgsqlDbType) parameter.UserType);
                         command.Parameters["@" + parameter.FieldName].Value = parameter.Value;
@@ -352,7 +352,7 @@ namespace Qoollo.Impl.Postgre.Internal
                 var value = reader.GetValue(i);
                 if (value is DBNull) value = null;
 
-                fields.Add(new Tuple<object, string>(value, name));
+                fields.Add(new Tuple<object, string>(value, PostgreHelper.NormalizeName(name)));
             }
 
             return fields;
@@ -371,7 +371,7 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public FieldDescription GetKeyDescription()
         {
-            var field = _handler.GetDbFieldsDescription().FirstOrDefault(x => PostgreHelper.AreNamesEqual(x.Item1, _userKeyName));
+            var field = _handler.GetDbFieldsDescription().FirstOrDefault(x => PostgreHelper.AreNamesEqual(x.Item1, false, _userKeyName, false));
 
             var description = new FieldDescription(_keyName, field.Item2)
             {

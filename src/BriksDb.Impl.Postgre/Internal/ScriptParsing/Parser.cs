@@ -78,21 +78,6 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             return new TokenizedScriptPart(src.Script, src.StartToken + depth, src.TokenCount - 2 * depth);
         }
 
-        protected static bool IsDoubleQuoted(string str)
-        {
-            return str.Length >= 3 && str[0] == '\"' && str[str.Length - 1] == '\"';
-        }
-        protected static string RemoveDoubleQuotes(string str)
-        {
-            if (str.Length < 3)
-                return str;
-
-            if (str[0] == '\"' && str[str.Length - 1] == '\"')
-                return str.Substring(1, str.Length - 2);
-
-            return str;
-        }
-
         protected static void SkipUntil(TokenizedScript script, ref int tokenIndex, ISet<TokenType> untilTypes, int maxIndex = int.MaxValue, bool skipInitial = false)
         {
             if (skipInitial && tokenIndex < script.Tokens.Count)
@@ -184,15 +169,9 @@ namespace Qoollo.Impl.Postgre.Internal.ScriptParsing
             return tokenString;
         }
 
-        protected static string NormalizeName(string name)
-        {
-            if (IsDoubleQuoted(name))
-                return RemoveDoubleQuotes(name);
-            return name.ToLower();
-        }
         protected static string NormalizeName(string name, bool normalizeCondition)
         {
-            return normalizeCondition ? NormalizeName(name) : name;
+            return normalizeCondition ? PostgreHelper.NormalizeName(name) : name;
         }
 
 

@@ -47,13 +47,13 @@ namespace Qoollo.Impl.Postgre.Internal
             SelectKeyElement selectKey = null;
             if (orderByKey.IsTableQualified)
             {
-                selectKey = parsedScript.Select.Keys.FirstOrDefault(o => o.IsTableColumn && string.Compare(o.GetTableColumnName(), orderByKeyName, true) == 0);
+                selectKey = parsedScript.Select.Keys.FirstOrDefault(o => o.IsTableColumn && PostgreHelper.AreNamesEqual(o.GetTableColumnName(), true, orderByKeyName, true));
             }
             else
             {
-                selectKey = parsedScript.Select.Keys.FirstOrDefault(o => string.Compare(o.GetKeyName(), orderByKeyName, true) == 0);
+                selectKey = parsedScript.Select.Keys.FirstOrDefault(o => PostgreHelper.AreNamesEqual(o.GetKeyName(), true, orderByKeyName, true));
                 if (selectKey == null)
-                    selectKey = parsedScript.Select.Keys.FirstOrDefault(o => o.IsTableColumn && string.Compare(o.GetTableColumnName(), orderByKeyName, true) == 0);
+                    selectKey = parsedScript.Select.Keys.FirstOrDefault(o => o.IsTableColumn && PostgreHelper.AreNamesEqual(o.GetTableColumnName(), true, orderByKeyName, true));
             }
 
             // Search for Field Description
@@ -62,11 +62,11 @@ namespace Qoollo.Impl.Postgre.Internal
             if (selectKey != null && selectKey.IsTableColumn)
             {
                 var columnName = selectKey.GetTableColumnName();
-                dbFieldDesc = allFields.FirstOrDefault(x => string.Compare(x.Item1, columnName, true) == 0);
+                dbFieldDesc = allFields.FirstOrDefault(x => PostgreHelper.AreNamesEqual(x.Item1, false, columnName, true));
             }
             else
             {
-                dbFieldDesc = allFields.FirstOrDefault(x => string.Compare(x.Item1, orderByKeyName, true) == 0);
+                dbFieldDesc = allFields.FirstOrDefault(x => PostgreHelper.AreNamesEqual(x.Item1, false, orderByKeyName, true));
             }
 
             // Db field not found
@@ -115,15 +115,15 @@ namespace Qoollo.Impl.Postgre.Internal
             if (parsedScript.OrderBy == null)
                 return null;
 
-            string keyName = handler.GetKeyName();
-            FieldDescription keyDescription = new FieldDescription(keyName, handler.GetDbFieldsDescription().First(x => string.Compare(x.Item1, keyName, true) == 0).Item2);
+            string keyName = PostgreHelper.NormalizeName(handler.GetKeyName());
+            FieldDescription keyDescription = new FieldDescription(keyName, handler.GetDbFieldsDescription().First(x => PostgreHelper.AreNamesEqual(x.Item1, false, keyName, true)).Item2);
             
             // Star presented
             if (parsedScript.Select.Keys.Any(o => o.IsStar))
                 return new Tuple<FieldDescription, string>(keyDescription, script);
 
             // Search for select key
-            SelectKeyElement selectKey = parsedScript.Select.Keys.FirstOrDefault(o => o.IsTableColumn && string.Compare(o.GetTableColumnName(), keyName, true) == 0);
+            SelectKeyElement selectKey = parsedScript.Select.Keys.FirstOrDefault(o => o.IsTableColumn && PostgreHelper.AreNamesEqual(o.GetTableColumnName(), true, keyName, true));
             if (selectKey != null)
                 return new Tuple<FieldDescription, string>(keyDescription, script);
 
@@ -143,17 +143,19 @@ namespace Qoollo.Impl.Postgre.Internal
 
             foreach (var element in parsedScript.OrderBy.Keys)
             {
+                string elementKeyName = element.GetKeyName();
+
                 if (element.IsCalculatable)
                 {
-                    if (element.GetKeyName() == "count")
+                    if (elementKeyName == "count")
                     {
-                        result.Add(new FieldDescription(element.GetKeyName(), typeof (Int64)));
+                        result.Add(new FieldDescription(elementKeyName, typeof(long)));
                     }
                 }
                 else
                 {
-                    result.Add(new FieldDescription(element.GetKeyName(),
-                        allFields.First(x => string.Compare(x.Item1, element.GetKeyName(), true) == 0).Item2));
+                    result.Add(new FieldDescription(elementKeyName,
+                        allFields.First(x => PostgreHelper.AreNamesEqual(x.Item1, false, elementKeyName, true)).Item2));
                 }
             }
 
@@ -173,7 +175,7 @@ namespace Qoollo.Impl.Postgre.Internal
 
             OrderType orderType = parsedScript.OrderBy.Keys[0].OrderType;
             if (orderType == OrderType.Asc)
-                return OrderAsc(parsedScript, idDescription, new List<FieldDescription> {idDescription});
+                return OrderAsc(parsedScript, idDescription, new List<FieldDescription> { idDescription });
             if (orderType == OrderType.Desc)
                 return OrderDesc(parsedScript, idDescription, new List<FieldDescription> { idDescription });
 
@@ -231,7 +233,7 @@ namespace Qoollo.Impl.Postgre.Internal
             // Conditionally apply ORDER BY if user script ordered differently
             if (script.OrderBy == null ||
                 script.OrderBy.Keys[0].OrderType != OrderType.Asc ||
-                string.Compare(script.OrderBy.Keys[0].GetKeyName(), idDescription.AsFieldName, true) != 0)
+                !PostgreHelper.AreNamesEqual(script.OrderBy.Keys[0].GetKeyName(), true, idDescription.AsFieldName, true))
             {
                 string order = " ORDER BY ";
                 for (int i = 0; i < keys.Count; i++)
@@ -279,7 +281,7 @@ namespace Qoollo.Impl.Postgre.Internal
             // Conditionally apply ORDER BY if user script ordered differently
             if (script.OrderBy == null ||
                 script.OrderBy.Keys[0].OrderType != OrderType.Desc ||
-                string.Compare(script.OrderBy.Keys[0].GetKeyName(), idDescription.AsFieldName, true) != 0)
+                !PostgreHelper.AreNamesEqual(script.OrderBy.Keys[0].GetKeyName(), true, idDescription.AsFieldName, true))
             {
                 string order = " ORDER BY ";
                 for (int i = 0; i < keys.Count; i++)

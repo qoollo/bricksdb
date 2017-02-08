@@ -9,21 +9,23 @@ namespace Qoollo.Impl.Collector.Comparer
 {
     internal static class DataComparer
     {
+        private static int MapCompareResult(int result)
+        {
+            if (result < 0) return -1;
+            if (result > 0) return 1;
+            return 0;
+        }
+
         public static int Compare(SearchData data1, SearchData data2, FieldDescription description)
         {
-            object value1 = data1.Fields.First(x => x.Item2.ToLower() == description.AsFieldName.ToLower()).Item1;
-            object value2 = data2.Fields.First(x => x.Item2.ToLower() == description.AsFieldName.ToLower()).Item1;
+            object value1 = data1.Fields.First(x => string.Equals(x.Item2, description.AsFieldName, StringComparison.OrdinalIgnoreCase)).Item1;
+            object value2 = data2.Fields.First(x => string.Equals(x.Item2, description.AsFieldName, StringComparison.OrdinalIgnoreCase)).Item1;
 
-            if (description.SystemFieldType == typeof (int) ||
-                description.SystemFieldType == typeof (Int16) ||
-                description.SystemFieldType == typeof (Int32))
-                return IntComparer.Compare(value1, value2);
+            if (value1 != null && value1 is IComparable)
+                return MapCompareResult((value1 as IComparable).CompareTo(value2));
 
-            if (description.SystemFieldType == typeof(Int64))
-                return Int64Comparer.Compare(value1, value2);
-
-            if (description.SystemFieldType == typeof (DateTime))
-                return DateTimeComparer.Compare(value1, value2);
+            if (value2 != null && value2 is IComparable)
+                return -MapCompareResult((value2 as IComparable).CompareTo(value1));
 
             return Consts.CompareFailed;
         }
@@ -37,7 +39,7 @@ namespace Qoollo.Impl.Collector.Comparer
                     return result;
             }
 
-            return Consts.CompareFailed;
+            return 0;
         }
     }
 }

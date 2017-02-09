@@ -44,12 +44,12 @@ namespace Qoollo.Impl.Collector.Merge
                 var current = GetCurrent(orderSelectTask, searchTasks, orderType);
 
                 if (ret.Count == 0 ||
-                    DataComparer.Compare(current.GetData(), ret.Last(), orderSelectTask.ScriptDescription) != 0)
+                    DataComparer.Compare(current.GetData(), ret[ret.Count - 1], orderSelectTask.ScriptDescription) != 0)
                     ret.Add(current.GetData());
 
                 current.IncrementPosition();
 
-                ReadSameValue(orderSelectTask, searchTasks, ret.Last());
+                ReadSameValue(orderSelectTask, searchTasks, ret[ret.Count - 1]);
 
                 if (searchTasks.Exists(searchTask => searchTask.Length < viewLength && !searchTask.IsAllDataRead))
                 {
@@ -86,12 +86,12 @@ namespace Qoollo.Impl.Collector.Merge
                 var current = GetCurrent(keys, searchTasks, orderType);
 
                 if (ret.Count == 0 ||
-                    DataComparer.Compare(current.GetData(), ret.Last(), keys) != 0)
+                    DataComparer.Compare(current.GetData(), ret[ret.Count - 1], keys) != 0)
                     ret.Add(current.GetData());
 
                 current.IncrementPosition();
 
-                ReadSameValue(searchTasks, ret.Last(), keys);
+                ReadSameValue(searchTasks, ret[ret.Count - 1], keys);
 
                 if (searchTasks.Exists(searchTask => searchTask.Length < viewLength && !searchTask.IsAllDataRead))
                 {

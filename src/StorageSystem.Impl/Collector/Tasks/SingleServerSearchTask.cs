@@ -101,11 +101,14 @@ namespace Qoollo.Impl.Collector.Tasks
         public void FindNextLastKey()
         {
             //TODO check
-            IdDescription.Value = _data.Last().Key;
-            foreach (var description in OrderKeyDescriptions)
+            IdDescription.Value = _data[_data.Count - 1].Key;
+            if (OrderKeyDescriptions != null)
             {
-                var value = _data.Last().Fields.First(x => x.Item2.ToLower() == description.AsFieldName.ToLower()).Item1;
-                description.Value = value;
+                foreach (var description in OrderKeyDescriptions)
+                {
+                    var value = _data[_data.Count - 1].Fields.First(x => string.Equals(x.Item2, description.AsFieldName, System.StringComparison.OrdinalIgnoreCase)).Item1;
+                    description.Value = value;
+                }
             }
         }
 

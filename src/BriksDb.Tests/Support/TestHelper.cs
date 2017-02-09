@@ -102,9 +102,13 @@ namespace Qoollo.Tests.Support
             return ret;
         }
 
-        public static SearchData CreateData(int data, string name = "")
+        public static SearchData CreateData(int data, string name = "Id")
         {
             return new SearchData(new List<Tuple<object, string>> { new Tuple<object, string>(data, name) }, data);
+        }
+        public static SearchData CreateData2(int data, long data2, string name = "Id", string name2 = "valCount")
+        {
+            return new SearchData(new List<Tuple<object, string>> { new Tuple<object, string>(data, name), new Tuple<object, string>(data2, name2) }, data);
         }
 
         public static string Quote(this string str)

@@ -118,7 +118,7 @@ namespace Qoollo.Impl.Postgre.Internal
         {
             string outputScript = script;
             var parsedScript = PostgreSelectScript.Parse(script);
-            if (parsedScript.OrderBy == null || parsedScript.OrderBy.Keys.Count != 1)
+            if (parsedScript.OrderBy == null)
                 return null;
 
             var allFields = handler.GetDbFieldsDescription();

@@ -293,17 +293,26 @@ namespace Qoollo.Impl.Postgre.Internal
                 }
             }
 
-            if (orderKeyParameters!= null)
+            if (orderKeyParameters != null)
+            {
                 foreach (var parameter in orderKeyParameters)
                 {
-                    if (parameter.UserType >= 0 && parameter.UserType <= 39 &&
-                        (idDescription.IsFirstAsk ||
-                         !PostgreHelper.AreNamesEqual(parameter.FieldName, false, idDescription.FieldName, true)))
+                    if (parameter.UserType >= 0 && parameter.UserType <= 39)
                     {
-                        command.Parameters.Add("@" + parameter.FieldName, (NpgsqlDbType) parameter.UserType);
-                        command.Parameters["@" + parameter.FieldName].Value = parameter.Value;
+                        if (!PostgreHelper.AreNamesEqual(parameter.FieldName, true, idDescription.FieldName, true) ||
+                            !command.Parameters.Contains("@" + parameter.FieldName))
+                        {
+                            NpgsqlParameter curPar = null;
+                            if (parameter.UserType == 0) // We don't know the type
+                                curPar = new NpgsqlParameter("@" + parameter.FieldName, parameter.Value);
+                            else
+                                curPar = new NpgsqlParameter("@" + parameter.FieldName, (NpgsqlDbType)parameter.UserType) { Value = parameter.Value };
+
+                            command.Parameters.Add(curPar);
+                        }
                     }
                 }
+            }
 
             return command;
         }
@@ -315,7 +324,7 @@ namespace Qoollo.Impl.Postgre.Internal
                 return CreateSelectCommand(script, idDescription, userParameters); // Fallback to old impl
 
             string nquery = _scriptParser.CreateOrderScript(script, idDescription, keysParameters);
-            return CreateSelectCommandInner(nquery, idDescription, userParameters);
+            return CreateSelectCommandInner(nquery, idDescription, userParameters, orderKeyParameters: keysParameters);
         }
 
         public NpgsqlCommand CreateSelectCommand(string script, FieldDescription idDescription,

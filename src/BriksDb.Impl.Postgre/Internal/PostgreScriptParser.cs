@@ -122,10 +122,16 @@ namespace Qoollo.Impl.Postgre.Internal
                 return null;
 
             var allFields = handler.GetDbFieldsDescription();
+            string keyName = PostgreHelper.NormalizeName(handler.GetKeyName());
 
             string additionalSelectKeys = "";
             bool containsCalculatable = false;
             bool containsStar = parsedScript.Select.Keys.Any(o => o.IsStar);
+
+            // Check key name
+            SelectKeyElement selectKey = parsedScript.Select.Keys.FirstOrDefault(o => o.IsTableColumn && PostgreHelper.AreNamesEqual(o.GetTableColumnName(), true, keyName, true));
+            if (!containsStar && selectKey == null)
+                additionalSelectKeys += $", {keyName}";
 
             // Check all Order By keys
             foreach (var orderByKey in parsedScript.OrderBy.Keys)
@@ -157,12 +163,10 @@ namespace Qoollo.Impl.Postgre.Internal
                 outputScript = script.Insert(lastSelectKeyPos, additionalSelectKeys);
             }
 
-            // Get first ORDER BY key description
-            var firstKeyDesc = GetKeyDescription(parsedScript, allFields, parsedScript.OrderBy.Keys[0]);
-            var resultField = CreateFieldDesc(parsedScript, firstKeyDesc);
-            resultField.ContainsCalculatedField = containsCalculatable;
 
-            return new Tuple<FieldDescription, string>(resultField, outputScript);
+            FieldDescription keyDescription = new FieldDescription(keyName, handler.GetDbFieldsDescription().First(x => PostgreHelper.AreNamesEqual(x.Item1, false, keyName, true)).Item2);
+            keyDescription.ContainsCalculatedField = containsCalculatable;
+            return new Tuple<FieldDescription, string>(keyDescription, outputScript);
         }
 
         public override Tuple<FieldDescription, string> PrepareKeyScript(string script, IUserCommandsHandler handler)

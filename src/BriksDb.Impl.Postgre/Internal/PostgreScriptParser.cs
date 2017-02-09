@@ -114,22 +114,6 @@ namespace Qoollo.Impl.Postgre.Internal
             }
         }
 
-        private static bool CheckCalculatableFileds(PostgreSelectScript parsedScript, List<Tuple<string, Type>> dbFieldDescs)
-        {
-            bool result = false;
-            foreach (var orderByKey in parsedScript.OrderBy.Keys)
-            {
-                var curOrderByDesc = GetKeyDescription(parsedScript, dbFieldDescs, orderByKey);
-                if (curOrderByDesc.IsCalculatable)
-                {
-                    result = true;
-                    if (curOrderByDesc.SelectKey == null)
-                        throw new Exception($"Calculatable key should always be a part of SELECT statement. Field: {curOrderByDesc.NormalizedKeyName}");
-                }
-            }
-            return result;
-        }
-
         public override Tuple<FieldDescription, string> PrepareOrderScript(string script, int pageSize, IUserCommandsHandler handler)
         {
             string outputScript = script;
@@ -139,28 +123,45 @@ namespace Qoollo.Impl.Postgre.Internal
 
             var allFields = handler.GetDbFieldsDescription();
 
-            // Order By key
-            OrderByKeyElement orderByKey = parsedScript.OrderBy.Keys[0];
-            var keyDesc = GetKeyDescription(parsedScript, allFields, orderByKey);
+            string additionalSelectKeys = "";
+            bool containsCalculatable = false;
+            bool containsStar = parsedScript.Select.Keys.Any(o => o.IsStar);
 
-            // Contains calculatable fields
-            bool containsCalculatable = CheckCalculatableFileds(parsedScript, allFields);
+            // Check all Order By keys
+            foreach (var orderByKey in parsedScript.OrderBy.Keys)
+            {
+                var keyDesc = GetKeyDescription(parsedScript, allFields, orderByKey);
 
+                // Db field not found
+                if (keyDesc.DbFieldDesc == null && !keyDesc.IsCalculatable)
+                    throw new Exception($"ORDER BY key is not a part of table declared fields and is not calculatable. Field: {keyDesc.NormalizedKeyName}");
 
-            // Db field not found
-            if (keyDesc.DbFieldDesc == null && !keyDesc.IsCalculatable)
-                return null;
+                // Verify calculatable fields
+                if (keyDesc.IsCalculatable)
+                {
+                    containsCalculatable = true;
+                    if (keyDesc.SelectKey == null)
+                        throw new Exception($"Calculatable ORDER BY key should always be a part of SELECT statement. Field: {keyDesc.NormalizedKeyName}");
+                }
 
-            // Key not found as a part of selection process: we should update query
-            if (keyDesc.SelectKey == null && !parsedScript.Select.Keys.Any(o => o.IsStar))
+                // When ORDER BY key is not presented in select result we should add additional keys
+                if (keyDesc.SelectKey == null && !containsStar)
+                    additionalSelectKeys += $", {orderByKey.KeyExpression.ToString()}";
+            }
+
+            // Insert additional select keys
+            if (!string.IsNullOrEmpty(additionalSelectKeys))
             {
                 var lastSelectKeyToken = parsedScript.Select.Keys.Last().Content.Tokens.Last();
                 int lastSelectKeyPos = lastSelectKeyToken.Content.StartIndex + lastSelectKeyToken.Content.Length;
-                outputScript = script.Insert(lastSelectKeyPos, $", {orderByKey.KeyExpression.ToString()}");
+                outputScript = script.Insert(lastSelectKeyPos, additionalSelectKeys);
             }
 
-            var resultField = CreateFieldDesc(parsedScript, keyDesc);
+            // Get first ORDER BY key description
+            var firstKeyDesc = GetKeyDescription(parsedScript, allFields, parsedScript.OrderBy.Keys[0]);
+            var resultField = CreateFieldDesc(parsedScript, firstKeyDesc);
             resultField.ContainsCalculatedField = containsCalculatable;
+
             return new Tuple<FieldDescription, string>(resultField, outputScript);
         }
 
@@ -212,121 +213,89 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public string CreateOrderScript(string script, FieldDescription idDescription)
         {
-            var parsedScript = PostgreSelectScript.Parse(script);
-            if (parsedScript.OrderBy == null)
-                throw new ArgumentException("Original script should be ordered");
-
-            OrderType orderType = parsedScript.OrderBy.Keys[0].OrderType;
-            if (orderType == OrderType.Asc)
-                return OrderAsc(parsedScript, idDescription, new List<FieldDescription> { idDescription });
-            if (orderType == OrderType.Desc)
-                return OrderDesc(parsedScript, idDescription, new List<FieldDescription> { idDescription });
-
-            return script;
+            return CreateOrderScript(script, idDescription, new List<FieldDescription> { idDescription });
         }
+
 
         public string CreateOrderScript(string script, FieldDescription idDescription, List<FieldDescription> keys)
         {
+            if (keys == null)
+                throw new ArgumentNullException(nameof(keys));
+            if (keys.Count == 0)
+                throw new ArgumentException("ORDER BY keys list cannot be empty", nameof(keys));
+
             var parsedScript = PostgreSelectScript.Parse(script);
             if (parsedScript.OrderBy == null)
                 throw new ArgumentException("Original script should be ordered");
 
-            OrderType orderType = parsedScript.OrderBy.Keys[0].OrderType;
-            if (orderType == OrderType.Asc)
-                return OrderAsc(parsedScript, idDescription, keys);
-            if (orderType == OrderType.Desc)
-                return OrderDesc(parsedScript, idDescription, keys);
 
-            return script;
-        }
+            // Check if script reordering required
+            OrderType? reorderDirection = null;
+            if (parsedScript.OrderBy.Keys.Count != keys.Count ||
+                !parsedScript.OrderBy.Keys.Zip(keys, (a, b) => PostgreHelper.AreNamesEqual(a.GetKeyName(), true, b.AsFieldName, true)).All(o => o))
+            {
+                reorderDirection = parsedScript.OrderBy.Keys[0].OrderType; // Reorder according to the first key
+            }
 
-        #endregion
 
-        #region Order
+            StringBuilder result = new StringBuilder(parsedScript.Script.Length);
+            var mainScript = parsedScript.RemovePreAndPostSelectPart();
 
-        private string OrderAsc(PostgreSelectScript script, FieldDescription idDescription, List<FieldDescription> keys)
-        {
-            StringBuilder result = new StringBuilder(script.Script.Length);
-            var mainScript = script.RemovePreAndPostSelectPart();
+            // Append PreSelect part
+            if (parsedScript.PreSelectPart.TokenCount > 0)
+                result.Append(parsedScript.PreSelectPart.ToString()).AppendLine(" ;");
 
-            if (script.PreSelectPart.TokenCount > 0)
-                result.Append(script.PreSelectPart.ToString()).AppendLine(" ;");
-
-            if (script.With != null)
+            // Append WITH
+            if (parsedScript.With != null)
             {
                 mainScript = mainScript.RemoveWith();
-                result.AppendLine(script.With.ToString());
+                result.AppendLine(parsedScript.With.ToString());
             }
 
+            // Append SELECT
             result.AppendLine($"SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable");
 
+            // Append WHERE
             if (!idDescription.IsFirstAsk)
             {
-                result.Append("WHERE ");
-                for (int i = 0; i < keys.Count; i++)
+                result.Append("WHERE (");
+
+                for (int lastK = keys.Count - 1; lastK >= 0; lastK--)
                 {
-                    if (i != 0)
+                    if (lastK != keys.Count - 1)
+                        result.AppendLine(")").Append(" OR (");
+
+                    // Append EQUAL keys
+                    for (int i = 0; i < lastK; i++)
+                    {
+                        if (i != 0)
+                            result.Append(" AND ");
+
+                        result.Append($"( UserSearchTable.{keys[i].AsFieldName} = @{keys[i].FieldName} )");
+                    }
+
+                    if (lastK != 0)
                         result.Append(" AND ");
 
-                    if (i == keys.Count - 1)
-                        result.AppendLine($"( UserSearchTable.{keys[i].AsFieldName} > @{keys[i].FieldName} )"); // Only last order key should be larger
+                    OrderType keyOrderType = reorderDirection ?? parsedScript.OrderBy.Keys[lastK].OrderType;
+                    if (keyOrderType == OrderType.Desc)
+                        result.Append($"( UserSearchTable.{keys[lastK].AsFieldName} < @{keys[lastK].FieldName} )");
                     else
-                        result.AppendLine($"( UserSearchTable.{keys[i].AsFieldName} >= @{keys[i].FieldName} )");
+                        result.Append($"( UserSearchTable.{keys[lastK].AsFieldName} > @{keys[lastK].FieldName} )");
                 }
+
+                result.AppendLine(")");
             }
 
-            // Conditionally apply ORDER BY if user script ordered differently
-            if (script.OrderBy == null || script.OrderBy.Keys.Count != keys.Count ||
-                !script.OrderBy.Keys.Zip(keys, (a, b) => PostgreHelper.AreNamesEqual(a.GetKeyName(), true, b.AsFieldName, true)).All(o => o))
+            // Conditionally append ORDER BY if user script ordered differently
+            if (reorderDirection != null)
             {
-                string order = string.Join(", ", keys.Select(o => $"UserSearchTable.{o.AsFieldName} ASC"));
+                string direction = reorderDirection == OrderType.Asc ? "ASC" : "DESC";
+                string order = string.Join(", ", keys.Select(o => $"UserSearchTable.{o.AsFieldName} {direction}"));
                 result.Append("ORDER BY ").AppendLine(order);
             }
 
-            result.AppendLine($"LIMIT {idDescription.PageSize}");
-
-            return result.ToString();
-        }
-
-        private string OrderDesc(PostgreSelectScript script, FieldDescription idDescription, List<FieldDescription> keys)
-        {
-            StringBuilder result = new StringBuilder(script.Script.Length);
-            var mainScript = script.RemovePreAndPostSelectPart();
-
-            if (script.PreSelectPart.TokenCount > 0)
-                result.Append(script.PreSelectPart.ToString()).AppendLine(" ;");
-
-            if (script.With != null)
-            {
-                mainScript = mainScript.RemoveWith();
-                result.AppendLine(script.With.ToString());
-            }
-
-            result.AppendLine($"SELECT * FROM ( {mainScript.Format()} ) AS UserSearchTable");
-
-            if (!idDescription.IsFirstAsk)
-            {
-                result.Append("WHERE ");
-                for (int i = 0; i < keys.Count; i++)
-                {
-                    if (i != 0)
-                        result.Append(" AND ");
-
-                    if (i == keys.Count - 1)
-                        result.AppendLine($"( UserSearchTable.{keys[i].AsFieldName} < @{keys[i].FieldName} )"); // Only last order key should be less
-                    else
-                        result.AppendLine($"( UserSearchTable.{keys[i].AsFieldName} <= @{keys[i].FieldName} )");
-                }
-            }
-
-            // Conditionally apply ORDER BY if user script ordered differently
-            if (script.OrderBy == null || script.OrderBy.Keys.Count != keys.Count ||
-                !script.OrderBy.Keys.Zip(keys, (a, b) => PostgreHelper.AreNamesEqual(a.GetKeyName(), true, b.AsFieldName, true)).All(o => o))
-            {
-                string order = string.Join(", ", keys.Select(o => $"UserSearchTable.{o.AsFieldName} DESC"));
-                result.Append("ORDER BY ").AppendLine(order);
-            }
-
+            // Append LIMIT
             result.AppendLine($"LIMIT {idDescription.PageSize}");
 
             return result.ToString();

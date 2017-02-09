@@ -311,8 +311,10 @@ namespace Qoollo.Impl.Postgre.Internal
         public NpgsqlCommand CreateSelectCommand(string script, FieldDescription idDescription, List<FieldDescription> userParameters,
             List<FieldDescription> keysParameters)
         {
-            string nquery = _scriptParser.CreateOrderScript(script, idDescription, keysParameters);
+            if (keysParameters == null)
+                return CreateSelectCommand(script, idDescription, userParameters); // Fallback to old impl
 
+            string nquery = _scriptParser.CreateOrderScript(script, idDescription, keysParameters);
             return CreateSelectCommandInner(nquery, idDescription, userParameters);
         }
 

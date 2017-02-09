@@ -524,7 +524,11 @@ namespace Qoollo.Tests
                     200,
                     new List<Impl.Collector.Parser.FieldDescription>())
                 {
-                    TableName = TableName
+                    TableName = TableName,
+                    OrderKeyDescriptions = new List<FieldDescription>()
+                    {
+                        new FieldDescription("id", typeof(int)) {AsFieldName = "id" }
+                    }
                 };
 
 
@@ -573,7 +577,11 @@ namespace Qoollo.Tests
                     200,
                     new List<Impl.Collector.Parser.FieldDescription>())
                 {
-                    TableName = TableName
+                    TableName = TableName,
+                    OrderKeyDescriptions = new List<FieldDescription>()
+                    {
+                        new FieldDescription("id", typeof(int)) {AsFieldName = "id" }
+                    }
                 };
 
 
@@ -611,7 +619,8 @@ namespace Qoollo.Tests
                 var selectDesc = new Impl.Collector.Parser.SelectDescription(
                     new Impl.Collector.Parser.FieldDescription("id", typeof(int))
                     {
-                        Value = 1000
+                        Value = 1000,
+                        IsFirstAsk = false
                     },
                     $"SELECT Id, (CASE WHEN id > 10 THEN 1 ELSE 2 END) AS Test FROM {TableName} ORDER BY Test DESC, Id DESC",
                     200,

@@ -629,8 +629,8 @@ namespace Qoollo.Tests
                     TableName = TableName,
                     OrderKeyDescriptions = new List<FieldDescription>()
                     {
-                        new FieldDescription("test", typeof(int)) { AsFieldName = "test" },
-                        new FieldDescription("id", typeof(int)) {AsFieldName = "id" }
+                        new FieldDescription("test", typeof(int)) { AsFieldName = "test", Value = 10000 },
+                        new FieldDescription("id", typeof(int)) {AsFieldName = "id", Value = 100000 }
                     }
                 };
 

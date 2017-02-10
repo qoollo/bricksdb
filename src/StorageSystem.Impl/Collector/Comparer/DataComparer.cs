@@ -16,10 +16,20 @@ namespace Qoollo.Impl.Collector.Comparer
             return 0;
         }
 
+        private static object FindValue(SearchData data, string name)
+        {
+            var fields = data.Fields;
+            for (int i = 0; i < fields.Count; i++)
+                if (string.Equals(fields[i].Item2, name, StringComparison.OrdinalIgnoreCase))
+                    return fields[i].Item1;
+
+            throw new InvalidOperationException($"Field with name '{name}' is not found inside results");
+        }
+
         public static int Compare(SearchData data1, SearchData data2, FieldDescription description)
         {
-            object value1 = data1.Fields.First(x => string.Equals(x.Item2, description.AsFieldName, StringComparison.OrdinalIgnoreCase)).Item1;
-            object value2 = data2.Fields.First(x => string.Equals(x.Item2, description.AsFieldName, StringComparison.OrdinalIgnoreCase)).Item1;
+            object value1 = FindValue(data1, description.AsFieldName);
+            object value2 = FindValue(data2, description.AsFieldName);
 
             if (value1 != null && value1 is IComparable)
                 return MapCompareResult((value1 as IComparable).CompareTo(value2));

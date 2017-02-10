@@ -8,16 +8,21 @@ using Qoollo.Turbo.Threading.ThreadPools;
 
 namespace Qoollo.Impl.Collector.Background
 {
-    internal class BackgroundModule:ControlModule
+    internal class BackgroundModule : ControlModule
     {
-        private readonly DynamicThreadPool _threadPool;
+        private readonly StaticThreadPool _threadPool;
         private readonly List<SearchTask> _tasks;
 
         public BackgroundModule(QueueConfiguration queueConfiguration)
         {
             _tasks = new List<SearchTask>();
-            _threadPool = new DynamicThreadPool(1, queueConfiguration.ProcessotCount, queueConfiguration.MaxSizeQueue,
-                "BackgroundModule");
+            _threadPool = new StaticThreadPool(queueConfiguration.ProcessotCount, queueConfiguration.MaxSizeQueue, "BackgroundModule", false,
+                new StaticThreadPoolOptions()
+                {
+                    FlowExecutionContext = false,
+                    UseOwnSyncContext = false,
+                    UseOwnTaskScheduler = false
+                });
         }
 
         public void Run(SearchTask sTask, Action action)
@@ -36,7 +41,7 @@ namespace Qoollo.Impl.Collector.Background
         {
             if (isUserCall)
             {
-                _tasks.ForEach(x=>x.Dispose());
+                _tasks.ForEach(x => x.Dispose());
                 _threadPool.Dispose(false, false, false);
             }
 

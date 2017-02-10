@@ -13,7 +13,7 @@ namespace Qoollo.Impl.Modules.Async
     {
         private readonly ReaderWriterLockSlim _lock;
         private readonly List<AsyncData> _tasks;
-        private readonly Lazy<DynamicThreadPool> _threadPool;
+        private readonly Lazy<StaticThreadPool> _threadPool;
         private Task _disp;
         private readonly AutoResetEvent _event;
         private readonly CancellationTokenSource _token;
@@ -24,10 +24,9 @@ namespace Qoollo.Impl.Modules.Async
             _tasks = new List<AsyncData>();
             //_threadPool = new DynamicThreadPool(1, configuration.ProcessotCount, configuration.MaxSizeQueue, "AsyncTaskModule");
             _threadPool =
-                new Lazy<DynamicThreadPool>(
+                new Lazy<StaticThreadPool>(
                     () =>
-                        new DynamicThreadPool(1, configuration.ProcessotCount, configuration.MaxSizeQueue,
-                            "AsyncTaskModule"));
+                        new StaticThreadPool(configuration.ProcessotCount, configuration.MaxSizeQueue, "AsyncTaskModule", false, new StaticThreadPoolOptions() { FlowExecutionContext = false, UseOwnSyncContext = false, UseOwnTaskScheduler = false }));
             _lock = new ReaderWriterLockSlim();
             _event = new AutoResetEvent(false);
             _token = new CancellationTokenSource();

@@ -41,10 +41,7 @@ namespace Qoollo.Impl.Collector.Tasks
 
         public void AddPage(List<SearchData> page)
         {
-            for (int i = 0; i < _dataPos; i++)
-            {
-                _data.RemoveAt(0);
-            }
+            _data.RemoveRange(0, _dataPos);
             _dataPos = 0;
 
             _data.AddRange(page);

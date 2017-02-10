@@ -108,20 +108,20 @@ namespace Qoollo.Impl.Collector.Merge
         {
             foreach (var searchTask in searchTasks)
             {
-                for (int i = 0; i < searchTask.Length;)
+                for (int i = 0; i < searchTask.Length; i++)
                 {
                     if (DataComparer.Compare(searchTask.GetData(i), searchData, keys) == 0)
+                    {
                         searchTask.RemoveAt(i);
-                    else
-                        i++;
+                        i--;
+                    }
                 }
             }
         }
 
-        private void ReadSameValue(OrderSelectTask orderSelectTask, List<SingleServerSearchTask> searchTasks,
-            SearchData searchData)
+        private void ReadSameValue(OrderSelectTask orderSelectTask, List<SingleServerSearchTask> searchTasks, SearchData searchData)
         {
-            ReadSameValue(searchTasks, searchData, new List<FieldDescription> {orderSelectTask.ScriptDescription});
+            ReadSameValue(searchTasks, searchData, new List<FieldDescription> { orderSelectTask.ScriptDescription });
         }
 
         private void PreLoadPages(List<SingleServerSearchTask> searchTasks)

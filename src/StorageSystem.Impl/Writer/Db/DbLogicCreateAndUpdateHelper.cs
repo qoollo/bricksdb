@@ -16,6 +16,7 @@ namespace Qoollo.Impl.Writer.Db
 {
     class DbLogicCreateAndUpdateHelper<TCommand, TKey, TValue, TConnection, TReader>
          where TConnection : class
+         where TCommand: IDisposable
     {
         private readonly IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader> _userCommandCreator;
         private readonly IMetaDataCommandCreator<TCommand, TReader> _metaDataCommandCreator;
@@ -155,48 +156,57 @@ namespace Qoollo.Impl.Writer.Db
 
         private RemoteResult CreateDataWithoutMetaData(object key, object value)
         {
-            var command = _userCommandCreator.Create((TKey)key, (TValue)value);
-            var ret = _implModule.ExecuteNonQuery(command);
+            using (var command = _userCommandCreator.Create((TKey)key, (TValue)value))
+            {
+                var ret = _implModule.ExecuteNonQuery(command);
 
-            IsError(ref ret);
-            return ret;
+                IsError(ref ret);
+                return ret;
+            }
         }
 
         private RemoteResult CreateMetaUpdateData(InnerData obj, bool local, object key, object value)
         {
-            var metaCommand = _metaDataCommandCreator.CreateMetaData(local, obj.Transaction.DataHash, key);
-            var ret = _implModule.ExecuteNonQuery(metaCommand);
-
-            if (!IsError(ref ret))
+            using (var metaCommand = _metaDataCommandCreator.CreateMetaData(local, obj.Transaction.DataHash, key))
             {
-                var command = _userCommandCreator.Update((TKey)key, (TValue)value);
-                ret = _implModule.ExecuteNonQuery(command);
-                IsError(ref ret);
+                var ret = _implModule.ExecuteNonQuery(metaCommand);
+
+                if (!IsError(ref ret))
+                {
+                    using (var command = _userCommandCreator.Update((TKey)key, (TValue)value))
+                    {
+                        ret = _implModule.ExecuteNonQuery(command);
+                        IsError(ref ret);
+                    }
+                }
+                return ret;
             }
-            return ret;
         }
 
         private RemoteResult CreateInner(InnerData obj, bool local, object key, object value)
         {
             var timer = WriterCounters.Instance.CreateTimer.StartNew();
 
-            var command = _userCommandCreator.Create((TKey)key, (TValue)value);
-            var ret = _implModule.ExecuteNonQuery(command);
-
-            if (!ret.IsError)
+            using (var command = _userCommandCreator.Create((TKey)key, (TValue)value))
             {
-                var metaTimer = WriterCounters.Instance.CreateMetaDataTimer.StartNew();
+                var ret = _implModule.ExecuteNonQuery(command);
 
-                var metaCommand = _metaDataCommandCreator.CreateMetaData(local, obj.Transaction.DataHash, key);
-                ret = _implModule.ExecuteNonQuery(metaCommand);
+                if (!ret.IsError)
+                {
+                    var metaTimer = WriterCounters.Instance.CreateMetaDataTimer.StartNew();
 
-                metaTimer.Complete();
+                    using (var metaCommand = _metaDataCommandCreator.CreateMetaData(local, obj.Transaction.DataHash, key))
+                    {
+                        ret = _implModule.ExecuteNonQuery(metaCommand);
+                    }
+                    metaTimer.Complete();
+                }
+
+                IsError(ref ret);
+
+                timer.Complete();
+                return ret;
             }
-
-            IsError(ref ret);
-
-            timer.Complete();
-            return ret;
         }
 
         #endregion
@@ -205,22 +215,26 @@ namespace Qoollo.Impl.Writer.Db
 
         private RemoteResult UpdateInner(bool local, object key, object value)
         {
-            var command = _userCommandCreator.Update((TKey)key, (TValue)value);
-            var ret = _implModule.ExecuteNonQuery(command);
+            using (var command = _userCommandCreator.Update((TKey)key, (TValue)value))
+            {
+                var ret = _implModule.ExecuteNonQuery(command);
 
-            if (!ret.IsError)
-                return UpdateMeta(local, key);
+                if (!ret.IsError)
+                    return UpdateMeta(local, key);
 
-            IsError(ref ret);
-            return ret;
+                IsError(ref ret);
+                return ret;
+            }
         }
 
         private RemoteResult UpdateMeta(bool local, object key)
         {
-            var command = _metaDataCommandCreator.UpdateMetaData(local, key);
-            var ret = _implModule.ExecuteNonQuery(command);
-            IsError(ref ret);
-            return ret;
+            using (var command = _metaDataCommandCreator.UpdateMetaData(local, key))
+            {
+                var ret = _implModule.ExecuteNonQuery(command);
+                IsError(ref ret);
+                return ret;
+            }
         }
 
         #endregion
@@ -253,8 +267,10 @@ namespace Qoollo.Impl.Writer.Db
 
         private RemoteResult SetMetaDataNotDeleted(object key)
         {
-            var metaCommand = _metaDataCommandCreator.SetDataNotDeleted(key);            
-            return _implModule.ExecuteNonQuery(metaCommand);
+            using (var metaCommand = _metaDataCommandCreator.SetDataNotDeleted(key))
+            {
+                return _implModule.ExecuteNonQuery(metaCommand);
+            }
         }
 
         private bool IsError(ref RemoteResult result)

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Qoollo.Tests.TestWriter
 {
-    public class TestCommand
+    public class TestCommand: IDisposable
     {
         public string Command { get; set; }
 
@@ -21,5 +21,8 @@ namespace Qoollo.Tests.TestWriter
 
         public string Hash { get; set; }
 
+        public void Dispose()
+        {
+        }
     }
 }

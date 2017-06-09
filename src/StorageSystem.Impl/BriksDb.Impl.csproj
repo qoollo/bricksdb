@@ -163,6 +163,9 @@
     <Compile Include="Modules\Net\ConnectionBehavior\ConnectionBehaviorBase.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\IConnectionBehavior.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\WpfConnection.cs" />
+    <Compile Include="Modules\Net\ReceiveBehavior\IReceiveBehavior.cs" />
+    <Compile Include="Modules\Net\ReceiveBehavior\NetReceiveBehavior.cs" />
+    <Compile Include="Modules\Net\ReceiveBehavior\ReceiveBehaviorBase.cs" />
     <Compile Include="PerfCounters\PoolsProfiling.cs" />
     <Compile Include="TestSupport\InitInjection.cs" />
     <Compile Include="Writer\AsyncDbWorks\Readers\ReaderFullBase.cs" />

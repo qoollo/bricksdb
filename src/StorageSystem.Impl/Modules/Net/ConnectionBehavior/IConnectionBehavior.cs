@@ -9,7 +9,6 @@ namespace Qoollo.Impl.Modules.Net.ConnectionBehavior
         ServerId Server { get; }
 
         bool Connect();
-        void Dispose();
 
         Task<TResult> SendAsyncFunc<TResult, TApi>(Func<TApi, Task<TResult>> func, Func<Exception, TResult> errorRet,
             string errorLogFromData) where TApi : class;

@@ -70,7 +70,12 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="NetMock\INetMock.cs" />
+    <Compile Include="NetMock\MockConnection.cs" />
+    <Compile Include="NetMock\MockReceive.cs" />
+    <Compile Include="NetMock\NetMock.cs" />
     <Compile Include="NetMock\NetTests.cs" />
+    <Compile Include="NetMock\TestInjectionModule.cs" />
     <Compile Include="PostgreTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleTests.cs" />

@@ -168,6 +168,7 @@
     <Compile Include="Modules\Net\ReceiveBehavior\ReceiveBehaviorBase.cs" />
     <Compile Include="PerfCounters\PoolsProfiling.cs" />
     <Compile Include="TestSupport\InitInjection.cs" />
+    <Compile Include="TestSupport\InjectionModule.cs" />
     <Compile Include="Writer\AsyncDbWorks\Readers\ReaderFullBase.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\RestoreProcess.cs" />
     <Compile Include="Writer\AsyncDbWorks\Support\AsyncDbHolder.cs" />

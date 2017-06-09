@@ -18,7 +18,9 @@ namespace Qoollo.Impl.Modules.Net
             var kernel = new StandardKernel();
             kernel.Load(Assembly.GetExecutingAssembly());
 
-            _receive = kernel.Get<IReceiveBehavior<T>>(new ConstructorArgument("configuration", configuration));
+            _receive = kernel.Get<IReceiveBehavior<T>>(
+                new ConstructorArgument("configuration", configuration),
+                new ConstructorArgument("host", this));
         }
 
         public override void Start()

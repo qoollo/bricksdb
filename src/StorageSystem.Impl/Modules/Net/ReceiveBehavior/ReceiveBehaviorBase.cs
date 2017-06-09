@@ -5,7 +5,7 @@ namespace Qoollo.Impl.Modules.Net.ReceiveBehavior
 {
     internal abstract class ReceiveBehaviorBase<TReceive> : IReceiveBehavior<TReceive>
     {
-        protected ReceiveBehaviorBase(NetReceiverConfiguration configuration)
+        protected ReceiveBehaviorBase(NetReceiverConfiguration configuration, object server)
         {
         }
 

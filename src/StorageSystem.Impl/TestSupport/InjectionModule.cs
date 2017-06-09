@@ -20,7 +20,7 @@ namespace Qoollo.Impl.TestSupport
             BindClientAndServer<ICommonProxyNetReceiver>();
         }
 
-        private void BindClientAndServer<TType>()
+        protected virtual void BindClientAndServer<TType>()
         {
             Bind<IConnectionBehavior<TType>>().To<WpfConnection<TType>>();
             Bind<IReceiveBehavior<TType>>().To<NetReceiveBehavior<TType>>();

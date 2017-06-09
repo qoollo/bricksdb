@@ -524,7 +524,11 @@ namespace Qoollo.Tests
                     200,
                     new List<Impl.Collector.Parser.FieldDescription>())
                 {
-                    TableName = TableName
+                    TableName = TableName,
+                    OrderKeyDescriptions = new List<FieldDescription>()
+                    {
+                        new FieldDescription("id", typeof(int)) {AsFieldName = "id" }
+                    }
                 };
 
 
@@ -573,7 +577,11 @@ namespace Qoollo.Tests
                     200,
                     new List<Impl.Collector.Parser.FieldDescription>())
                 {
-                    TableName = TableName
+                    TableName = TableName,
+                    OrderKeyDescriptions = new List<FieldDescription>()
+                    {
+                        new FieldDescription("id", typeof(int)) {AsFieldName = "id" }
+                    }
                 };
 
 
@@ -583,6 +591,56 @@ namespace Qoollo.Tests
                 Assert.AreEqual(10, selectResult.Item2.Data.Count);
                 Assert.AreEqual(89, (int)selectResult.Item2.Data[0].Key);
                 Assert.AreEqual(80, (int)selectResult.Item2.Data[selectResult.Item2.Data.Count - 1].Key);
+
+                writer.Dispose();
+            }
+        }
+
+
+        [TestMethod]
+        public void Postgre_SelectQuery_MultiOrder_Test()
+        {
+            CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
+            var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
+            TestProxy.TestNetDistributorForProxy distrib;
+            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            {
+                writer.Start();
+
+                for (int i = 1; i < 100; i++)
+                {
+                    var data = new StoredData(i);
+                    var createRequest = CreateRequest(data);
+                    var result = writer.Input.ProcessSync(createRequest);
+                    Assert.IsFalse(result.IsError);
+                }
+
+
+                var selectDesc = new Impl.Collector.Parser.SelectDescription(
+                    new Impl.Collector.Parser.FieldDescription("id", typeof(int))
+                    {
+                        Value = 1000,
+                        IsFirstAsk = false
+                    },
+                    $"SELECT Id, (CASE WHEN id > 10 THEN 1 ELSE 2 END) AS Test FROM {TableName} ORDER BY Test DESC, Id DESC",
+                    200,
+                    new List<Impl.Collector.Parser.FieldDescription>())
+                {
+                    TableName = TableName,
+                    OrderKeyDescriptions = new List<FieldDescription>()
+                    {
+                        new FieldDescription("test", typeof(int)) { AsFieldName = "test", Value = 10000 },
+                        new FieldDescription("id", typeof(int)) {AsFieldName = "id", Value = 100000 }
+                    }
+                };
+
+
+                var selectResult = writer.Input.SelectQuery(selectDesc);
+                Assert.IsNotNull(selectResult);
+                Assert.IsFalse(selectResult.Item1.IsError);
+                Assert.AreEqual(99, selectResult.Item2.Data.Count);
+                Assert.AreEqual(10, (int)selectResult.Item2.Data[0].Key);
+                Assert.AreEqual(99, (int)selectResult.Item2.Data[10].Key);
 
                 writer.Dispose();
             }
@@ -609,7 +667,8 @@ namespace Qoollo.Tests
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
-            var merge = new OrderMerge(loader, parser);
+            var merge = new OrderMerge(loader, parser, new CollectorModel(new DistributorHashConfiguration(1),
+                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
             var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
 
             var distributor =
@@ -624,39 +683,39 @@ namespace Qoollo.Tests
 
             loader.Data.Add(server1, new List<SearchData>
             {
-                TestHelper.CreateData(1),
-                TestHelper.CreateData(2),
-                TestHelper.CreateData(4),
-                TestHelper.CreateData(5),
-                TestHelper.CreateData(6),
-                TestHelper.CreateData(7),
-                TestHelper.CreateData(8),
+                TestHelper.CreateData(1, "Id"),
+                TestHelper.CreateData(2, "Id"),
+                TestHelper.CreateData(4, "Id"),
+                TestHelper.CreateData(5, "Id"),
+                TestHelper.CreateData(6, "Id"),
+                TestHelper.CreateData(7, "Id"),
+                TestHelper.CreateData(8, "Id"),
             });
 
             loader.Data.Add(server2, new List<SearchData>
             {
-                TestHelper.CreateData(4),
-                TestHelper.CreateData(5),
-                TestHelper.CreateData(6),
-                TestHelper.CreateData(7),
-                TestHelper.CreateData(8),
-                TestHelper.CreateData(9),
-                TestHelper.CreateData(10),
-                TestHelper.CreateData(11),
+                TestHelper.CreateData(4, "Id"),
+                TestHelper.CreateData(5, "Id"),
+                TestHelper.CreateData(6, "Id"),
+                TestHelper.CreateData(7, "Id"),
+                TestHelper.CreateData(8, "Id"),
+                TestHelper.CreateData(9, "Id"),
+                TestHelper.CreateData(10, "Id"),
+                TestHelper.CreateData(11, "Id"),
             });
 
             loader.Data.Add(server3, new List<SearchData>
             {
-                TestHelper.CreateData(2),
-                TestHelper.CreateData(3),
-                TestHelper.CreateData(5),
-                TestHelper.CreateData(7),
-                TestHelper.CreateData(8),
-                TestHelper.CreateData(9),
-                TestHelper.CreateData(10),
-                TestHelper.CreateData(11),
-                TestHelper.CreateData(12),
-                TestHelper.CreateData(13),
+                TestHelper.CreateData(2, "Id"),
+                TestHelper.CreateData(3, "Id"),
+                TestHelper.CreateData(5, "Id"),
+                TestHelper.CreateData(7, "Id"),
+                TestHelper.CreateData(8, "Id"),
+                TestHelper.CreateData(9, "Id"),
+                TestHelper.CreateData(10, "Id"),
+                TestHelper.CreateData(11, "Id"),
+                TestHelper.CreateData(12, "Id"),
+                TestHelper.CreateData(13, "Id"),
             });
 
             #endregion
@@ -678,6 +737,115 @@ namespace Qoollo.Tests
                 reader.ReadNext();
 
                 Assert.AreEqual(i + 1, reader.GetValue(0));
+            }
+            reader.ReadNext();
+            Assert.IsFalse(reader.IsCanRead);
+
+            reader.Dispose();
+
+            async.Dispose();
+            back.Dispose();
+        }
+
+
+        [TestMethod]
+        public void Postgre_Collector_MultipleKey_Test()
+        {
+            var server1 = new ServerId("", 1);
+            var server2 = new ServerId("", 2);
+            var server3 = new ServerId("", 3);
+            const int pageSize = 5;
+            var writer = new HashWriter(new HashMapConfiguration("TestCollector", HashMapCreationMode.CreateNew, 3, 3, HashFileType.Writer));
+            writer.CreateMap();
+            writer.SetServer(0, server1.RemoteHost, server1.Port, 157);
+            writer.SetServer(1, server2.RemoteHost, server2.Port, 157);
+            writer.SetServer(2, server3.RemoteHost, server3.Port, 157);
+            writer.Save();
+
+            var loader = new TestDataLoader(pageSize);
+            var parser = new PostgreScriptParser();
+            parser.SetCommandsHandler(
+                new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
+                    new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
+
+            var merge = new OrderMerge(loader, parser, 
+                new CollectorModel(new DistributorHashConfiguration(1), 
+                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
+            var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+
+            var distributor =
+                new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
+                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
+                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+            var back = new BackgroundModule(new QueueConfiguration(5, 10));
+
+            var searchModule = new SearchTaskModule("Test", merge, loader, distributor, back, parser);
+
+            #region hell
+
+            loader.Data.Add(server1, new List<SearchData>
+            {
+                TestHelper.CreateData2(1, 1),
+                TestHelper.CreateData2(5, 1),
+                TestHelper.CreateData2(7, 1),
+                TestHelper.CreateData2(2, 2),
+                TestHelper.CreateData2(4, 2),             
+                TestHelper.CreateData2(6, 2),              
+                TestHelper.CreateData2(8, 2),
+            });
+
+            loader.Data.Add(server2, new List<SearchData>
+            {
+                TestHelper.CreateData2(5, 1),
+                TestHelper.CreateData2(7, 1),
+                TestHelper.CreateData2(9, 1),
+                TestHelper.CreateData2(11, 1),
+                TestHelper.CreateData2(4, 2),              
+                TestHelper.CreateData2(6, 2),              
+                TestHelper.CreateData2(8, 2),               
+                TestHelper.CreateData2(10, 2),
+                
+            });
+
+            loader.Data.Add(server3, new List<SearchData>
+            {
+                TestHelper.CreateData2(3, 1),
+                TestHelper.CreateData2(5, 1),
+                TestHelper.CreateData2(7, 1),
+                TestHelper.CreateData2(9, 1),
+                TestHelper.CreateData2(11, 1),
+                TestHelper.CreateData2(13, 1),
+                TestHelper.CreateData2(2, 2),             
+                TestHelper.CreateData2(8, 2),          
+                TestHelper.CreateData2(10, 2),               
+                TestHelper.CreateData2(12, 2),           
+            });
+
+            List<int> expectedOrder = new List<int>()
+            {
+                1, 3, 5, 7, 9, 11, 13, 2, 4, 6, 8, 10, 12
+            };
+
+            #endregion
+
+            async.Start();
+            searchModule.Start();
+            distributor.Start();
+            merge.Start();
+            back.Start();
+
+            var reader = searchModule.CreateReader($"SELECT Id, (2 - (Id % 2)) AS valCount FROM {TableName} ORDER BY valCount ASC, Id asc");
+            reader.Start();
+
+            const int count = 13;
+            for (int i = 0; i < count; i++)
+            {
+                Assert.IsTrue(reader.IsCanRead);
+
+                reader.ReadNext();
+
+                Assert.AreEqual(expectedOrder[i], reader.GetValue(0));
+                Assert.AreEqual((long)(2 - (expectedOrder[i] % 2)), reader.GetValue(1));
             }
             reader.ReadNext();
             Assert.IsFalse(reader.IsCanRead);

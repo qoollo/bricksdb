@@ -48,7 +48,7 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public void SetKeyName(string keyName)
         {
-            _keyName = "Meta_" + keyName.UnQuote();
+            _keyName = PostgreHelper.NormalizeName("Meta_" + keyName.UnQuote());
             _userKeyName = keyName;
             var descr = _handler.GetFieldsDescription();
             _keyType = descr.Find(x => x.Item1 == keyName).Item3;
@@ -181,11 +181,11 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public MetaData ReadMetaFromSearchData(SearchData data)
         {
-            object local = data.Fields.Find(x => string.Equals(x.Item2, PostgreConsts.Local, StringComparison.OrdinalIgnoreCase)).Item1;
-            object isDeleted = data.Fields.Find(x => string.Equals(x.Item2, PostgreConsts.IsDeleted, StringComparison.OrdinalIgnoreCase)).Item1;
-            object deleteTime = data.Fields.Find(x => string.Equals(x.Item2, PostgreConsts.DeleteTime, StringComparison.OrdinalIgnoreCase)).Item1;
-            object hash = data.Fields.Find(x => string.Equals(x.Item2, PostgreConsts.Hash, StringComparison.OrdinalIgnoreCase)).Item1;
-            object id = data.Fields.Find(x => string.Equals(x.Item2, _keyName, StringComparison.OrdinalIgnoreCase)).Item1;
+            object local = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, true, PostgreConsts.Local, true)).Item1;
+            object isDeleted = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, true, PostgreConsts.IsDeleted, true)).Item1;
+            object deleteTime = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, true, PostgreConsts.DeleteTime, true)).Item1;
+            object hash = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, true, PostgreConsts.Hash, true)).Item1;
+            object id = data.Fields.Find(x => PostgreHelper.AreNamesEqual(x.Item2, true, _keyName, true)).Item1;
 
             MetaData meta = null;
 
@@ -271,14 +271,14 @@ namespace Qoollo.Impl.Postgre.Internal
 
 
         private NpgsqlCommand CreateSelectCommandInner(string script, FieldDescription idDescription,
-            List<FieldDescription> userParameters, bool useUserScript = false)
+            List<FieldDescription> userParameters, bool useUserScript = false, List<FieldDescription> orderKeyParameters = null)
         {
             var command = new NpgsqlCommand(script);
-            var name = idDescription.FieldName == _keyName ? _userKeyName : idDescription.FieldName;
+            var name = idDescription.FieldName == _keyName ? PostgreHelper.NormalizeName(_userKeyName) : idDescription.FieldName;
 
             if (!useUserScript || !idDescription.IsFirstAsk)
             {
-                var dbtype = _handler.GetFieldsDescription().Find(x => x.Item1.ToLower() == name.ToLower());
+                var dbtype = _handler.GetFieldsDescription().Find(x => PostgreHelper.AreNamesEqual(x.Item1, false, name, true));
                 command.Parameters.Add("@" + idDescription.FieldName, dbtype.Item3);
                 command.Parameters["@" + idDescription.FieldName].Value = idDescription.Value;
             }
@@ -286,34 +286,67 @@ namespace Qoollo.Impl.Postgre.Internal
             foreach (var parameter in userParameters)
             {
                 if (parameter.UserType >= 0 && parameter.UserType <= 39 &&
-                    (idDescription.IsFirstAsk || parameter.FieldName.ToLower() != idDescription.FieldName.ToLower()))
+                    (idDescription.IsFirstAsk || !PostgreHelper.AreNamesEqual(parameter.FieldName, false, idDescription.FieldName, true)))
                 {
                     command.Parameters.Add("@" + parameter.FieldName, (NpgsqlDbType)parameter.UserType);
                     command.Parameters["@" + parameter.FieldName].Value = parameter.Value;
                 }
             }
 
+            if (orderKeyParameters != null)
+            {
+                foreach (var parameter in orderKeyParameters)
+                {
+                    if (parameter.UserType >= 0 && parameter.UserType <= 39)
+                    {
+                        if (!PostgreHelper.AreNamesEqual(parameter.FieldName, true, idDescription.FieldName, true) ||
+                            !command.Parameters.Contains("@" + parameter.FieldName))
+                        {
+                            NpgsqlParameter curPar = null;
+                            if (parameter.UserType == 0) // We don't know the type
+                                curPar = new NpgsqlParameter("@" + parameter.FieldName, parameter.Value);
+                            else
+                                curPar = new NpgsqlParameter("@" + parameter.FieldName, (NpgsqlDbType)parameter.UserType) { Value = parameter.Value };
+
+                            command.Parameters.Add(curPar);
+                        }
+                    }
+                }
+            }
+
             return command;
         }
 
-        public NpgsqlCommand CreateSelectCommand(string script, FieldDescription idDescription, List<FieldDescription> userParameters)
+        public NpgsqlCommand CreateSelectCommand(string script, FieldDescription idDescription, List<FieldDescription> userParameters,
+            List<FieldDescription> keysParameters)
+        {
+            if (keysParameters == null)
+                return CreateSelectCommand(script, idDescription, userParameters); // Fallback to old impl
+
+            string nquery = _scriptParser.CreateOrderScript(script, idDescription, keysParameters);
+            return CreateSelectCommandInner(nquery, idDescription, userParameters, orderKeyParameters: keysParameters);
+        }
+
+        public NpgsqlCommand CreateSelectCommand(string script, FieldDescription idDescription,
+            List<FieldDescription> userParameters)
         {
             string nquery = _scriptParser.CreateOrderScript(script, idDescription);
-
             return CreateSelectCommandInner(nquery, idDescription, userParameters);
         }
 
         public NpgsqlCommand CreateSelectCommand(SelectDescription description)
         {
             if (!description.UseUserScript)
-                return CreateSelectCommand(description.Script, description.IdDescription, description.UserParametrs);
+                return CreateSelectCommand(description.Script, description.IdDescription,
+                    description.UserParametrs, description.OrderKeyDescriptions);
 
-            return CreateSelectCommandInner(description.Script, description.IdDescription, description.UserParametrs, true);
+            return CreateSelectCommandInner(description.Script, description.IdDescription, description.UserParametrs,
+                true, description.OrderKeyDescriptions);
         }
 
         public NpgsqlCommand CreateSelectCommand(NpgsqlCommand script, FieldDescription idDescription, List<FieldDescription> userParameters)
         {
-            return CreateSelectCommand(script.CommandText, idDescription, userParameters);
+            return CreateSelectCommand(script.CommandText, idDescription, userParameters, new List<FieldDescription>());
         }
 
         public List<Tuple<object, string>> SelectProcess(DbReader<NpgsqlDataReader> reader)
@@ -330,8 +363,7 @@ namespace Qoollo.Impl.Postgre.Internal
                 var value = reader.GetValue(i);
                 if (value is DBNull) value = null;
 
-
-                fields.Add(new Tuple<object, string>(value, name));
+                fields.Add(new Tuple<object, string>(value, PostgreHelper.NormalizeName(name)));
             }
 
             return fields;
@@ -350,7 +382,7 @@ namespace Qoollo.Impl.Postgre.Internal
 
         public FieldDescription GetKeyDescription()
         {
-            var field = _handler.GetDbFieldsDescription().FirstOrDefault(x => x.Item1.ToLower() == _userKeyName.ToLower());
+            var field = _handler.GetDbFieldsDescription().FirstOrDefault(x => PostgreHelper.AreNamesEqual(x.Item1, false, _userKeyName, false));
 
             var description = new FieldDescription(_keyName, field.Item2)
             {

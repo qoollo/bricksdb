@@ -13,9 +13,10 @@ namespace Qoollo.Impl.Collector.Tasks
         public bool IsAllDataRead { get; private set; }
         public bool IsServersAvailbale { get; private set; }
 
-        public object LastKey { get; private set; }
+//        public object LastKey { get; private set; }
 
         public FieldDescription IdDescription { get; private set; }
+        public List<FieldDescription> OrderKeyDescriptions { get; set; }
         public ServerId ServerId { get; private set; }
         private readonly List<SearchData> _data;
         private int _dataPos;
@@ -40,10 +41,7 @@ namespace Qoollo.Impl.Collector.Tasks
 
         public void AddPage(List<SearchData> page)
         {
-            for (int i = 0; i < _dataPos; i++)
-            {
-                _data.RemoveAt(0);
-            }
+            _data.RemoveRange(0, _dataPos);
             _dataPos = 0;
 
             _data.AddRange(page);
@@ -97,16 +95,18 @@ namespace Qoollo.Impl.Collector.Tasks
 
         #region Page work
 
-        public void SetLastKey(object key)
-        {
-            LastKey = key;
-            IdDescription.Value = LastKey;
-        }
-
         public void FindNextLastKey()
         {
-            LastKey = _data.Last().Key;
-            IdDescription.Value = LastKey;
+            //TODO check
+            IdDescription.Value = _data[_data.Count - 1].Key;
+            if (OrderKeyDescriptions != null)
+            {
+                foreach (var description in OrderKeyDescriptions)
+                {
+                    var value = _data[_data.Count - 1].Fields.First(x => string.Equals(x.Item2, description.AsFieldName, System.StringComparison.OrdinalIgnoreCase)).Item1;
+                    description.Value = value;
+                }
+            }
         }
 
         #endregion

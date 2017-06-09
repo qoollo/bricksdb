@@ -92,6 +92,13 @@ namespace Qoollo.Impl.Collector
             var searchTask = new OrderSelectTask(servers, description.Item1, description.Item1, description.Item2,
                 limitCount, userPage, userParameters, _tableName, isUserScript);
 
+            //TODO check
+            var keysDescriptions = _scriptParser.GetOrderKeysInner(query);
+            if (keysDescriptions.Count != 1)
+            {
+                searchTask.SearchTasks.ForEach(x => x.OrderKeyDescriptions = keysDescriptions);
+            }
+
             _scriptParser.PrepareStartPages(searchTask.SearchTasks);
 
             _dataLoader.LoadAllPagesParallel(searchTask.SearchTasks);

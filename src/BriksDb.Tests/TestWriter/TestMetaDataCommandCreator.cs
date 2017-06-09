@@ -132,7 +132,7 @@ namespace Qoollo.Tests.TestWriter
 
             for (int i = 0; i < reader.CountFields(); i++)
             {
-                fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).Key, ""));
+                fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).Key, "id"));
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).Local, "local"));
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).IsDeleted, "isdelete"));
                 fields.Add(new Tuple<object, string>(((TestCommand)reader.GetValue(i)).DeleteTime, "time"));                

@@ -23,6 +23,7 @@ namespace Qoollo.Impl.Writer.Db
 {
     internal class DbLogicModule<TCommand, TKey, TValue, TConnection, TReader> : DbModule
         where TConnection : class
+        where TCommand: IDisposable
     {
         private readonly IHashCalculater _hashCalculater;
         private readonly IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader> _userCommandCreator;
@@ -85,9 +86,10 @@ namespace Qoollo.Impl.Writer.Db
             if (result)
             {
                 var idinit = _userCommandCreator.GetKeyInitialization();
-                var metaCommand = _metaDataCommandCreator.InitMetaDataDb(idinit);
-
-                ret = _implModule.ExecuteNonQuery(metaCommand);
+                using (var metaCommand = _metaDataCommandCreator.InitMetaDataDb(idinit))
+                {
+                    ret = _implModule.ExecuteNonQuery(metaCommand);
+                }
             }
             else
                 ret = new InnerFailResult("Fail init db");
@@ -107,37 +109,34 @@ namespace Qoollo.Impl.Writer.Db
             object key = DeserializeKey(obj);
 
             var script = _metaDataCommandCreator.ReadMetaData(_userCommandCreator.Read(), key);
-            var reader = _implModule.CreateReader(script);
-
-            var meta = new Tuple<MetaData, bool>(null, true);
-            try
+            using (var reader = _implModule.CreateReader(script))
             {
-                reader.Start();
-
-                if (reader.IsFail)
+                var meta = new Tuple<MetaData, bool>(null, true);
+                try
                 {
-                    timer.Complete();
-                    return null;
+                    reader.Start();
+
+                    if (reader.IsFail)
+                    {
+                        timer.Complete();
+                        return null;
+                    }
+
+                    if (reader.IsCanRead)
+                    {
+                        reader.ReadNext();
+
+                        meta = _metaDataCommandCreator.ReadMetaDataFromReader(reader);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Logger.Instance.Warn(e, "");
                 }
 
-                if (reader.IsCanRead)
-                {
-                    reader.ReadNext();
-
-                    meta = _metaDataCommandCreator.ReadMetaDataFromReader(reader);
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Logger.Instance.Warn(e, "");
-            }
-            finally
-            {
-                reader.Dispose();
-            }            
-
-            timer.Complete();
-            return meta;
+                timer.Complete();
+                return meta;
+            }          
         }        
 
         public override RemoteResult Create(InnerData obj, bool local)
@@ -171,13 +170,15 @@ namespace Qoollo.Impl.Writer.Db
         {
             object key = DeserializeKey(obj);
 
-            var metaCommand = _metaDataCommandCreator.SetDataDeleted(key);            
-            var ret = _implModule.ExecuteNonQuery(metaCommand);
+            using (var metaCommand = _metaDataCommandCreator.SetDataDeleted(key))
+            {
+                var ret = _implModule.ExecuteNonQuery(metaCommand);
 
-            if (ret.IsError)
-                ret = new InnerServerError(ret);
-            WriterCounters.Instance.DeletePerSec.OperationFinished();
-            return ret;
+                if (ret.IsError)
+                    ret = new InnerServerError(ret);
+                WriterCounters.Instance.DeletePerSec.OperationFinished();
+                return ret;
+            }
         }
 
         public override RemoteResult DeleteFull(InnerData obj)
@@ -186,14 +187,17 @@ namespace Qoollo.Impl.Writer.Db
             object value;
             DeserializeData(obj, out key, out value);
 
-            var command = _metaDataCommandCreator.DeleteMetaData(key);            
-            _implModule.ExecuteNonQuery(command);
+            using (var command = _metaDataCommandCreator.DeleteMetaData(key))
+            {
+                _implModule.ExecuteNonQuery(command);
+            }
+            using (var command = _userCommandCreator.Delete((TKey)key))
+            { 
+                var ret = _implModule.ExecuteNonQuery(command);
 
-            command = _userCommandCreator.Delete((TKey) key);
-            var ret = _implModule.ExecuteNonQuery(command);
-
-            WriterCounters.Instance.DeleteFullPerSec.OperationFinished();
-            return ret;
+                WriterCounters.Instance.DeleteFullPerSec.OperationFinished();
+                return ret;
+            }
         }        
 
         public override RemoteResult SelectRead(SelectDescription description, out SelectSearchResult searchResult)
@@ -209,32 +213,31 @@ namespace Qoollo.Impl.Writer.Db
                 return new InnerServerError(Errors.QueryError);
             }
 
-            var reader = _implModule.CreateReader(command);
-
-            reader.Start();
-
-            if (reader.IsFail)
+            using (var reader = _implModule.CreateReader(command))
             {
-                reader.Dispose();
-                searchResult = new SelectSearchResult(result, true);
-                return new InnerFailResult("script error");
+                reader.Start();
+
+                if (reader.IsFail)
+                {
+                    searchResult = new SelectSearchResult(result, true);
+                    return new InnerFailResult("script error");
+                }
+
+                while (reader.IsCanRead && result.Count < description.CountElements)
+                {
+                    reader.ReadNext();
+
+                    var fields = _metaDataCommandCreator.SelectProcess(reader);
+
+                    var key = fields.Find(x => x.Item2.ToLower() == description.IdDescription.AsFieldName.ToLower());
+                    result.Add(new SearchData(fields, key.Item1));
+                }
+                bool isAllDataRead = !reader.IsCanRead;
+
+                searchResult = new SelectSearchResult(result, isAllDataRead);
+
+                return new SuccessResult();
             }
-
-            while (reader.IsCanRead && result.Count < description.CountElements)
-            {
-                reader.ReadNext();
-
-                var fields = _metaDataCommandCreator.SelectProcess(reader);
-
-                var key = fields.Find(x => x.Item2.ToLower() == description.IdDescription.AsFieldName.ToLower());
-                result.Add(new SearchData(fields, key.Item1));
-            }
-            bool isAllDataRead = !reader.IsCanRead;
-
-            reader.Dispose();
-            searchResult = new SelectSearchResult(result, isAllDataRead);
-
-            return new SuccessResult();
         }
 
         public override RemoteResult RestoreUpdate(InnerData obj, bool local)
@@ -299,44 +302,44 @@ namespace Qoollo.Impl.Writer.Db
             var timer = WriterCounters.Instance.ReadTimer.StartNew();
 
             var script = _userCommandCreator.Read();
-            script = _metaDataCommandCreator.ReadWithDelete(script, isDeleted, key);            
+            script = _metaDataCommandCreator.ReadWithDelete(script, isDeleted, key);
 
-            var reader = _implModule.CreateReader(script);
-
-            try
+            using (var reader = _implModule.CreateReader(script))
             {
-                reader.Start();
-
-                if (reader.IsFail)
+                try
                 {
+                    reader.Start();
+
+                    if (reader.IsFail)
+                    {
+                        ret.Data = null;
+                        ret.Transaction.SetError();
+                        ret.Transaction.AddErrorDescription("Script error");
+                        reader.Dispose();
+                        return ret;
+                    }
+
+                    if (reader.IsCanRead)
+                    {
+                        reader.ReadNext();
+
+                        TKey tmp;
+                        object value = _userCommandCreator.ReadObjectFromReader(reader, out tmp);
+                        ret.Data = value == null ? null : _hashCalculater.SerializeValue(value);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Logger.Instance.Error(e, "");
                     ret.Data = null;
+
                     ret.Transaction.SetError();
-                    ret.Transaction.AddErrorDescription("Script error");
-                    reader.Dispose();
-                    return ret;
+                    ret.Transaction.AddErrorDescription(e.Message);
                 }
 
-                if (reader.IsCanRead)
-                {
-                    reader.ReadNext();
-
-                    TKey tmp;
-                    object value = _userCommandCreator.ReadObjectFromReader(reader, out tmp);
-                    ret.Data = value == null ? null : _hashCalculater.SerializeValue(value);
-                }
+                timer.Complete();
+                return ret;
             }
-            catch (Exception e)
-            {
-                Logger.Logger.Instance.Error(e, "");
-                ret.Data = null;
-
-                ret.Transaction.SetError();
-                ret.Transaction.AddErrorDescription(e.Message);
-            }
-
-            reader.Dispose();
-            timer.Complete();
-            return ret;
         }
 
         #endregion
@@ -360,13 +363,15 @@ namespace Qoollo.Impl.Writer.Db
         {
             object key = DeserializeKey(obj);
 
-            var command = _metaDataCommandCreator.DeleteMetaData(key);
-            _implModule.ExecuteNonQuery(command);
-
-            command = _userCommandCreator.Delete((TKey) key);
-            var result = _implModule.ExecuteNonQuery(command);
-
-            return result;
+            using (var command = _metaDataCommandCreator.DeleteMetaData(key))
+            {
+                _implModule.ExecuteNonQuery(command);
+            }
+            using (var command = _userCommandCreator.Delete((TKey)key))
+            { 
+                var result = _implModule.ExecuteNonQuery(command);
+                return result;
+            }
         }
 
         public override RemoteResult UpdateRollback(InnerData obj, bool local)
@@ -379,8 +384,10 @@ namespace Qoollo.Impl.Writer.Db
         {
             object key = DeserializeKey(obj);
 
-            var metaCommand = _metaDataCommandCreator.SetDataNotDeleted(key);
-            return _implModule.ExecuteNonQuery(metaCommand);
+            using (var metaCommand = _metaDataCommandCreator.SetDataNotDeleted(key))
+            {
+                return _implModule.ExecuteNonQuery(metaCommand);
+            }
         }
 
         public override RemoteResult CustomOperationRollback(InnerData obj, bool local)
@@ -529,47 +536,44 @@ namespace Qoollo.Impl.Writer.Db
             var command = _metaDataCommandCreator.ReadWithDeleteAndLocalList(_userCommandCreator.Read(), isDeleted,
                 ids.Select(x => x.Id).ToList());
 
-            var reader = _implModule.CreateReader(command);
-
-            try
+            using (var reader = _implModule.CreateReader(command))
             {
-                reader.Start();
-
-                if (reader.IsFail)
+                try
                 {
-                    return new List<InnerData>();
-                }
-                var ret = new List<InnerData>();
-                
-                while (reader.IsCanRead)
-                {
-                    reader.ReadNext();
-                    
-                    TKey tmp;
-                    object value = _userCommandCreator.ReadObjectFromReader(reader, out tmp);
+                    reader.Start();
 
-                    var meta = ids.Find(x => x.Id.Equals(tmp));
-
-                    var data = new InnerData(new Transaction(meta.Hash, "default"))
+                    if (reader.IsFail)
                     {
-                        Data = value == null ? null : _hashCalculater.SerializeValue(value),
-                        MetaData = meta,
-                        Key = _hashCalculater.SerializeKey(tmp),
-                        Transaction = {TableName = TableName}
-                    };
-                    ret.Add(data);
+                        return new List<InnerData>();
+                    }
+                    var ret = new List<InnerData>();
+
+                    while (reader.IsCanRead)
+                    {
+                        reader.ReadNext();
+
+                        TKey tmp;
+                        object value = _userCommandCreator.ReadObjectFromReader(reader, out tmp);
+
+                        var meta = ids.Find(x => x.Id.Equals(tmp));
+
+                        var data = new InnerData(new Transaction(meta.Hash, "default"))
+                        {
+                            Data = value == null ? null : _hashCalculater.SerializeValue(value),
+                            MetaData = meta,
+                            Key = _hashCalculater.SerializeKey(tmp),
+                            Transaction = { TableName = TableName }
+                        };
+                        ret.Add(data);
+                    }
+                    return ret;
                 }
-                return ret;
+                catch (Exception e)
+                {
+                    Logger.Logger.Instance.Error(e, "");
+                }
+                return new List<InnerData>();
             }
-            catch (Exception e)
-            {
-                Logger.Logger.Instance.Error(e, "");
-            }
-            finally
-            {
-                reader.Dispose();
-            }
-            return new List<InnerData>();
         }
 
         private FieldDescription PrepareKeyDescription(int countElements, bool isfirstAsk, object lastId)

@@ -43,7 +43,8 @@ namespace Qoollo.Impl.Collector.Load
                 _serverPageSize, searchTask.UserParametrs)
             {
                 TableName = searchTask.TableName,
-                UseUserScript = searchTask.IsUserScript
+                UseUserScript = searchTask.IsUserScript,
+                OrderKeyDescriptions = searchTask.OrderKeyDescriptions
             };
             var result = _net.SelectQuery(searchTask.ServerId, description);
 

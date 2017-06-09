@@ -15,8 +15,8 @@ namespace Qoollo.Impl.Collector.Model
         public bool UseStart { get; private set; }
         private List<WriterDescription> _servers; 
         private readonly ReaderWriterLockSlim _lock;
-        private DistributorHashConfiguration _configuration;
-        private HashMap _map;
+        private readonly DistributorHashConfiguration _configuration;
+        private readonly HashMap _map;
 
         public CollectorModel(DistributorHashConfiguration configuration, HashMapConfiguration mapConfiguration,
             bool useStart = true)
@@ -173,6 +173,56 @@ namespace Qoollo.Impl.Collector.Model
             _lock.ExitReadLock();
 
             return ret;
+        }
+
+        public bool CheckAliveServersWithStep(ServerId startServer)
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                var index = _servers.FindIndex(startServer.Equals);
+                if (index == -1)
+                    return false;
+
+                var count = _servers.Count/_configuration.CountReplics;
+                for (int i = 0; i < count; i++)
+                {
+                    if (!_servers[index].IsAvailable)
+                        return false;
+                    index = (index + _configuration.CountReplics)%_servers.Count;
+                }
+
+                return true;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+
+        public List<ServerId> GetAliveServersWithStep(ServerId startServer)
+        {
+            var ret = new List<ServerId>();
+            _lock.EnterReadLock();
+            try
+            {
+                var index = _servers.FindIndex(startServer.Equals);
+                if (index == -1)
+                    return ret;
+
+                var count = _servers.Count / _configuration.CountReplics;
+                for (int i = 0; i < count; i++)
+                {
+                    ret.Add(_servers[index]);
+                    index = (index + _configuration.CountReplics) % _servers.Count;
+                }
+
+                return ret;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
         }
     }
 }

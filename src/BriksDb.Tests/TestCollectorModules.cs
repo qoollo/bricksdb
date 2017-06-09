@@ -4,6 +4,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Ninject;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
@@ -25,6 +26,8 @@ using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Sql.Internal;
+using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestCollector;
 using Qoollo.Tests.TestModules;
@@ -35,6 +38,12 @@ namespace Qoollo.Tests
     [TestClass]
     public class TestCollectorModules
     {
+        [TestInitialize]
+        public void Initialize()
+        {
+            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
+        }
+
         [TestMethod]
         public void SingleServerSearchTask_GetData_CheckData()
         {
@@ -331,7 +340,6 @@ namespace Qoollo.Tests
             async.Dispose();
             back.Dispose();
         }
-
 
         [TestMethod]
         public void SearchTaskModule_CreateReader_ReadData_MultipleKeys()

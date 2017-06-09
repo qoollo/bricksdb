@@ -4,6 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Ninject;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -21,6 +22,8 @@ using Qoollo.Impl.DistributorModules.Model;
 using Qoollo.Impl.DistributorModules.ParallelWork;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Consts = Qoollo.Impl.Common.Support.Consts;
@@ -32,6 +35,12 @@ namespace Qoollo.Tests
     [TestClass]
     public class TestDistributorModules
     {
+        [TestInitialize]
+        public void Initialize()
+        {
+            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
+        }
+
         [TestMethod]
         public void WriterSystemModel_GetUnavailableServers_CheckAvailableAndUnAvailableServers()
         {
@@ -464,7 +473,6 @@ namespace Qoollo.Tests
             Assert.IsTrue(ret4.Count == 0);
         }
 
-     
         [TestMethod]
         public void MainLogic_ProcessWithData_SendAllReplicsThenObsoleteDataInCache()
         {

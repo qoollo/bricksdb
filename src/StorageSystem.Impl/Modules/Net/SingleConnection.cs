@@ -6,6 +6,7 @@ using Ninject.Parameters;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net.ConnectionBehavior;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Impl.Modules.Net
 {
@@ -19,10 +20,8 @@ namespace Qoollo.Impl.Modules.Net
         protected SingleConnection(ServerId server, ConnectionConfiguration configuration,
             ConnectionTimeoutConfiguration timeoutConfiguration)
         {
-            var kernel= new StandardKernel();
-            kernel.Load(Assembly.GetExecutingAssembly());
-
-            _connection = kernel.Get<IConnectionBehavior<T>>(new ConstructorArgument("server", server),
+            _connection = InitInjection.Kernel.Get<IConnectionBehavior<T>>(
+                new ConstructorArgument("server", server),
                 new ConstructorArgument("configuration", configuration),
                 new ConstructorArgument("timeoutConfiguration", timeoutConfiguration));
         }

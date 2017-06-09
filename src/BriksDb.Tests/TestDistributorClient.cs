@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Ninject;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
 using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestWriter;
 
@@ -15,6 +18,12 @@ namespace Qoollo.Tests
     [TestClass]
     public class TestDistributorClient
     {
+        [TestInitialize]
+        public void Initialize()
+        {
+            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
+        }
+
         [TestMethod]
         public void DistributorApi_ProcessAsyncOperationsFromProxy()
         {

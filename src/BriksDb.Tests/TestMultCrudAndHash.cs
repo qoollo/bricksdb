@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Ninject;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
@@ -8,6 +9,8 @@ using Qoollo.Client.Support;
 using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestWriter;
@@ -22,6 +25,8 @@ namespace Qoollo.Tests
         [TestInitialize]
         public void Initialize()
         {
+            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
+
             var common = new CommonConfiguration(1, 100);
 
             var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
@@ -206,6 +211,7 @@ namespace Qoollo.Tests
             storage2.Api.Restore(RestoreMode.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
+            Thread.Sleep(TimeSpan.FromMilliseconds(20000000));
 
             Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
             Assert.AreEqual(count, f2.Db.Local + f4.Db.Local);

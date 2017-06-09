@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Ninject;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -15,6 +16,8 @@ using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 
@@ -23,6 +26,12 @@ namespace Qoollo.Tests
     [TestClass]
     public class SimpleTests
     {
+        [TestInitialize]
+        public void Initialize()
+        {
+            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
+        }
+
         #region Test cache
 
         [TestMethod]
@@ -271,8 +280,14 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(800));
 
-            Assert.AreEqual(1, ddistributor.GetDestination(data1, false).Count);
-            Assert.AreEqual(1, ddistributor.GetDestination(data2, false).Count);
+            dest = ddistributor.GetDestination(data1, false);
+            dest2 = ddistributor.GetDestination(data2, false);
+
+            Assert.AreNotEqual(null, dest);
+            Assert.AreNotEqual(null, dest2);
+
+            Assert.AreEqual(1, dest.Count);
+            Assert.AreEqual(1, dest2.Count);
 
             ddistributor.Dispose();
             h1.Dispose();

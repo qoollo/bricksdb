@@ -1,6 +1,7 @@
 ﻿using Ninject.Modules;
 using Qoollo.Impl.Modules.Net.ConnectionBehavior;
 using Qoollo.Impl.Modules.Net.ReceiveBehavior;
+using Qoollo.Impl.NetInterfaces;
 using Qoollo.Impl.NetInterfaces.Distributor;
 using Qoollo.Impl.NetInterfaces.Proxy;
 using Qoollo.Impl.NetInterfaces.Writer;
@@ -18,6 +19,8 @@ namespace Qoollo.Impl.TestSupport
             BindClientAndServer<ICommonNetReceiverForProxy>();
 
             BindClientAndServer<ICommonProxyNetReceiver>();
+
+            BindClientAndServer<ICommonCommunicationNet>();
         }
 
         protected virtual void BindClientAndServer<TType>()

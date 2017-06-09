@@ -3,6 +3,7 @@ using Ninject;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net.ReceiveBehavior;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Tests.NetMock
 {
@@ -12,16 +13,13 @@ namespace Qoollo.Tests.NetMock
         public readonly TReceive Server;
         private readonly INetMock _netMock;
 
-        public MockReceive(NetReceiverConfiguration configuration, object server) 
+        public MockReceive(NetReceiverConfiguration configuration, TReceive server) 
             : base(configuration, server)
         {
             _configuration = configuration;
-            Server = (TReceive)server;
+            Server = server;
 
-            var kernel = new StandardKernel();
-            kernel.Load(Assembly.GetExecutingAssembly());
-
-            _netMock = kernel.Get<INetMock>();
+            _netMock = InitInjection.Kernel.Get<INetMock>();
         }
 
         public override void Start()

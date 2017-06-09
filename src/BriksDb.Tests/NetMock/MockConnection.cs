@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Ninject;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Modules.Net.ConnectionBehavior;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Tests.NetMock
 {
@@ -14,10 +15,7 @@ namespace Qoollo.Tests.NetMock
 
         public MockConnection(ServerId server) : base(server)
         {
-            var kernel = new StandardKernel();
-            kernel.Load(Assembly.GetExecutingAssembly());
-
-            _netMock = kernel.Get<INetMock>();
+            _netMock = InitInjection.Kernel.Get<INetMock>();
         }
 
         public override bool Connect()
@@ -37,7 +35,7 @@ namespace Qoollo.Tests.NetMock
 
         protected override void Dispose(bool isUserCall)
         {
-            throw new NotImplementedException();
+            
         }
     }
 }

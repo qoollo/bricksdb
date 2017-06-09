@@ -4,8 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Ninject;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
+using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 
@@ -32,6 +35,8 @@ namespace Qoollo.Tests
         [TestInitialize]
         public void Initialize()
         {
+            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
+
             var common = new CommonConfiguration(1, 100);
             var distrNet = new DistributorNetConfiguration("localhost",
                 distrServer1, distrServer12, "testService", 10);

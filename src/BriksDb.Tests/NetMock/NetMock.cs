@@ -48,9 +48,12 @@ namespace Qoollo.Tests.NetMock
             {
                 foreach (var receiver in _receivers)
                 {
-                    if (Equals(receiver.ServerId, serverId) && receiver.Type == typeof (TConnection))
+                    if (Equals(receiver.ServerId, serverId) &&
+                        (receiver.Type == typeof (TConnection) ||
+                         typeof (TConnection).IsAssignableFrom(receiver.Type)))
                     {
-                        host = ((ReceiveWrapper<TConnection>) receiver).ReceiveApi.Server;
+                        //host = ((ReceiveWrapper<TConnection>) receiver).ReceiveApi.Server;
+                        host = receiver.GetResult<TConnection>();
                         return true;
                     }
                 }
@@ -63,7 +66,7 @@ namespace Qoollo.Tests.NetMock
             return false;
         }
 
-        private class ReceiveWrapperBase
+        private abstract class ReceiveWrapperBase
         {
             public readonly ServerId ServerId;
             public readonly Type Type;
@@ -73,6 +76,13 @@ namespace Qoollo.Tests.NetMock
                 ServerId = serverId;
                 Type = type;
             }
+
+            public TResult GetResult<TResult>()// where TResult:class
+            {
+                return (TResult)GetResultInner();
+            }
+
+            protected abstract object GetResultInner();
         }
 
         private class ReceiveWrapper<TReceive> : ReceiveWrapperBase
@@ -84,6 +94,11 @@ namespace Qoollo.Tests.NetMock
             }
 
             public readonly MockReceive<TReceive> ReceiveApi;
+
+            protected override object GetResultInner()
+            {
+                return ReceiveApi.Server;
+            }
         }
     }
 }

@@ -10,6 +10,8 @@ namespace Qoollo.Tests.NetMock
         public override void Load()
         {
             base.Load();
+
+            Bind<INetMock>().To<NetMock>().InSingletonScope();
         }
 
         protected override void BindClientAndServer<TType>()

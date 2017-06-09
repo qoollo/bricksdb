@@ -4,6 +4,7 @@ using Ninject;
 using Ninject.Parameters;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net.ReceiveBehavior;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Impl.Modules.Net
 {
@@ -15,12 +16,9 @@ namespace Qoollo.Impl.Modules.Net
         {
             Contract.Requires(configuration != null);
 
-            var kernel = new StandardKernel();
-            kernel.Load(Assembly.GetExecutingAssembly());
-
-            _receive = kernel.Get<IReceiveBehavior<T>>(
+            _receive = InitInjection.Kernel.Get<IReceiveBehavior<T>>(
                 new ConstructorArgument("configuration", configuration),
-                new ConstructorArgument("host", this));
+                new ConstructorArgument("server", this));
         }
 
         public override void Start()

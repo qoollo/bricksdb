@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Ninject;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
@@ -10,6 +11,8 @@ using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestWriter;
 
@@ -23,6 +26,8 @@ namespace Qoollo.Tests
         [TestInitialize]
         public void Initialize()
         {
+            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
+
             const int proxyServer = 22369;
             var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
             var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1),

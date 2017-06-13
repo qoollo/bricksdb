@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Ninject;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -14,6 +15,8 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
@@ -33,6 +36,8 @@ namespace Qoollo.Tests
         [TestInitialize]
         public void Initialize()
         {
+            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
+
             const int proxyServer = 22020;
             var queue = new QueueConfiguration(2, 100);
             var connection = new ConnectionConfiguration("testService", 10);
@@ -105,90 +110,6 @@ namespace Qoollo.Tests
             Assert.AreEqual(count, mem.Local + mem.Remote);
 
             _writer1.Dispose();
-        }
-
-        [TestMethod]
-        public void Writer_SendRestoreCommandToDistributors_RestoreRemoteTable()
-        {            
-            const int distrServer1 = 22113;
-            const int distrServer12 = 23113;
-            const int distrServer2 = 22114;
-            const int distrServer22 = 23114;
-            const int storageServer1 = 22115;
-            const int storageServer2 = 22116;
-
-            var writer =
-                new HashWriter(new HashMapConfiguration("test7", HashMapCreationMode.CreateNew, 2, 3,
-                    HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
-
-            writer =
-                new HashWriter(new HashMapConfiguration("test6", HashMapCreationMode.CreateNew, 2, 3,
-                    HashFileType.Writer));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
-
-            _distributor1.Build(2, distrServer1, distrServer12, "test7");
-            _distributor2.Build(2, distrServer2, distrServer22, "test6");
-
-            _writer1.Build(storageServer1, "test6", 2);
-            _writer2.Build(storageServer2, "test7", 2);
-            
-            _proxy.Start();
-
-            _distributor1.Start();
-            _distributor2.Start();
-
-            _proxy.Distributor.SayIAmHere(new ServerId("localhost", distrServer12));
-            _proxy.Distributor.SayIAmHere(new ServerId("localhost", distrServer22));
-
-            _distributor2.Distributor.SayIAmHereRemoteResult(new ServerId("localhost", distrServer12));
-
-            Thread.Sleep(TimeSpan.FromMilliseconds(300));
-            Assert.AreEqual(1, _distributor1.Distributor.GetDistributors().Count);
-            Assert.AreEqual(1, _distributor2.Distributor.GetDistributors().Count);
-
-            var api = _proxy.CreateApi("Int", false, new IntHashConvertor());
-
-            var tr1 = api.CreateSync(10, 10);
-            var tr2 = api.CreateSync(11, 11);
-
-            tr1.Wait();
-            tr2.Wait();
-
-            _writer1.Start();
-            _writer2.Start();
-
-            _writer1.Distributor.Restore(RestoreState.SimpleRestoreNeed);
-
-            _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed);
-
-            Thread.Sleep(TimeSpan.FromMilliseconds(2000));
-
-            var tr3 = api.CreateSync(12, 12);
-            var tr4 = api.CreateSync(13, 13);
-
-            tr3.Wait();
-            tr4.Wait();
-
-            var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
-            var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
-
-            Assert.AreEqual(2, mem.Local);
-            Assert.AreEqual(2, mem2.Local);
-
-            _writer1.Dispose();
-            _writer2.Dispose();
-
-            _proxy.Dispose();
-            
-            _distributor1.Dispose();
-            _distributor2.Dispose();
         }
 
         [TestMethod]

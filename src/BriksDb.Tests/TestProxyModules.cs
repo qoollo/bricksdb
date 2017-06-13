@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -23,6 +24,8 @@ using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
 using Qoollo.Impl.Proxy.Model;
 using Qoollo.Impl.Proxy.ProxyNet;
+using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 
@@ -30,7 +33,13 @@ namespace Qoollo.Tests
 {    
     [TestClass]
     public class TestProxyModules
-    {        
+    {
+        [TestInitialize]
+        public void Initialize()
+        {
+            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
+        }
+
         [TestMethod]
         public void ProxySystem_CreateSync_SendSyncDataToFakeDistributor_NoError()
         {

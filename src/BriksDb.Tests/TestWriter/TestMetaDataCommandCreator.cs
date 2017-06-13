@@ -144,7 +144,7 @@ namespace Qoollo.Tests.TestWriter
 
         public FieldDescription GetKeyDescription()
         {
-            return new FieldDescription("", typeof(int));
+            return new FieldDescription("id", typeof(int));
         }
 
         public MetaData ReadMetaFromSearchData(SearchData data)
@@ -154,7 +154,7 @@ namespace Qoollo.Tests.TestWriter
             var time = (DateTime)data.Fields.First(x => x.Item2 == "time").Item1;
             var hash = (string)data.Fields.First(x => x.Item2 == "hash").Item1;
 
-            return new MetaData(local, time, isdelete, hash) { Id = data.Fields.First(x => x.Item2 == "").Item1 };
+            return new MetaData(local, time, isdelete, hash) { Id = data.Fields.First(x => x.Item2 == "id").Item1 };
         }
     }
 }

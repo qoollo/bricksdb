@@ -273,56 +273,54 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestProxy.TestNetDistributorForProxy distrib;
-            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(),
+                new ConnectionConfiguration("testService", 10));
+            writer.Start();
+
+            for (int i = 1; i < 100; i++)
             {
-                writer.Start();
-
-                for (int i = 1; i < 100; i++)
-                {
-                    var data = new StoredData(i);
-                    var createRequest = CreateRequest(data);
-                    var result = writer.Input.ProcessSync(createRequest);
-                    Assert.IsFalse(result.IsError);
-                }
-
-                for (int i = 99; i >= 1; i--)
-                {
-                    var readRequest = ReadRequest(i);
-                    var resultRead = writer.Input.ReadOperation(readRequest);
-                    Assert.IsFalse(resultRead.Transaction.IsError);
-                    Assert.IsNotNull(resultRead.Data);
-                    Assert.AreEqual(i, CommonDataSerializer.Deserialize<StoredData>(resultRead.Data).Id);
-                }
-
-                for (int i = 1; i < 100; i++)
-                {
-                    var updateData = new StoredData(i);
-                    var updateRequest = UpdateRequest(updateData);
-                    var updateResult = writer.Input.ProcessSync(updateRequest);
-                    Assert.IsFalse(updateResult.IsError);
-                }
-
-                for (int i = 1; i < 100; i += 2)
-                {
-                    var deleteRequest = DeleteRequest(i);
-                    var deleteResult = writer.Input.ProcessSync(deleteRequest);
-                    Assert.IsFalse(deleteResult.IsError);
-                }
-
-                for (int i = 1; i < 100; i++)
-                {
-                    var readRequest = ReadRequest(i);
-                    var resultRead = writer.Input.ReadOperation(readRequest);
-                    Assert.IsFalse(resultRead.Transaction.IsError);
-                    if ((i % 2) == 1)
-                        Assert.IsNull(resultRead.Data);
-                    else
-                        Assert.IsNotNull(resultRead.Data);
-                }
-
-                writer.Dispose();
+                var data = new StoredData(i);
+                var createRequest = CreateRequest(data);
+                var result = writer.Input.ProcessSync(createRequest);
+                Assert.IsFalse(result.IsError);
             }
+
+            for (int i = 99; i >= 1; i--)
+            {
+                var readRequest = ReadRequest(i);
+                var resultRead = writer.Input.ReadOperation(readRequest);
+                Assert.IsFalse(resultRead.Transaction.IsError);
+                Assert.IsNotNull(resultRead.Data);
+                Assert.AreEqual(i, CommonDataSerializer.Deserialize<StoredData>(resultRead.Data).Id);
+            }
+
+            for (int i = 1; i < 100; i++)
+            {
+                var updateData = new StoredData(i);
+                var updateRequest = UpdateRequest(updateData);
+                var updateResult = writer.Input.ProcessSync(updateRequest);
+                Assert.IsFalse(updateResult.IsError);
+            }
+
+            for (int i = 1; i < 100; i += 2)
+            {
+                var deleteRequest = DeleteRequest(i);
+                var deleteResult = writer.Input.ProcessSync(deleteRequest);
+                Assert.IsFalse(deleteResult.IsError);
+            }
+
+            for (int i = 1; i < 100; i++)
+            {
+                var readRequest = ReadRequest(i);
+                var resultRead = writer.Input.ReadOperation(readRequest);
+                Assert.IsFalse(resultRead.Transaction.IsError);
+                if ((i%2) == 1)
+                    Assert.IsNull(resultRead.Data);
+                else
+                    Assert.IsNotNull(resultRead.Data);
+            }
+
+            writer.Dispose();
         }
 
 
@@ -332,50 +330,49 @@ namespace Qoollo.Tests
             CreateHashFileForTwoWriters(nameof(Postgre_Restore_Single_Test));
             //var writer1 = CreatePostgreWriter(nameof(Postgre_Restore_Single_Test), 0);
             var writer2 = CreatePostgreWriter(nameof(Postgre_Restore_Single_Test), 1);
-            TestProxy.TestNetDistributorForProxy distrib;
-            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            writer2.Start();
+
+            for (int i = 1; i < 100; i++)
             {
-                writer2.Start();
+                var data = new StoredData(i);
+                var createRequest = CreateRequest(data);
+                var result = writer2.Input.ProcessSync(createRequest);
+                Assert.IsFalse(result.IsError);
+            }
 
-                for (int i = 1; i < 100; i++)
+            List<int> idsToRestore = new List<int>();
+            using (var connection = new Npgsql.NpgsqlConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
                 {
-                    var data = new StoredData(i);
-                    var createRequest = CreateRequest(data);
-                    var result = writer2.Input.ProcessSync(createRequest);
-                    Assert.IsFalse(result.IsError);
-                }
-
-                List<int> idsToRestore = new List<int>();
-                using (var connection = new Npgsql.NpgsqlConnection(ConnectionString))
-                {
-                    connection.Open();
-                    using (var cmd = connection.CreateCommand())
+                    cmd.CommandText = "SELECT Meta_Id FROM metatable_teststored WHERE meta_local = 1";
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        cmd.CommandText = "SELECT Meta_Id FROM metatable_teststored WHERE meta_local = 1";
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                                idsToRestore.Add(reader.GetInt32(0));
-                        }
+                        while (reader.Read())
+                            idsToRestore.Add(reader.GetInt32(0));
                     }
                 }
-
-                List<InnerData> readedForRestore = new List<InnerData>();
-                Action<InnerData> procesor = data =>
-                {
-                    lock (readedForRestore)
-                        readedForRestore.Add(data);
-                };
-
-                var restoreResult = writer2.Db.GetDbModules[1].AsyncProcess(
-                    new Impl.Writer.Db.RestoreDataContainer(false, false, 100, procesor, meta => true, usePackage: false));
-
-                Assert.IsTrue(!restoreResult.IsError || restoreResult.Description == "");
-                Assert.AreEqual(idsToRestore.Count, readedForRestore.Count);
-                Assert.IsTrue(readedForRestore.Select(o => CommonDataSerializer.Deserialize<int>(o.Key)).All(o => idsToRestore.Contains(o)));
-
-                writer2.Dispose();
             }
+
+            List<InnerData> readedForRestore = new List<InnerData>();
+            Action<InnerData> procesor = data =>
+            {
+                lock (readedForRestore)
+                    readedForRestore.Add(data);
+            };
+
+            var restoreResult = writer2.Db.GetDbModules[1].AsyncProcess(
+                new Impl.Writer.Db.RestoreDataContainer(false, false, 100, procesor, meta => true, usePackage: false));
+
+            Assert.IsTrue(!restoreResult.IsError || restoreResult.Description == "");
+            Assert.AreEqual(idsToRestore.Count, readedForRestore.Count);
+            Assert.IsTrue(
+                readedForRestore.Select(o => CommonDataSerializer.Deserialize<int>(o.Key))
+                    .All(o => idsToRestore.Contains(o)));
+
+            writer2.Dispose();
         }
 
         [TestMethod]
@@ -384,53 +381,50 @@ namespace Qoollo.Tests
             CreateHashFileForTwoWriters(nameof(Postgre_Restore_Package_Test));
             //var writer1 = CreatePostgreWriter(nameof(Postgre_Restore_Package_Test), 0);
             var writer2 = CreatePostgreWriter(nameof(Postgre_Restore_Package_Test), 1);
-            TestProxy.TestNetDistributorForProxy distrib;
-            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            writer2.Start();
+
+            for (int i = 1; i < 100; i++)
             {
-                writer2.Start();
+                var data = new StoredData(i);
+                var createRequest = CreateRequest(data);
+                var result = writer2.Input.ProcessSync(createRequest);
+                Assert.IsFalse(result.IsError);
+            }
 
-                for (int i = 1; i < 100; i++)
+            List<int> idsToRestore = new List<int>();
+            using (var connection = new Npgsql.NpgsqlConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
                 {
-                    var data = new StoredData(i);
-                    var createRequest = CreateRequest(data);
-                    var result = writer2.Input.ProcessSync(createRequest);
-                    Assert.IsFalse(result.IsError);
-                }
-
-                List<int> idsToRestore = new List<int>();
-                using (var connection = new Npgsql.NpgsqlConnection(ConnectionString))
-                {
-                    connection.Open();
-                    using (var cmd = connection.CreateCommand())
+                    cmd.CommandText = "SELECT Meta_Id FROM metatable_teststored WHERE meta_local = 1";
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        cmd.CommandText = "SELECT Meta_Id FROM metatable_teststored WHERE meta_local = 1";
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                                idsToRestore.Add(reader.GetInt32(0));
-                        }
+                        while (reader.Read())
+                            idsToRestore.Add(reader.GetInt32(0));
                     }
                 }
-
-                List<InnerData> readedForRestore = new List<InnerData>();
-                Action<List<InnerData>> procesor = data =>
-                    {
-                        lock (readedForRestore)
-                            readedForRestore.AddRange(data);
-                    };
-
-                var restoreResult = writer2.Db.GetDbModules[1].AsyncProcess(
-                    new Impl.Writer.Db.RestoreDataContainer(false, false, 100, procesor, meta => true, usePackage: true));
-
-                Assert.IsTrue(!restoreResult.IsError || restoreResult.Description == "");
-                Assert.AreEqual(idsToRestore.Count, readedForRestore.Count);
-                Assert.IsTrue(readedForRestore.Select(o => CommonDataSerializer.Deserialize<int>(o.Key)).All(o => idsToRestore.Contains(o)));
-
-                writer2.Dispose();
             }
+
+            List<InnerData> readedForRestore = new List<InnerData>();
+            Action<List<InnerData>> procesor = data =>
+            {
+                lock (readedForRestore)
+                    readedForRestore.AddRange(data);
+            };
+
+            var restoreResult = writer2.Db.GetDbModules[1].AsyncProcess(
+                new Impl.Writer.Db.RestoreDataContainer(false, false, 100, procesor, meta => true, usePackage: true));
+
+            Assert.IsTrue(!restoreResult.IsError || restoreResult.Description == "");
+            Assert.AreEqual(idsToRestore.Count, readedForRestore.Count);
+            Assert.IsTrue(
+                readedForRestore.Select(o => CommonDataSerializer.Deserialize<int>(o.Key))
+                    .All(o => idsToRestore.Contains(o)));
+
+            writer2.Dispose();
         }
-
-
 
         [TestMethod]
         public void Postgre_Lexer_Test()
@@ -501,44 +495,41 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestProxy.TestNetDistributorForProxy distrib;
-            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            writer.Start();
+
+            for (int i = 1; i < 100; i++)
             {
-                writer.Start();
-
-                for (int i = 1; i < 100; i++)
-                {
-                    var data = new StoredData(i);
-                    var createRequest = CreateRequest(data);
-                    var result = writer.Input.ProcessSync(createRequest);
-                    Assert.IsFalse(result.IsError);
-                }
-
-
-                var selectDesc = new Impl.Collector.Parser.SelectDescription(
-                    new Impl.Collector.Parser.FieldDescription("id", typeof(int))
-                    {
-                        Value = 1000
-                    },
-                    $"SELECT id FROM {TableName} ORDER BY Id DESC",
-                    200,
-                    new List<Impl.Collector.Parser.FieldDescription>())
-                {
-                    TableName = TableName,
-                    OrderKeyDescriptions = new List<FieldDescription>()
-                    {
-                        new FieldDescription("id", typeof(int)) {AsFieldName = "id" }
-                    }
-                };
-
-
-                var selectResult = writer.Input.SelectQuery(selectDesc);
-                Assert.IsNotNull(selectResult);
-                Assert.IsFalse(selectResult.Item1.IsError);
-                Assert.AreEqual(99, selectResult.Item2.Data.Count);
-
-                writer.Dispose();
+                var data = new StoredData(i);
+                var createRequest = CreateRequest(data);
+                var result = writer.Input.ProcessSync(createRequest);
+                Assert.IsFalse(result.IsError);
             }
+
+
+            var selectDesc = new Impl.Collector.Parser.SelectDescription(
+                new Impl.Collector.Parser.FieldDescription("id", typeof (int))
+                {
+                    Value = 1000
+                },
+                $"SELECT id FROM {TableName} ORDER BY Id DESC",
+                200,
+                new List<Impl.Collector.Parser.FieldDescription>())
+            {
+                TableName = TableName,
+                OrderKeyDescriptions = new List<FieldDescription>()
+                {
+                    new FieldDescription("id", typeof (int)) {AsFieldName = "id"}
+                }
+            };
+
+
+            var selectResult = writer.Input.SelectQuery(selectDesc);
+            Assert.IsNotNull(selectResult);
+            Assert.IsFalse(selectResult.Item1.IsError);
+            Assert.AreEqual(99, selectResult.Item2.Data.Count);
+
+            writer.Dispose();
         }
 
 
@@ -547,53 +538,50 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestProxy.TestNetDistributorForProxy distrib;
-            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            writer.Start();
+
+            for (int i = 1; i < 100; i += 2)
             {
-                writer.Start();
-
-                for (int i = 1; i < 100; i += 2)
-                {
-                    var data = new StoredData(i);
-                    var createRequest = CreateRequest(data);
-                    var result = writer.Input.ProcessSync(createRequest);
-                    Assert.IsFalse(result.IsError);
-                }
-                for (int i = 2; i < 100; i += 2)
-                {
-                    var data = new StoredData(i);
-                    var createRequest = CreateRequest(data);
-                    var result = writer.Input.ProcessSync(createRequest);
-                    Assert.IsFalse(result.IsError);
-                }
-
-
-                var selectDesc = new Impl.Collector.Parser.SelectDescription(
-                    new Impl.Collector.Parser.FieldDescription("id", typeof(int))
-                    {
-                        Value = 1000
-                    },
-                    $"SELECT id FROM {TableName} ORDER BY Id DESC LIMIT 10 OFFSET 10",
-                    200,
-                    new List<Impl.Collector.Parser.FieldDescription>())
-                {
-                    TableName = TableName,
-                    OrderKeyDescriptions = new List<FieldDescription>()
-                    {
-                        new FieldDescription("id", typeof(int)) {AsFieldName = "id" }
-                    }
-                };
-
-
-                var selectResult = writer.Input.SelectQuery(selectDesc);
-                Assert.IsNotNull(selectResult);
-                Assert.IsFalse(selectResult.Item1.IsError);
-                Assert.AreEqual(10, selectResult.Item2.Data.Count);
-                Assert.AreEqual(89, (int)selectResult.Item2.Data[0].Key);
-                Assert.AreEqual(80, (int)selectResult.Item2.Data[selectResult.Item2.Data.Count - 1].Key);
-
-                writer.Dispose();
+                var data = new StoredData(i);
+                var createRequest = CreateRequest(data);
+                var result = writer.Input.ProcessSync(createRequest);
+                Assert.IsFalse(result.IsError);
             }
+            for (int i = 2; i < 100; i += 2)
+            {
+                var data = new StoredData(i);
+                var createRequest = CreateRequest(data);
+                var result = writer.Input.ProcessSync(createRequest);
+                Assert.IsFalse(result.IsError);
+            }
+
+
+            var selectDesc = new Impl.Collector.Parser.SelectDescription(
+                new Impl.Collector.Parser.FieldDescription("id", typeof (int))
+                {
+                    Value = 1000
+                },
+                $"SELECT id FROM {TableName} ORDER BY Id DESC LIMIT 10 OFFSET 10",
+                200,
+                new List<Impl.Collector.Parser.FieldDescription>())
+            {
+                TableName = TableName,
+                OrderKeyDescriptions = new List<FieldDescription>()
+                {
+                    new FieldDescription("id", typeof (int)) {AsFieldName = "id"}
+                }
+            };
+
+
+            var selectResult = writer.Input.SelectQuery(selectDesc);
+            Assert.IsNotNull(selectResult);
+            Assert.IsFalse(selectResult.Item1.IsError);
+            Assert.AreEqual(10, selectResult.Item2.Data.Count);
+            Assert.AreEqual(89, (int) selectResult.Item2.Data[0].Key);
+            Assert.AreEqual(80, (int) selectResult.Item2.Data[selectResult.Item2.Data.Count - 1].Key);
+
+            writer.Dispose();
         }
 
 
@@ -602,48 +590,45 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestProxy.TestNetDistributorForProxy distrib;
-            using (TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10), out distrib))
+            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            writer.Start();
+
+            for (int i = 1; i < 100; i++)
             {
-                writer.Start();
-
-                for (int i = 1; i < 100; i++)
-                {
-                    var data = new StoredData(i);
-                    var createRequest = CreateRequest(data);
-                    var result = writer.Input.ProcessSync(createRequest);
-                    Assert.IsFalse(result.IsError);
-                }
-
-
-                var selectDesc = new Impl.Collector.Parser.SelectDescription(
-                    new Impl.Collector.Parser.FieldDescription("id", typeof(int))
-                    {
-                        Value = 1000,
-                        IsFirstAsk = false
-                    },
-                    $"SELECT Id, (CASE WHEN id > 10 THEN 1 ELSE 2 END) AS Test FROM {TableName} ORDER BY Test DESC, Id DESC",
-                    200,
-                    new List<Impl.Collector.Parser.FieldDescription>())
-                {
-                    TableName = TableName,
-                    OrderKeyDescriptions = new List<FieldDescription>()
-                    {
-                        new FieldDescription("test", typeof(int)) { AsFieldName = "test", Value = 10000 },
-                        new FieldDescription("id", typeof(int)) {AsFieldName = "id", Value = 100000 }
-                    }
-                };
-
-
-                var selectResult = writer.Input.SelectQuery(selectDesc);
-                Assert.IsNotNull(selectResult);
-                Assert.IsFalse(selectResult.Item1.IsError);
-                Assert.AreEqual(99, selectResult.Item2.Data.Count);
-                Assert.AreEqual(10, (int)selectResult.Item2.Data[0].Key);
-                Assert.AreEqual(99, (int)selectResult.Item2.Data[10].Key);
-
-                writer.Dispose();
+                var data = new StoredData(i);
+                var createRequest = CreateRequest(data);
+                var result = writer.Input.ProcessSync(createRequest);
+                Assert.IsFalse(result.IsError);
             }
+
+
+            var selectDesc = new Impl.Collector.Parser.SelectDescription(
+                new Impl.Collector.Parser.FieldDescription("id", typeof (int))
+                {
+                    Value = 1000,
+                    IsFirstAsk = false
+                },
+                $"SELECT Id, (CASE WHEN id > 10 THEN 1 ELSE 2 END) AS Test FROM {TableName} ORDER BY Test DESC, Id DESC",
+                200,
+                new List<Impl.Collector.Parser.FieldDescription>())
+            {
+                TableName = TableName,
+                OrderKeyDescriptions = new List<FieldDescription>()
+                {
+                    new FieldDescription("test", typeof (int)) {AsFieldName = "test", Value = 10000},
+                    new FieldDescription("id", typeof (int)) {AsFieldName = "id", Value = 100000}
+                }
+            };
+
+
+            var selectResult = writer.Input.SelectQuery(selectDesc);
+            Assert.IsNotNull(selectResult);
+            Assert.IsFalse(selectResult.Item1.IsError);
+            Assert.AreEqual(99, selectResult.Item2.Data.Count);
+            Assert.AreEqual(10, (int) selectResult.Item2.Data[0].Key);
+            Assert.AreEqual(99, (int) selectResult.Item2.Data[10].Key);
+
+            writer.Dispose();
         }
 
 

@@ -211,7 +211,6 @@ namespace Qoollo.Tests
             storage2.Api.Restore(RestoreMode.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
-            Thread.Sleep(TimeSpan.FromMilliseconds(20000000));
 
             Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
             Assert.AreEqual(count, f2.Db.Local + f4.Db.Local);

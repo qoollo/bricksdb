@@ -40,27 +40,54 @@ namespace Qoollo.Tests.Support
                 Data = calc.SerializeValue(CreateStoredData(id))
             };
             return ev;
-        }        
+        }
 
+        public static TestNetDistributorForProxy OpenDistributorHostForDb(ServerId server, ConnectionConfiguration config)
+        {
+            var ret = new TestNetDistributorForProxy();
+
+            var netConfig = new NetReceiverConfiguration(server.Port, server.RemoteHost, config.ServiceName);
+
+            OpenDistributorMockHost<ICommonNetReceiverForDb>(ret, netConfig);
+
+            return ret;
+        }
         public static TestNetDistributorForProxy OpenDistributorHost(ServerId server, ConnectionConfiguration config)
         {
             var ret = new TestNetDistributorForProxy();
-            var host = new ServiceHost(ret,
-                                       new Uri(string.Format("net.tcp://{0}:{1}/{2}", server.RemoteHost, server.Port,
-                                                             config.ServiceName)));
+
+            var netConfig = new NetReceiverConfiguration(server.Port, server.RemoteHost, config.ServiceName);
+
+            //OpenDistributorNetHost(ret, netConfig);
+            OpenDistributorMockHost<ICommonNetReceiverForProxy>(ret, netConfig);
+
+            return ret;
+        }
+        public static void OpenDistributorNetHost(TestNetDistributorForProxy server, NetReceiverConfiguration config)
+        {
+            var host = new ServiceHost(server,
+                new Uri($"net.tcp://{config.Host}:{config.Port}/{config.Service}"));
+
+            server.Host = host;
             var binding = new NetTcpBinding
             {
                 Security = { Mode = SecurityMode.None },
                 TransactionFlow = true
             };
-            var contractType = typeof(ICommonNetReceiverForProxy);
+            var contractType = typeof(ICommonNetReceiverWriterForWrite);
             host.AddServiceEndpoint(contractType, binding, "");
             var behavior = host.Description.Behaviors.Find<ServiceBehaviorAttribute>();
             behavior.InstanceContextMode = InstanceContextMode.Single;
 
             host.Open();
+        }
+        public static void OpenDistributorMockHost<TReceive>(TestNetDistributorForProxy server, NetReceiverConfiguration config)
+        {
+            var s = InitInjection.Kernel.Get<IReceiveBehavior<TReceive>>(
+                new ConstructorArgument("configuration", config),
+                new ConstructorArgument("server", server));
 
-            return ret;
+            s.Start();
         }
 
         public static TestWriterServer OpenWriterHost(ServerId server, ConnectionConfiguration config)
@@ -74,7 +101,6 @@ namespace Qoollo.Tests.Support
 
             return ret;
         }
-
         public static void OpenWriterNetHost(TestWriterServer server, NetReceiverConfiguration config)
         {
             var host = new ServiceHost(server,
@@ -93,7 +119,6 @@ namespace Qoollo.Tests.Support
 
             host.Open();
         }
-
         public static void OpenWriterMockHost(TestWriterServer server, NetReceiverConfiguration config)
         {
             var s = InitInjection.Kernel.Get<IReceiveBehavior<ICommonNetReceiverWriterForWrite>>(
@@ -101,30 +126,6 @@ namespace Qoollo.Tests.Support
                 new ConstructorArgument("server", server));
 
             s.Start();
-        }
-
-        public static IDisposable OpenDistributorHostForDb(ServerId server, ConnectionConfiguration config, out TestNetDistributorForProxy distributor)
-        {
-            var ret = new TestNetDistributorForProxy();
-            var host = new ServiceHost(ret,
-                new Uri(string.Format("net.tcp://{0}:{1}/{2}", server.RemoteHost, server.Port,
-                    config.ServiceName)));
-            var binding = new NetTcpBinding { Security = { Mode = SecurityMode.None }, TransactionFlow = true };
-            var contractType = typeof(ICommonNetReceiverForDb);
-            host.AddServiceEndpoint(contractType, binding, "");
-            var behavior = host.Description.Behaviors.Find<ServiceBehaviorAttribute>();
-            behavior.InstanceContextMode = InstanceContextMode.Single;
-
-            host.Open();
-
-            distributor = ret;
-            return host;
-        }
-        public static TestNetDistributorForProxy OpenDistributorHostForDb(ServerId server, ConnectionConfiguration config)
-        {
-            TestNetDistributorForProxy ret = null;
-            OpenDistributorHostForDb(server, config, out ret);
-            return ret;
         }
 
         public static SearchData CreateData(int data, string name = "Id")

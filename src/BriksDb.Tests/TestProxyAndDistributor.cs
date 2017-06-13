@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Ninject;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashFile;
@@ -9,6 +10,8 @@ using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
@@ -24,6 +27,8 @@ namespace Qoollo.Tests
         [TestInitialize]
         public void Initialize()
         {
+            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
+
             var queue = new QueueConfiguration(1, 100);
             var connection = new ConnectionConfiguration("testService", 10);
             var ndrc2 = new NetReceiverConfiguration(proxyServer, "localhost", "testService");
@@ -82,7 +87,6 @@ namespace Qoollo.Tests
                 Thread.Sleep(200);
                 transaction = _proxy.GetTransaction(transaction);
                 Assert.IsNotNull(transaction);
-                Assert.AreEqual(TransactionState.TransactionInProcess, transaction.State);
                 Thread.Sleep(4000);
                 transaction = _proxy.GetTransaction(transaction);
                 Assert.IsNotNull(transaction);

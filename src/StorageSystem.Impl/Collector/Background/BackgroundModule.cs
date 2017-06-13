@@ -10,31 +10,26 @@ namespace Qoollo.Impl.Collector.Background
 {
     internal class BackgroundModule : ControlModule
     {
-        private readonly StaticThreadPool _threadPool;
+        private readonly DynamicThreadPool _threadPool;
         private readonly List<SearchTask> _tasks;
 
         public BackgroundModule(QueueConfiguration queueConfiguration)
         {
             _tasks = new List<SearchTask>();
-            _threadPool = new StaticThreadPool(queueConfiguration.ProcessotCount, queueConfiguration.MaxSizeQueue, "BackgroundModule", false,
-                new StaticThreadPoolOptions()
-                {
-                    FlowExecutionContext = false,
-                    UseOwnSyncContext = false,
-                    UseOwnTaskScheduler = false
-                });
+            //_threadPool = new DynamicThreadPool(1, queueConfiguration.ProcessotCount, queueConfiguration.MaxSizeQueue, "BackgroundModule");
         }
 
         public void Run(SearchTask sTask, Action action)
         {
-            _threadPool.Run(action);
-
+            //_threadPool.Run(action);
+            Task.Factory.StartNew(action);
             _tasks.Add(sTask);
         }
 
         public Task RunAsTask(Action action)
         {
-            return _threadPool.RunAsTask(action);
+            //return _threadPool.RunAsTask(action);
+            return Task.Factory.StartNew(action);
         }
 
         protected override void Dispose(bool isUserCall)
@@ -42,7 +37,7 @@ namespace Qoollo.Impl.Collector.Background
             if (isUserCall)
             {
                 _tasks.ForEach(x => x.Dispose());
-                _threadPool.Dispose(false, false, false);
+                //_threadPool.Dispose(false, false, false);
             }
 
             base.Dispose(isUserCall);

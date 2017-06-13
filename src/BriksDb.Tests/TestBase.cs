@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Ninject;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
@@ -9,7 +10,7 @@ using Qoollo.Tests.TestModules;
 
 namespace Qoollo.Tests
 {
-    public class TestBase
+    public class TestBase:IDisposable
     {
         internal TestWriterGate _writer1;
         internal TestWriterGate _writer2;
@@ -26,8 +27,12 @@ namespace Qoollo.Tests
         internal const int storageServer2 = 22156;
         internal const int storageServer3 = 22157;
 
+        private static readonly object Lock = new object();
+
         public TestBase()
         {
+            Monitor.Enter(Lock);
+
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
 
             var common = new CommonConfiguration(1, 100);
@@ -52,6 +57,11 @@ namespace Qoollo.Tests
             _writer1 = new TestWriterGate();
             _writer2 = new TestWriterGate();
             _writer3 = new TestWriterGate();
+        }
+
+        public void Dispose()
+        {
+            Monitor.Exit(Lock);
         }
     }
 }

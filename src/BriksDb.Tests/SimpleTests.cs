@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Ninject;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -15,21 +14,14 @@ using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
-using Qoollo.Impl.TestSupport;
-using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Xunit;
 
 namespace Qoollo.Tests
 {
-    public class SimpleTests
+    public class SimpleTests: TestBase
     {
-        public SimpleTests()
-        {
-            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
-        }
-
         #region Test cache
 
         [Fact]
@@ -48,6 +40,8 @@ namespace Qoollo.Tests
             Assert.Equal(0, cache.CountCallback);
             cache.Remove(key);
             Assert.Equal(0, cache.CountCallback);
+
+            cache.Dispose();
         }
 
         [Fact]
@@ -92,6 +86,8 @@ namespace Qoollo.Tests
             min.Add(v1);
             max.Add(v2);
             avg.Add(v3);
+
+            cache.Dispose();
         }
 
         private void TestCachePerfHelper(DistributorCache cache, List<InnerData> obj, int count, ref long min,
@@ -147,6 +143,8 @@ namespace Qoollo.Tests
             Thread.Sleep(200);
             ret = cache.Get("1234");
             Assert.Equal(null, ret);
+
+            cache.Dispose();
         }
 
         #endregion
@@ -176,7 +174,6 @@ namespace Qoollo.Tests
             Assert.Equal(3, value);
 
             test.Dispose();
-
         }
 
         [Fact]
@@ -223,75 +220,79 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncTaskModule_PingServers_AvalilableAfterSomeTime()
         {
-            const int storageServer1 = 21132;
-            const int storageServer2 = 22121;
-            const int distrServer1 = 22134;
-            const int distrServer12 = 23134;
+            var filename = nameof(AsyncTaskModule_PingServers_AvalilableAfterSomeTime);
+            using (new FileCleaner(filename))
+            {
+                const int storageServer1 = 21132;
+                const int storageServer2 = 22121;
+                const int distrServer1 = 22134;
+                const int distrServer12 = 23134;
 
-            var writer = new HashWriter(new HashMapConfiguration("TestAsyncPing", HashMapCreationMode.CreateNew, 2, 3, HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                var writer = new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 3, HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
 
-            #region hell
+                #region hell
 
-            var connection = new ConnectionConfiguration("testService", 10);
+                var connection = new ConnectionConfiguration("testService", 10);
 
-            var distrconfig = new DistributorHashConfiguration(1);
-            var queueconfig = new QueueConfiguration(1, 100);
-            var dnet = new DistributorNetModule(connection,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(2000)), distrconfig, queueconfig, dnet,
-                new ServerId("localhost", distrServer1), new ServerId("localhost", distrServer12),
-                new HashMapConfiguration("TestAsyncPing", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
-            dnet.SetDistributor(ddistributor);
+                var distrconfig = new DistributorHashConfiguration(1);
+                var queueconfig = new QueueConfiguration(1, 100);
+                var dnet = new DistributorNetModule(connection,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
+                    new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(2000)), distrconfig, queueconfig, dnet,
+                    new ServerId("localhost", distrServer1), new ServerId("localhost", distrServer12),
+                    new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
+                dnet.SetDistributor(ddistributor);
 
-            dnet.Start();
-            ddistributor.Start();
-            GlobalQueue.Queue.Start();
+                dnet.Start();
+                ddistributor.Start();
+                GlobalQueue.Queue.Start();
 
-            #endregion
+                #endregion
 
-            var data1 = new InnerData(new Transaction("", "default"));
-            var data2 = new InnerData(new Transaction("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "default"));
+                var data1 = new InnerData(new Transaction("", "default"));
+                var data2 = new InnerData(new Transaction("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "default"));
 
-            var dest = ddistributor.GetDestination(data1, false);
-            var dest2 = ddistributor.GetDestination(data2, false);
+                var dest = ddistributor.GetDestination(data1, false);
+                var dest2 = ddistributor.GetDestination(data2, false);
 
-            dnet.Process(dest.First(), data1);
-            dnet.Process(dest2.First(), data1);
+                dnet.Process(dest.First(), data1);
+                dnet.Process(dest2.First(), data1);
 
-            Thread.Sleep(100);
+                Thread.Sleep(100);
 
-            dest = ddistributor.GetDestination(data1, false);
-            dest2 = ddistributor.GetDestination(data2, false);
+                dest = ddistributor.GetDestination(data1, false);
+                dest2 = ddistributor.GetDestination(data2, false);
 
-            Assert.Equal(null, dest);
-            Assert.Equal(null, dest2);
+                Assert.Equal(null, dest);
+                Assert.Equal(null, dest2);
 
-            var h1 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer1),
-                new ConnectionConfiguration("testService", 10));
-            var h2 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer2),
-                new ConnectionConfiguration("testService", 10));
+                var h1 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer1),
+                    new ConnectionConfiguration("testService", 10));
+                var h2 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer2),
+                    new ConnectionConfiguration("testService", 10));
 
-            Thread.Sleep(TimeSpan.FromMilliseconds(800));
+                Thread.Sleep(TimeSpan.FromMilliseconds(800));
 
-            dest = ddistributor.GetDestination(data1, false);
-            dest2 = ddistributor.GetDestination(data2, false);
+                dest = ddistributor.GetDestination(data1, false);
+                dest2 = ddistributor.GetDestination(data2, false);
 
-            Assert.NotEqual(null, dest);
-            Assert.NotEqual(null, dest2);
+                Assert.NotEqual(null, dest);
+                Assert.NotEqual(null, dest2);
 
-            Assert.Equal(1, dest.Count);
-            Assert.Equal(1, dest2.Count);
+                Assert.Equal(1, dest.Count);
+                Assert.Equal(1, dest2.Count);
 
-            ddistributor.Dispose();
-            h1.Dispose();
-            h2.Dispose();
+                GlobalQueue.Queue.Dispose();
 
-            GlobalQueue.Queue.Dispose();            
+                ddistributor.Dispose();
+                h1.Dispose();
+                h2.Dispose();
+            }
         }
 
         #endregion

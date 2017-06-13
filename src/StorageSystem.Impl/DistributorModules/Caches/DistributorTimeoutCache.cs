@@ -11,7 +11,7 @@ namespace Qoollo.Impl.DistributorModules.Caches
     {
         private readonly TimeSpan _aliveTimeout;
 
-        public Action<InnerData> DataTimeout;
+        public Action<InnerData> DataTimeout = data => { };
 
         public DistributorTimeoutCache(DistributorCacheConfiguration cacheConfiguration)
             : base(cacheConfiguration.TimeAliveBeforeDeleteMls)

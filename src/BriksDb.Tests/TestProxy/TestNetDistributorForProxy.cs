@@ -52,7 +52,7 @@ namespace Qoollo.Tests.TestProxy
         {
             try
             {
-                Host.Close();
+                Host?.Close();
             }
             catch (Exception)
             {

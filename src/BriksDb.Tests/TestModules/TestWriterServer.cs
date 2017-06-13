@@ -68,7 +68,7 @@ namespace Qoollo.Tests.TestModules
         {
             try
             {
-                Host.Close();
+                Host?.Close();
             }
             catch (Exception)
             {

@@ -25,7 +25,7 @@ using Xunit;
 
 namespace Qoollo.Tests
 {
-    public class PostgreTest:IDisposable
+    internal class PostgreTest:IDisposable
     {
         private const string TableName = "TestStored";
         private const string ConnectionString = "Server=127.0.0.1;" +

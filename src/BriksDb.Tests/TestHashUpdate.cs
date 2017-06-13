@@ -14,7 +14,6 @@ namespace Qoollo.Tests
 {    
     public class TestHashUpdate:TestBase
     {
-
         [Fact]
         public void HashFileUpdater_UpdateFile_AddNewFileAndRenameOld()
         {
@@ -22,38 +21,36 @@ namespace Qoollo.Tests
             string fileName = fileNameWithouPrefix + ".txt";
             const string testMessage = "TestMessage";
 
-            using (var writer = new StreamWriter(fileName))
+            using (new FileCleaner(fileNameWithouPrefix + "1.txt"))
+            using (new FileCleaner(fileNameWithouPrefix + "2.txt"))
             {
-                writer.WriteLine(testMessage);
+                using (var writer = new StreamWriter(fileName))
+                {
+                    writer.WriteLine(testMessage);
+                }
+
+                HashFileUpdater.UpdateFile(fileName);
+                using (var writer = new StreamWriter(fileName))
+                {
+                    writer.WriteLine(testMessage);
+                    writer.WriteLine(testMessage);
+                }
+                HashFileUpdater.UpdateFile(fileName);
+
+                Assert.True(File.Exists(fileNameWithouPrefix + "1.txt"));
+                Assert.True(File.Exists(fileNameWithouPrefix + "2.txt"));
+
+                using (var reader = new StreamReader(fileNameWithouPrefix + "2.txt"))
+                {
+                    Assert.Equal(testMessage, reader.ReadLine());
+                }
+
+                using (var reader = new StreamReader(fileNameWithouPrefix + "1.txt"))
+                {
+                    Assert.Equal(testMessage, reader.ReadLine());
+                    Assert.Equal(testMessage, reader.ReadLine());
+                }
             }
-
-            File.Delete(fileNameWithouPrefix + "1.txt");
-            File.Delete(fileNameWithouPrefix + "2.txt");
-
-            HashFileUpdater.UpdateFile(fileName);
-            using (var writer = new StreamWriter(fileName))
-            {
-                writer.WriteLine(testMessage);
-                writer.WriteLine(testMessage);
-            }
-            HashFileUpdater.UpdateFile(fileName);
-
-            Assert.True(File.Exists(fileNameWithouPrefix + "1.txt"));
-            Assert.True(File.Exists(fileNameWithouPrefix + "2.txt"));
-
-            using (var reader = new StreamReader(fileNameWithouPrefix + "2.txt"))
-            {
-                Assert.Equal(testMessage, reader.ReadLine());
-            }
-
-            using (var reader = new StreamReader(fileNameWithouPrefix + "1.txt"))
-            {
-                Assert.Equal(testMessage, reader.ReadLine());
-                Assert.Equal(testMessage, reader.ReadLine());
-            }
-
-            File.Delete(fileNameWithouPrefix + "1.txt");
-            File.Delete(fileNameWithouPrefix + "2.txt");
         }
 
         [Fact]
@@ -63,34 +60,36 @@ namespace Qoollo.Tests
             string fileName = fileNameWithouPrefix;
             const string testMessage = "TestMessage";
 
-            using (var writer = new StreamWriter(fileName))
+            using (new FileCleaner(fileNameWithouPrefix + "1"))
+            using (new FileCleaner(fileNameWithouPrefix + "2"))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
-                writer.WriteLine(testMessage);
-            }
+                using (var writer = new StreamWriter(fileName))
+                {
+                    writer.WriteLine(testMessage);
+                }
 
-            File.Delete(fileNameWithouPrefix + "1");
-            File.Delete(fileNameWithouPrefix + "2");
+                HashFileUpdater.UpdateFile(fileName);
+                using (var writer = new StreamWriter(fileName))
+                {
+                    writer.WriteLine(testMessage);
+                    writer.WriteLine(testMessage);
+                }
+                HashFileUpdater.UpdateFile(fileName);
 
-            HashFileUpdater.UpdateFile(fileName);
-            using (var writer = new StreamWriter(fileName))
-            {
-                writer.WriteLine(testMessage);
-                writer.WriteLine(testMessage);
-            }
-            HashFileUpdater.UpdateFile(fileName);
+                Assert.True(File.Exists(fileNameWithouPrefix + "1"));
+                Assert.True(File.Exists(fileNameWithouPrefix + "2"));
 
-            Assert.True(File.Exists(fileNameWithouPrefix + "1"));
-            Assert.True(File.Exists(fileNameWithouPrefix + "2"));
+                using (var reader = new StreamReader(fileNameWithouPrefix + "2"))
+                {
+                    Assert.Equal(testMessage, reader.ReadLine());
+                }
 
-            using (var reader = new StreamReader(fileNameWithouPrefix + "2"))
-            {
-                Assert.Equal(testMessage, reader.ReadLine());
-            }
-
-            using (var reader = new StreamReader(fileNameWithouPrefix + "1"))
-            {
-                Assert.Equal(testMessage, reader.ReadLine());
-                Assert.Equal(testMessage, reader.ReadLine());
+                using (var reader = new StreamReader(fileNameWithouPrefix + "1"))
+                {
+                    Assert.Equal(testMessage, reader.ReadLine());
+                    Assert.Equal(testMessage, reader.ReadLine());
+                }
             }
         }
 
@@ -101,73 +100,78 @@ namespace Qoollo.Tests
             const string hashFileNameWriter1 = "Distributor_UpdateHashOnWritersViaNet_1Writer";
             const string hashFileNameWriter2 = "Distributor_UpdateHashOnWritersViaNet_2Writer";
 
-            File.Delete(hashFileNameWriter1 + "1");
-            File.Delete(hashFileNameWriter1 + "2");
-            File.Delete(hashFileNameWriter2 + "1");
-            File.Delete(hashFileNameWriter2 + "2");
+            using (new FileCleaner(hashFileNameWriter1 + "1"))
+            using (new FileCleaner(hashFileNameWriter1 + "2"))
+            using (new FileCleaner(hashFileNameWriter2 + "1"))
+            using (new FileCleaner(hashFileNameWriter2 + "2"))
+            using (new FileCleaner(hashFileName))
+            using (new FileCleaner(hashFileNameWriter1))
+            using (new FileCleaner(hashFileNameWriter2))
+            using (new FileCleaner(Consts.RestoreHelpFile))
+            {
+                var writer =
+                   new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 2, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
 
-            var writer =
-               new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 2, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                writer =
+                   new HashWriter(new HashMapConfiguration(hashFileNameWriter1, HashMapCreationMode.CreateNew, 2, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
 
-            writer =
-               new HashWriter(new HashMapConfiguration(hashFileNameWriter1, HashMapCreationMode.CreateNew, 2, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                writer =
+                   new HashWriter(new HashMapConfiguration(hashFileNameWriter2, HashMapCreationMode.CreateNew, 2, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
 
-            writer =
-               new HashWriter(new HashMapConfiguration(hashFileNameWriter2, HashMapCreationMode.CreateNew, 2, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                _distrTest.Build(1, distrServer1, distrServer12, hashFileName);
 
-            _distrTest.Build(1, distrServer1, distrServer12, hashFileName);
+                _writer1.Build(storageServer1, hashFileNameWriter1, 1);
+                _writer2.Build(storageServer2, hashFileNameWriter2, 1);
 
-            _writer1.Build(storageServer1, hashFileNameWriter1, 1);
-            _writer2.Build(storageServer2, hashFileNameWriter2, 1);
+                _distrTest.Start();
+                _writer1.Start();
+                _writer2.Start();
 
-            _distrTest.Start();
-            _writer1.Start();
-            _writer2.Start();
+                writer =
+                   new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 3, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.SetServer(2, "localhost", storageServer3, 157);
+                writer.Save();
 
-            writer =
-               new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 3, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.SetServer(2, "localhost", storageServer3, 157);
-            writer.Save();
+                _distrTest.Distributor.UpdateModel();
 
-            _distrTest.Distributor.UpdateModel();
+                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
-            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+                Assert.True(File.Exists(hashFileNameWriter1));
+                Assert.True(File.Exists(hashFileNameWriter1 + "1"));
+                Assert.True(File.Exists(hashFileNameWriter2));
+                Assert.True(File.Exists(hashFileNameWriter2 + "1"));
 
-            Assert.True(File.Exists(hashFileNameWriter1));
-            Assert.True(File.Exists(hashFileNameWriter1 + "1"));
-            Assert.True(File.Exists(hashFileNameWriter2));
-            Assert.True(File.Exists(hashFileNameWriter2 + "1"));
+                Assert.Equal(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
+                Assert.Equal(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
 
-            Assert.Equal(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
-            Assert.Equal(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
-            
-            Assert.Equal(3, _writer1.WriterModel.Servers.Count);
-            Assert.Equal(3, _writer2.WriterModel.Servers.Count);
+                Assert.Equal(3, _writer1.WriterModel.Servers.Count);
+                Assert.Equal(3, _writer2.WriterModel.Servers.Count);
 
-            Assert.True(_distrTest.WriterSystemModel.Servers.Exists(x => !x.IsAvailable));
+                Assert.True(_distrTest.WriterSystemModel.Servers.Exists(x => !x.IsAvailable));
 
-            _writer1.Dispose();
-            _writer2.Dispose();
-            _distrTest.Dispose();
+                _writer1.Dispose();
+                _writer2.Dispose();
+                _distrTest.Dispose();
+            }
         }
 
         [Fact]
@@ -178,90 +182,96 @@ namespace Qoollo.Tests
             const string hashFileNameWriter2 = "Distributor_UpdateHashOnWritersViaNet2_2Writer";
             const string hashFileNameWriter3 = "Distributor_UpdateHashOnWritersViaNet2_3Writer";
 
-            File.Delete(hashFileNameWriter1 + "1");
-            File.Delete(hashFileNameWriter1 + "2");
-            File.Delete(hashFileNameWriter2 + "1");
-            File.Delete(hashFileNameWriter2 + "2");
-            File.Delete(hashFileNameWriter3 + "1");
-            File.Delete(hashFileNameWriter3 + "2");
-
-            var writer =
+            using (new FileCleaner(hashFileNameWriter1 + "1"))
+            using (new FileCleaner(hashFileNameWriter1 + "2"))
+            using (new FileCleaner(hashFileNameWriter2 + "1"))
+            using (new FileCleaner(hashFileNameWriter2 + "2"))
+            using (new FileCleaner(hashFileNameWriter3 + "1"))
+            using (new FileCleaner(hashFileNameWriter3 + "2"))
+            using (new FileCleaner(hashFileName))
+            using (new FileCleaner(hashFileNameWriter1))
+            using (new FileCleaner(hashFileNameWriter2))
+            using (new FileCleaner(hashFileNameWriter3))
+            using (new FileCleaner(Consts.RestoreHelpFile))
+            {
+                var writer =
                new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 2, 3,
                    HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
 
-            writer =
-               new HashWriter(new HashMapConfiguration(hashFileNameWriter1, HashMapCreationMode.CreateNew, 2, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                writer =
+                   new HashWriter(new HashMapConfiguration(hashFileNameWriter1, HashMapCreationMode.CreateNew, 2, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
 
-            writer =
-               new HashWriter(new HashMapConfiguration(hashFileNameWriter2, HashMapCreationMode.CreateNew, 2, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                writer =
+                   new HashWriter(new HashMapConfiguration(hashFileNameWriter2, HashMapCreationMode.CreateNew, 2, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
 
-            writer =
-               new HashWriter(new HashMapConfiguration(hashFileNameWriter3, HashMapCreationMode.CreateNew, 2, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer3, 157);
-            writer.Save();
+                writer =
+                   new HashWriter(new HashMapConfiguration(hashFileNameWriter3, HashMapCreationMode.CreateNew, 2, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer3, 157);
+                writer.Save();
 
-            _distrTest.Build(1, distrServer1, distrServer12, hashFileName);
+                _distrTest.Build(1, distrServer1, distrServer12, hashFileName);
 
-            _writer1.Build(storageServer1, hashFileNameWriter1, 1);
-            _writer2.Build(storageServer2, hashFileNameWriter2, 1);
-            _writer3.Build(storageServer3, hashFileNameWriter3, 1);
+                _writer1.Build(storageServer1, hashFileNameWriter1, 1);
+                _writer2.Build(storageServer2, hashFileNameWriter2, 1);
+                _writer3.Build(storageServer3, hashFileNameWriter3, 1);
 
-            _distrTest.Start();
-            _writer1.Start();
-            _writer2.Start();
-            _writer3.Start();
+                _distrTest.Start();
+                _writer1.Start();
+                _writer2.Start();
+                _writer3.Start();
 
-            writer =
-               new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 3, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.SetServer(2, "localhost", storageServer3, 157);
-            writer.Save();
+                writer =
+                   new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 3, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.SetServer(2, "localhost", storageServer3, 157);
+                writer.Save();
 
-            _distrTest.Distributor.UpdateModel();
+                _distrTest.Distributor.UpdateModel();
 
-            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
-            Assert.True(File.Exists(hashFileNameWriter1));
-            Assert.True(File.Exists(hashFileNameWriter1 + "1"));
-            Assert.True(File.Exists(hashFileNameWriter2));
-            Assert.True(File.Exists(hashFileNameWriter2 + "1"));
-            Assert.True(File.Exists(hashFileNameWriter3));
-            Assert.True(File.Exists(hashFileNameWriter3 + "1"));
+                Assert.True(File.Exists(hashFileNameWriter1));
+                Assert.True(File.Exists(hashFileNameWriter1 + "1"));
+                Assert.True(File.Exists(hashFileNameWriter2));
+                Assert.True(File.Exists(hashFileNameWriter2 + "1"));
+                Assert.True(File.Exists(hashFileNameWriter3));
+                Assert.True(File.Exists(hashFileNameWriter3 + "1"));
 
-            Assert.Equal(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
-            Assert.Equal(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
-            Assert.Equal(RestoreState.FullRestoreNeed, _writer3.Distributor.GetRestoreRequiredState());
+                Assert.Equal(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
+                Assert.Equal(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
+                Assert.Equal(RestoreState.FullRestoreNeed, _writer3.Distributor.GetRestoreRequiredState());
 
-            Assert.Equal(3, _writer1.WriterModel.Servers.Count);
-            Assert.Equal(3, _writer2.WriterModel.Servers.Count);
-            Assert.Equal(3, _writer3.WriterModel.Servers.Count);
+                Assert.Equal(3, _writer1.WriterModel.Servers.Count);
+                Assert.Equal(3, _writer2.WriterModel.Servers.Count);
+                Assert.Equal(3, _writer3.WriterModel.Servers.Count);
 
-            Assert.False(_distrTest.WriterSystemModel.Servers.Exists(x => !x.IsAvailable));
+                Assert.False(_distrTest.WriterSystemModel.Servers.Exists(x => !x.IsAvailable));
 
-            _writer1.Dispose();
-            _writer2.Dispose();
-            _writer3.Dispose();
-            _distrTest.Dispose();
+                _writer1.Dispose();
+                _writer2.Dispose();
+                _writer3.Dispose();
+                _distrTest.Dispose();
+            }
         }
 
         [Fact]
@@ -272,84 +282,90 @@ namespace Qoollo.Tests
             const string hashFileNameWriter1 = "Distributor_1UpdateHashOnDistributor";
             const string hashFileNameWriter2 = "Distributor_2UpdateHashOnDistributor";
 
-            File.Delete(hashFileNameWriter1 + "1");
-            File.Delete(hashFileNameWriter1 + "2");
-            File.Delete(hashFileNameWriter2 + "1");
-            File.Delete(hashFileNameWriter2 + "2");
-            File.Delete(hashFileName2 + "1");
-            File.Delete(hashFileName2 + "2");
-
-            var writer =
+            using (new FileCleaner(hashFileNameWriter1 + "1"))
+            using (new FileCleaner(hashFileNameWriter1 + "2"))
+            using (new FileCleaner(hashFileNameWriter2 + "1"))
+            using (new FileCleaner(hashFileNameWriter2 + "2"))
+            using (new FileCleaner(hashFileName2 + "1"))
+            using (new FileCleaner(hashFileName2 + "2"))
+            using (new FileCleaner(hashFileName))
+            using (new FileCleaner(hashFileName2))
+            using (new FileCleaner(hashFileNameWriter1))
+            using (new FileCleaner(hashFileNameWriter2))
+            using (new FileCleaner(Consts.RestoreHelpFile))
+            {
+                var writer =
                new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 2, 3,
                    HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
 
-            writer =
-               new HashWriter(new HashMapConfiguration(hashFileName2, HashMapCreationMode.CreateNew, 2, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                writer =
+                   new HashWriter(new HashMapConfiguration(hashFileName2, HashMapCreationMode.CreateNew, 2, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
 
-            writer =
-               new HashWriter(new HashMapConfiguration(hashFileNameWriter1, HashMapCreationMode.CreateNew, 2, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                writer =
+                   new HashWriter(new HashMapConfiguration(hashFileNameWriter1, HashMapCreationMode.CreateNew, 2, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
 
-            writer =
-               new HashWriter(new HashMapConfiguration(hashFileNameWriter2, HashMapCreationMode.CreateNew, 2, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                writer =
+                   new HashWriter(new HashMapConfiguration(hashFileNameWriter2, HashMapCreationMode.CreateNew, 2, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.Save();
 
-            var distrTest2 = new TestDistributorGate();
+                var distrTest2 = new TestDistributorGate();
 
-            _distrTest.Build(1, distrServer1, distrServer12, hashFileName);
-            distrTest2.Build(1, distrServer2, distrServer22, hashFileName2);
+                _distrTest.Build(1, distrServer1, distrServer12, hashFileName);
+                distrTest2.Build(1, distrServer2, distrServer22, hashFileName2);
 
-            _writer1.Build(storageServer1, hashFileNameWriter1, 1);
-            _writer2.Build(storageServer2, hashFileNameWriter2, 1);
+                _writer1.Build(storageServer1, hashFileNameWriter1, 1);
+                _writer2.Build(storageServer2, hashFileNameWriter2, 1);
 
-            _distrTest.Start();
-            distrTest2.Start();
+                _distrTest.Start();
+                distrTest2.Start();
 
-            _writer1.Start();
-            _writer2.Start();
+                _writer1.Start();
+                _writer2.Start();
 
-            var result = distrTest2.Distributor.SayIAmHereRemoteResult(new ServerId("localhost", distrServer1));
-            Assert.False(result.IsError);
+                var result = distrTest2.Distributor.SayIAmHereRemoteResult(new ServerId("localhost", distrServer1));
+                Assert.False(result.IsError);
 
-            writer =
-               new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 3, 3,
-                   HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.SetServer(2, "localhost", storageServer3, 157);
-            writer.Save();
+                writer =
+                   new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 3, 3,
+                       HashFileType.Distributor));
+                writer.CreateMap();
+                writer.SetServer(0, "localhost", storageServer1, 157);
+                writer.SetServer(1, "localhost", storageServer2, 157);
+                writer.SetServer(2, "localhost", storageServer3, 157);
+                writer.Save();
 
-            _distrTest.Distributor.UpdateModel();
+                _distrTest.Distributor.UpdateModel();
 
-            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
-            Assert.True(File.Exists(hashFileName2));
-            Assert.True(File.Exists(hashFileName2 + "1"));
+                Assert.True(File.Exists(hashFileName2));
+                Assert.True(File.Exists(hashFileName2 + "1"));
 
-            Assert.Equal(3, distrTest2.WriterSystemModel.Servers.Count);            
+                Assert.Equal(3, distrTest2.WriterSystemModel.Servers.Count);
 
-            _writer1.Dispose();
-            _writer2.Dispose();
-            _distrTest.Dispose();
-            distrTest2.Dispose();
+                _writer1.Dispose();
+                _writer2.Dispose();
+                _distrTest.Dispose();
+                distrTest2.Dispose();
+            }
         }        
     }
 }

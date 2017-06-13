@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Ninject;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -26,22 +25,20 @@ using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
+using Xunit;
 using Consts = Qoollo.Impl.Common.Support.Consts;
 using SingleConnectionToDistributor = Qoollo.Impl.Writer.WriterNet.SingleConnectionToDistributor;
 
 namespace Qoollo.Tests
 {
-
-    [TestClass]
     public class TestDistributorModules
     {
-        [TestInitialize]
-        public void Initialize()
+        public TestDistributorModules()
         {
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
         }
 
-        [TestMethod]
+        [Fact]
         public void WriterSystemModel_GetUnavailableServers_CheckAvailableAndUnAvailableServers()
         {
             var server1 = new ServerId("local", 11010);
@@ -69,24 +66,24 @@ namespace Qoollo.Tests
             model.Start();
 
             model.ServerNotAvailable(server1);
-            Assert.AreEqual(1, model.GetUnavailableServers().Count);
+            Assert.Equal(1, model.GetUnavailableServers().Count);
             model.ServerNotAvailable(server1);
-            Assert.AreEqual(1, model.GetUnavailableServers().Count);
+            Assert.Equal(1, model.GetUnavailableServers().Count);
             model.ServerNotAvailable(server2);
-            Assert.AreEqual(2, model.GetUnavailableServers().Count);
+            Assert.Equal(2, model.GetUnavailableServers().Count);
             model.ServerNotAvailable(server3);
-            Assert.AreEqual(3, model.GetUnavailableServers().Count);
+            Assert.Equal(3, model.GetUnavailableServers().Count);
             model.ServerAvailable(server1);
-            Assert.AreEqual(2, model.GetUnavailableServers().Count);
+            Assert.Equal(2, model.GetUnavailableServers().Count);
             model.ServerAvailable(server1);
-            Assert.AreEqual(2, model.GetUnavailableServers().Count);
+            Assert.Equal(2, model.GetUnavailableServers().Count);
             model.ServerAvailable(server2);
-            Assert.AreEqual(1, model.GetUnavailableServers().Count);
+            Assert.Equal(1, model.GetUnavailableServers().Count);
             model.ServerAvailable(server3);
-            Assert.AreEqual(0, model.GetUnavailableServers().Count);
+            Assert.Equal(0, model.GetUnavailableServers().Count);
         }
 
-        [TestMethod]
+        [Fact]
         public void MainLogicModule_TransactionAnswerResult_ReceiveAnswersFromWriter()
         {
             const int distrServer1 = 22168;
@@ -141,13 +138,13 @@ namespace Qoollo.Tests
             Thread.Sleep(TimeSpan.FromMilliseconds(100));
             connection.TransactionAnswerResult(new Transaction("1243", "1423"));
             Thread.Sleep(TimeSpan.FromMilliseconds(100));
-            Assert.AreEqual(2, t);
+            Assert.Equal(2, t);
 
             connection.Dispose();
             receiver4.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void TransactionModule_ProcessSyncWithExecutor_NoServersToSendData()
         {
             var s1 = new TestServerDescription(1);
@@ -180,11 +177,11 @@ namespace Qoollo.Tests
 
             Thread.Sleep(1000);
 
-            Assert.IsTrue(data.Transaction.IsError);
+            Assert.True(data.Transaction.IsError);
             trm.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void TransactionModule_ProcessSyncWithExecutor_SuccessSendDataToServers()
         {
             var server1 = new ServerId("localhost", 21131);
@@ -228,9 +225,9 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(100));
 
-            Assert.AreEqual(1, s1.Value);
-            Assert.AreEqual(1, s2.Value);
-            Assert.IsFalse(ev.Transaction.IsError);
+            Assert.Equal(1, s1.Value);
+            Assert.Equal(1, s2.Value);
+            Assert.False(ev.Transaction.IsError);
 
             net.Dispose();
             distributor.Dispose();
@@ -239,7 +236,7 @@ namespace Qoollo.Tests
             s2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void TransactionModule_ProcessSyncWithExecutor_RollbackNoEnoughServers()
         {
             var server1 = new ServerId("localhost", 21141);
@@ -295,9 +292,9 @@ namespace Qoollo.Tests
 
             Thread.Sleep(2000);
 
-            Assert.IsTrue(s1.Value <= 0);
-            Assert.IsTrue(s2.Value <= 0);
-            Assert.IsTrue(data.Transaction.IsError);
+            Assert.True(s1.Value <= 0);
+            Assert.True(s2.Value <= 0);
+            Assert.True(data.Transaction.IsError);
 
             net.Dispose();   
             trm.Dispose();
@@ -305,7 +302,7 @@ namespace Qoollo.Tests
             s2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void NetModule_Process_SendDatatoAvaliableAndUnavalilableServers()
         {
             var server1 = new ServerId("localhost", 21121);
@@ -342,11 +339,11 @@ namespace Qoollo.Tests
             var ret1 = net.Process(server1, ev);
             var ret2 = net.Process(server2, ev);
             var ret3 = net.Process(server3, ev);
-            Assert.AreEqual(1, s1.Value);
-            Assert.AreEqual(1, s2.Value);
-            Assert.AreEqual(typeof(SuccessResult), ret1.GetType());
-            Assert.AreEqual(typeof(SuccessResult), ret2.GetType());
-            Assert.AreEqual(typeof(ServerNotFoundResult), ret3.GetType());
+            Assert.Equal(1, s1.Value);
+            Assert.Equal(1, s2.Value);
+            Assert.Equal(typeof(SuccessResult), ret1.GetType());
+            Assert.Equal(typeof(SuccessResult), ret2.GetType());
+            Assert.Equal(typeof(ServerNotFoundResult), ret3.GetType());
 
             GlobalQueue.Queue.Dispose();
             net.Dispose();
@@ -355,7 +352,7 @@ namespace Qoollo.Tests
             s2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void DistributorTimeoutCache_GetUpdate()
         {
             var cache = new DistributorTimeoutCache(
@@ -368,21 +365,21 @@ namespace Qoollo.Tests
 
             cache.AddToCache("123", ev);
             var ret = cache.Get("123");
-            Assert.AreEqual(ev, ret);
+            Assert.Equal(ev, ret);
             ev.Transaction.Complete();
             cache.Update("123", ev);
             ret = cache.Get("123");
-            Assert.AreEqual(ev, ret);
+            Assert.Equal(ev, ret);
             Thread.Sleep(200);
             ret = cache.Get("123");
-            Assert.AreEqual(ev, ret);
-            Assert.AreEqual(TransactionState.Complete, ev.Transaction.State);
+            Assert.Equal(ev, ret);
+            Assert.Equal(TransactionState.Complete, ev.Transaction.State);
             Thread.Sleep(500);
             ret = cache.Get("123");
-            Assert.AreEqual(null, ret);
+            Assert.Equal(null, ret);
         }
 
-        [TestMethod]
+        [Fact]
         public void DistributorTimeoutCache_TimeoutData_SendToMainLogicModuleObsoleteData()
         {
             var cache = new DistributorTimeoutCache(
@@ -400,16 +397,16 @@ namespace Qoollo.Tests
             ev.Transaction.Complete();
             cache.AddToCache(ev.Transaction.CacheKey, ev);
             var ret = cache.Get(ev.Transaction.CacheKey);
-            Assert.AreEqual(ev, ret);
+            Assert.Equal(ev, ret);
             Thread.Sleep(200);
             cache.Get(ev.Transaction.CacheKey);
-            Assert.AreEqual(TransactionState.Complete, ev.Transaction.State);
+            Assert.Equal(TransactionState.Complete, ev.Transaction.State);
             Thread.Sleep(200);
             cache.Get(ev.Transaction.CacheKey);
-            Assert.AreEqual(TransactionState.Complete, ev.Transaction.State);
+            Assert.Equal(TransactionState.Complete, ev.Transaction.State);
             Thread.Sleep(500);
             ret = cache.Get(ev.Transaction.CacheKey);
-            Assert.AreEqual(null, ret);
+            Assert.Equal(null, ret);
 
             ev = new InnerData(new Transaction("1231", "") { OperationName = OperationName.Create })
             {
@@ -419,19 +416,19 @@ namespace Qoollo.Tests
             ev.Transaction.StartTransaction();
             cache.AddToCache(ev.Transaction.CacheKey, ev);
             ret = cache.Get(ev.Transaction.CacheKey);
-            Assert.AreEqual(ev, ret);
+            Assert.Equal(ev, ret);
             Thread.Sleep(200);
             cache.Get(ev.Transaction.CacheKey);
-            Assert.AreEqual(TransactionState.Error, ev.Transaction.State);
+            Assert.Equal(TransactionState.Error, ev.Transaction.State);
             Thread.Sleep(200);
             cache.Get(ev.Transaction.CacheKey);
-            Assert.AreEqual(TransactionState.Error, ev.Transaction.State);
+            Assert.Equal(TransactionState.Error, ev.Transaction.State);
             Thread.Sleep(500);
             ret = cache.Get(ev.Transaction.CacheKey);
-            Assert.AreEqual(null, ret);
+            Assert.Equal(null, ret);
         }
 
-        [TestMethod]
+        [Fact]
         public void WriterSystemModel_GetDestination_ChechAvailableServers()
         {
             var config = new DistributorHashConfiguration(1);
@@ -458,22 +455,22 @@ namespace Qoollo.Tests
             };
 
             var ret = model.GetDestination(ev);
-            Assert.IsTrue(ret.Count == 1);
+            Assert.True(ret.Count == 1);
             model.ServerNotAvailable(ret.First());
             var ret2 = model.GetDestination(ev);
-            Assert.IsTrue(ret2.Count == 1);
-            Assert.AreNotEqual(ret.First(), ret2.First());
+            Assert.True(ret2.Count == 1);
+            Assert.NotEqual(ret.First(), ret2.First());
             model.ServerNotAvailable(ret2.First());
             var ret3 = model.GetDestination(ev);
-            Assert.IsTrue(ret3.Count == 1);
-            Assert.AreNotEqual(ret.First(), ret3.First());
-            Assert.AreNotEqual(ret3.First(), ret2.First());
+            Assert.True(ret3.Count == 1);
+            Assert.NotEqual(ret.First(), ret3.First());
+            Assert.NotEqual(ret3.First(), ret2.First());
             model.ServerNotAvailable(ret3.First());
             var ret4 = model.GetDestination(ev);
-            Assert.IsTrue(ret4.Count == 0);
+            Assert.True(ret4.Count == 0);
         }
 
-        [TestMethod]
+        [Fact]
         public void MainLogic_ProcessWithData_SendAllReplicsThenObsoleteDataInCache()
         {
             var writer = new HashWriter(new HashMapConfiguration("test9", HashMapCreationMode.CreateNew, 2, 3, HashFileType.Distributor));
@@ -538,11 +535,11 @@ namespace Qoollo.Tests
             GlobalQueue.Queue.TransactionQueue.Add(ev.Transaction);
             Thread.Sleep(TimeSpan.FromMilliseconds(300));
 
-            Assert.IsTrue(s1.Value > 0);
-            Assert.IsTrue(s2.Value > 0);
-            Assert.AreEqual(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.Complete);
+            Assert.True(s1.Value > 0);
+            Assert.True(s2.Value > 0);
+            Assert.Equal(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.Complete);
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-            Assert.AreEqual(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.DontExist);
+            Assert.Equal(main.GetTransactionState(ev.Transaction.UserTransaction).State, TransactionState.DontExist);
 
             net.Dispose();
             distributor.Dispose();
@@ -554,7 +551,7 @@ namespace Qoollo.Tests
             s2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void WriterSystemModel_GetDestination_CountReplics()
         {
             var config = new DistributorHashConfiguration(4);
@@ -581,20 +578,20 @@ namespace Qoollo.Tests
             };            
 
             var ret = model.GetDestination(ev);
-            Assert.IsTrue(ret.Count == 0);
+            Assert.True(ret.Count == 0);
             model = new WriterSystemModel(new DistributorHashConfiguration(3),
                                               new HashMapConfiguration("testhash", HashMapCreationMode.ReadFromFile, 1,
                                                                        1, HashFileType.Distributor));
             model.Start();
 
             ret = model.GetDestination(ev);
-            Assert.AreEqual(3, ret.Count);
-            Assert.AreNotEqual(ret[0], ret[1]);
-            Assert.AreNotEqual(ret[0], ret[2]);
-            Assert.AreNotEqual(ret[2], ret[1]);
+            Assert.Equal(3, ret.Count);
+            Assert.NotEqual(ret[0], ret[1]);
+            Assert.NotEqual(ret[0], ret[2]);
+            Assert.NotEqual(ret[2], ret[1]);
         }
 
-        [TestMethod]
+        [Fact]
         public void InputModuleWithParallel_ProcessAsync_SendToOneServers_Success()
         {
             const int distrServer1 = 22161;
@@ -676,12 +673,12 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
-            Assert.AreEqual(count, s.Value);
+            Assert.Equal(count, s.Value);
 
             foreach (var data in list)
             {
                 var transaction = main.GetTransactionState(data.Transaction.UserTransaction);
-                Assert.AreEqual(TransactionState.TransactionInProcess, transaction.State);
+                Assert.Equal(TransactionState.TransactionInProcess, transaction.State);
             }
             foreach (var data in list)
             {
@@ -691,7 +688,7 @@ namespace Qoollo.Tests
             foreach (var data in list)
             {
                 var transaction = main.GetTransactionState(data.Transaction.UserTransaction);
-                Assert.AreEqual(TransactionState.Complete, transaction.State);
+                Assert.Equal(TransactionState.Complete, transaction.State);
             }
             q1.Dispose();
 
@@ -704,7 +701,7 @@ namespace Qoollo.Tests
             s.Dispose();            
         }
 
-        [TestMethod]
+        [Fact]
         public void InputModuleWithParallel_ProcessAsync_SendToTwoServers_Success()
         {
             const int distrServer1 = 22163;
@@ -791,13 +788,13 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1200));
 
-            Assert.AreEqual(count, s1.Value);
-            Assert.AreEqual(count, s2.Value);
+            Assert.Equal(count, s1.Value);
+            Assert.Equal(count, s2.Value);
 
             foreach (var data in list)
             {
                 var transaction = main.GetTransactionState(data.Transaction.UserTransaction);
-                Assert.AreEqual(TransactionState.TransactionInProcess, transaction.State);
+                Assert.Equal(TransactionState.TransactionInProcess, transaction.State);
             }
             foreach (var data in list)
             {
@@ -812,7 +809,7 @@ namespace Qoollo.Tests
             foreach (var data in list)
             {
                 var transaction = main.GetTransactionState(data.Transaction.UserTransaction);
-                Assert.AreEqual(TransactionState.Complete, transaction.State);
+                Assert.Equal(TransactionState.Complete, transaction.State);
             }
             q1.Dispose();
 
@@ -826,7 +823,7 @@ namespace Qoollo.Tests
             s2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void InputModuleWithParallel_ProcessAsync_SendToOneServersAndTimeoutInCache_Success()
         {
             const int distrServer1 = 22166;
@@ -908,12 +905,12 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
-            Assert.AreEqual(count, s.Value);
+            Assert.Equal(count, s.Value);
 
             foreach (var data in list)
             {
                 var transaction = main.GetTransactionState(data.Transaction.UserTransaction);
-                Assert.AreEqual(TransactionState.TransactionInProcess, transaction.State);
+                Assert.Equal(TransactionState.TransactionInProcess, transaction.State);
             }
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
@@ -923,7 +920,7 @@ namespace Qoollo.Tests
                 if (transaction.State == TransactionState.DontExist)
                     Thread.Sleep(1000);
                 transaction = main.GetTransactionState(data.Transaction.UserTransaction);
-                Assert.AreEqual(TransactionState.Error, transaction.State);
+                Assert.Equal(TransactionState.Error, transaction.State);
             }
 
             q1.Dispose();

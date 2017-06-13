@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Data;
-using System.Text;
 using System.Collections.Generic;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Ninject;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
@@ -32,19 +29,18 @@ using Qoollo.Tests.Support;
 using Qoollo.Tests.TestCollector;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestWriter;
+using Xunit;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
     public class TestCollectorModules
     {
-        [TestInitialize]
-        public void Initialize()
+        public TestCollectorModules()
         {
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
         }
 
-        [TestMethod]
+        [Fact]
         public void SingleServerSearchTask_GetData_CheckData()
         {
             var task = new SingleServerSearchTask(new ServerId("", 0), "",
@@ -60,25 +56,25 @@ namespace Qoollo.Tests
 
             for (int i = 0; i < count; i++)
             {
-                Assert.AreEqual(i, task.GetData().Key);
+                Assert.Equal(i, task.GetData().Key);
                 task.IncrementPosition();
             }
             task.AddPage(page);
 
             for (int i = count; i < count * 2; i++)
             {
-                Assert.AreEqual(i, task.GetData().Key);
+                Assert.Equal(i, task.GetData().Key);
                 task.IncrementPosition();
             }
 
             for (int i = count * 2; i < count * 4; i++)
             {
-                Assert.AreEqual(i - count * 2, task.GetData().Key);
+                Assert.Equal(i - count * 2, task.GetData().Key);
                 task.IncrementPosition();
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void CollectorModel_GetSystemState_CheckWritersState()
         {
             const int countReplics = 2;
@@ -96,34 +92,34 @@ namespace Qoollo.Tests
 
 
             var state = model.GetSystemState();
-            Assert.AreEqual(SystemSearchStateInner.AllServersAvailable, state);
+            Assert.Equal(SystemSearchStateInner.AllServersAvailable, state);
 
             model.ServerNotAvailable(new ServerId("localhost", 1));
             state = model.GetSystemState();
-            Assert.AreEqual(SystemSearchStateInner.AllDataAvailable, state);
+            Assert.Equal(SystemSearchStateInner.AllDataAvailable, state);
 
             model.ServerNotAvailable(new ServerId("localhost", 3));
             state = model.GetSystemState();
-            Assert.AreEqual(SystemSearchStateInner.AllDataAvailable, state);
+            Assert.Equal(SystemSearchStateInner.AllDataAvailable, state);
 
             model.ServerNotAvailable(new ServerId("localhost", 2));
             state = model.GetSystemState();
-            Assert.AreEqual(SystemSearchStateInner.SomeDataUnavailable, state);
+            Assert.Equal(SystemSearchStateInner.SomeDataUnavailable, state);
 
             model.ServerAvailable(new ServerId("localhost", 1));
             state = model.GetSystemState();
-            Assert.AreEqual(SystemSearchStateInner.SomeDataUnavailable, state);
+            Assert.Equal(SystemSearchStateInner.SomeDataUnavailable, state);
 
             model.ServerNotAvailable(new ServerId("localhost", 4));
             state = model.GetSystemState();
-            Assert.AreEqual(SystemSearchStateInner.SomeDataUnavailable, state);
+            Assert.Equal(SystemSearchStateInner.SomeDataUnavailable, state);
 
             model.ServerAvailable(new ServerId("localhost", 3));
             state = model.GetSystemState();
-            Assert.AreEqual(SystemSearchStateInner.AllDataAvailable, state);
+            Assert.Equal(SystemSearchStateInner.AllDataAvailable, state);
         }
 
-        [TestMethod]
+        [Fact]
         public void BackgroundModule_CountLoads_CountLoads()
         {
             var background = new BackgroundModule(new QueueConfiguration(1, 100));
@@ -136,27 +132,27 @@ namespace Qoollo.Tests
 
 
             Thread.Sleep(TimeSpan.FromMilliseconds(100));
-            Assert.AreEqual(1, search.CountLoads);
+            Assert.Equal(1, search.CountLoads);
             search.GetDataInner();
 
             Thread.Sleep(TimeSpan.FromMilliseconds(100));
-            Assert.AreEqual(2, search.CountLoads);
+            Assert.Equal(2, search.CountLoads);
             Thread.Sleep(TimeSpan.FromMilliseconds(100));
-            Assert.AreEqual(2, search.CountLoads);
+            Assert.Equal(2, search.CountLoads);
             search.Finish = true;
             search.GetDataInner();
 
             Thread.Sleep(TimeSpan.FromMilliseconds(100));
-            Assert.AreEqual(3, search.CountLoads);
+            Assert.Equal(3, search.CountLoads);
             search.GetDataInner();
 
             Thread.Sleep(TimeSpan.FromMilliseconds(100));
-            Assert.AreEqual(3, search.CountLoads);
+            Assert.Equal(3, search.CountLoads);
 
             background.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void OrderMerge_GetMergeFunction_CheckData()
         {
             const int pageSize = 5;
@@ -216,33 +212,33 @@ namespace Qoollo.Tests
             var function = merge.GetMergeFunction(ScriptType.OrderAsc);
 
             var result = function(task, task.SearchTasks);
-            Assert.AreEqual(1, result[0].Key);
-            Assert.AreEqual(2, result[1].Key);
-            Assert.AreEqual(3, result[2].Key);
-            Assert.AreEqual(4, result[3].Key);
-            Assert.AreEqual(5, result[4].Key);
+            Assert.Equal(1, result[0].Key);
+            Assert.Equal(2, result[1].Key);
+            Assert.Equal(3, result[2].Key);
+            Assert.Equal(4, result[3].Key);
+            Assert.Equal(5, result[4].Key);
             result = function(task, task.SearchTasks);
-            Assert.AreEqual(6, result[0].Key);
-            Assert.AreEqual(7, result[1].Key);
-            Assert.AreEqual(8, result[2].Key);
-            Assert.AreEqual(9, result[3].Key);
-            Assert.AreEqual(10, result[4].Key);
-            Assert.IsTrue(task.SearchTasks[0].IsAllDataRead);
+            Assert.Equal(6, result[0].Key);
+            Assert.Equal(7, result[1].Key);
+            Assert.Equal(8, result[2].Key);
+            Assert.Equal(9, result[3].Key);
+            Assert.Equal(10, result[4].Key);
+            Assert.True(task.SearchTasks[0].IsAllDataRead);
             result = function(task, task.SearchTasks);
-            Assert.AreEqual(11, result[0].Key);
-            Assert.AreEqual(12, result[1].Key);
-            Assert.AreEqual(13, result[2].Key);
-            Assert.IsTrue(task.SearchTasks[0].IsAllDataRead);
-            Assert.IsTrue(task.SearchTasks[1].IsAllDataRead);
-            Assert.IsTrue(task.SearchTasks[2].IsAllDataRead);
+            Assert.Equal(11, result[0].Key);
+            Assert.Equal(12, result[1].Key);
+            Assert.Equal(13, result[2].Key);
+            Assert.True(task.SearchTasks[0].IsAllDataRead);
+            Assert.True(task.SearchTasks[1].IsAllDataRead);
+            Assert.True(task.SearchTasks[2].IsAllDataRead);
             result = function(task, task.SearchTasks);
-            Assert.IsTrue(result.Count == 0);
-            Assert.IsTrue(task.SearchTasks[0].IsAllDataRead);
-            Assert.IsTrue(task.SearchTasks[1].IsAllDataRead);
-            Assert.IsTrue(task.SearchTasks[2].IsAllDataRead);
+            Assert.True(result.Count == 0);
+            Assert.True(task.SearchTasks[0].IsAllDataRead);
+            Assert.True(task.SearchTasks[1].IsAllDataRead);
+            Assert.True(task.SearchTasks[2].IsAllDataRead);
         }
 
-        [TestMethod]
+        [Fact]
         public void SearchTaskModule_CreateReader_ReadData()
         {
             var server1 = new ServerId("", 1);
@@ -326,14 +322,14 @@ namespace Qoollo.Tests
             const int count = 13;
             for (int i = 0; i < count; i++)
             {
-                Assert.IsTrue(reader.IsCanRead);
+                Assert.True(reader.IsCanRead);
 
                 reader.ReadNext();
 
-                Assert.AreEqual(i + 1, reader.GetValue(0));
+                Assert.Equal(i + 1, reader.GetValue(0));
             }
             reader.ReadNext();
-            Assert.IsFalse(reader.IsCanRead);
+            Assert.False(reader.IsCanRead);
 
             reader.Dispose();
 
@@ -341,7 +337,7 @@ namespace Qoollo.Tests
             back.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void SearchTaskModule_CreateReader_ReadData_MultipleKeys()
         {
             var server1 = new ServerId("", 1);
@@ -431,15 +427,15 @@ namespace Qoollo.Tests
             const int count = 13;
             for (int i = 0; i < count; i++)
             {
-                Assert.IsTrue(reader.IsCanRead);
+                Assert.True(reader.IsCanRead);
 
                 reader.ReadNext();
 
-                Assert.AreEqual(expectedOrder[i], reader.GetValue(0));
-                Assert.AreEqual((long)(2 - (expectedOrder[i] % 2)), reader.GetValue(1));
+                Assert.Equal(expectedOrder[i], reader.GetValue(0));
+                Assert.Equal((long)(2 - (expectedOrder[i] % 2)), reader.GetValue(1));
             }
             reader.ReadNext();
-            Assert.IsFalse(reader.IsCanRead);
+            Assert.False(reader.IsCanRead);
 
             reader.Dispose();
 
@@ -447,7 +443,7 @@ namespace Qoollo.Tests
             back.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void SearchTaskModule_CreateReader_LimitDataRead()
         {
             var server1 = new ServerId("", 1);
@@ -530,14 +526,14 @@ namespace Qoollo.Tests
             const int count = 10;
             for (int i = 0; i < count; i++)
             {
-                Assert.IsTrue(reader.IsCanRead);
+                Assert.True(reader.IsCanRead);
 
                 reader.ReadNext();
 
-                Assert.AreEqual(i + 1, reader.GetValue(0));
+                Assert.Equal(i + 1, reader.GetValue(0));
             }
             reader.ReadNext();
-            Assert.IsFalse(reader.IsCanRead);
+            Assert.False(reader.IsCanRead);
 
             reader.Dispose();
 
@@ -545,7 +541,7 @@ namespace Qoollo.Tests
             async.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void SearchTaskModule_CreateReader_LimitDataReadAndUserPage()
         {
             var server1 = new ServerId("", 1);
@@ -628,14 +624,14 @@ namespace Qoollo.Tests
             const int count = 10;
             for (int i = 0; i < count; i++)
             {
-                Assert.IsTrue(reader.IsCanRead);
+                Assert.True(reader.IsCanRead);
 
                 reader.ReadNext();
 
-                Assert.AreEqual(i + 1, reader.GetValue(0));
+                Assert.Equal(i + 1, reader.GetValue(0));
             }
             reader.ReadNext();
-            Assert.IsFalse(reader.IsCanRead);
+            Assert.False(reader.IsCanRead);
 
             reader.Dispose();
 
@@ -643,7 +639,7 @@ namespace Qoollo.Tests
             back.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void SearchTaskModule_CreateReader_UnlimitDataReadAndUserPage()
         {
             var server1 = new ServerId("", 1);
@@ -726,21 +722,21 @@ namespace Qoollo.Tests
             const int count = 13;
             for (int i = 0; i < count; i++)
             {
-                Assert.IsTrue(reader.IsCanRead);
+                Assert.True(reader.IsCanRead);
 
                 reader.ReadNext();
 
-                Assert.AreEqual(i + 1, reader.GetValue(0));
+                Assert.Equal(i + 1, reader.GetValue(0));
             }
             reader.ReadNext();
-            Assert.IsFalse(reader.IsCanRead);
+            Assert.False(reader.IsCanRead);
 
             reader.Dispose();
             async.Dispose();
             back.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void CollectorNet_ReadFromWriter()
         {
             const int proxyServer = 22337;
@@ -825,7 +821,7 @@ namespace Qoollo.Tests
             for (int i = 0; i < count; i++)
             {
                 var request = proxy.Int.CreateSync(i, i);
-                Assert.AreEqual(RequestState.Complete, request.State);
+                Assert.Equal(RequestState.Complete, request.State);
             }
 
             var reader = searchModule.CreateReader("asc", -1, 20);
@@ -833,14 +829,14 @@ namespace Qoollo.Tests
 
             for (int i = 0; i < count; i++)
             {
-                Assert.IsTrue(reader.IsCanRead);
+                Assert.True(reader.IsCanRead);
 
                 reader.ReadNext();
 
-                Assert.AreEqual(i, reader.GetValue(0));
+                Assert.Equal(i, reader.GetValue(0));
             }
             reader.ReadNext();
-            Assert.IsFalse(reader.IsCanRead);
+            Assert.False(reader.IsCanRead);
 
             reader.Dispose();
             back.Dispose();
@@ -852,16 +848,16 @@ namespace Qoollo.Tests
             async.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void SqlScriptParser_ParseQueryType()
         {
             var parser = new SqlScriptParser();
             var type = parser.ParseQueryType("order by");
-            Assert.AreEqual(ScriptType.OrderAsc, type);
+            Assert.Equal(ScriptType.OrderAsc, type);
             type = parser.ParseQueryType("order by desc");
-            Assert.AreEqual(ScriptType.OrderDesc, type);
+            Assert.Equal(ScriptType.OrderDesc, type);
             type = parser.ParseQueryType("order bsy desc");
-            Assert.AreEqual(ScriptType.Unknown, type);
+            Assert.Equal(ScriptType.Unknown, type);
         }        
     }
 }

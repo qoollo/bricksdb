@@ -1,21 +1,13 @@
 ﻿using System;
-using System.Runtime.Caching;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.Common.Data.Support;
-using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.Modules.Cache;
+using Xunit;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
     public class TestTransactionLogic
     {
          class TestData
@@ -49,7 +41,7 @@ namespace Qoollo.Tests
              }
         }
 
-        [TestMethod]
+        [Fact]
         public void DistributorData_TestCacheLock_TwoThread_IncrementCounter()
         {
             const string key = "123";
@@ -74,7 +66,7 @@ namespace Qoollo.Tests
             Task.Factory.StartNew(action);
 
             Thread.Sleep(1000);
-            Assert.AreEqual(2, cache.Get(key).Counter);
+            Assert.Equal(2, cache.Get(key).Counter);
         }
     }
 }

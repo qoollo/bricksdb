@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -23,11 +21,11 @@ using Qoollo.Impl.Collector.Distributor;
 using Qoollo.Impl.Collector.Background;
 using Qoollo.Impl.Collector;
 using Qoollo.Impl.Postgre.Internal;
+using Xunit;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
-    public class PostgreTest
+    public class PostgreTest:IDisposable
     {
         private const string TableName = "TestStored";
         private const string ConnectionString = "Server=127.0.0.1;" +
@@ -38,8 +36,7 @@ namespace Qoollo.Tests
         private static StoredDataDataProvider _storedDataProvider = new StoredDataDataProvider();
 
 
-        [TestInitialize]
-        public void Initialize()
+        public PostgreTest()
         {
             using (var connection = new Npgsql.NpgsqlConnection(ConnectionString))
             {
@@ -68,12 +65,10 @@ namespace Qoollo.Tests
                     }
                 }
             }
-
-            Cleanup();
+            Dispose();
         }
 
-        [TestCleanup]
-        public void Cleanup()
+        public void Dispose()
         {
             using (var connection = new Npgsql.NpgsqlConnection(ConnectionString))
             {
@@ -86,7 +81,7 @@ namespace Qoollo.Tests
             }
         }
 
-        // ===========
+        #region support
 
         private static ServerId CreateUniqueServerId()
         {
@@ -178,9 +173,9 @@ namespace Qoollo.Tests
             };
         }
 
-        // ==============
+        #endregion
 
-        [TestMethod]
+        [Fact]
         public void Postgre_Create_Read_Test()
         {
             CreateHashFileForSingleWriter(nameof(Postgre_Create_Read_Test));
@@ -192,19 +187,19 @@ namespace Qoollo.Tests
             var data = new StoredData(1);
             var createRequest = CreateRequest(data);
             var result = writer.Input.ProcessSync(createRequest);
-            Assert.IsFalse(result.IsError);
+            Assert.False(result.IsError);
 
 
             var readRequest = ReadRequest(data.Id);
             var resultRead = writer.Input.ReadOperation(readRequest);
-            Assert.IsFalse(resultRead.Transaction.IsError);
-            Assert.IsNotNull(resultRead.Data);
-            Assert.AreEqual(data.Id, CommonDataSerializer.Deserialize<StoredData>(resultRead.Data).Id);
+            Assert.False(resultRead.Transaction.IsError);
+            Assert.NotNull(resultRead.Data);
+            Assert.Equal(data.Id, CommonDataSerializer.Deserialize<StoredData>(resultRead.Data).Id);
 
             writer.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Postgre_Create_Update_Read_Test()
         {
             CreateHashFileForSingleWriter(nameof(Postgre_Create_Update_Read_Test));
@@ -216,23 +211,23 @@ namespace Qoollo.Tests
             var data = new StoredData(1);
             var createRequest = CreateRequest(data);
             var result = writer.Input.ProcessSync(createRequest);
-            Assert.IsFalse(result.IsError);
+            Assert.False(result.IsError);
 
             var updateData = new StoredData(1);
             var updateRequest = UpdateRequest(updateData);
             var updateResult = writer.Input.ProcessSync(updateRequest);
-            Assert.IsFalse(updateResult.IsError);
+            Assert.False(updateResult.IsError);
 
             var readRequest = ReadRequest(data.Id);
             var resultRead = writer.Input.ReadOperation(readRequest);
-            Assert.IsFalse(resultRead.Transaction.IsError);
-            Assert.IsNotNull(resultRead.Data);
-            Assert.AreEqual(data.Id, CommonDataSerializer.Deserialize<StoredData>(resultRead.Data).Id);
+            Assert.False(resultRead.Transaction.IsError);
+            Assert.NotNull(resultRead.Data);
+            Assert.Equal(data.Id, CommonDataSerializer.Deserialize<StoredData>(resultRead.Data).Id);
 
             writer.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Postgre_Create_Delete_Test()
         {
             CreateHashFileForSingleWriter(nameof(Postgre_Create_Delete_Test));
@@ -244,31 +239,30 @@ namespace Qoollo.Tests
             var data = new StoredData(1);
             var createRequest = CreateRequest(data);
             var result = writer.Input.ProcessSync(createRequest);
-            Assert.IsFalse(result.IsError);
+            Assert.False(result.IsError);
 
             var deleteRequest = DeleteRequest(data.Id);
             var deleteResult = writer.Input.ProcessSync(deleteRequest);
-            Assert.IsFalse(deleteResult.IsError);
+            Assert.False(deleteResult.IsError);
 
             var readRequest = ReadRequest(data.Id);
             var resultRead = writer.Input.ReadOperation(readRequest);
-            Assert.IsFalse(resultRead.Transaction.IsError);
-            Assert.IsNull(resultRead.Data);
+            Assert.False(resultRead.Transaction.IsError);
+            Assert.Null(resultRead.Data);
 
             var deleteRequest2 = DeleteRequest(data.Id);
             var deleteResult2 = writer.Db.DeleteFull(deleteRequest);
-            Assert.IsFalse(deleteResult2.IsError);
+            Assert.False(deleteResult2.IsError);
 
             var readRequest2 = ReadRequest(data.Id);
             var resultRead2 = writer.Input.ReadOperation(readRequest);
-            Assert.IsFalse(resultRead2.Transaction.IsError);
-            Assert.IsNull(resultRead2.Data);
+            Assert.False(resultRead2.Transaction.IsError);
+            Assert.Null(resultRead2.Data);
 
             writer.Dispose();
         }
 
-
-        [TestMethod]
+        [Fact]
         public void Postgre_CRUD_Multiple_Test()
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
@@ -282,16 +276,16 @@ namespace Qoollo.Tests
                 var data = new StoredData(i);
                 var createRequest = CreateRequest(data);
                 var result = writer.Input.ProcessSync(createRequest);
-                Assert.IsFalse(result.IsError);
+                Assert.False(result.IsError);
             }
 
             for (int i = 99; i >= 1; i--)
             {
                 var readRequest = ReadRequest(i);
                 var resultRead = writer.Input.ReadOperation(readRequest);
-                Assert.IsFalse(resultRead.Transaction.IsError);
-                Assert.IsNotNull(resultRead.Data);
-                Assert.AreEqual(i, CommonDataSerializer.Deserialize<StoredData>(resultRead.Data).Id);
+                Assert.False(resultRead.Transaction.IsError);
+                Assert.NotNull(resultRead.Data);
+                Assert.Equal(i, CommonDataSerializer.Deserialize<StoredData>(resultRead.Data).Id);
             }
 
             for (int i = 1; i < 100; i++)
@@ -299,32 +293,32 @@ namespace Qoollo.Tests
                 var updateData = new StoredData(i);
                 var updateRequest = UpdateRequest(updateData);
                 var updateResult = writer.Input.ProcessSync(updateRequest);
-                Assert.IsFalse(updateResult.IsError);
+                Assert.False(updateResult.IsError);
             }
 
             for (int i = 1; i < 100; i += 2)
             {
                 var deleteRequest = DeleteRequest(i);
                 var deleteResult = writer.Input.ProcessSync(deleteRequest);
-                Assert.IsFalse(deleteResult.IsError);
+                Assert.False(deleteResult.IsError);
             }
 
             for (int i = 1; i < 100; i++)
             {
                 var readRequest = ReadRequest(i);
                 var resultRead = writer.Input.ReadOperation(readRequest);
-                Assert.IsFalse(resultRead.Transaction.IsError);
+                Assert.False(resultRead.Transaction.IsError);
                 if ((i%2) == 1)
-                    Assert.IsNull(resultRead.Data);
+                    Assert.Null(resultRead.Data);
                 else
-                    Assert.IsNotNull(resultRead.Data);
+                    Assert.NotNull(resultRead.Data);
             }
 
             writer.Dispose();
         }
 
 
-        [TestMethod]
+        [Fact]
         public void Postgre_Restore_Single_Test()
         {
             CreateHashFileForTwoWriters(nameof(Postgre_Restore_Single_Test));
@@ -338,7 +332,7 @@ namespace Qoollo.Tests
                 var data = new StoredData(i);
                 var createRequest = CreateRequest(data);
                 var result = writer2.Input.ProcessSync(createRequest);
-                Assert.IsFalse(result.IsError);
+                Assert.False(result.IsError);
             }
 
             List<int> idsToRestore = new List<int>();
@@ -366,16 +360,16 @@ namespace Qoollo.Tests
             var restoreResult = writer2.Db.GetDbModules[1].AsyncProcess(
                 new Impl.Writer.Db.RestoreDataContainer(false, false, 100, procesor, meta => true, usePackage: false));
 
-            Assert.IsTrue(!restoreResult.IsError || restoreResult.Description == "");
-            Assert.AreEqual(idsToRestore.Count, readedForRestore.Count);
-            Assert.IsTrue(
+            Assert.True(!restoreResult.IsError || restoreResult.Description == "");
+            Assert.Equal(idsToRestore.Count, readedForRestore.Count);
+            Assert.True(
                 readedForRestore.Select(o => CommonDataSerializer.Deserialize<int>(o.Key))
                     .All(o => idsToRestore.Contains(o)));
 
             writer2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Postgre_Restore_Package_Test()
         {
             CreateHashFileForTwoWriters(nameof(Postgre_Restore_Package_Test));
@@ -389,7 +383,7 @@ namespace Qoollo.Tests
                 var data = new StoredData(i);
                 var createRequest = CreateRequest(data);
                 var result = writer2.Input.ProcessSync(createRequest);
-                Assert.IsFalse(result.IsError);
+                Assert.False(result.IsError);
             }
 
             List<int> idsToRestore = new List<int>();
@@ -417,26 +411,26 @@ namespace Qoollo.Tests
             var restoreResult = writer2.Db.GetDbModules[1].AsyncProcess(
                 new Impl.Writer.Db.RestoreDataContainer(false, false, 100, procesor, meta => true, usePackage: true));
 
-            Assert.IsTrue(!restoreResult.IsError || restoreResult.Description == "");
-            Assert.AreEqual(idsToRestore.Count, readedForRestore.Count);
-            Assert.IsTrue(
+            Assert.True(!restoreResult.IsError || restoreResult.Description == "");
+            Assert.Equal(idsToRestore.Count, readedForRestore.Count);
+            Assert.True(
                 readedForRestore.Select(o => CommonDataSerializer.Deserialize<int>(o.Key))
                     .All(o => idsToRestore.Contains(o)));
 
             writer2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Postgre_Lexer_Test()
         {
             var parseRes = Impl.Postgre.Internal.ScriptParsing.TokenizedScript.Parse(
                 "SELECT Id FROM A a JOIN b b ON a.Id=b.Id WHERE Id > 10 AND Id > '1''1' ORDER  BY Id DESC");
 
-            Assert.IsNotNull(parseRes);
-            Assert.AreEqual(23, parseRes.Tokens.Count);
+            Assert.NotNull(parseRes);
+            Assert.Equal(23, parseRes.Tokens.Count);
         }
 
-        [TestMethod]
+        [Fact]
         public void Postgre_Parser_Test()
         {
             var parseRes = Impl.Postgre.Internal.ScriptParsing.PostgreSelectScript.Parse(
@@ -449,48 +443,48 @@ namespace Qoollo.Tests
                     LIMIT 10
                     OFFSET 10;");
 
-            Assert.IsNotNull(parseRes);
-            Assert.AreEqual("DECLARE stuff;", parseRes.PreSelectPart.ToString());
-            Assert.IsNotNull(parseRes.With);
-            Assert.AreEqual("WITH Ololo AS (SELECT * FROM Test)", parseRes.With.ToString());
-            Assert.IsNotNull(parseRes.Select);
-            Assert.AreEqual(@"SELECT *, Id AS ""Id"", Ololo, 1 + 2 AS Calc", parseRes.Select.ToString());
-            Assert.AreEqual(4, parseRes.Select.Keys.Count);
-            Assert.AreEqual("Id", parseRes.Select.Keys[1].GetKeyName());
-            Assert.IsNotNull(parseRes.From);
-            Assert.AreEqual("FROM A a JOIN b b ON a.Id=b.Id", parseRes.From.ToString());
-            Assert.IsNotNull(parseRes.Where);
-            Assert.AreEqual("WHERE Id > 10 AND Id > '1''1'", parseRes.Where.ToString());
-            Assert.IsNotNull(parseRes.OrderBy);
-            Assert.AreEqual("ORDER  BY Id DESC", parseRes.OrderBy.ToString());
-            Assert.AreEqual(1, parseRes.OrderBy.Keys.Count);
-            Assert.AreEqual("id", parseRes.OrderBy.Keys[0].GetKeyName());
-            Assert.AreEqual(OrderType.Desc, parseRes.OrderBy.Keys[0].OrderType);
-            Assert.IsNotNull(parseRes.Limit);
-            Assert.AreEqual("LIMIT 10", parseRes.Limit.ToString());
-            Assert.IsNotNull(parseRes.Offset);
-            Assert.AreEqual("OFFSET 10", parseRes.Offset.ToString());
-            Assert.AreEqual(";", parseRes.PostSelectPart.ToString());
+            Assert.NotNull(parseRes);
+            Assert.Equal("DECLARE stuff;", parseRes.PreSelectPart.ToString());
+            Assert.NotNull(parseRes.With);
+            Assert.Equal("WITH Ololo AS (SELECT * FROM Test)", parseRes.With.ToString());
+            Assert.NotNull(parseRes.Select);
+            Assert.Equal(@"SELECT *, Id AS ""Id"", Ololo, 1 + 2 AS Calc", parseRes.Select.ToString());
+            Assert.Equal(4, parseRes.Select.Keys.Count);
+            Assert.Equal("Id", parseRes.Select.Keys[1].GetKeyName());
+            Assert.NotNull(parseRes.From);
+            Assert.Equal("FROM A a JOIN b b ON a.Id=b.Id", parseRes.From.ToString());
+            Assert.NotNull(parseRes.Where);
+            Assert.Equal("WHERE Id > 10 AND Id > '1''1'", parseRes.Where.ToString());
+            Assert.NotNull(parseRes.OrderBy);
+            Assert.Equal("ORDER  BY Id DESC", parseRes.OrderBy.ToString());
+            Assert.Equal(1, parseRes.OrderBy.Keys.Count);
+            Assert.Equal("id", parseRes.OrderBy.Keys[0].GetKeyName());
+            Assert.Equal(OrderType.Desc, parseRes.OrderBy.Keys[0].OrderType);
+            Assert.NotNull(parseRes.Limit);
+            Assert.Equal("LIMIT 10", parseRes.Limit.ToString());
+            Assert.NotNull(parseRes.Offset);
+            Assert.Equal("OFFSET 10", parseRes.Offset.ToString());
+            Assert.Equal(";", parseRes.PostSelectPart.ToString());
 
             var fromatted = parseRes.Format();
-            Assert.IsNotNull(fromatted);
+            Assert.NotNull(fromatted);
 
 
             var parseRes2 = Impl.Postgre.Internal.ScriptParsing.PostgreSelectScript.Parse(
                 @"  SELECT (1 + 2) AS ""Field"", (public.""Table"".""Id""), Table.Id, 1 AS One
                     From ""Table""");
 
-            Assert.AreEqual(4, parseRes2.Select.Keys.Count);
-            Assert.IsFalse(parseRes2.Select.Keys[1].IsCalculatable);
-            Assert.AreEqual("Id", parseRes2.Select.Keys[1].GetKeyName());
-            Assert.AreEqual("id", parseRes2.Select.Keys[2].GetKeyName());
-            Assert.AreEqual("one", parseRes2.Select.Keys[3].GetKeyName());
-            Assert.IsTrue(parseRes2.Select.Keys[3].IsCalculatable);
+            Assert.Equal(4, parseRes2.Select.Keys.Count);
+            Assert.False(parseRes2.Select.Keys[1].IsCalculatable);
+            Assert.Equal("Id", parseRes2.Select.Keys[1].GetKeyName());
+            Assert.Equal("id", parseRes2.Select.Keys[2].GetKeyName());
+            Assert.Equal("one", parseRes2.Select.Keys[3].GetKeyName());
+            Assert.True(parseRes2.Select.Keys[3].IsCalculatable);
         }
 
 
 
-        [TestMethod]
+        [Fact]
         public void Postgre_SelectQuery_Test()
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
@@ -503,7 +497,7 @@ namespace Qoollo.Tests
                 var data = new StoredData(i);
                 var createRequest = CreateRequest(data);
                 var result = writer.Input.ProcessSync(createRequest);
-                Assert.IsFalse(result.IsError);
+                Assert.False(result.IsError);
             }
 
 
@@ -525,15 +519,15 @@ namespace Qoollo.Tests
 
 
             var selectResult = writer.Input.SelectQuery(selectDesc);
-            Assert.IsNotNull(selectResult);
-            Assert.IsFalse(selectResult.Item1.IsError);
-            Assert.AreEqual(99, selectResult.Item2.Data.Count);
+            Assert.NotNull(selectResult);
+            Assert.False(selectResult.Item1.IsError);
+            Assert.Equal(99, selectResult.Item2.Data.Count);
 
             writer.Dispose();
         }
 
 
-        [TestMethod]
+        [Fact]
         public void Postgre_SelectQuery_Limit_Offset_Test()
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
@@ -546,14 +540,14 @@ namespace Qoollo.Tests
                 var data = new StoredData(i);
                 var createRequest = CreateRequest(data);
                 var result = writer.Input.ProcessSync(createRequest);
-                Assert.IsFalse(result.IsError);
+                Assert.False(result.IsError);
             }
             for (int i = 2; i < 100; i += 2)
             {
                 var data = new StoredData(i);
                 var createRequest = CreateRequest(data);
                 var result = writer.Input.ProcessSync(createRequest);
-                Assert.IsFalse(result.IsError);
+                Assert.False(result.IsError);
             }
 
 
@@ -575,17 +569,17 @@ namespace Qoollo.Tests
 
 
             var selectResult = writer.Input.SelectQuery(selectDesc);
-            Assert.IsNotNull(selectResult);
-            Assert.IsFalse(selectResult.Item1.IsError);
-            Assert.AreEqual(10, selectResult.Item2.Data.Count);
-            Assert.AreEqual(89, (int) selectResult.Item2.Data[0].Key);
-            Assert.AreEqual(80, (int) selectResult.Item2.Data[selectResult.Item2.Data.Count - 1].Key);
+            Assert.NotNull(selectResult);
+            Assert.False(selectResult.Item1.IsError);
+            Assert.Equal(10, selectResult.Item2.Data.Count);
+            Assert.Equal(89, (int) selectResult.Item2.Data[0].Key);
+            Assert.Equal(80, (int) selectResult.Item2.Data[selectResult.Item2.Data.Count - 1].Key);
 
             writer.Dispose();
         }
 
 
-        [TestMethod]
+        [Fact]
         public void Postgre_SelectQuery_MultiOrder_Test()
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
@@ -598,7 +592,7 @@ namespace Qoollo.Tests
                 var data = new StoredData(i);
                 var createRequest = CreateRequest(data);
                 var result = writer.Input.ProcessSync(createRequest);
-                Assert.IsFalse(result.IsError);
+                Assert.False(result.IsError);
             }
 
 
@@ -622,17 +616,17 @@ namespace Qoollo.Tests
 
 
             var selectResult = writer.Input.SelectQuery(selectDesc);
-            Assert.IsNotNull(selectResult);
-            Assert.IsFalse(selectResult.Item1.IsError);
-            Assert.AreEqual(99, selectResult.Item2.Data.Count);
-            Assert.AreEqual(10, (int) selectResult.Item2.Data[0].Key);
-            Assert.AreEqual(99, (int) selectResult.Item2.Data[10].Key);
+            Assert.NotNull(selectResult);
+            Assert.False(selectResult.Item1.IsError);
+            Assert.Equal(99, selectResult.Item2.Data.Count);
+            Assert.Equal(10, (int) selectResult.Item2.Data[0].Key);
+            Assert.Equal(99, (int) selectResult.Item2.Data[10].Key);
 
             writer.Dispose();
         }
 
 
-        [TestMethod]
+        [Fact]
         public void Postgre_Collector_Test()
         {
             var server1 = new ServerId("", 1);
@@ -717,14 +711,14 @@ namespace Qoollo.Tests
             const int count = 13;
             for (int i = 0; i < count; i++)
             {
-                Assert.IsTrue(reader.IsCanRead);
+                Assert.True(reader.IsCanRead);
 
                 reader.ReadNext();
 
-                Assert.AreEqual(i + 1, reader.GetValue(0));
+                Assert.Equal(i + 1, reader.GetValue(0));
             }
             reader.ReadNext();
-            Assert.IsFalse(reader.IsCanRead);
+            Assert.False(reader.IsCanRead);
 
             reader.Dispose();
 
@@ -733,7 +727,7 @@ namespace Qoollo.Tests
         }
 
 
-        [TestMethod]
+        [Fact]
         public void Postgre_Collector_MultipleKey_Test()
         {
             var server1 = new ServerId("", 1);
@@ -825,15 +819,15 @@ namespace Qoollo.Tests
             const int count = 13;
             for (int i = 0; i < count; i++)
             {
-                Assert.IsTrue(reader.IsCanRead);
+                Assert.True(reader.IsCanRead);
 
                 reader.ReadNext();
 
-                Assert.AreEqual(expectedOrder[i], reader.GetValue(0));
-                Assert.AreEqual((long)(2 - (expectedOrder[i] % 2)), reader.GetValue(1));
+                Assert.Equal(expectedOrder[i], reader.GetValue(0));
+                Assert.Equal((long)(2 - (expectedOrder[i] % 2)), reader.GetValue(1));
             }
             reader.ReadNext();
-            Assert.IsFalse(reader.IsCanRead);
+            Assert.False(reader.IsCanRead);
 
             reader.Dispose();
 

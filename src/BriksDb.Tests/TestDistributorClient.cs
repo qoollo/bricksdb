@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Ninject;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
@@ -12,19 +11,18 @@ using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestWriter;
+using Xunit;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
     public class TestDistributorClient
     {
-        [TestInitialize]
-        public void Initialize()
+        public TestDistributorClient()
         {
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
         }
 
-        [TestMethod]
+        [Fact]
         public void DistributorApi_ProcessAsyncOperationsFromProxy()
         {
             const int proxyServer = 22213;
@@ -78,7 +76,7 @@ namespace Qoollo.Tests
             for (int i = 0; i < count; i++)
             {
                 var state = proxy.Int.CreateSync(i, i);
-                Assert.AreEqual(RequestState.Complete, state.State);
+                Assert.Equal(RequestState.Complete, state.State);
             }
 
             for (int i = 0; i < count; i++)
@@ -86,14 +84,14 @@ namespace Qoollo.Tests
                 RequestDescription description;
                 var read = proxy.Int.Read(i, out description);
 
-                Assert.AreEqual(i, read);
-                Assert.AreEqual(RequestState.Complete, description.State);
+                Assert.Equal(i, read);
+                Assert.Equal(RequestState.Complete, description.State);
             }
 
             for (int i = 0; i < count; i++)
             {
                 var state = proxy.Int.DeleteSync(i);
-                Assert.AreEqual(RequestState.Complete, state.State);
+                Assert.Equal(RequestState.Complete, state.State);
             }
 
             for (int i = 0; i < count; i++)
@@ -101,7 +99,7 @@ namespace Qoollo.Tests
                 RequestDescription description;
                 proxy.Int.Read(i, out description);
 
-                Assert.AreEqual(RequestState.DataNotFound, description.State);
+                Assert.Equal(RequestState.DataNotFound, description.State);
             }
 
             proxy.Dispose();
@@ -109,7 +107,7 @@ namespace Qoollo.Tests
             storage.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void DistributorApi_ProcessSyncOperationsFromProxy()
         {
             const int proxyServer = 22327;
@@ -172,8 +170,8 @@ namespace Qoollo.Tests
                 RequestDescription description;
                 var read = proxy.Int.Read(i, out description);
 
-                Assert.AreEqual(i, read);
-                Assert.AreEqual(RequestState.Complete, description.State);
+                Assert.Equal(i, read);
+                Assert.Equal(RequestState.Complete, description.State);
             }
 
             for (int i = 0; i < count; i++)
@@ -188,7 +186,7 @@ namespace Qoollo.Tests
                 RequestDescription description;
                 proxy.Int.Read(i, out description);
 
-                Assert.AreEqual(RequestState.DataNotFound, description.State);
+                Assert.Equal(RequestState.DataNotFound, description.State);
             }
 
             proxy.Dispose();

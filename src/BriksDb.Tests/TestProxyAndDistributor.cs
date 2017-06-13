@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Ninject;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -15,17 +14,16 @@ using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
+using Xunit;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
     public class TestProxyAndDistributor
     {
         private TestProxySystem _proxy;
         const int proxyServer = 32223;
 
-        [TestInitialize]
-        public void Initialize()
+        public TestProxyAndDistributor()
         {
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
 
@@ -42,7 +40,7 @@ namespace Qoollo.Tests
             _proxy.Build();
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyAndDistributor_Create_WriterMock()
         {
             var writer =
@@ -83,14 +81,14 @@ namespace Qoollo.Tests
                 var api = _proxy.CreateApi("", false, new StoredDataHashCalculator());
 
                 var transaction = api.Create(10, TestHelper.CreateStoredData(10));
-                Assert.IsNotNull(transaction);
+                Assert.NotNull(transaction);
                 Thread.Sleep(200);
                 transaction = _proxy.GetTransaction(transaction);
-                Assert.IsNotNull(transaction);
+                Assert.NotNull(transaction);
                 Thread.Sleep(4000);
                 transaction = _proxy.GetTransaction(transaction);
-                Assert.IsNotNull(transaction);
-                Assert.AreEqual(TransactionState.DontExist, transaction.State, transaction.ErrorDescription);
+                Assert.NotNull(transaction);
+                Assert.Equal(TransactionState.DontExist, transaction.State);
 
                 var server1 = new ServerId("localhost", 21181);
                 var netconfig = new ConnectionConfiguration("testService", 1);
@@ -99,23 +97,23 @@ namespace Qoollo.Tests
                 Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
                 transaction = api.Create(11, TestHelper.CreateStoredData(11));
-                Assert.IsNotNull(transaction);
+                Assert.NotNull(transaction);
                 Thread.Sleep(200);
                 transaction = _proxy.GetTransaction(transaction);
                 GlobalQueue.Queue.TransactionQueue.Add(new Transaction(transaction));
                 Thread.Sleep(100);
                 transaction = _proxy.GetTransaction(transaction);
-                Assert.IsNotNull(transaction);
+                Assert.NotNull(transaction);
                 if (transaction.State == TransactionState.TransactionInProcess)
                 {
                     Thread.Sleep(100);
                     transaction = _proxy.GetTransaction(transaction);
                 }
-                Assert.AreEqual(TransactionState.Complete, transaction.State, transaction.ErrorDescription);
+                Assert.Equal(TransactionState.Complete, transaction.State);
                 Thread.Sleep(1000);
                 transaction = _proxy.GetTransaction(transaction);
-                Assert.IsNotNull(transaction);
-                Assert.AreEqual(TransactionState.DontExist, transaction.State, transaction.ErrorDescription);
+                Assert.NotNull(transaction);
+                Assert.Equal(TransactionState.DontExist, transaction.State);
                 s.Dispose(); 
             }
             finally
@@ -125,7 +123,7 @@ namespace Qoollo.Tests
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyAndDistributor_Create_WriterMock_TwoReplics()
         {
             var writer = new HashWriter(new HashMapConfiguration("test3", HashMapCreationMode.CreateNew, 2, 3, HashFileType.Writer));
@@ -197,9 +195,9 @@ namespace Qoollo.Tests
                 api.Create(10, TestHelper.CreateStoredData(10));
                 api.Create(11, TestHelper.CreateStoredData(11));
                 Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-                Assert.AreEqual(1, s1.Value);
-                Assert.AreEqual(2, s2.Value);
-                Assert.AreEqual(1, s3.Value);
+                Assert.Equal(1, s1.Value);
+                Assert.Equal(2, s2.Value);
+                Assert.Equal(1, s3.Value);
 
                 s1.Dispose();
                 s2.Dispose();
@@ -213,7 +211,7 @@ namespace Qoollo.Tests
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyAndDistributor_Read_DirectReadFromOneServerMock()
         {
             const int storageServer = 22261;
@@ -260,13 +258,13 @@ namespace Qoollo.Tests
             UserTransaction transaction;
             var read = (StoredData)api.Read(10, out transaction);
 
-            Assert.AreEqual(10, read.Id);
+            Assert.Equal(10, read.Id);
             _proxy.Dispose();
             distr.Dispose();
             s.Dispose();            
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyAndDistributor_Read_DirectReadFromOneServer()
         {
             const int storageServer1 = 22462;            
@@ -328,7 +326,7 @@ namespace Qoollo.Tests
             {
                 var task = api.CreateSync(i, i);
                 task.Wait();
-                Assert.AreEqual(TransactionState.Complete, task.Result.State);
+                Assert.Equal(TransactionState.Complete, task.Result.State);
             }
 
             for (int i = 1; i < count; i++)
@@ -336,7 +334,7 @@ namespace Qoollo.Tests
                 UserTransaction transaction;
                 var read = (int)api.Read(i, out transaction);
 
-                Assert.AreEqual(i, read);
+                Assert.Equal(i, read);
             }
 
             _proxy.Dispose();
@@ -344,7 +342,7 @@ namespace Qoollo.Tests
             storage.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyAndDistributor_Read_DirectReadFromTwoServer()
         {
             const int storageServer1 = 22262;
@@ -421,7 +419,7 @@ namespace Qoollo.Tests
             {
                 var task = api.CreateSync(i, i);
                 task.Wait();
-                Assert.AreEqual(TransactionState.Complete, task.Result.State);
+                Assert.Equal(TransactionState.Complete, task.Result.State);
             }
 
             for (int i = 1; i < count; i++)
@@ -432,7 +430,7 @@ namespace Qoollo.Tests
               //  var read = api.Read(i, out transaction);
               //  Thread.Sleep(10000000);
 
-                Assert.AreEqual(i, read);
+                Assert.Equal(i, read);
             }
 
             _proxy.Dispose();
@@ -441,7 +439,7 @@ namespace Qoollo.Tests
             storage2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyAndDistributor_Read_DirectReadFromTwoServer_TwoReplics()
         {
             const int storageServer1 = 22265;
@@ -519,7 +517,7 @@ namespace Qoollo.Tests
             {
                 var task = api.CreateSync(i, i);
                 task.Wait();
-                Assert.AreEqual(TransactionState.Complete, task.Result.State);
+                Assert.Equal(TransactionState.Complete, task.Result.State);
             }
 
             for (int i = 1; i < count; i++)
@@ -527,7 +525,7 @@ namespace Qoollo.Tests
                 UserTransaction transaction;
                 var read = (int)api.Read(i, out transaction);
 
-                Assert.AreEqual(i, read);
+                Assert.Equal(i, read);
             }
 
             _proxy.Dispose();
@@ -536,7 +534,7 @@ namespace Qoollo.Tests
             storage2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyAndDistributor_Read_DirectReadFromTwoServer_TwoReplics_NoData()
         {
             const int storageServer1 = 22268;
@@ -609,7 +607,7 @@ namespace Qoollo.Tests
             UserTransaction transaction;
             var read = api.Read(10, out transaction);
 
-            Assert.IsNull(read);
+            Assert.Null(read);
 
             _proxy.Dispose();
             distr.Dispose();
@@ -617,7 +615,7 @@ namespace Qoollo.Tests
             storage2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyAndDistributor_Read_DirectReadFromTwoServer_TwoReplics_LongRead()
         {
             const int storageServer1 = 22281;
@@ -696,13 +694,13 @@ namespace Qoollo.Tests
 
             task = api.CreateSync(10, 10);
             task.Wait();
-            Assert.AreEqual(TransactionState.Complete, task.Result.State);
+            Assert.Equal(TransactionState.Complete, task.Result.State);
 
             UserTransaction transaction;
 
             var data = api.Read(10, out transaction);
 
-            Assert.AreEqual(10, data);
+            Assert.Equal(10, data);
 
             _proxy.Dispose();
             distr.Dispose();

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Ninject;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -12,7 +11,6 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.TestSupport;
@@ -20,11 +18,11 @@ using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
+using Xunit;
 using Consts = Qoollo.Client.Support.Consts;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
     public class TestWriterModules
     {
         private TestProxySystem _proxy;
@@ -33,8 +31,7 @@ namespace Qoollo.Tests
         private TestDistributorGate _distributor1;
         private TestDistributorGate _distributor2;
 
-        [TestInitialize]
-        public void Initialize()
+        public TestWriterModules()
         {
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
 
@@ -59,7 +56,7 @@ namespace Qoollo.Tests
             _distributor2 = new TestDistributorGate();
         }
 
-        [TestMethod]
+        [Fact]
         public void DbModule_LocalAndRemoteData_Count()
         {
             var provider = new IntHashConvertor();
@@ -105,14 +102,14 @@ namespace Qoollo.Tests
             Thread.Sleep(1000);
 
             var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
-            Assert.AreNotEqual(count, mem.Local);
-            Assert.AreNotEqual(count, mem.Remote);
-            Assert.AreEqual(count, mem.Local + mem.Remote);
+            Assert.NotEqual(count, mem.Local);
+            Assert.NotEqual(count, mem.Remote);
+            Assert.Equal(count, mem.Local + mem.Remote);
 
             _writer1.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_ProcessData_SendResultToDistributerMock()
         {
             const int distributorServer1 = 22171;
@@ -157,11 +154,11 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
-            Assert.AreEqual(count, s.SendValue);
+            Assert.Equal(count, s.SendValue);
             _writer1.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_ProcessData_SendResultToTwoDistributeMocks()
         {
             const int distributorServer1 = 22173;
@@ -229,13 +226,13 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
-            Assert.AreEqual(count, s.SendValue);
-            Assert.AreEqual(count, s2.SendValue);
+            Assert.Equal(count, s.SendValue);
+            Assert.Equal(count, s2.SendValue);
 
             _writer1.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_ProcessDataFromDistributor_SendResultBack()
         {
             const int distrServer1 = 22180;
@@ -283,17 +280,17 @@ namespace Qoollo.Tests
             foreach (var data in list)
             {
                 var transaction = _distributor1.Main.GetTransactionState(data.Transaction.UserTransaction);
-                Assert.AreEqual(TransactionState.Complete, transaction.State);
+                Assert.Equal(TransactionState.Complete, transaction.State);
             }
 
             var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
-            Assert.AreEqual(count, mem.Local);
+            Assert.Equal(count, mem.Local);
 
             _writer1.Dispose();
             _distributor1.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_ProcessDataFromDistributor_SendResultBack_TwoWriters()
         {
             const int distrServer1 = 22182;
@@ -349,13 +346,13 @@ namespace Qoollo.Tests
             foreach (var data in list)
             {
                 var transaction = _distributor1.Main.GetTransactionState(data.Transaction.UserTransaction);
-                Assert.AreEqual(TransactionState.Complete, transaction.State);
+                Assert.Equal(TransactionState.Complete, transaction.State);
             }
 
             var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
             var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
 
-            Assert.AreEqual(count, mem.Local + mem2.Local);
+            Assert.Equal(count, mem.Local + mem2.Local);
 
             _writer1.Dispose();
             _writer2.Dispose();
@@ -363,7 +360,7 @@ namespace Qoollo.Tests
             _distributor1.Dispose();        
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_ProcessDataFromDistributor_SendResultBack_TwoWritersAndTwoReplics()
         {
             const int distrServer1 = 22185;
@@ -418,14 +415,14 @@ namespace Qoollo.Tests
             foreach (var data in list)
             {
                 var transaction = _distributor1.Main.GetTransactionState(data.Transaction.UserTransaction);
-                Assert.AreEqual(TransactionState.Complete, transaction.State);
+                Assert.Equal(TransactionState.Complete, transaction.State);
             }
 
             var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
             var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
 
-            Assert.AreEqual(count, mem.Local + mem2.Local);
-            Assert.AreEqual(count, mem.Remote + mem2.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local);
+            Assert.Equal(count, mem.Remote + mem2.Remote);
             
             _writer1.Dispose();
             _writer2.Dispose();
@@ -433,7 +430,7 @@ namespace Qoollo.Tests
            _distributor1.Dispose();       
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_ProcessDataFromDistributor_CRUD_TwoWriters()
         {            
             const int distrServer1 = 22201;
@@ -494,28 +491,28 @@ namespace Qoollo.Tests
             {
                 var task = api.CreateSync(i, i);
                 task.Wait();
-                Assert.AreEqual(i + 1, mem.Local + mem2.Local);
+                Assert.Equal(i + 1, mem.Local + mem2.Local);
             }
 
             for (int i = 0; i < count; i++)
             {
                 UserTransaction user;
                 var data = api.Read(i, out user);
-                Assert.AreEqual(i, data);
+                Assert.Equal(i, data);
             }
 
             for (int i = 0; i < count; i++)
             {
                 var task = api.DeleteSync(i);
                 task.Wait();
-                Assert.AreEqual(count - i - 1, mem.Local + mem2.Local);
+                Assert.Equal(count - i - 1, mem.Local + mem2.Local);
             }
 
             for (int i = 0; i < count; i++)
             {
                 UserTransaction user;
                 var data = api.Read(i, out user);
-                Assert.IsNull(data);
+                Assert.Null(data);
             }
 
             _writer2.Dispose();

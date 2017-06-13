@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Ninject;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
@@ -14,7 +9,6 @@ using Qoollo.Tests.TestModules;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
     public class TestBase
     {
         internal TestWriterGate _writer1;
@@ -32,8 +26,7 @@ namespace Qoollo.Tests
         internal const int storageServer2 = 22156;
         internal const int storageServer3 = 22157;
 
-        [TestInitialize]
-        public void Initialize()
+        public TestBase()
         {
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
 

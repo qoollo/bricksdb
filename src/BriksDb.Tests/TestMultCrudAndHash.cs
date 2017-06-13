@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Ninject;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
@@ -14,16 +13,16 @@ using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestWriter;
+using Xunit;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
     public class TestMultCrudAndHash
     {
         private TestGate _proxy;
         const int proxyServer = 22378;
-        [TestInitialize]
-        public void Initialize()
+        
+        public TestMultCrudAndHash()
         {
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
 
@@ -37,7 +36,7 @@ namespace Qoollo.Tests
             _proxy.Build();
         }
 
-        [TestMethod]
+        [Fact]
         public void Proxy_CRUD_TwoTables()
         {            
             const int distrServer1 = 22379;
@@ -91,17 +90,17 @@ namespace Qoollo.Tests
                 RequestDescription result;
 
                 _proxy.Int.Read(i, out result);
-                Assert.AreEqual(RequestState.DataNotFound, result.State);
+                Assert.Equal(RequestState.DataNotFound, result.State);
                 _proxy.Int2.Read(i, out result);
-                Assert.AreEqual(RequestState.DataNotFound, result.State);
+                Assert.Equal(RequestState.DataNotFound, result.State);
             }
 
             for (int i = 0; i < count; i++)
             {
                 RequestDescription result = _proxy.Int.CreateSync(i, i);
-                Assert.AreEqual(RequestState.Complete, result.State);
+                Assert.Equal(RequestState.Complete, result.State);
                 result = _proxy.Int2.CreateSync(i, i);
-                Assert.AreEqual(RequestState.Complete, result.State);
+                Assert.Equal(RequestState.Complete, result.State);
             }
 
             for (int i = 0; i < count; i++)
@@ -109,21 +108,21 @@ namespace Qoollo.Tests
                 RequestDescription result;
 
                 var value = _proxy.Int.Read(i, out result);
-                Assert.AreEqual(RequestState.Complete, result.State);
-                Assert.AreEqual(i, value);
+                Assert.Equal(RequestState.Complete, result.State);
+                Assert.Equal(i, value);
                 value = _proxy.Int2.Read(i, out result);
-                Assert.AreEqual(i, value);
+                Assert.Equal(i, value);
             }
 
-            Assert.AreEqual(count, f.Db.Local);
-            Assert.AreEqual(count, f2.Db.Local);
+            Assert.Equal(count, f.Db.Local);
+            Assert.Equal(count, f2.Db.Local);
 
             _proxy.Dispose();
             distr.Dispose();
             storage.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Proxy_Restore_TwoTablesOneCommand()
         {            
             const int distrServer1 = 22384;
@@ -198,22 +197,22 @@ namespace Qoollo.Tests
                 RequestDescription result;
 
                 var value = _proxy.Int.Read(i, out result);
-                Assert.AreEqual(RequestState.Complete, result.State);
-                Assert.AreEqual(i, value);
+                Assert.Equal(RequestState.Complete, result.State);
+                Assert.Equal(i, value);
                 value = _proxy.Int2.Read(i, out result);
-                Assert.AreEqual(i, value);
+                Assert.Equal(i, value);
             }
 
-            Assert.AreEqual(count, f.Db.Local + f.Db.Remote);
-            Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
+            Assert.Equal(count, f.Db.Local + f.Db.Remote);
+            Assert.Equal(count, f2.Db.Local + f2.Db.Remote);
 
             storage2.Start();
             storage2.Api.Restore(RestoreMode.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
-            Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
-            Assert.AreEqual(count, f2.Db.Local + f4.Db.Local);
+            Assert.Equal(count, f.Db.Local + f3.Db.Local);
+            Assert.Equal(count, f2.Db.Local + f4.Db.Local);
 
             _proxy.Dispose();
             distr.Dispose();
@@ -221,7 +220,7 @@ namespace Qoollo.Tests
             storage2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Proxy_Restore_TwoTablesTwoCommands()
         {            
             const int distrServer1 = 22391;
@@ -296,27 +295,27 @@ namespace Qoollo.Tests
                 RequestDescription result;
 
                 var value = _proxy.Int.Read(i, out result);
-                Assert.AreEqual(RequestState.Complete, result.State);
-                Assert.AreEqual(i, value);
+                Assert.Equal(RequestState.Complete, result.State);
+                Assert.Equal(i, value);
                 value = _proxy.Int2.Read(i, out result);
-                Assert.AreEqual(i, value);
+                Assert.Equal(i, value);
             }
 
-            Assert.AreEqual(count, f.Db.Local + f.Db.Remote);
-            Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
+            Assert.Equal(count, f.Db.Local + f.Db.Remote);
+            Assert.Equal(count, f2.Db.Local + f2.Db.Remote);
 
             storage2.Start();
             storage2.Api.Restore(RestoreMode.SimpleRestoreNeed, "Int");
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
-            Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
-            Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
+            Assert.Equal(count, f.Db.Local + f3.Db.Local);
+            Assert.Equal(count, f2.Db.Local + f2.Db.Remote);
 
             storage2.Api.Restore(RestoreMode.SimpleRestoreNeed, "Int2");
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
-            Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
-            Assert.AreEqual(count, f2.Db.Local + f4.Db.Local);
+            Assert.Equal(count, f.Db.Local + f3.Db.Local);
+            Assert.Equal(count, f2.Db.Local + f4.Db.Local);
 
             _proxy.Dispose();
             distr.Dispose();
@@ -324,7 +323,7 @@ namespace Qoollo.Tests
             storage2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Proxy_HashFromValue()
         {
             const int distrServer1 = 22398;
@@ -379,13 +378,13 @@ namespace Qoollo.Tests
                 RequestDescription result;
 
                 _proxy.Int3.Read(i, out result);
-                Assert.AreEqual(RequestState.DataNotFound, result.State);
+                Assert.Equal(RequestState.DataNotFound, result.State);
             }
 
             for (int i = 0; i < count; i++)
             {
                 RequestDescription result = _proxy.Int3.CreateSync(i, i);
-                Assert.AreEqual(RequestState.Complete, result.State);
+                Assert.Equal(RequestState.Complete, result.State);
             }
 
             for (int i = 0; i < count; i++)
@@ -393,18 +392,18 @@ namespace Qoollo.Tests
                 RequestDescription result;
 
                 var value = _proxy.Int3.Read(i, out result);
-                Assert.AreEqual(RequestState.Complete, result.State);
-                Assert.AreEqual(i, value);
+                Assert.Equal(RequestState.Complete, result.State);
+                Assert.Equal(i, value);
             }
 
-            Assert.AreEqual(count, f.Db.Local);
+            Assert.Equal(count, f.Db.Local);
 
             _proxy.Dispose();
             distr.Dispose();
             storage.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Proxy_Restore_HashFromValue()
         {
             const int distrServer1 = 22403;
@@ -473,20 +472,20 @@ namespace Qoollo.Tests
                 RequestDescription result;
 
                 var value = _proxy.Int3.Read(i, out result);
-                Assert.AreEqual(RequestState.Complete, result.State);
-                Assert.AreEqual(i, value);
+                Assert.Equal(RequestState.Complete, result.State);
+                Assert.Equal(i, value);
             }
 
-            Assert.AreEqual(count, f1.Db.Local + f1.Db.Remote);
+            Assert.Equal(count, f1.Db.Local + f1.Db.Remote);
 
             storage2.Start();
 
             storage2.Api.Restore(RestoreMode.SimpleRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
-            Assert.AreEqual(count, f1.Db.Local + f2.Db.Local);
-            Assert.AreEqual(0, f1.Db.Remote);
-            Assert.AreEqual(0, f2.Db.Remote);
+            Assert.Equal(count, f1.Db.Local + f2.Db.Local);
+            Assert.Equal(0, f1.Db.Remote);
+            Assert.Equal(0, f2.Db.Remote);
 
             _proxy.Dispose();
             distr.Dispose();

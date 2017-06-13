@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -28,19 +27,19 @@ using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
+using Xunit;
+using Assert = Xunit.Assert;
 
 namespace Qoollo.Tests
 {    
-    [TestClass]
     public class TestProxyModules
     {
-        [TestInitialize]
-        public void Initialize()
+        public TestProxyModules()
         {
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxySystem_CreateSync_SendSyncDataToFakeDistributor_NoError()
         {
             var queue = new QueueConfiguration(1, 100);
@@ -75,21 +74,16 @@ namespace Qoollo.Tests
                 transaction.Complete();
                 proxy.Queue.ProxyDistributorQueue.Add(new OperationCompleteCommand(transaction));
             });
-            try
-            {
-                var api = proxy.CreateApi("", false, provider);
-                var wait = api.CreateSync(10, TestHelper.CreateStoredData(10));
-                wait.Wait();
-                Assert.AreEqual(TransactionState.Complete, wait.Result.State);
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+
+            var api = proxy.CreateApi("", false, provider);
+            var wait = api.CreateSync(10, TestHelper.CreateStoredData(10));
+            wait.Wait();
+            Assert.Equal(TransactionState.Complete, wait.Result.State);
+
             proxy.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxySystem_Read_ReadFromFakeDistributor_ExpectedData()
         {
             var queue = new QueueConfiguration(1, 100);
@@ -129,23 +123,18 @@ namespace Qoollo.Tests
                 };
                 proxy.Queue.ProxyDistributorQueue.Add(new ReadOperationCompleteCommand(data));
             });
-            try
-            {
-                UserTransaction userTransaction;
-                var api = proxy.CreateApi("", false, new IntHashConvertor());
-                var wait = api.Read(10, out userTransaction);
 
-                Assert.AreEqual(10, wait);
-                Assert.AreEqual(TransactionState.Complete, userTransaction.State);
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+            UserTransaction userTransaction;
+            var api = proxy.CreateApi("", false, new IntHashConvertor());
+            var wait = api.Read(10, out userTransaction);
+
+            Assert.Equal(10, wait);
+            Assert.Equal(TransactionState.Complete, userTransaction.State);
+
             proxy.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void AsyncProxyCache_AddToCache_WaitRemovedCallback_ExpiredData()
         {
             var cache = new AsyncProxyCache(TimeSpan.FromMilliseconds(200));
@@ -157,18 +146,11 @@ namespace Qoollo.Tests
 
             cache.AddToCache("123", ev.Transaction);
 
-            try
-            {
-                wait.Wait();
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
-            Assert.IsTrue(wait.Result.IsError);
+            wait.Wait();
+            Assert.True(wait.Result.IsError);
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyNetModule_Process_SendDataToDistributors_2SuccessAnd1Fail()
         {
             var server1 = new ServerId("localhost", 21161);
@@ -199,17 +181,17 @@ namespace Qoollo.Tests
             var ret3 = net.Process(server3, ev);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(200));
-            Assert.AreEqual(1, s1.Value);
-            Assert.AreEqual(1, s2.Value);
-            Assert.AreEqual(typeof(SuccessResult), ret1.GetType());
-            Assert.AreEqual(typeof(SuccessResult), ret2.GetType());
-            Assert.AreEqual(typeof(ServerNotFoundResult), ret3.GetType());
+            Assert.Equal(1, s1.Value);
+            Assert.Equal(1, s2.Value);
+            Assert.Equal(typeof(SuccessResult), ret1.GetType());
+            Assert.Equal(typeof(SuccessResult), ret2.GetType());
+            Assert.Equal(typeof(ServerNotFoundResult), ret3.GetType());
 
             net.Dispose();
             distr.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyDistributorModule_TransactionDestination_CreateTransAndGetDestination()
         {
             var model = new DistributorSystemModel();
@@ -222,29 +204,29 @@ namespace Qoollo.Tests
             const string hash = "123";
 
             var res1 = model.CreateTransaction(hash);
-            Assert.IsNotNull(res1);
+            Assert.NotNull(res1);
             var res2 = model.GetDestination(res1.UserTransaction);
-            Assert.IsTrue(server1.Equals(res2));
+            Assert.True(server1.Equals(res2));
 
             var res3 = model.CreateTransaction(hash);
-            Assert.IsNotNull(res3);
+            Assert.NotNull(res3);
             var res4 = model.GetDestination(res3.UserTransaction);
-            Assert.IsTrue(server2.Equals(res4));
+            Assert.True(server2.Equals(res4));
 
             model.ServerNotAvailable(server1);
 
             var res5 = model.CreateTransaction(hash);
-            Assert.IsNotNull(res5);
+            Assert.NotNull(res5);
             var res6 = model.GetDestination(res5.UserTransaction);
-            Assert.IsTrue(server2.Equals(res6));
+            Assert.True(server2.Equals(res6));
 
             model.ServerNotAvailable(server2);
 
             var res7 = model.CreateTransaction(hash);
-            Assert.AreEqual(Errors.NotAvailableServersInSystem + "; ", res7.ErrorDescription);
+            Assert.Equal(Errors.NotAvailableServersInSystem + "; ", res7.ErrorDescription);
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyMainLogic_Process_SendDataToRealDistributor()
         {
             var queue = new QueueConfiguration(1, 1000);
@@ -290,15 +272,15 @@ namespace Qoollo.Tests
             bool res = main.Process(ev);
 
             var server = cache.Get(ev.Transaction.DataHash);
-            Assert.IsNull(server);
-            Assert.IsTrue(res);
+            Assert.Null(server);
+            Assert.True(res);
 
             main.Dispose();
             distributor.Dispose();
             net.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void ProxyDistributorModule_SayIAmHere_AddDistributor()
         {
             const int server1 = 22250;
@@ -411,39 +393,34 @@ namespace Qoollo.Tests
             distributor.SayIAmHere(new ServerId("localhost", server42));
             distributor2.SayIAmHere(new ServerId("localhost", server42));
 
-            var privateObject = new PrivateObject(distributor);
-            var dsm1 = (DistributorSystemModel)privateObject.GetField("_distributorSystemModel");
-            privateObject = new PrivateObject(distributor2);
-            var dsm2 = (DistributorSystemModel)privateObject.GetField("_distributorSystemModel");
+            var dsm1 = (DistributorSystemModel)distributor.GetField("_distributorSystemModel");
+            var dsm2 = (DistributorSystemModel)distributor2.GetField("_distributorSystemModel");
 
-            Assert.AreEqual(1, dsm1.GetDistributorsList().Count);
-            Assert.AreEqual(1, dsm2.GetDistributorsList().Count);
+            Assert.Equal(1, dsm1.GetDistributorsList().Count);
+            Assert.Equal(1, dsm2.GetDistributorsList().Count);
 
             ddistributor2.SayIAmHereRemoteResult(new ServerId("localhost", server42));
 
             Thread.Sleep(TimeSpan.FromMilliseconds(300));
 
-            privateObject = new PrivateObject(ddistributor);
             var mad1 =
                 (Impl.DistributorModules.Model.DistributorSystemModel)
-                    privateObject.GetField("_modelOfAnotherDistributors");
+                    ddistributor.GetField("_modelOfAnotherDistributors");
 
-            privateObject = new PrivateObject(ddistributor2);
             var mad2 =
                 (Impl.DistributorModules.Model.DistributorSystemModel)
-                    privateObject.GetField("_modelOfAnotherDistributors");
+                    ddistributor2.GetField("_modelOfAnotherDistributors");
 
             Thread.Sleep(400);
 
-            Assert.AreEqual(1, mad1.GetDistributorList().Count);
-            Assert.AreEqual(1, mad2.GetDistributorList().Count);
+            Assert.Equal(1, mad1.GetDistributorList().Count);
+            Assert.Equal(1, mad2.GetDistributorList().Count);
 
             distributor3.SayIAmHere(new ServerId("localhost", server52));
 
-            privateObject = new PrivateObject(distributor3);
-            var dsm3 = (DistributorSystemModel)privateObject.GetField("_distributorSystemModel");
+            var dsm3 = (DistributorSystemModel)distributor3.GetField("_distributorSystemModel");
 
-            Assert.AreEqual(2, dsm3.GetDistributorsList().Count);
+            Assert.Equal(2, dsm3.GetDistributorsList().Count);
 
             q1.Dispose();
             q2.Dispose();

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Ninject;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
@@ -15,16 +14,15 @@ using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestWriter;
+using Xunit;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
-    public class TestProxyClient
+    public class TestProxyClient:IDisposable
     {
         private static TestGate _proxy;
 
-        [TestInitialize]
-        public void Initialize()
+        public TestProxyClient()
         {
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
 
@@ -39,13 +37,12 @@ namespace Qoollo.Tests
             _proxy.Start();
         }
 
-        [TestCleanup]
-        public void Cleanup()
+        public void Dispose()
         {
             _proxy.Dispose();
         }
 
-        [TestMethod]        
+        [Fact]        
         public void ClientProxy_CrudOperations()
         {
             const int distrServer1 = 22206;
@@ -100,7 +97,7 @@ namespace Qoollo.Tests
             for (int i = 0; i < count; i++)
             {
                 var state = _proxy.Int.CreateSync(i, i);
-                Assert.AreEqual(RequestState.Complete, state.State);
+                Assert.Equal(RequestState.Complete, state.State);
             }
 
             for (int i = 0; i < count; i++)
@@ -108,14 +105,14 @@ namespace Qoollo.Tests
                 RequestDescription description;
                 var read = _proxy.Int.Read(i, out description);
 
-                Assert.AreEqual(i, read);
-                Assert.AreEqual(RequestState.Complete, description.State);
+                Assert.Equal(i, read);
+                Assert.Equal(RequestState.Complete, description.State);
             }
 
             for (int i = 0; i < count; i++)
             {
                 var state = _proxy.Int.DeleteSync(i);
-                Assert.AreEqual(RequestState.Complete, state.State);
+                Assert.Equal(RequestState.Complete, state.State);
             }
 
             for (int i = 0; i < count; i++)
@@ -123,14 +120,14 @@ namespace Qoollo.Tests
                 RequestDescription description;
                 _proxy.Int.Read(i, out description);
 
-                Assert.AreEqual(RequestState.DataNotFound, description.State);
+                Assert.Equal(RequestState.DataNotFound, description.State);
             }
 
             distr.Dispose();
             storage.Dispose();
         }
         
-        [TestMethod]
+        [Fact]
         public void ClientProxy_AsyncRead()
         {
             const int distrServer1 = 22359;
@@ -186,7 +183,7 @@ namespace Qoollo.Tests
             {
                 var state = _proxy.Int.CreateSync(i, i);
                 
-                Assert.AreEqual(RequestState.Complete, state.State);
+                Assert.Equal(RequestState.Complete, state.State);
             }
 
             for (int i = 0; i < count; i++)
@@ -195,14 +192,14 @@ namespace Qoollo.Tests
 
                 read.Wait();
 
-                Assert.AreEqual(i, read.Result.Value);
-                Assert.AreEqual(RequestState.Complete, read.Result.RequestDescription.State);
+                Assert.Equal(i, read.Result.Value);
+                Assert.Equal(RequestState.Complete, read.Result.RequestDescription.State);
             }
 
             for (int i = 0; i < count; i++)
             {
                 var state = _proxy.Int.DeleteSync(i);
-                Assert.AreEqual(RequestState.Complete, state.State);
+                Assert.Equal(RequestState.Complete, state.State);
             }
 
             for (int i = 0; i < count; i++)
@@ -210,14 +207,14 @@ namespace Qoollo.Tests
                 var read = _proxy.Int.ReadAsync(i);
 
                 read.Wait();
-                Assert.AreEqual(RequestState.DataNotFound, read.Result.RequestDescription.State);
+                Assert.Equal(RequestState.DataNotFound, read.Result.RequestDescription.State);
             }
 
             distr.Dispose();
             storage.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void ClientProxy_Dispose_DisposeWhenWriting()
         {           
             const int distrServer1 = 22370;
@@ -250,7 +247,7 @@ namespace Qoollo.Tests
             distr.Start();
 
             var result = _proxy.Int.SayIAmHere("localhost", distrServer1);
-            Assert.AreEqual(RequestState.Complete, result.State, result.ToString());
+            Assert.Equal(RequestState.Complete, result.State);
 
             storage.Build();
             storage.AddDbModule(new TestInMemoryDbFactory());
@@ -267,7 +264,7 @@ namespace Qoollo.Tests
 
                 if (!(state.State == RequestState.Complete || state.State == RequestState.Error &&
                       state.ErrorDescription == "System disposed" || i == count / 4))
-                    Assert.Fail(state + " " + i);
+                    Assert.NotNull(null);
             }
 
             distr.Dispose();

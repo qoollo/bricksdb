@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Ninject;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -20,21 +19,20 @@ using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
+using Xunit;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
     public class SimpleTests
     {
-        [TestInitialize]
-        public void Initialize()
+        public SimpleTests()
         {
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
         }
 
         #region Test cache
 
-        [TestMethod]
+        [Fact]
         public void Cache_AddGetUpdateRemove()
         {
             var cache = new TestCache(TimeSpan.FromMilliseconds(10000000));
@@ -45,14 +43,14 @@ namespace Qoollo.Tests
             cache.AddToCache(key, ev1);
             cache.AddToCache(key, ev2);
             var data = cache.Get(key);
-            Assert.AreEqual(0, cache.CountCallback);
+            Assert.Equal(0, cache.CountCallback);
             cache.Update(key, data, TimeSpan.FromMinutes(1000));
-            Assert.AreEqual(0, cache.CountCallback);
+            Assert.Equal(0, cache.CountCallback);
             cache.Remove(key);
-            Assert.AreEqual(0, cache.CountCallback);
+            Assert.Equal(0, cache.CountCallback);
         }
 
-        [TestMethod]
+        [Fact]
         public void CachePerformance()
         {
             var ts1 = TimeSpan.FromMilliseconds(400);
@@ -123,7 +121,7 @@ namespace Qoollo.Tests
             avg = avg / count;
         }
 
-        [TestMethod]
+        [Fact]
         public void Cache_AddGet()
         {
             var cache = new TestCache(TimeSpan.FromMilliseconds(100));
@@ -135,27 +133,27 @@ namespace Qoollo.Tests
 
             cache.AddToCache("123", ev);
             var ret = cache.Get("123");
-            Assert.AreEqual(ev, ret);
+            Assert.Equal(ev, ret);
             Thread.Sleep(200);
             ret = cache.Get("123");
-            Assert.AreEqual(null, ret);
+            Assert.Equal(null, ret);
             cache.AddToCache("123", ev);
             ret = cache.Get("123");
-            Assert.AreEqual(ev, ret);
+            Assert.Equal(ev, ret);
 
             cache.AddToCache("1234", ev);
             ret = cache.Get("1234");
-            Assert.AreEqual(ev, ret);
+            Assert.Equal(ev, ret);
             Thread.Sleep(200);
             ret = cache.Get("1234");
-            Assert.AreEqual(null, ret);
+            Assert.Equal(null, ret);
         }
 
         #endregion
 
         #region Test async tasks
 
-        [TestMethod]
+        [Fact]
         public void AsyncTaskModule_AddAsyncTask_AmountOfOperations()
         {
             var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
@@ -167,21 +165,21 @@ namespace Qoollo.Tests
 
             test.AddAsyncTask(async1, false);
             Thread.Sleep(TimeSpan.FromMilliseconds(600));
-            Assert.AreEqual(1, value);
+            Assert.Equal(1, value);
 
             test.StopTask(name1);
             Thread.Sleep(TimeSpan.FromMilliseconds(600));
-            Assert.AreEqual(1, value);
+            Assert.Equal(1, value);
 
             test.RestartTask(name1, true);
             Thread.Sleep(TimeSpan.FromMilliseconds(700));
-            Assert.AreEqual(3, value);
+            Assert.Equal(3, value);
 
             test.Dispose();
 
         }
 
-        [TestMethod]
+        [Fact]
         public void AsyncTaskModule_AddAsyncTask_AmountOfOperations_2Tasks()
         {
             var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
@@ -197,15 +195,15 @@ namespace Qoollo.Tests
             test.AddAsyncTask(async1, true);
             test.AddAsyncTask(async2, true);
             Thread.Sleep(TimeSpan.FromMilliseconds(300));
-            Assert.AreEqual(2, value);
+            Assert.Equal(2, value);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(500));
-            Assert.AreEqual(4, value);
+            Assert.Equal(4, value);
 
             test.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void AsyncTaskModule_Dispose_StopAsyncTaskAfterNumberOfRetry()
         {
             var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
@@ -217,12 +215,12 @@ namespace Qoollo.Tests
 
             test.AddAsyncTask(async1, true);
             Thread.Sleep(TimeSpan.FromMilliseconds(800));
-            Assert.AreEqual(4, value);
+            Assert.Equal(4, value);
 
             test.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void AsyncTaskModule_PingServers_AvalilableAfterSomeTime()
         {
             const int storageServer1 = 21132;
@@ -270,8 +268,8 @@ namespace Qoollo.Tests
             dest = ddistributor.GetDestination(data1, false);
             dest2 = ddistributor.GetDestination(data2, false);
 
-            Assert.AreEqual(null, dest);
-            Assert.AreEqual(null, dest2);
+            Assert.Equal(null, dest);
+            Assert.Equal(null, dest2);
 
             var h1 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer1),
                 new ConnectionConfiguration("testService", 10));
@@ -283,11 +281,11 @@ namespace Qoollo.Tests
             dest = ddistributor.GetDestination(data1, false);
             dest2 = ddistributor.GetDestination(data2, false);
 
-            Assert.AreNotEqual(null, dest);
-            Assert.AreNotEqual(null, dest2);
+            Assert.NotEqual(null, dest);
+            Assert.NotEqual(null, dest2);
 
-            Assert.AreEqual(1, dest.Count);
-            Assert.AreEqual(1, dest2.Count);
+            Assert.Equal(1, dest.Count);
+            Assert.Equal(1, dest2.Count);
 
             ddistributor.Dispose();
             h1.Dispose();

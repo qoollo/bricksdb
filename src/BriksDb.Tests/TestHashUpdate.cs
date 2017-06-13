@@ -3,20 +3,19 @@ using System.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Tests.Support;
+using Xunit;
 
 namespace Qoollo.Tests
 {    
-    [TestClass]
     public class TestHashUpdate:TestBase
     {
 
-        [TestMethod]
+        [Fact]
         public void HashFileUpdater_UpdateFile_AddNewFileAndRenameOld()
         {
             const string fileNameWithouPrefix = "testHashForUpdate";
@@ -39,25 +38,25 @@ namespace Qoollo.Tests
             }
             HashFileUpdater.UpdateFile(fileName);
 
-            Assert.IsTrue(File.Exists(fileNameWithouPrefix + "1.txt"));
-            Assert.IsTrue(File.Exists(fileNameWithouPrefix + "2.txt"));
+            Assert.True(File.Exists(fileNameWithouPrefix + "1.txt"));
+            Assert.True(File.Exists(fileNameWithouPrefix + "2.txt"));
 
             using (var reader = new StreamReader(fileNameWithouPrefix + "2.txt"))
             {
-                Assert.AreEqual(testMessage, reader.ReadLine());
+                Assert.Equal(testMessage, reader.ReadLine());
             }
 
             using (var reader = new StreamReader(fileNameWithouPrefix + "1.txt"))
             {
-                Assert.AreEqual(testMessage, reader.ReadLine());
-                Assert.AreEqual(testMessage, reader.ReadLine());
+                Assert.Equal(testMessage, reader.ReadLine());
+                Assert.Equal(testMessage, reader.ReadLine());
             }
 
             File.Delete(fileNameWithouPrefix + "1.txt");
             File.Delete(fileNameWithouPrefix + "2.txt");
         }
 
-        [TestMethod]
+        [Fact]
         public void HashFileUpdater_UpdateFile_EmptyPrefix_AddNewFileAndRenameOld()
         {
             const string fileNameWithouPrefix = "testHashForUpdate";
@@ -80,22 +79,22 @@ namespace Qoollo.Tests
             }
             HashFileUpdater.UpdateFile(fileName);
 
-            Assert.IsTrue(File.Exists(fileNameWithouPrefix + "1"));
-            Assert.IsTrue(File.Exists(fileNameWithouPrefix + "2"));
+            Assert.True(File.Exists(fileNameWithouPrefix + "1"));
+            Assert.True(File.Exists(fileNameWithouPrefix + "2"));
 
             using (var reader = new StreamReader(fileNameWithouPrefix + "2"))
             {
-                Assert.AreEqual(testMessage, reader.ReadLine());
+                Assert.Equal(testMessage, reader.ReadLine());
             }
 
             using (var reader = new StreamReader(fileNameWithouPrefix + "1"))
             {
-                Assert.AreEqual(testMessage, reader.ReadLine());
-                Assert.AreEqual(testMessage, reader.ReadLine());
+                Assert.Equal(testMessage, reader.ReadLine());
+                Assert.Equal(testMessage, reader.ReadLine());
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void Distributor_UpdateHashOnWritersViaNet_NewServerNotExist()
         {
             const string hashFileName = "Distributor_UpdateHashOnWritersViaNet";
@@ -153,25 +152,25 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
-            Assert.IsTrue(File.Exists(hashFileNameWriter1));
-            Assert.IsTrue(File.Exists(hashFileNameWriter1 + "1"));
-            Assert.IsTrue(File.Exists(hashFileNameWriter2));
-            Assert.IsTrue(File.Exists(hashFileNameWriter2 + "1"));
+            Assert.True(File.Exists(hashFileNameWriter1));
+            Assert.True(File.Exists(hashFileNameWriter1 + "1"));
+            Assert.True(File.Exists(hashFileNameWriter2));
+            Assert.True(File.Exists(hashFileNameWriter2 + "1"));
 
-            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
             
-            Assert.AreEqual(3, _writer1.WriterModel.Servers.Count);
-            Assert.AreEqual(3, _writer2.WriterModel.Servers.Count);
+            Assert.Equal(3, _writer1.WriterModel.Servers.Count);
+            Assert.Equal(3, _writer2.WriterModel.Servers.Count);
 
-            Assert.IsTrue(_distrTest.WriterSystemModel.Servers.Exists(x => !x.IsAvailable));
+            Assert.True(_distrTest.WriterSystemModel.Servers.Exists(x => !x.IsAvailable));
 
             _writer1.Dispose();
             _writer2.Dispose();
             _distrTest.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Distributor_UpdateHashOnWritersViaNet_NewServerExist()
         {
             const string hashFileName = "Distributor_UpdateHashOnWritersViaNet2";
@@ -242,22 +241,22 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
-            Assert.IsTrue(File.Exists(hashFileNameWriter1));
-            Assert.IsTrue(File.Exists(hashFileNameWriter1 + "1"));
-            Assert.IsTrue(File.Exists(hashFileNameWriter2));
-            Assert.IsTrue(File.Exists(hashFileNameWriter2 + "1"));
-            Assert.IsTrue(File.Exists(hashFileNameWriter3));
-            Assert.IsTrue(File.Exists(hashFileNameWriter3 + "1"));
+            Assert.True(File.Exists(hashFileNameWriter1));
+            Assert.True(File.Exists(hashFileNameWriter1 + "1"));
+            Assert.True(File.Exists(hashFileNameWriter2));
+            Assert.True(File.Exists(hashFileNameWriter2 + "1"));
+            Assert.True(File.Exists(hashFileNameWriter3));
+            Assert.True(File.Exists(hashFileNameWriter3 + "1"));
 
-            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer3.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.FullRestoreNeed, _writer3.Distributor.GetRestoreRequiredState());
 
-            Assert.AreEqual(3, _writer1.WriterModel.Servers.Count);
-            Assert.AreEqual(3, _writer2.WriterModel.Servers.Count);
-            Assert.AreEqual(3, _writer3.WriterModel.Servers.Count);
+            Assert.Equal(3, _writer1.WriterModel.Servers.Count);
+            Assert.Equal(3, _writer2.WriterModel.Servers.Count);
+            Assert.Equal(3, _writer3.WriterModel.Servers.Count);
 
-            Assert.IsFalse(_distrTest.WriterSystemModel.Servers.Exists(x => !x.IsAvailable));
+            Assert.False(_distrTest.WriterSystemModel.Servers.Exists(x => !x.IsAvailable));
 
             _writer1.Dispose();
             _writer2.Dispose();
@@ -265,7 +264,7 @@ namespace Qoollo.Tests
             _distrTest.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Distributor_UpdateHashOnDistributor()
         {
             const string hashFileName = "Distributor_UpdateHashOnDistributor";
@@ -327,7 +326,7 @@ namespace Qoollo.Tests
             _writer2.Start();
 
             var result = distrTest2.Distributor.SayIAmHereRemoteResult(new ServerId("localhost", distrServer1));
-            Assert.IsFalse(result.IsError);
+            Assert.False(result.IsError);
 
             writer =
                new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 3, 3,
@@ -342,10 +341,10 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
-            Assert.IsTrue(File.Exists(hashFileName2));
-            Assert.IsTrue(File.Exists(hashFileName2 + "1"));
+            Assert.True(File.Exists(hashFileName2));
+            Assert.True(File.Exists(hashFileName2 + "1"));
 
-            Assert.AreEqual(3, distrTest2.WriterSystemModel.Servers.Count);            
+            Assert.Equal(3, distrTest2.WriterSystemModel.Servers.Count);            
 
             _writer1.Dispose();
             _writer2.Dispose();

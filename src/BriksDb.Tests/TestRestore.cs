@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
@@ -21,11 +20,11 @@ using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
+using Xunit;
 using Consts = Qoollo.Impl.Common.Support.Consts;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
     public class TestRestore : TestBase
     {
         private void CreateRestoreFile(string filename, string tableName, RestoreState state,
@@ -58,7 +57,7 @@ namespace Qoollo.Tests
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_TwoServers()
         {
             var writer =
@@ -129,21 +128,21 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
             }
-            Assert.AreEqual(count, mem.Local + mem.Remote);
+            Assert.Equal(count, mem.Local + mem.Remote);
 
             _writer2.Start();
             _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(count, mem.Local + mem2.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
             _distrTest.Dispose();
             _writer1.Dispose();
@@ -154,7 +153,7 @@ namespace Qoollo.Tests
             File.Delete(file3);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_ThreeServers()
         {
             var writer =
@@ -229,7 +228,7 @@ namespace Qoollo.Tests
                     }
                 }
             }
-            Assert.AreEqual(2, counter);
+            Assert.Equal(2, counter);
 
             #endregion
 
@@ -239,10 +238,10 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
             }
-            Assert.AreEqual(count, mem.Local + mem.Remote);
+            Assert.Equal(count, mem.Local + mem.Remote);
 
             _writer2.Start();
             _writer3.Start();
@@ -255,13 +254,13 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(0, mem3.Remote);
-            Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(0, mem3.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local + mem3.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
             _distrTest.Dispose();
             _writer1.Dispose();
@@ -276,7 +275,7 @@ namespace Qoollo.Tests
             File.Delete(file4);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_RestoreAfterUpdateHashFile_ThreeServers()
         {
             const string fileName = "TestRestore3ServersUpdate";
@@ -361,14 +360,14 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
-                Assert.AreNotEqual(count, mem2.Local);
-                Assert.AreNotEqual(count, mem2.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem2.Local);
+                Assert.NotEqual(count, mem2.Remote);
             }
-            Assert.AreEqual(count, mem.Local + mem2.Local);
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
 
             func2(fileName);
 
@@ -382,14 +381,14 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1400));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(0, mem3.Remote);
-            Assert.AreNotEqual(0, mem3.Local);
-            Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
-            Assert.AreEqual(true, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(true, _writer2.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(0, mem3.Remote);
+            Assert.NotEqual(0, mem3.Local);
+            Assert.Equal(count, mem.Local + mem2.Local + mem3.Local);
+            Assert.Equal(true, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(true, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
             _writer1.Dispose();
             _writer2.Dispose();
@@ -403,7 +402,7 @@ namespace Qoollo.Tests
             File.Delete(file4);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_TwoServersWhenOneServerNotAvailable()
         {
             #region hell
@@ -439,17 +438,17 @@ namespace Qoollo.Tests
             storage1.Api.Restore(RestoreMode.SimpleRestoreNeed);
 
             Thread.Sleep(4000);
-            Assert.IsFalse(storage1.Api.IsRestoreCompleted());
+            Assert.False(storage1.Api.IsRestoreCompleted());
 
             var list = storage1.Api.FailedServers();
-            Assert.AreEqual(1, list.Count);
+            Assert.Equal(1, list.Count);
 
             storage2.Build();
             storage2.AddDbModule(new TestInMemoryDbFactory());
             storage2.Start();
 
             Thread.Sleep(2000);
-            Assert.IsTrue(storage1.Api.IsRestoreCompleted());
+            Assert.True(storage1.Api.IsRestoreCompleted());
 
             _proxy.Dispose();
             _distr.Dispose();
@@ -457,7 +456,7 @@ namespace Qoollo.Tests
             storage2.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_SelfRestore()
         {
             #region hell
@@ -499,10 +498,10 @@ namespace Qoollo.Tests
                 if (wait.IsError)
                     wait = _proxy.Int.CreateSync(i, i);
 
-                Assert.AreEqual(RequestState.Complete, wait.State);
+                Assert.Equal(RequestState.Complete, wait.State);
             }
 
-            Assert.AreEqual(count, factory.Db.Local + factory.Db.Remote);
+            Assert.Equal(count, factory.Db.Local + factory.Db.Remote);
 
             writer =
                 new HashWriter(new HashMapConfiguration("TestRestore", HashMapCreationMode.CreateNew, 1, 1,
@@ -516,14 +515,14 @@ namespace Qoollo.Tests
 
             Thread.Sleep(1000);
 
-            Assert.AreEqual(count, factory.Db.Local);
+            Assert.Equal(count, factory.Db.Local);
 
             _proxy.Dispose();
             _distr.Dispose();
             storage1.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_TimeoutDelete()
         {
             #region hell
@@ -561,32 +560,32 @@ namespace Qoollo.Tests
             {
                 var wait = _proxy.Int.CreateSync(i, i);
 
-                Assert.AreEqual(RequestState.Complete, wait.State);
+                Assert.Equal(RequestState.Complete, wait.State);
             }
 
-            Assert.AreEqual(count, factory.Db.Local);
+            Assert.Equal(count, factory.Db.Local);
 
             for (int i = 0; i < count/2; i++)
             {
                 var wait = _proxy.Int.DeleteSync(i);
 
-                Assert.AreEqual(RequestState.Complete, wait.State);
+                Assert.Equal(RequestState.Complete, wait.State);
             }
 
-            Assert.AreEqual(count/2, factory.Db.Local);
-            Assert.AreEqual(count/2, factory.Db.Deleted);
+            Assert.Equal(count/2, factory.Db.Local);
+            Assert.Equal(count/2, factory.Db.Deleted);
 
             Thread.Sleep(4000);
 
-            Assert.AreEqual(count/2, factory.Db.Local);
-            Assert.AreEqual(0, factory.Db.Deleted);
+            Assert.Equal(count/2, factory.Db.Local);
+            Assert.Equal(0, factory.Db.Deleted);
 
             _proxy.Dispose();
             _distr.Dispose();
             storage1.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_ThreeServersTwoReplics()
         {
             var writer =
@@ -637,13 +636,13 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
 
-                Assert.AreNotEqual(count, mem2.Local);
-                Assert.AreNotEqual(count, mem2.Remote);
+                Assert.NotEqual(count, mem2.Local);
+                Assert.NotEqual(count, mem2.Remote);
             }
-            Assert.AreEqual(count*2, mem.Local + mem.Remote + mem2.Local + mem2.Remote);
+            Assert.Equal(count*2, mem.Local + mem.Remote + mem2.Local + mem2.Remote);
 
             _writer3.Start();
 
@@ -651,13 +650,13 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(0, mem3.Remote);
-            Assert.AreEqual(count*2, mem.Local + mem2.Local + mem3.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(0, mem3.Remote);
+            Assert.Equal(count*2, mem.Local + mem2.Local + mem3.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
             _distrTest.Dispose();
             _writer1.Dispose();
@@ -672,7 +671,7 @@ namespace Qoollo.Tests
             File.Delete(file4);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_ThreeServersTwoReplics_UpdateModel()
         {
             var writer =
@@ -720,11 +719,11 @@ namespace Qoollo.Tests
             var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
             var mem3 = _writer3.Db.GetDbModules.First() as TestDbInMemory;
 
-            Assert.AreEqual(count, mem.Local);
-            Assert.AreEqual(0, mem.Remote);
+            Assert.Equal(count, mem.Local);
+            Assert.Equal(0, mem.Remote);
 
-            Assert.AreEqual(count, mem2.Local);
-            Assert.AreEqual(0, mem2.Remote);
+            Assert.Equal(count, mem2.Local);
+            Assert.Equal(0, mem2.Remote);
 
             writer =
                 new HashWriter(new HashMapConfiguration("Writer_Restore_ThreeServersTwoReplics_UpdateModel",
@@ -753,16 +752,16 @@ namespace Qoollo.Tests
             _writer1.Distributor.Restore(RestoreState.FullRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(0, mem3.Remote);
-            Assert.AreEqual(count*2, mem.Local + mem2.Local + mem3.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(0, mem3.Remote);
+            Assert.Equal(count*2, mem.Local + mem2.Local + mem3.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
-            Assert.AreNotEqual(localLast, mem.Local);
-            Assert.AreNotEqual(localLast2, mem2.Local);
+            Assert.NotEqual(localLast, mem.Local);
+            Assert.NotEqual(localLast2, mem2.Local);
 
             _distrTest.Dispose();
             _writer1.Dispose();
@@ -777,7 +776,7 @@ namespace Qoollo.Tests
             File.Delete(file4);
         }
 
-        [TestMethod]
+        [Fact]
         public void Distributor_RestoreWithDistributirStateCheck_WithoutModelUpdate()
         {
             const string fileName = "Distributor_Restore";
@@ -820,37 +819,37 @@ namespace Qoollo.Tests
                 }
             }
 
-            Assert.AreEqual(count, mem.Local + mem.Remote);
+            Assert.Equal(count, mem.Local + mem.Remote);
 
-            Assert.IsTrue(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer1).IsAvailable);
-            Assert.IsFalse(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).IsAvailable);
+            Assert.True(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer1).IsAvailable);
+            Assert.False(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).IsAvailable);
 
-            Assert.IsTrue(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer1).IsServerRestored);
-            Assert.IsFalse(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).IsServerRestored);
+            Assert.True(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer1).IsServerRestored);
+            Assert.False(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).IsServerRestored);
 
-            Assert.AreEqual(RestoreState.Restored,
+            Assert.Equal(RestoreState.Restored,
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer1).RestoreState);
 
-            Assert.AreEqual(RestoreState.SimpleRestoreNeed,
+            Assert.Equal(RestoreState.SimpleRestoreNeed,
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).RestoreState);
 
             _writer2.Start();
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1200));
 
-            Assert.AreEqual(RestoreState.SimpleRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.SimpleRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
 
             _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
-            Assert.AreEqual(RestoreState.Restored, _writer2.Distributor.GetRestoreRequiredState());
-            Assert.IsTrue(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).IsServerRestored);
+            Assert.Equal(RestoreState.Restored, _writer2.Distributor.GetRestoreRequiredState());
+            Assert.True(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).IsServerRestored);
 
-            Assert.AreEqual(RestoreState.Restored,
+            Assert.Equal(RestoreState.Restored,
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).RestoreState);
 
-            Assert.AreEqual(count, mem.Local + mem2.Local);
+            Assert.Equal(count, mem.Local + mem2.Local);
 
             for (int i = 0; i < count; i++)
             {
@@ -861,7 +860,7 @@ namespace Qoollo.Tests
                 }
             }
 
-            Assert.AreEqual(count*2, mem.Local + mem2.Local);
+            Assert.Equal(count*2, mem.Local + mem2.Local);
 
             _proxy.Dispose();
             _distrTest.Dispose();
@@ -873,7 +872,7 @@ namespace Qoollo.Tests
             File.Delete(file3);
         }
 
-        [TestMethod]
+        [Fact]
         public void Distributor_RestoreWithDistributirStateCheck_WithModelUpdate_RestoreAllServers()
         {
             var func = new Action<string>(file =>
@@ -937,7 +936,7 @@ namespace Qoollo.Tests
                 _proxy.Int.CreateSync(i, i);
             }
 
-            Assert.AreEqual(count, mem.Local + mem2.Local);
+            Assert.Equal(count, mem.Local + mem2.Local);
             func2(fileName);
 
             _writer3.Build(storageServer3, fileName4, 1);
@@ -948,21 +947,21 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(1500));
 
-            Assert.AreEqual(3, _distrTest.WriterSystemModel.Servers.Count);
-            Assert.IsTrue(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer1).IsAvailable);
-            Assert.IsTrue(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).IsAvailable);
-            Assert.IsTrue(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer3).IsAvailable);
+            Assert.Equal(3, _distrTest.WriterSystemModel.Servers.Count);
+            Assert.True(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer1).IsAvailable);
+            Assert.True(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).IsAvailable);
+            Assert.True(_distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer3).IsAvailable);
 
-            Assert.AreEqual(RestoreState.FullRestoreNeed,
+            Assert.Equal(RestoreState.FullRestoreNeed,
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer1).RestoreState);
-            Assert.AreEqual(RestoreState.FullRestoreNeed,
+            Assert.Equal(RestoreState.FullRestoreNeed,
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).RestoreState);
-            Assert.AreEqual(RestoreState.FullRestoreNeed,
+            Assert.Equal(RestoreState.FullRestoreNeed,
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer3).RestoreState);
 
-            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual(RestoreState.FullRestoreNeed, _writer3.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.FullRestoreNeed, _writer1.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.FullRestoreNeed, _writer2.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.FullRestoreNeed, _writer3.Distributor.GetRestoreRequiredState());
 
             _writer1.Distributor.Restore(RestoreState.FullRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(1500));
@@ -971,18 +970,18 @@ namespace Qoollo.Tests
             _writer3.Distributor.Restore(RestoreState.FullRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(1500));
 
-            Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
+            Assert.Equal(count, mem.Local + mem2.Local + mem3.Local);
 
-            Assert.AreEqual(RestoreState.Restored,
+            Assert.Equal(RestoreState.Restored,
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer1).RestoreState);
-            Assert.AreEqual(RestoreState.Restored,
+            Assert.Equal(RestoreState.Restored,
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer2).RestoreState);
-            Assert.AreEqual(RestoreState.Restored,
+            Assert.Equal(RestoreState.Restored,
                 _distrTest.WriterSystemModel.Servers.First(x => x.Port == storageServer3).RestoreState);
 
-            Assert.AreEqual(RestoreState.Restored, _writer1.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual(RestoreState.Restored, _writer2.Distributor.GetRestoreRequiredState());
-            Assert.AreEqual(RestoreState.Restored, _writer3.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.Restored, _writer1.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.Restored, _writer2.Distributor.GetRestoreRequiredState());
+            Assert.Equal(RestoreState.Restored, _writer3.Distributor.GetRestoreRequiredState());
 
             _proxy.Dispose();
             _distrTest.Dispose();
@@ -995,7 +994,7 @@ namespace Qoollo.Tests
             File.Delete(file3);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_TwoServer_RestoreFromFile()
         {
             var writer =
@@ -1072,20 +1071,20 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
             }
-            Assert.AreEqual(count, mem.Local + mem.Remote);
+            Assert.Equal(count, mem.Local + mem.Remote);
 
             _writer2.Start();
 
             Thread.Sleep(TimeSpan.FromMilliseconds(4000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(count, mem.Local + mem2.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
             _distrTest.Dispose();
             _writer1.Dispose();
@@ -1095,7 +1094,7 @@ namespace Qoollo.Tests
             File.Delete(restoreFile2);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_TwoServer_RestoreFromDistributor()
         {
             var writer =
@@ -1167,21 +1166,21 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
             }
-            Assert.AreEqual(count, mem.Local + mem.Remote);
-            Assert.AreEqual(0, mem2.Local + mem2.Remote);
+            Assert.Equal(count, mem.Local + mem.Remote);
+            Assert.Equal(0, mem2.Local + mem2.Remote);
 
             _writer2.Start();
 
             Thread.Sleep(TimeSpan.FromMilliseconds(5000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(count, mem.Local + mem2.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
             _distrTest.Dispose();
             _writer1.Dispose();
@@ -1191,7 +1190,7 @@ namespace Qoollo.Tests
             File.Delete(restoreFile2);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_TwoServer_RestoreWithDefaultMode()
         {
             var writer =
@@ -1263,21 +1262,21 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
             }
-            Assert.AreEqual(count, mem.Local + mem.Remote);
+            Assert.Equal(count, mem.Local + mem.Remote);
 
             _writer2.Start();
             Thread.Sleep(TimeSpan.FromMilliseconds(4000));
             _writer2.Distributor.Restore();
             Thread.Sleep(TimeSpan.FromMilliseconds(4000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(count, mem.Local + mem2.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
             _distrTest.Dispose();
             _writer1.Dispose();
@@ -1287,7 +1286,7 @@ namespace Qoollo.Tests
             File.Delete(restoreFile2);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode()
         {
             const string fileName = "Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode";
@@ -1372,14 +1371,14 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
-                Assert.AreNotEqual(count, mem2.Local);
-                Assert.AreNotEqual(count, mem2.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem2.Local);
+                Assert.NotEqual(count, mem2.Remote);
             }
-            Assert.AreEqual(count, mem.Local + mem2.Local);
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
 
             func2(fileName);
 
@@ -1394,14 +1393,14 @@ namespace Qoollo.Tests
             Thread.Sleep(TimeSpan.FromMilliseconds(1400));
 
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(0, mem3.Remote);
-            Assert.AreNotEqual(0, mem3.Local);
-            Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
-            Assert.AreEqual(true, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(true, _writer2.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(0, mem3.Remote);
+            Assert.NotEqual(0, mem3.Local);
+            Assert.Equal(count, mem.Local + mem2.Local + mem3.Local);
+            Assert.Equal(true, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(true, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
             _writer1.Dispose();
             _writer2.Dispose();
@@ -1415,7 +1414,7 @@ namespace Qoollo.Tests
             File.Delete(file4);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_ThreeServers_DirectServersForRestore()
         {
             var writer =
@@ -1491,7 +1490,7 @@ namespace Qoollo.Tests
                     }
                 }
             }
-            Assert.AreEqual(2, counter);
+            Assert.Equal(2, counter);
 
             #endregion
 
@@ -1501,10 +1500,10 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
             }
-            Assert.AreEqual(count, mem.Local + mem.Remote);
+            Assert.Equal(count, mem.Local + mem.Remote);
 
             _writer2.Start();
             _writer3.Start();
@@ -1517,13 +1516,13 @@ namespace Qoollo.Tests
                 RestoreState.SimpleRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(0, mem3.Remote);
-            Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(RestoreState.SimpleRestoreNeed, _writer2.Restore.RestoreState);
-            Assert.AreEqual(RestoreState.SimpleRestoreNeed, _writer3.Restore.RestoreState);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(0, mem3.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local + mem3.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(RestoreState.SimpleRestoreNeed, _writer2.Restore.RestoreState);
+            Assert.Equal(RestoreState.SimpleRestoreNeed, _writer3.Restore.RestoreState);
 
             _writer2.Distributor.Restore(new List<ServerId> {new ServerId("localhost", storageServer3)},
                 RestoreState.SimpleRestoreNeed);
@@ -1533,13 +1532,13 @@ namespace Qoollo.Tests
                 RestoreState.SimpleRestoreNeed);
             Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(0, mem3.Remote);
-            Assert.AreEqual(count, mem.Local + mem2.Local + mem3.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer3.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(0, mem3.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local + mem3.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
             _distrTest.Dispose();
             _writer1.Dispose();
@@ -1554,7 +1553,7 @@ namespace Qoollo.Tests
             File.Delete(file4);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_TwoServer_RestoreFromDistributor_EnableCommand()
         {
             var writer =
@@ -1628,29 +1627,29 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
             }
-            Assert.AreEqual(count, mem.Local + mem.Remote);
-            Assert.AreEqual(0, mem2.Local + mem2.Remote);
+            Assert.Equal(count, mem.Local + mem.Remote);
+            Assert.Equal(0, mem2.Local + mem2.Remote);
 
             _writer2.Start();
 
             Thread.Sleep(TimeSpan.FromMilliseconds(5000));
 
-            Assert.AreEqual(count, mem.Local + mem.Remote);
-            Assert.AreEqual(0, mem2.Local + mem2.Remote);
-            Assert.AreEqual(true, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(count, mem.Local + mem.Remote);
+            Assert.Equal(0, mem2.Local + mem2.Remote);
+            Assert.Equal(true, _writer2.Restore.IsNeedRestore);
 
             _distrTest.Distributor.AutoRestoreSetMode(true);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(5000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(count, mem.Local + mem2.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
             _distrTest.Dispose();
             _writer1.Dispose();
@@ -1660,7 +1659,7 @@ namespace Qoollo.Tests
             File.Delete(restoreFile2);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_TwoServer_RestoreFromDistributorWithCommand()
         {
             var writer =
@@ -1732,11 +1731,11 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
             }
-            Assert.AreEqual(count, mem.Local + mem.Remote);
-            Assert.AreEqual(0, mem2.Local + mem2.Remote);
+            Assert.Equal(count, mem.Local + mem.Remote);
+            Assert.Equal(0, mem2.Local + mem2.Remote);
 
             _writer2.Start();
             _distrTest.Distributor.Restore(new ServerId("localhost", storageServer2),
@@ -1744,11 +1743,11 @@ namespace Qoollo.Tests
 
             Thread.Sleep(TimeSpan.FromMilliseconds(5000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(count, mem.Local + mem2.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
             _distrTest.Dispose();
             _writer1.Dispose();
@@ -1758,7 +1757,7 @@ namespace Qoollo.Tests
             File.Delete(restoreFile2);
         }
 
-        [TestMethod]
+        [Fact]
         public void Writer_Restore_TwoServers_Package()
         {
             var writer =
@@ -1830,21 +1829,21 @@ namespace Qoollo.Tests
 
             if (count > 1)
             {
-                Assert.AreNotEqual(count, mem.Local);
-                Assert.AreNotEqual(count, mem.Remote);
+                Assert.NotEqual(count, mem.Local);
+                Assert.NotEqual(count, mem.Remote);
             }
-            Assert.AreEqual(count, mem.Local + mem.Remote);
+            Assert.Equal(count, mem.Local + mem.Remote);
 
             _writer2.Start();
             _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
-            Assert.AreEqual(0, mem.Remote);
-            Assert.AreEqual(0, mem2.Remote);
-            Assert.AreEqual(count, mem.Local + mem2.Local);
-            Assert.AreEqual(false, _writer1.Restore.IsNeedRestore);
-            Assert.AreEqual(false, _writer2.Restore.IsNeedRestore);
+            Assert.Equal(0, mem.Remote);
+            Assert.Equal(0, mem2.Remote);
+            Assert.Equal(count, mem.Local + mem2.Local);
+            Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+            Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
             _distrTest.Dispose();
             _writer1.Dispose();

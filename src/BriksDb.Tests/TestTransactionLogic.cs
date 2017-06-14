@@ -8,7 +8,8 @@ using Xunit;
 
 namespace Qoollo.Tests
 {
-    public class TestTransactionLogic
+    [Collection("test collection 1")]
+    public class TestTransactionLogic:TestBase
     {
          class TestData
         {
@@ -16,7 +17,7 @@ namespace Qoollo.Tests
             public DistributorData DistributorData;
         }
 
-         class TestCache : CacheModule<TestData>
+        class TestCache : CacheModule<TestData>
         {
             private readonly TimeSpan _aliveTimeout;
 
@@ -45,20 +46,19 @@ namespace Qoollo.Tests
         public void DistributorData_TestCacheLock_TwoThread_IncrementCounter()
         {
             const string key = "123";
-            var cache =
-                new TestCache(new DistributorCacheConfiguration(TimeSpan.FromMinutes(10),
+            var cache = new TestCache(new DistributorCacheConfiguration(TimeSpan.FromMinutes(10),
                     TimeSpan.FromMinutes(10)));
 
-            var data = new TestData { DistributorData = new DistributorData() };
+            var data = new TestData {DistributorData = new DistributorData()};
             cache.AddToCache(key, data);
-            
+
             var action = new Action(() =>
             {
                 var value = cache.Get(key);
                 using (value.DistributorData.GetLock())
                 {
                     value.Counter++;
-                    cache.Update(key, value);                    
+                    cache.Update(key, value);
                 }
             });
 
@@ -67,6 +67,8 @@ namespace Qoollo.Tests
 
             Thread.Sleep(1000);
             Assert.Equal(2, cache.Get(key).Counter);
+
+            cache.Dispose();
         }
     }
 }

@@ -14,13 +14,15 @@ using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestWriter;
 using Xunit;
+using Consts = Qoollo.Impl.Common.Support.Consts;
 
 namespace Qoollo.Tests
 {
+    [Collection("test collection 1")]
     public class TestMultCrudAndHash:TestBase
     {
-        private TestGate _proxy;
-        const int proxyServer = 22378;
+        private TestGate _proxyGate;
+        new const int proxyServer = 22378;
         
         public TestMultCrudAndHash():base()
         {
@@ -32,8 +34,8 @@ namespace Qoollo.Tests
             var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1),
                 TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
 
-            _proxy = new TestGate(netconfig, toconfig, common);
-            _proxy.Build();
+            _proxyGate = new TestGate(netconfig, toconfig, common);
+            _proxyGate.Build();
         }
 
         [Fact]
@@ -46,6 +48,8 @@ namespace Qoollo.Tests
 
             var filename = nameof(Proxy_CRUD_TwoTables);
             using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
+
             {
                 #region hell
 
@@ -81,10 +85,10 @@ namespace Qoollo.Tests
                 storage.AddDbModule(f2);
 
                 storage.Start();
-                _proxy.Start();
+                _proxyGate.Start();
                 distr.Start();
 
-                _proxy.Int.SayIAmHere("localhost", distrServer1);
+                _proxyGate.Int.SayIAmHere("localhost", distrServer1);
 
                 const int count = 5;
 
@@ -92,17 +96,17 @@ namespace Qoollo.Tests
                 {
                     RequestDescription result;
 
-                    _proxy.Int.Read(i, out result);
+                    _proxyGate.Int.Read(i, out result);
                     Assert.Equal(RequestState.DataNotFound, result.State);
-                    _proxy.Int2.Read(i, out result);
+                    _proxyGate.Int2.Read(i, out result);
                     Assert.Equal(RequestState.DataNotFound, result.State);
                 }
 
                 for (int i = 0; i < count; i++)
                 {
-                    RequestDescription result = _proxy.Int.CreateSync(i, i);
+                    RequestDescription result = _proxyGate.Int.CreateSync(i, i);
                     Assert.Equal(RequestState.Complete, result.State);
-                    result = _proxy.Int2.CreateSync(i, i);
+                    result = _proxyGate.Int2.CreateSync(i, i);
                     Assert.Equal(RequestState.Complete, result.State);
                 }
 
@@ -110,17 +114,17 @@ namespace Qoollo.Tests
                 {
                     RequestDescription result;
 
-                    var value = _proxy.Int.Read(i, out result);
+                    var value = _proxyGate.Int.Read(i, out result);
                     Assert.Equal(RequestState.Complete, result.State);
                     Assert.Equal(i, value);
-                    value = _proxy.Int2.Read(i, out result);
+                    value = _proxyGate.Int2.Read(i, out result);
                     Assert.Equal(i, value);
                 }
 
                 Assert.Equal(count, f.Db.Local);
                 Assert.Equal(count, f2.Db.Local);
 
-                _proxy.Dispose();
+                _proxyGate.Dispose();
                 distr.Dispose();
                 storage.Dispose();
             }
@@ -138,6 +142,7 @@ namespace Qoollo.Tests
 
             var filename = nameof(Proxy_Restore_TwoTablesOneCommand);
             using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 #region hell
 
@@ -182,30 +187,30 @@ namespace Qoollo.Tests
                 storage2.AddDbModule(f4);
 
                 storage1.Start();
-                _proxy.Start();
+                _proxyGate.Start();
                 distr.Start();
 
-                _proxy.Int.SayIAmHere("localhost", distrServer1);
+                _proxyGate.Int.SayIAmHere("localhost", distrServer1);
 
                 const int count = 5;
 
                 for (int i = 0; i < count; i++)
                 {
-                    _proxy.Int.CreateSync(i, i);
-                    _proxy.Int2.CreateSync(i, i);
+                    _proxyGate.Int.CreateSync(i, i);
+                    _proxyGate.Int2.CreateSync(i, i);
 
-                    _proxy.Int.CreateSync(i, i);
-                    _proxy.Int2.CreateSync(i, i);
+                    _proxyGate.Int.CreateSync(i, i);
+                    _proxyGate.Int2.CreateSync(i, i);
                 }
 
                 for (int i = 0; i < count; i++)
                 {
                     RequestDescription result;
 
-                    var value = _proxy.Int.Read(i, out result);
+                    var value = _proxyGate.Int.Read(i, out result);
                     Assert.Equal(RequestState.Complete, result.State);
                     Assert.Equal(i, value);
-                    value = _proxy.Int2.Read(i, out result);
+                    value = _proxyGate.Int2.Read(i, out result);
                     Assert.Equal(i, value);
                 }
 
@@ -220,7 +225,7 @@ namespace Qoollo.Tests
                 Assert.Equal(count, f.Db.Local + f3.Db.Local);
                 Assert.Equal(count, f2.Db.Local + f4.Db.Local);
 
-                _proxy.Dispose();
+                _proxyGate.Dispose();
                 distr.Dispose();
                 storage1.Dispose();
                 storage2.Dispose();
@@ -239,6 +244,7 @@ namespace Qoollo.Tests
 
             var filename = nameof(Proxy_Restore_TwoTablesTwoCommands);
             using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 #region hell
 
@@ -283,30 +289,30 @@ namespace Qoollo.Tests
                 storage2.AddDbModule(f4);
 
                 storage1.Start();
-                _proxy.Start();
+                _proxyGate.Start();
                 distr.Start();
 
-                _proxy.Int.SayIAmHere("localhost", distrServer1);
+                _proxyGate.Int.SayIAmHere("localhost", distrServer1);
 
                 const int count = 5;
 
                 for (int i = 0; i < count; i++)
                 {
-                    var result = _proxy.Int.CreateSync(i, i);
-                    _proxy.Int2.CreateSync(i, i);
+                    _proxyGate.Int.CreateSync(i, i);
+                    _proxyGate.Int2.CreateSync(i, i);
 
-                    result = _proxy.Int.CreateSync(i, i);
-                    _proxy.Int2.CreateSync(i, i);
+                    _proxyGate.Int.CreateSync(i, i);
+                    _proxyGate.Int2.CreateSync(i, i);
                 }
 
                 for (int i = 0; i < count; i++)
                 {
                     RequestDescription result;
 
-                    var value = _proxy.Int.Read(i, out result);
+                    var value = _proxyGate.Int.Read(i, out result);
                     Assert.Equal(RequestState.Complete, result.State);
                     Assert.Equal(i, value);
-                    value = _proxy.Int2.Read(i, out result);
+                    value = _proxyGate.Int2.Read(i, out result);
                     Assert.Equal(i, value);
                 }
 
@@ -326,7 +332,7 @@ namespace Qoollo.Tests
                 Assert.Equal(count, f.Db.Local + f3.Db.Local);
                 Assert.Equal(count, f2.Db.Local + f4.Db.Local);
 
-                _proxy.Dispose();
+                _proxyGate.Dispose();
                 distr.Dispose();
                 storage1.Dispose();
                 storage2.Dispose();
@@ -343,6 +349,7 @@ namespace Qoollo.Tests
 
             var filename = nameof(Proxy_HashFromValue);
             using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 #region hell
 
@@ -379,10 +386,10 @@ namespace Qoollo.Tests
                 storage.AddDbModule(f);
 
                 storage.Start();
-                _proxy.Start();
+                _proxyGate.Start();
                 distr.Start();
 
-                _proxy.Int.SayIAmHere("localhost", distrServer1);
+                _proxyGate.Int.SayIAmHere("localhost", distrServer1);
 
                 const int count = 5;
 
@@ -390,13 +397,13 @@ namespace Qoollo.Tests
                 {
                     RequestDescription result;
 
-                    _proxy.Int3.Read(i, out result);
+                    _proxyGate.Int3.Read(i, out result);
                     Assert.Equal(RequestState.DataNotFound, result.State);
                 }
 
                 for (int i = 0; i < count; i++)
                 {
-                    RequestDescription result = _proxy.Int3.CreateSync(i, i);
+                    RequestDescription result = _proxyGate.Int3.CreateSync(i, i);
                     Assert.Equal(RequestState.Complete, result.State);
                 }
 
@@ -404,14 +411,14 @@ namespace Qoollo.Tests
                 {
                     RequestDescription result;
 
-                    var value = _proxy.Int3.Read(i, out result);
+                    var value = _proxyGate.Int3.Read(i, out result);
                     Assert.Equal(RequestState.Complete, result.State);
                     Assert.Equal(i, value);
                 }
 
                 Assert.Equal(count, f.Db.Local);
 
-                _proxy.Dispose();
+                _proxyGate.Dispose();
                 distr.Dispose();
                 storage.Dispose();
             }
@@ -429,6 +436,7 @@ namespace Qoollo.Tests
 
             var filename = nameof(Proxy_Restore_HashFromValue);
             using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 #region hell
 
@@ -471,24 +479,24 @@ namespace Qoollo.Tests
                 storage2.AddDbModule(f2);
 
                 storage1.Start();
-                _proxy.Start();
+                _proxyGate.Start();
                 distr.Start();
 
-                _proxy.Int.SayIAmHere("localhost", distrServer1);
+                _proxyGate.Int.SayIAmHere("localhost", distrServer1);
 
                 const int count = 50;
 
                 for (int i = 0; i < count; i++)
                 {
-                    _proxy.Int3.CreateSync(i, i);
-                    _proxy.Int3.CreateSync(i, i);
+                    _proxyGate.Int3.CreateSync(i, i);
+                    _proxyGate.Int3.CreateSync(i, i);
                 }
 
                 for (int i = 0; i < count; i++)
                 {
                     RequestDescription result;
 
-                    var value = _proxy.Int3.Read(i, out result);
+                    var value = _proxyGate.Int3.Read(i, out result);
                     Assert.Equal(RequestState.Complete, result.State);
                     Assert.Equal(i, value);
                 }
@@ -504,7 +512,7 @@ namespace Qoollo.Tests
                 Assert.Equal(0, f1.Db.Remote);
                 Assert.Equal(0, f2.Db.Remote);
 
-                _proxy.Dispose();
+                _proxyGate.Dispose();
                 distr.Dispose();
                 storage1.Dispose();
                 storage2.Dispose();

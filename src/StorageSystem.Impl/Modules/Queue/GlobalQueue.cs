@@ -16,6 +16,8 @@ namespace Qoollo.Impl.Modules.Queue
         {
             _queue = queue;
         }
+
+        public static GlobalQueueInner GetQueue() => _queue;
     }
 
     internal class GlobalQueueInner:ControlModule

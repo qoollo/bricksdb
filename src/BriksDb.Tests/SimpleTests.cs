@@ -20,6 +20,7 @@ using Xunit;
 
 namespace Qoollo.Tests
 {
+    [Collection("test collection 1")]
     public class SimpleTests: TestBase
     {
         #region Test cache

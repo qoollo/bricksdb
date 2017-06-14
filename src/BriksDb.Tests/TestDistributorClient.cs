@@ -5,6 +5,7 @@ using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
 using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.HashFile;
+using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
@@ -13,6 +14,7 @@ using Xunit;
 
 namespace Qoollo.Tests
 {
+    [Collection("test collection 1")]
     public class TestDistributorClient:TestBase
     {
         [Fact]
@@ -25,6 +27,7 @@ namespace Qoollo.Tests
 
             var filename = nameof(DistributorApi_ProcessAsyncOperationsFromProxy);
             using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 #region hell
 
@@ -114,6 +117,7 @@ namespace Qoollo.Tests
 
             var filename = nameof(DistributorApi_ProcessSyncOperationsFromProxy);
             using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 #region hell
 

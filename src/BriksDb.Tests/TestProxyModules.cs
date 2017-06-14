@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -23,22 +22,16 @@ using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
 using Qoollo.Impl.Proxy.Model;
 using Qoollo.Impl.Proxy.ProxyNet;
-using Qoollo.Impl.TestSupport;
-using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Xunit;
 using Assert = Xunit.Assert;
 
 namespace Qoollo.Tests
-{    
-    public class TestProxyModules
+{
+    [Collection("test collection 1")]
+    public class TestProxyModules:TestBase
     {
-        public TestProxyModules()
-        {
-            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
-        }
-
         [Fact]
         public void ProxySystem_CreateSync_SendSyncDataToFakeDistributor_NoError()
         {
@@ -148,6 +141,8 @@ namespace Qoollo.Tests
 
             wait.Wait();
             Assert.True(wait.Result.IsError);
+
+            cache.Dispose();
         }
 
         [Fact]
@@ -189,6 +184,8 @@ namespace Qoollo.Tests
 
             net.Dispose();
             distr.Dispose();
+            s1.Dispose();
+            s2.Dispose();
         }
 
         [Fact]
@@ -236,17 +233,18 @@ namespace Qoollo.Tests
             var server3 = new ServerId("localhost", 21173);
             var netconfig = new ConnectionConfiguration("testService", 10);
 
-            TestHelper.OpenDistributorHost(server1, netconfig);
-            TestHelper.OpenDistributorHost(server2, netconfig);
+            var s1 = TestHelper.OpenDistributorHost(server1, netconfig);
+            var s2 = TestHelper.OpenDistributorHost(server2, netconfig);
 
             var net = new ProxyNetModule(netconfig,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var distributor = new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)), net, queue, server1,
+            var cache = new ProxyCache(TimeSpan.FromSeconds(20));
+            var acache = new AsyncProxyCache(TimeSpan.FromMinutes(100));
+            var distributor = new ProxyDistributorModule(acache, net, queue, server1,
                                                          new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
                                                          new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
             net.SetDistributor(distributor);
 
-            var cache = new ProxyCache(TimeSpan.FromSeconds(20));
             var main = new ProxyMainLogicModule(distributor, net, cache);
 
             net.Start();
@@ -278,6 +276,8 @@ namespace Qoollo.Tests
             main.Dispose();
             distributor.Dispose();
             net.Dispose();
+            cache.Dispose();
+            acache.Dispose();
         }
 
         [Fact]
@@ -291,153 +291,160 @@ namespace Qoollo.Tests
             const int server5 = 22254;
             const int server52 = 23254;
 
-            var q1 = new GlobalQueueInner();
-            var q2 = new GlobalQueueInner();
-            var q3 = new GlobalQueueInner();
+            var filename1 = nameof(ProxyDistributorModule_SayIAmHere_AddDistributor)+"1";
+            var filename2 = nameof(ProxyDistributorModule_SayIAmHere_AddDistributor)+"2";
+            using (new FileCleaner(filename1))
+            using (new FileCleaner(filename2))
+            using (new FileCleaner(Consts.RestoreHelpFile))
+            {
+                var q1 = new GlobalQueueInner();
+                var q2 = new GlobalQueueInner();
+                var q3 = new GlobalQueueInner();
 
-            GlobalQueue.SetQueue(q1);
-            var queue = new QueueConfiguration(1, 1000);
-            var netconfig = new ConnectionConfiguration("testService", 10);
+                GlobalQueue.SetQueue(q1);
+                var queue = new QueueConfiguration(1, 1000);
+                var netconfig = new ConnectionConfiguration("testService", 10);
 
-            var netReceive = new NetReceiverConfiguration(server1, "localhost", "testService");
-            var net = new ProxyNetModule(netconfig,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var distributor = new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)), net, queue, new ServerId("localhost", server1),
-                                                         new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
-                                                         new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
-            net.SetDistributor(distributor);
-            var receive = new ProxyNetReceiver(distributor, netReceive);
+                var netReceive = new NetReceiverConfiguration(server1, "localhost", "testService");
+                var net = new ProxyNetModule(netconfig,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var distributor = new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)), net, queue, new ServerId("localhost", server1),
+                                                             new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
+                                                             new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
+                net.SetDistributor(distributor);
+                var receive = new ProxyNetReceiver(distributor, netReceive);
 
-            GlobalQueue.SetQueue(q2);
+                GlobalQueue.SetQueue(q2);
 
-            var netReceive2 = new NetReceiverConfiguration(server2, "localhost", "testService");
-            var net2 = new ProxyNetModule(netconfig,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var distributor2 = new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)), net2, queue, new ServerId("localhost", server2),
-                                                          new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
-                                                          new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
-            net2.SetDistributor(distributor2);
-            var receive2 = new ProxyNetReceiver(distributor2, netReceive2);
+                var netReceive2 = new NetReceiverConfiguration(server2, "localhost", "testService");
+                var net2 = new ProxyNetModule(netconfig,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var distributor2 = new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)), net2, queue, new ServerId("localhost", server2),
+                                                              new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
+                                                              new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
+                net2.SetDistributor(distributor2);
+                var receive2 = new ProxyNetReceiver(distributor2, netReceive2);
 
-            GlobalQueue.SetQueue(q3);
+                GlobalQueue.SetQueue(q3);
 
-            var netReceive3 = new NetReceiverConfiguration(server3, "localhost", "testService");
-            var net3 = new ProxyNetModule(netconfig,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var distributor3 = new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)), net3, queue, new ServerId("localhost", server3),
-                                                          new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
-                                                          new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
-            net3.SetDistributor(distributor3);
-            var receive3 = new ProxyNetReceiver(distributor3, netReceive3);
+                var netReceive3 = new NetReceiverConfiguration(server3, "localhost", "testService");
+                var net3 = new ProxyNetModule(netconfig,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var distributor3 = new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)), net3, queue, new ServerId("localhost", server3),
+                                                              new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
+                                                              new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
+                net3.SetDistributor(distributor3);
+                var receive3 = new ProxyNetReceiver(distributor3, netReceive3);
 
-            var distrconfig = new DistributorHashConfiguration(2);
-            var queueconfig = new QueueConfiguration(1, 100);
-            var dnet = new DistributorNetModule(netconfig,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
-                queueconfig, dnet, new ServerId("localhost", server4),
-                new ServerId("localhost", server42),
-                new HashMapConfiguration("test7", HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
-            dnet.SetDistributor(ddistributor);
+                var distrconfig = new DistributorHashConfiguration(2);
+                var queueconfig = new QueueConfiguration(1, 100);
+                var dnet = new DistributorNetModule(netconfig,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                    new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
+                    queueconfig, dnet, new ServerId("localhost", server4),
+                    new ServerId("localhost", server42),
+                    new HashMapConfiguration(filename1, HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
+                dnet.SetDistributor(ddistributor);
 
-            var cache = new DistributorTimeoutCache(
-                new DistributorCacheConfiguration(new TimeSpan(), new TimeSpan()));
-            var tranc = new TransactionModule(dnet, new TransactionConfiguration(4), 1, cache);
-            var main = new MainLogicModule(ddistributor, tranc, cache);
-            var netReceive4 = new NetReceiverConfiguration(server4, "localhost", "testService");
-            var netReceive42 = new NetReceiverConfiguration(server42, "localhost", "testService");
+                var cache = new DistributorTimeoutCache(
+                    new DistributorCacheConfiguration(new TimeSpan(), new TimeSpan()));
+                var tranc = new TransactionModule(dnet, new TransactionConfiguration(4), 1, cache);
+                var main = new MainLogicModule(ddistributor, tranc, cache);
+                var netReceive4 = new NetReceiverConfiguration(server4, "localhost", "testService");
+                var netReceive42 = new NetReceiverConfiguration(server42, "localhost", "testService");
 
-            var input = new InputModuleWithParallel(new QueueConfiguration(1, 1), main, tranc);
-            var receiver4 = new NetDistributorReceiver(main, input, ddistributor, netReceive4, netReceive42);
+                var input = new InputModuleWithParallel(new QueueConfiguration(1, 1), main, tranc);
+                var receiver4 = new NetDistributorReceiver(main, input, ddistributor, netReceive4, netReceive42);
 
-            GlobalQueue.SetQueue(q1);
-            var dnet2 = new DistributorNetModule(netconfig,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var ddistributor2 = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
-                queueconfig, dnet2,
-                new ServerId("localhost", server5),
-                new ServerId("localhost", server52),
-                new HashMapConfiguration("test6", HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
-            dnet2.SetDistributor(ddistributor2);
+                GlobalQueue.SetQueue(q1);
+                var dnet2 = new DistributorNetModule(netconfig,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var ddistributor2 = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
+                    new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
+                    queueconfig, dnet2,
+                    new ServerId("localhost", server5),
+                    new ServerId("localhost", server52),
+                    new HashMapConfiguration(filename2, HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
+                dnet2.SetDistributor(ddistributor2);
 
-            var netReceive5 = new NetReceiverConfiguration(server5, "localhost", "testService");
-            var netReceive52 = new NetReceiverConfiguration(server52, "localhost", "testService");
-            var receiver5 = new NetDistributorReceiver(main,
-                                                       new InputModuleWithParallel(new QueueConfiguration(1, 1), main,
-                                                                                   tranc),
-                                                       ddistributor2, netReceive5, netReceive52);
+                var netReceive5 = new NetReceiverConfiguration(server5, "localhost", "testService");
+                var netReceive52 = new NetReceiverConfiguration(server52, "localhost", "testService");
+                var receiver5 = new NetDistributorReceiver(main,
+                                                           new InputModuleWithParallel(new QueueConfiguration(1, 1), main,
+                                                                                       tranc),
+                                                           ddistributor2, netReceive5, netReceive52);
 
-            receive.Start();
-            receive2.Start();
-            receive3.Start();
-            receiver4.Start();
-            receiver5.Start();
-            net.Start();
-            net2.Start();
-            net3.Start();
-            distributor.Start();
-            distributor2.Start();
-            distributor3.Start();
+                receive.Start();
+                receive2.Start();
+                receive3.Start();
+                receiver4.Start();
+                receiver5.Start();
+                net.Start();
+                net2.Start();
+                net3.Start();
+                distributor.Start();
+                distributor2.Start();
+                distributor3.Start();
 
-            dnet.Start();
-            dnet2.Start();
-            ddistributor.Start();
-            ddistributor2.Start();
+                dnet.Start();
+                dnet2.Start();
+                ddistributor.Start();
+                ddistributor2.Start();
 
-            q1.Start();
-            q2.Start();
-            q3.Start();
+                q1.Start();
+                q2.Start();
+                q3.Start();
 
-            distributor.SayIAmHere(new ServerId("localhost", server42));
-            distributor2.SayIAmHere(new ServerId("localhost", server42));
+                distributor.SayIAmHere(new ServerId("localhost", server42));
+                distributor2.SayIAmHere(new ServerId("localhost", server42));
 
-            var dsm1 = (DistributorSystemModel)distributor.GetField("_distributorSystemModel");
-            var dsm2 = (DistributorSystemModel)distributor2.GetField("_distributorSystemModel");
+                var dsm1 = (DistributorSystemModel)distributor.GetField("_distributorSystemModel");
+                var dsm2 = (DistributorSystemModel)distributor2.GetField("_distributorSystemModel");
 
-            Assert.Equal(1, dsm1.GetDistributorsList().Count);
-            Assert.Equal(1, dsm2.GetDistributorsList().Count);
+                Assert.Equal(1, dsm1.GetDistributorsList().Count);
+                Assert.Equal(1, dsm2.GetDistributorsList().Count);
 
-            ddistributor2.SayIAmHereRemoteResult(new ServerId("localhost", server42));
+                ddistributor2.SayIAmHereRemoteResult(new ServerId("localhost", server42));
 
-            Thread.Sleep(TimeSpan.FromMilliseconds(300));
+                Thread.Sleep(TimeSpan.FromMilliseconds(300));
 
-            var mad1 =
-                (Impl.DistributorModules.Model.DistributorSystemModel)
-                    ddistributor.GetField("_modelOfAnotherDistributors");
+                var mad1 =
+                    (Impl.DistributorModules.Model.DistributorSystemModel)
+                        ddistributor.GetField("_modelOfAnotherDistributors");
 
-            var mad2 =
-                (Impl.DistributorModules.Model.DistributorSystemModel)
-                    ddistributor2.GetField("_modelOfAnotherDistributors");
+                var mad2 =
+                    (Impl.DistributorModules.Model.DistributorSystemModel)
+                        ddistributor2.GetField("_modelOfAnotherDistributors");
 
-            Thread.Sleep(400);
+                Thread.Sleep(400);
 
-            Assert.Equal(1, mad1.GetDistributorList().Count);
-            Assert.Equal(1, mad2.GetDistributorList().Count);
+                Assert.Equal(1, mad1.GetDistributorList().Count);
+                Assert.Equal(1, mad2.GetDistributorList().Count);
 
-            distributor3.SayIAmHere(new ServerId("localhost", server52));
+                distributor3.SayIAmHere(new ServerId("localhost", server52));
 
-            var dsm3 = (DistributorSystemModel)distributor3.GetField("_distributorSystemModel");
+                var dsm3 = (DistributorSystemModel)distributor3.GetField("_distributorSystemModel");
 
-            Assert.Equal(2, dsm3.GetDistributorsList().Count);
+                Assert.Equal(2, dsm3.GetDistributorsList().Count);
 
-            q1.Dispose();
-            q2.Dispose();
-            q3.Dispose();
+                q1.Dispose();
+                q2.Dispose();
+                q3.Dispose();
 
-            net.Dispose();
-            net2.Dispose();
-            net3.Dispose();
-            dnet.Dispose();
-            dnet2.Dispose();
+                net.Dispose();
+                net2.Dispose();
+                net3.Dispose();
+                dnet.Dispose();
+                dnet2.Dispose();
 
-            ddistributor.Dispose();
-            ddistributor2.Dispose();
+                ddistributor.Dispose();
+                ddistributor2.Dispose();
 
-            distributor.Dispose();
-            distributor2.Dispose();
-            distributor3.Dispose();
+                distributor.Dispose();
+                distributor2.Dispose();
+                distributor3.Dispose();
+            }
         }
     }
 }

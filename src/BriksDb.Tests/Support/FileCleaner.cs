@@ -21,6 +21,7 @@ namespace Qoollo.Tests.Support
         private void RemoveFile(string filename)
         {
             File.Delete(filename);
+            File.Delete(filename+"1");
         }
 
         public void Dispose()

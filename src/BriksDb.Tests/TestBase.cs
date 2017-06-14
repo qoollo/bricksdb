@@ -23,7 +23,7 @@ namespace Qoollo.Tests
         internal const int proxyServer = 22331;
         internal const int distrServer12 = 22324;
         internal const int distrServer22 = 22424;
-        internal const int storageServer1 = 22357;
+        internal const int storageServer1 = 22155;
         internal const int storageServer2 = 22156;
         internal const int storageServer3 = 22157;
 
@@ -59,8 +59,13 @@ namespace Qoollo.Tests
             _writer3 = new TestWriterGate();
         }
 
+        protected virtual void Dispose(bool isUserCall)
+        {
+        }
+
         public void Dispose()
         {
+            Dispose(true);
             Monitor.Exit(Lock);
         }
     }

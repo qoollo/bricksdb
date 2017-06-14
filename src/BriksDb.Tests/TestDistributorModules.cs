@@ -28,6 +28,7 @@ using SingleConnectionToDistributor = Qoollo.Impl.Writer.WriterNet.SingleConnect
 
 namespace Qoollo.Tests
 {
+    [Collection("test collection 1")]
     public class TestDistributorModules: TestBase
     {
         [Fact]
@@ -300,6 +301,9 @@ namespace Qoollo.Tests
                     trm.ProcessWithExecutor(data, trans.Element);
                 }
 
+                Thread.Sleep(200);
+                GlobalQueue.Queue.TransactionQueue.Add(data.Transaction);
+                GlobalQueue.Queue.TransactionQueue.Add(data.Transaction);
                 Thread.Sleep(2000);
 
                 Assert.True(s1.Value <= 0);

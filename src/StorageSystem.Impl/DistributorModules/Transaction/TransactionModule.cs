@@ -24,14 +24,14 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             Contract.Requires(net != null);
             Contract.Requires(transactionConfiguration != null);
             Contract.Requires(countReplics>0);            
-            Contract.Requires(cache != null);                        
+            Contract.Requires(cache != null);
+
+            _queue = GlobalQueue.Queue;
 
             _transactionPool = new TransactionPool(transactionConfiguration.ElementsCount, net, countReplics);
             _countReplics = countReplics;
             _net = net;
             _cache = cache;
-            _queue = GlobalQueue.Queue;
-
             _cache.DataTimeout += DataTimeout;
         }
 
@@ -132,16 +132,10 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
             using (item.DistributorData.GetLock())
             {
-                if (transaction.IsError && !item.DistributorData.IsRollbackSended)
-                {
-                    item.DistributorData.SendRollback();
-                    Rollback(item);
-                }
-
-                if (transaction.ErrorDescription != "" || item.Transaction.IsError)
-                {
-                    AddErrorAndUpdate(item, transaction.ErrorDescription);
-                }
+                //if (transaction.ErrorDescription != "" || item.Transaction.IsError)
+                //{
+                //    AddErrorAndUpdate(item, transaction.ErrorDescription);
+                //}
 
                 item.DistributorData.IncreaseTransactionAnswersCount();
 
@@ -152,7 +146,14 @@ namespace Qoollo.Impl.DistributorModules.Transaction
                 }
 
                 if (item.DistributorData.TransactionAnswersCount == _countReplics)
+                {
+                    if (transaction.IsError && !item.DistributorData.IsRollbackSended)
+                    {
+                        item.DistributorData.SendRollback();
+                        Rollback(item);
+                    }
                     FinishTransaction(item);
+                }
             }
           
         }
@@ -202,13 +203,13 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             data.Transaction.SetError();
             data.Transaction.AddErrorDescription(error);
 
-            if (data.Transaction.OperationType == OperationType.Sync)
-                ProcessSyncTransaction(data);
-            else
-                _cache.Update(data.Transaction.CacheKey, data);
+            //if (data.Transaction.OperationType == OperationType.Sync)
+            //    ProcessSyncTransaction(data);
+            //else
+                //_cache.Update(data.Transaction.CacheKey, data);
 
-            if (data.DistributorData.ExecuteTimer != null)
-                data.DistributorData.ExecuteTimer.Value.Complete();
+            //if (data.DistributorData.ExecuteTimer != null)
+            //    data.DistributorData.ExecuteTimer.Value.Complete();
         }
 
         protected override void Dispose(bool isUserCall)

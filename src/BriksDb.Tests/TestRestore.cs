@@ -442,13 +442,13 @@ namespace Qoollo.Tests
                     TimeSpan.FromMilliseconds(10000000), TimeSpan.FromMilliseconds(500000), TimeSpan.FromSeconds(100),
                     TimeSpan.FromMilliseconds(10000000));
 
-                _distr = new DistributorApi(distrNet, distrConf, common);
-                _distr.Build();
+                var distr = new DistributorApi(distrNet, distrConf, common);
+                distr.Build();
 
                 #endregion
 
                 _proxy.Start();
-                _distr.Start();
+                distr.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer1);
 
@@ -486,7 +486,7 @@ namespace Qoollo.Tests
                 Assert.Equal(count, factory.Db.Local);
 
                 _proxy.Dispose();
-                _distr.Dispose();
+                distr.Dispose();
                 storage1.Dispose();
             }
         }
@@ -522,14 +522,14 @@ namespace Qoollo.Tests
                     TimeSpan.FromMilliseconds(10000000), TimeSpan.FromMilliseconds(500000), TimeSpan.FromSeconds(100),
                     TimeSpan.FromMilliseconds(10000000));
 
-                _distr = new DistributorApi(distrNet, distrConf, common);
-                _distr.Build();
+                var distr = new DistributorApi(distrNet, distrConf, common);
+                distr.Build();
 
                 #endregion
 
                 _proxy.Start();
 
-                _distr.Start();
+                distr.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer1);
 
@@ -564,7 +564,7 @@ namespace Qoollo.Tests
                 Assert.Equal(0, factory.Db.Deleted);
 
                 _proxy.Dispose();
-                _distr.Dispose();
+                distr.Dispose();
                 storage1.Dispose();
             }
         }

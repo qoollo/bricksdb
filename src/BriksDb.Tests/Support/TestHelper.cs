@@ -84,11 +84,11 @@ namespace Qoollo.Tests.Support
             s.Start();
         }
 
-        public static TestWriterServer OpenWriterHost(ServerId server, ConnectionConfiguration config)
+        public static TestWriterServer OpenWriterHost(int writerPort)
         {
             var ret = new TestWriterServer();
 
-            var netConfig = new NetReceiverConfiguration(server.Port, server.RemoteHost, config.ServiceName);
+            var netConfig = new NetReceiverConfiguration(writerPort, "localhost", "testService");
 
             //OpenWriterNetHost(ret, netConfig);
             OpenWriterMockHost(ret, netConfig);

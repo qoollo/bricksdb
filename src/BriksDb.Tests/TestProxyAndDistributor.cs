@@ -97,7 +97,7 @@ namespace Qoollo.Tests
 
                     var server1 = new ServerId("localhost", 21181);
                     var netconfig = new ConnectionConfiguration("testService", 1);
-                    var s = TestHelper.OpenWriterHost(server1, netconfig);
+                    var s = TestHelper.OpenWriterHost(server1.Port);
 
                     Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
@@ -196,9 +196,9 @@ namespace Qoollo.Tests
                     var server2 = new ServerId("localhost", 21192);
                     var server3 = new ServerId("localhost", 21193);
                     var netconfig = new ConnectionConfiguration("testService", 1);
-                    var s1 = TestHelper.OpenWriterHost(server1, netconfig);
-                    var s2 = TestHelper.OpenWriterHost(server2, netconfig);
-                    var s3 = TestHelper.OpenWriterHost(server3, netconfig);
+                    var s1 = TestHelper.OpenWriterHost(server1.Port);
+                    var s2 = TestHelper.OpenWriterHost(server2.Port);
+                    var s3 = TestHelper.OpenWriterHost(server3.Port);
 
                     Thread.Sleep(TimeSpan.FromMilliseconds(300));
 
@@ -265,7 +265,7 @@ namespace Qoollo.Tests
 
                 _proxy.Distributor.SayIAmHere(server);
 
-                var s = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer), connection);
+                var s = TestHelper.OpenWriterHost(storageServer);
 
                 s.retData = TestHelper.CreateEvent(new StoredDataHashCalculator(), 10);
 

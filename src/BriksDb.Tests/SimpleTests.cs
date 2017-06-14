@@ -3,15 +3,11 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
-using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Tests.Support;
@@ -224,29 +220,12 @@ namespace Qoollo.Tests
             var filename = nameof(AsyncTaskModule_PingServers_AvalilableAfterSomeTime);
             using (new FileCleaner(filename))
             {
-                const int storageServer1 = 21132;
-                const int storageServer2 = 22121;
-                const int distrServer1 = 22134;
-                const int distrServer12 = 23134;
-
-                var writer = new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 3, HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
+                CreateHashFile(filename, 2);
 
                 #region hell
 
-                var connection = new ConnectionConfiguration("testService", 10);
-
-                var distrconfig = new DistributorHashConfiguration(1);
-                var queueconfig = new QueueConfiguration(1, 100);
-                var dnet = new DistributorNetModule(connection,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-                var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
-                    new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(2000)), distrconfig, queueconfig, dnet,
-                    new ServerId("localhost", distrServer1), new ServerId("localhost", distrServer12),
-                    new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
+                var dnet = DistributorNetModule();
+                var ddistributor = DistributorDistributorModule(filename, 1, dnet);
                 dnet.SetDistributor(ddistributor);
 
                 dnet.Start();
@@ -272,10 +251,8 @@ namespace Qoollo.Tests
                 Assert.Equal(null, dest);
                 Assert.Equal(null, dest2);
 
-                var h1 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer1),
-                    new ConnectionConfiguration("testService", 10));
-                var h2 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer2),
-                    new ConnectionConfiguration("testService", 10));
+                var h1 = TestHelper.OpenWriterHost(storageServer1);
+                var h2 = TestHelper.OpenWriterHost(storageServer2);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(800));
 

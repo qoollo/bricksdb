@@ -110,29 +110,9 @@ namespace Qoollo.Tests
             using (new FileCleaner(hashFileNameWriter2))
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
-                var writer =
-                   new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 2, 3,
-                       HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
-
-                writer =
-                   new HashWriter(new HashMapConfiguration(hashFileNameWriter1, HashMapCreationMode.CreateNew, 2, 3,
-                       HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
-
-                writer =
-                   new HashWriter(new HashMapConfiguration(hashFileNameWriter2, HashMapCreationMode.CreateNew, 2, 3,
-                       HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
+                CreateHashFile(hashFileName, 2);
+                CreateHashFile(hashFileNameWriter1, 2);
+                CreateHashFile(hashFileNameWriter2, 2);
 
                 _distrTest.Build(1, distrServer1, distrServer12, hashFileName);
 
@@ -143,14 +123,7 @@ namespace Qoollo.Tests
                 _writer1.Start();
                 _writer2.Start();
 
-                writer =
-                   new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 3, 3,
-                       HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.SetServer(2, "localhost", storageServer3, 157);
-                writer.Save();
+                CreateHashFile(hashFileName, 3);
 
                 _distrTest.Distributor.UpdateModel();
 
@@ -196,36 +169,16 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 var writer =
-               new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 2, 3,
-                   HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
-
-                writer =
-                   new HashWriter(new HashMapConfiguration(hashFileNameWriter1, HashMapCreationMode.CreateNew, 2, 3,
-                       HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
-
-                writer =
-                   new HashWriter(new HashMapConfiguration(hashFileNameWriter2, HashMapCreationMode.CreateNew, 2, 3,
-                       HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
-
-                writer =
                    new HashWriter(new HashMapConfiguration(hashFileNameWriter3, HashMapCreationMode.CreateNew, 2, 3,
                        HashFileType.Distributor));
                 writer.CreateMap();
                 writer.SetServer(0, "localhost", storageServer1, 157);
                 writer.SetServer(1, "localhost", storageServer3, 157);
                 writer.Save();
+
+                CreateHashFile(hashFileName, 2);
+                CreateHashFile(hashFileNameWriter1, 2);
+                CreateHashFile(hashFileNameWriter2, 2);
 
                 _distrTest.Build(1, distrServer1, distrServer12, hashFileName);
 
@@ -238,14 +191,7 @@ namespace Qoollo.Tests
                 _writer2.Start();
                 _writer3.Start();
 
-                writer =
-                   new HashWriter(new HashMapConfiguration(hashFileName, HashMapCreationMode.CreateNew, 3, 3,
-                       HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.SetServer(2, "localhost", storageServer3, 157);
-                writer.Save();
+                CreateHashFile(hashFileName, 3);
 
                 _distrTest.Distributor.UpdateModel();
 

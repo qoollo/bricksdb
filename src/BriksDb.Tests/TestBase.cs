@@ -9,13 +9,16 @@ using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Collector.Model;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Model;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
+using Qoollo.Tests.TestProxy;
 
 namespace Qoollo.Tests
 {
@@ -132,16 +135,75 @@ namespace Qoollo.Tests
             return new DistributorApi(distrNet, distrConf, CommonConfiguration);
         }
 
-        internal StorageConfiguration StorageConfiguration(string filename, int countReplics)
+        internal StorageConfiguration StorageConfiguration(string filename, int countReplics, int restoreAnswerMls = 10000000)
         {
-            return new StorageConfiguration(filename, countReplics, 10, TimeSpan.FromHours(1), TimeSpan.FromHours(1),
-                    TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
+            return new StorageConfiguration(filename, countReplics, 10, TimeSpan.FromHours(1),
+                TimeSpan.FromMilliseconds(restoreAnswerMls), TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
         }
 
-        internal WriterApi WriterApi(StorageConfiguration storageConfiguration, int portForDistr, int portForCollector)
+        internal WriterApi WriterApi(StorageConfiguration storageConfiguration, int portForDistr, int portForCollector = 157)
         {
             var storageNet = new StorageNetConfiguration("localhost", portForDistr, portForCollector, "testService", 10);
             return new WriterApi(storageNet, storageConfiguration, CommonConfiguration);
+        }
+
+        internal NetReceiverConfiguration NetReceiverConfiguration(int serverPort)
+        {
+            return new NetReceiverConfiguration(serverPort, "localhost", "testService");
+        }
+
+        internal DistributorCacheConfiguration DistributorCacheConfiguration(int deleteMls = 2000, int updateMls = 200000)
+        {
+            return new DistributorCacheConfiguration(TimeSpan.FromMilliseconds(deleteMls), TimeSpan.FromMilliseconds(updateMls));
+        }
+
+        internal WriterSystemModel WriterSystemModel(string filename, int countReplics)
+        {
+            return new WriterSystemModel(new DistributorHashConfiguration(countReplics),
+                new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics,
+                    HashFileType.Distributor));
+        }
+
+        internal TestProxySystem TestProxySystem(int proxyPort)
+        {
+            var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(2));
+            return new TestProxySystem(ServerId(proxyPort),
+               QueueConfiguration, ConnectionConfiguration, 
+               pcc, pcc,
+               NetReceiverConfiguration(proxyPort),
+               new AsyncTasksConfiguration(new TimeSpan()),
+               new AsyncTasksConfiguration(new TimeSpan()),
+               new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+        }
+
+        internal DistributorSystem DistributorSystem(DistributorCacheConfiguration cacheConfiguration,
+            string filename, int countReplics, int portForProxy, int portForWriter,
+            int toMls1 = 200, int toMls2 = 30000)
+        {
+            return new DistributorSystem(ServerId(portForWriter), ServerId(portForProxy),
+                new DistributorHashConfiguration(countReplics),
+                QueueConfiguration, ConnectionConfiguration, cacheConfiguration,
+                NetReceiverConfiguration(portForWriter),
+                NetReceiverConfiguration(portForProxy),
+                new TransactionConfiguration(1),
+                new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics,
+                    HashFileType.Distributor),
+                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls1)),
+                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls2)),
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+        }
+
+        internal WriterSystem WriterSystem(string filename, int countReplics, int portForDistr, int portForCollector = 157)
+        {
+            return new WriterSystem(ServerId(portForDistr), QueueConfiguration,
+                NetReceiverConfiguration(portForDistr),
+                NetReceiverConfiguration(portForCollector),
+                new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics, HashFileType.Writer),
+                ConnectionConfiguration,
+                new RestoreModuleConfiguration(10, new TimeSpan()),
+                new RestoreModuleConfiguration(10, new TimeSpan()),
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
+                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
         }
 
         protected virtual void Dispose(bool isUserCall)

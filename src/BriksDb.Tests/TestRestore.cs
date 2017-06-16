@@ -4,22 +4,16 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Qoollo.Client.Configuration;
-using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
-using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.Support;
-using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
 using Xunit;
 using Consts = Qoollo.Impl.Common.Support.Consts;
@@ -64,8 +58,26 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_TwoServers()
+        private InnerData InnerData(int i)
+        {
+            var ev = new InnerData(new Transaction(
+                HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "default")
+            {
+                OperationName = OperationName.Create,
+                OperationType = OperationType.Async
+            })
+            {
+                Data = CommonDataSerializer.Serialize(i),
+                Key = CommonDataSerializer.Serialize(i),
+                Transaction = {Distributor = new ServerId("localhost", distrServer1)}
+            };
+            ev.Transaction.TableName = "Int";
+            return ev;
+        }
+
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_TwoServers(int count)
         {
             var filename = nameof(Writer_Restore_TwoServers);
             using (new FileCleaner(filename))
@@ -73,13 +85,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             using (new FileCleaner(file3))
             {
-                var writer =
-                    new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 3,
-                        HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
+                CreateHashFile(filename, 2);
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build(1, distrServer1, distrServer12, filename);
@@ -92,28 +98,13 @@ namespace Qoollo.Tests
                 _writer1.Start();
 
                 var list = new List<InnerData>();
-                const int count = 50;
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
-                            "default")
-                        {
-                            OperationName = OperationName.Create,
-                            OperationType = OperationType.Async
-                        })
-                        {
-                            Data = CommonDataSerializer.Serialize(i),
-                            Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { Distributor = new ServerId("localhost", distrServer1) }
-                        };
-                    ev.Transaction.TableName = "Int";
+                    var data = InnerData(i);
+                    data.Transaction.Distributor = new ServerId("localhost", distrServer1);
 
-                    list.Add(ev);
-                }
+                    list.Add(data);
 
-                foreach (var data in list)
-                {
                     _distrTest.Input.ProcessAsync(data);
                 }
 
@@ -159,8 +150,9 @@ namespace Qoollo.Tests
             }            
         }
 
-        [Fact]
-        public void Writer_Restore_ThreeServers()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_ThreeServers(int count)
         {
             var filename = nameof(Writer_Restore_ThreeServers);
             using (new FileCleaner(filename))
@@ -169,29 +161,9 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             using (new FileCleaner(file4))
             {
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 3, 3,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.SetServer(2, "localhost", storageServer3, 157);
-                writer.Save();
+                CreateHashFile(filename, 3);
 
-                #region hell
-
-                var queue = new QueueConfiguration(2, 100);
-                var connection = new ConnectionConfiguration("testService", 10);
-                var ndrc2 = new NetReceiverConfiguration(proxyServer, "localhost", "testService");
-                var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(3));
-                var pccc2 = new ProxyCacheConfiguration(TimeSpan.FromSeconds(4));
-
-                var proxy = new TestProxySystem(new ServerId("localhost", proxyServer),
-                    queue, connection, pcc, pccc2, ndrc2,
-                    new AsyncTasksConfiguration(new TimeSpan()),
-                    new AsyncTasksConfiguration(new TimeSpan()),
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-
+                var proxy = TestProxySystem(proxyServer, 3, 4);
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build(1, distrServer1, distrServer12, filename);
@@ -202,8 +174,6 @@ namespace Qoollo.Tests
                 InitInjection.RestoreHelpFileOut = file4;
                 _writer3.Build(storageServer3, filename, 1);
 
-                #endregion
-
                 #region hell2
 
                 proxy.Build();
@@ -212,11 +182,10 @@ namespace Qoollo.Tests
                 _distrTest.Start();
                 _writer1.Start();
 
-                proxy.Distributor.SayIAmHere(new ServerId("localhost", distrServer12));
+                proxy.Distributor.SayIAmHere(ServerId(distrServer12));
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(200));
 
-                const int count = 50;
                 int counter = 0;
 
                 var api = proxy.CreateApi("Int", false, new IntHashConvertor());
@@ -237,6 +206,7 @@ namespace Qoollo.Tests
                         }
                     }
                 }
+
                 Assert.Equal(2, counter);
 
                 #endregion
@@ -280,8 +250,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_RestoreAfterUpdateHashFile_ThreeServers()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_RestoreAfterUpdateHashFile_ThreeServers(int count)
         {
             var filename = nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers);
             var filename1 = "1" + nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers);
@@ -296,31 +267,12 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             using (new FileCleaner(file4))
             {
-                var func = new Action<string>(file =>
-                {
-                    var writer = new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 2, 3,
-                        HashFileType.Distributor));
-                    writer.CreateMap();
-                    writer.SetServer(0, "localhost", storageServer1, 157);
-                    writer.SetServer(1, "localhost", storageServer2, 157);
-                    writer.Save();
-                });
+                #region hell
 
-                var func2 = new Action<string>(file =>
-                {
-                    var writer = new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 3, 3,
-                        HashFileType.Distributor));
-                    writer.CreateMap();
-                    writer.SetServer(0, "localhost", storageServer1, 157);
-                    writer.SetServer(1, "localhost", storageServer2, 157);
-                    writer.SetServer(2, "localhost", storageServer3, 157);
-                    writer.Save();
-                });
-
-                func(filename);
-                func(filename1);
-                func(filename2);
-                func2(filename3);
+                CreateHashFile(filename, 2);
+                CreateHashFile(filename1, 2);
+                CreateHashFile(filename2, 2);
+                CreateHashFile(filename3, 3);
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build(1, distrServer1, distrServer12, filename);
@@ -335,30 +287,14 @@ namespace Qoollo.Tests
                 _writer1.Start();
                 _writer2.Start();
 
-                #region hell
-
                 var list = new List<InnerData>();
-                const int count = 50;
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
-                        {
-                            OperationName = OperationName.Create,
-                            OperationType = OperationType.Async
-                        })
-                        {
-                            Data = CommonDataSerializer.Serialize(i),
-                            Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { Distributor = new ServerId("localhost", distrServer1) }
-                        };
-                    ev.Transaction.TableName = "Int";
+                    var data = InnerData(i);
+                    data.Transaction.Distributor = ServerId(distrServer1);
 
-                    list.Add(ev);
-                }
+                    list.Add(data);
 
-                foreach (var data in list)
-                {
                     _distrTest.Input.ProcessAsync(data);
                 }
 
@@ -381,7 +317,7 @@ namespace Qoollo.Tests
                 Assert.Equal(0, mem.Remote);
                 Assert.Equal(0, mem2.Remote);
 
-                func2(filename);
+                CreateHashFile(filename, 3);
 
                 _writer3.Start();
 
@@ -410,42 +346,21 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_SelfRestore()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_SelfRestore(int count)
         {
             var filename = nameof(Writer_Restore_SelfRestore);
             using (new FileCleaner(filename))
-            using (new FileCleaner(Impl.Common.Support.Consts.RestoreHelpFile))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
-                #region hell
-
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 1,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
-
-                var common = new CommonConfiguration(1, 100);
-
-                var storageNet1 = new StorageNetConfiguration("localhost", storageServer1, 157, "testService", 10);
-                var storageConfig = new StorageConfiguration(filename, 1, 10, TimeSpan.FromMilliseconds(10000),
-                    TimeSpan.FromMilliseconds(200), TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
+                CreateHashFile(filename, 2);
 
                 var factory = new TestInMemoryDbFactory();
-                var storage1 = new WriterApi(storageNet1, storageConfig, common);
+                var storage1 = WriterApi(StorageConfiguration(filename, 1, 200), storageServer1);
 
-                var distrNet = new DistributorNetConfiguration("localhost",
-                    distrServer1, distrServer12, "testService", 10);
-                var distrConf = new DistributorConfiguration(1, filename,
-                    TimeSpan.FromMilliseconds(10000000), TimeSpan.FromMilliseconds(500000), TimeSpan.FromSeconds(100),
-                    TimeSpan.FromMilliseconds(10000000));
-
-                var distr = new DistributorApi(distrNet, distrConf, common);
+                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 distr.Build();
-
-                #endregion
 
                 _proxy.Start();
                 distr.Start();
@@ -457,7 +372,6 @@ namespace Qoollo.Tests
                 storage1.Start();
 
                 Thread.Sleep(500);
-                const int count = 50;
 
                 for (int i = 0; i < count; i++)
                 {
@@ -471,12 +385,7 @@ namespace Qoollo.Tests
 
                 Assert.Equal(count, factory.Db.Local + factory.Db.Remote);
 
-                writer =
-                    new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 1, 1,
-                        HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.Save();
+                CreateHashFile(filename, 1);
 
                 storage1.Api.UpdateModel();
                 storage1.Api.Restore(RestoreMode.FullRestoreNeed);
@@ -491,44 +400,23 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_TimeoutDelete()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_TimeoutDelete(int count)
         {
             var filename = nameof(Writer_Restore_TimeoutDelete);
             using (new FileCleaner(filename))
-            using (new FileCleaner(Impl.Common.Support.Consts.RestoreHelpFile))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
-                #region hell
-
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 1, 1,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.Save();
-
-                var storageNet1 = new StorageNetConfiguration("localhost", storageServer1, 157, "testService", 10);
-                var storageConfig = new StorageConfiguration(filename, 1, 10,
-                    TimeSpan.FromMilliseconds(10000),
-                    TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(1), TimeSpan.FromSeconds(1), true);
+                CreateHashFile(filename, 1);
 
                 var factory = new TestInMemoryDbFactory();
-                var storage1 = new WriterApi(storageNet1, storageConfig, new CommonConfiguration(1, 10));
+                var storage1 = WriterApi(StorageConfiguration(filename, 1, 200, 1, 60, true), storageServer1);
 
-                var common = new CommonConfiguration(1, 100);
-                var distrNet = new DistributorNetConfiguration("localhost",
-                distrServer1, distrServer12, "testService", 10);
-                var distrConf = new DistributorConfiguration(1, filename,
-                    TimeSpan.FromMilliseconds(10000000), TimeSpan.FromMilliseconds(500000), TimeSpan.FromSeconds(100),
-                    TimeSpan.FromMilliseconds(10000000));
-
-                var distr = new DistributorApi(distrNet, distrConf, common);
+                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 distr.Build();
 
-                #endregion
-
                 _proxy.Start();
-
                 distr.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer1);
@@ -537,12 +425,9 @@ namespace Qoollo.Tests
                 storage1.AddDbModule(factory);
                 storage1.Start();
 
-                const int count = 50;
-
                 for (int i = 0; i < count; i++)
                 {
                     var wait = _proxy.Int.CreateSync(i, i);
-
                     Assert.Equal(RequestState.Complete, wait.State);
                 }
 
@@ -551,7 +436,6 @@ namespace Qoollo.Tests
                 for (int i = 0; i < count / 2; i++)
                 {
                     var wait = _proxy.Int.DeleteSync(i);
-
                     Assert.Equal(RequestState.Complete, wait.State);
                 }
 
@@ -569,8 +453,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_ThreeServersTwoReplics()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_ThreeServersTwoReplics(int count)
         {
             var filename = nameof(Writer_Restore_ThreeServersTwoReplics);
             using (new FileCleaner(filename))
@@ -579,14 +464,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             using (new FileCleaner(file4))
             {
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 3, 3,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.SetServer(2, "localhost", storageServer3, 157);
-                writer.Save();
+                CreateHashFile(filename, 3);
 
                 _proxy.Start();
                 InitInjection.RestoreHelpFileOut = file1;
@@ -605,8 +483,6 @@ namespace Qoollo.Tests
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(200));
-
-                const int count = 50;
 
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
@@ -653,8 +529,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_ThreeServersTwoReplics_UpdateModel()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_ThreeServersTwoReplics_UpdateModel(int count)
         {
             var filename = nameof(Writer_Restore_ThreeServersTwoReplics_UpdateModel);
             using (new FileCleaner(filename))
@@ -663,13 +540,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             using (new FileCleaner(file4))
             {
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 2,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
+                CreateHashFile(filename, 2);
 
                 _proxy.Start();
                 InitInjection.RestoreHelpFileOut = file1;
@@ -689,9 +560,6 @@ namespace Qoollo.Tests
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(200));
 
-                const int count = 50;
-
-
                 for (int i = 0; i < count; i++)
                 {
                     if (_proxy.Int.CreateSync(i, i).IsError)
@@ -708,14 +576,7 @@ namespace Qoollo.Tests
                 Assert.Equal(count, mem2.Local);
                 Assert.Equal(0, mem2.Remote);
 
-                writer =
-                    new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 3, 3,
-                        HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.SetServer(2, "localhost", storageServer3, 157);
-                writer.Save();
+                CreateHashFile(filename, 3);
 
                 var localLast = mem.Local;
                 var localLast2 = mem2.Local;
@@ -754,8 +615,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Distributor_RestoreWithDistributirStateCheck_WithoutModelUpdate()
+        [Theory]
+        [InlineData(50)]
+        public void Distributor_RestoreWithDistributirStateCheck_WithoutModelUpdate(int count)
         {
             var filename = nameof(Distributor_RestoreWithDistributirStateCheck_WithoutModelUpdate);
             using (new FileCleaner(filename))
@@ -763,13 +625,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             using (new FileCleaner(file3))
             {
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 3,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
+                CreateHashFile(filename, 2);
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1, filename, 1);
@@ -788,7 +644,6 @@ namespace Qoollo.Tests
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
 
-                const int count = 50;
                 for (int i = 0; i < count; i++)
                 {
                     var result = _proxy.Int.CreateSync(i, i);
@@ -848,8 +703,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Distributor_RestoreWithDistributirStateCheck_WithModelUpdate_RestoreAllServers()
+        [Theory]
+        [InlineData(50)]
+        public void Distributor_RestoreWithDistributirStateCheck_WithModelUpdate_RestoreAllServers(int count)
         {
             var filename = nameof(Distributor_RestoreWithDistributirStateCheck_WithModelUpdate_RestoreAllServers);
             var filename2 = nameof(Distributor_RestoreWithDistributirStateCheck_WithModelUpdate_RestoreAllServers)+"2";
@@ -863,33 +719,10 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             using (new FileCleaner(file3))
             {
-                var func = new Action<string>(file =>
-                {
-                    var writer =
-                        new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 2, 3,
-                            HashFileType.Distributor));
-                    writer.CreateMap();
-                    writer.SetServer(0, "localhost", storageServer1, 157);
-                    writer.SetServer(1, "localhost", storageServer2, 157);
-                    writer.Save();
-                });
-
-                var func2 = new Action<string>(file =>
-                {
-                    var writer =
-                        new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 3, 3,
-                            HashFileType.Distributor));
-                    writer.CreateMap();
-                    writer.SetServer(0, "localhost", storageServer1, 157);
-                    writer.SetServer(1, "localhost", storageServer2, 157);
-                    writer.SetServer(2, "localhost", storageServer3, 157);
-                    writer.Save();
-                });
-
-                func(filename);
-                func(filename2);
-                func(filename3);
-                func2(filename4);
+                CreateHashFile(filename, 2);
+                CreateHashFile(filename2, 2);
+                CreateHashFile(filename3, 2);
+                CreateHashFile(filename4, 3);
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1, filename2, 1);
@@ -909,14 +742,13 @@ namespace Qoollo.Tests
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
 
-                const int count = 50;
                 for (int i = 0; i < count; i++)
                 {
                     _proxy.Int.CreateSync(i, i);
                 }
 
                 Assert.Equal(count, mem.Local + mem2.Local);
-                func2(filename);
+                CreateHashFile(filename, 3);
 
                 _writer3.Build(storageServer3, filename4, 1);
                 _writer3.Start();
@@ -970,8 +802,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_TwoServer_RestoreFromFile()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_TwoServer_RestoreFromFile(int count)
         {
             var filename = nameof(Writer_Restore_TwoServer_RestoreFromFile);
             using (new FileCleaner(filename))
@@ -979,13 +812,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             using (new FileCleaner(file3))
             {
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 3,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
+                CreateHashFile(filename, 2);
 
                 _distrTest.Build(1, distrServer1, distrServer12, filename);
 
@@ -995,8 +822,8 @@ namespace Qoollo.Tests
                 CreateRestoreFile(file2, string.Empty, RestoreState.SimpleRestoreNeed,
                     new List<RestoreServerSave>
                     {
-                    new RestoreServerSave(new RestoreServer("localhost", storageServer1)
-                    {IsFailed = false, IsRestored = false, IsNeedRestore = true})
+                        new RestoreServerSave(new RestoreServer("localhost", storageServer1)
+                        {IsFailed = false, IsRestored = false, IsNeedRestore = true})
                     });
                 _writer2.Build(storageServer2, filename, 1);
 
@@ -1004,28 +831,13 @@ namespace Qoollo.Tests
                 _writer1.Start();
 
                 var list = new List<InnerData>();
-                const int count = 50;
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
-                            "default")
-                        {
-                            OperationName = OperationName.Create,
-                            OperationType = OperationType.Async
-                        })
-                        {
-                            Data = CommonDataSerializer.Serialize(i),
-                            Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { Distributor = new ServerId("localhost", distrServer1) }
-                        };
-                    ev.Transaction.TableName = "Int";
+                    var data = InnerData(i);
+                    data.Transaction.Distributor = ServerId(distrServer1);
 
-                    list.Add(ev);
-                }
+                    list.Add(data);
 
-                foreach (var data in list)
-                {
                     _distrTest.Input.ProcessAsync(data);
                 }
 
@@ -1070,8 +882,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_TwoServer_RestoreFromDistributor()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_TwoServer_RestoreFromDistributor(int count)
         {
             var filename = nameof(Writer_Restore_TwoServer_RestoreFromDistributor);
             using (new FileCleaner(filename))
@@ -1079,13 +892,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             using (new FileCleaner(file3))
             {
-                var writer =
-               new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 3,
-                   HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
+                CreateHashFile(filename, 2);
 
                 _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(100), true);
 
@@ -1098,28 +905,13 @@ namespace Qoollo.Tests
                 _writer1.Start();
 
                 var list = new List<InnerData>();
-                const int count = 50;
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
-                            "default")
-                        {
-                            OperationName = OperationName.Create,
-                            OperationType = OperationType.Async
-                        })
-                        {
-                            Data = CommonDataSerializer.Serialize(i),
-                            Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { Distributor = new ServerId("localhost", distrServer1) }
-                        };
-                    ev.Transaction.TableName = "Int";
+                    var data = InnerData(i);
+                    data.Transaction.Distributor = ServerId(distrServer1);
 
-                    list.Add(ev);
-                }
+                    list.Add(data);
 
-                foreach (var data in list)
-                {
                     _distrTest.Input.ProcessAsync(data);
                 }
 
@@ -1165,8 +957,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_TwoServer_RestoreWithDefaultMode()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_TwoServer_RestoreWithDefaultMode(int count)
         {
             var filename = nameof(Writer_Restore_TwoServer_RestoreWithDefaultMode);
             using (new FileCleaner(filename))
@@ -1174,13 +967,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             using (new FileCleaner(file3))
             {
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 3,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
+                CreateHashFile(filename, 2);
 
                 _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(200));
 
@@ -1193,28 +980,13 @@ namespace Qoollo.Tests
                 _writer1.Start();
 
                 var list = new List<InnerData>();
-                const int count = 50;
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
-                            "default")
-                        {
-                            OperationName = OperationName.Create,
-                            OperationType = OperationType.Async
-                        })
-                        {
-                            Data = CommonDataSerializer.Serialize(i),
-                            Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { Distributor = new ServerId("localhost", distrServer1) }
-                        };
-                    ev.Transaction.TableName = "Int";
+                    var data = InnerData(i);
+                    data.Transaction.Distributor = ServerId(distrServer1);
 
-                    list.Add(ev);
-                }
+                    list.Add(data);
 
-                foreach (var data in list)
-                {
                     _distrTest.Input.ProcessAsync(data);
                 }
 
@@ -1226,7 +998,6 @@ namespace Qoollo.Tests
                 foreach (var data in list)
                 {
                     var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
-                    //if (tr.State != TransactionState.Complete)
                     if (tr.IsError)
                     {
                         data.Transaction = new Transaction(data.Transaction);
@@ -1261,8 +1032,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode(int count)
         {
             var filename = nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode);
             var filename1 = nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode)+"1";
@@ -1277,31 +1049,10 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             using (new FileCleaner(file4))
             {
-                var func = new Action<string>(file =>
-                {
-                    var writer = new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 2, 3,
-                        HashFileType.Distributor));
-                    writer.CreateMap();
-                    writer.SetServer(0, "localhost", storageServer1, 157);
-                    writer.SetServer(1, "localhost", storageServer2, 157);
-                    writer.Save();
-                });
-
-                var func2 = new Action<string>(file =>
-                {
-                    var writer = new HashWriter(new HashMapConfiguration(file, HashMapCreationMode.CreateNew, 3, 3,
-                        HashFileType.Distributor));
-                    writer.CreateMap();
-                    writer.SetServer(0, "localhost", storageServer1, 157);
-                    writer.SetServer(1, "localhost", storageServer2, 157);
-                    writer.SetServer(2, "localhost", storageServer3, 157);
-                    writer.Save();
-                });
-
-                func(filename);
-                func(filename1);
-                func(filename2);
-                func2(filename3);
+                CreateHashFile(filename, 2);
+                CreateHashFile(filename1, 2);
+                CreateHashFile(filename2, 2);
+                CreateHashFile(filename3, 3);
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(2000));
@@ -1316,36 +1067,18 @@ namespace Qoollo.Tests
                 _writer1.Start();
                 _writer2.Start();
 
-                #region hell
-
                 var list = new List<InnerData>();
-                const int count = 50;
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
-                        {
-                            OperationName = OperationName.Create,
-                            OperationType = OperationType.Async
-                        })
-                        {
-                            Data = CommonDataSerializer.Serialize(i),
-                            Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { Distributor = new ServerId("localhost", distrServer1) }
-                        };
-                    ev.Transaction.TableName = "Int";
+                    var data = InnerData(i);
+                    data.Transaction.Distributor = ServerId(distrServer1);
 
-                    list.Add(ev);
-                }
+                    list.Add(data);
 
-                foreach (var data in list)
-                {
                     _distrTest.Input.ProcessAsync(data);
                 }
 
-                Thread.Sleep(TimeSpan.FromMilliseconds(5000));
-
-                #endregion
+                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
@@ -1362,7 +1095,7 @@ namespace Qoollo.Tests
                 Assert.Equal(0, mem.Remote);
                 Assert.Equal(0, mem2.Remote);
 
-                func2(filename);
+                CreateHashFile(filename, 3);
 
                 _writer3.Start();
 
@@ -1392,8 +1125,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_ThreeServers_DirectServersForRestore()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_ThreeServers_DirectServersForRestore(int count)
         {
             var filename = nameof(Writer_Restore_ThreeServers_DirectServersForRestore);
             using (new FileCleaner(filename))
@@ -1402,28 +1136,9 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             using (new FileCleaner(file4))
             {
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 3, 3,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.SetServer(2, "localhost", storageServer3, 157);
-                writer.Save();
+                CreateHashFile(filename, 3);
 
-                #region hell
-
-                var queue = new QueueConfiguration(2, 100);
-                var connection = new ConnectionConfiguration("testService", 10);
-                var ndrc2 = new NetReceiverConfiguration(proxyServer, "localhost", "testService");
-                var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(3));
-                var pccc2 = new ProxyCacheConfiguration(TimeSpan.FromSeconds(3));
-
-                var proxy = new TestProxySystem(new ServerId("localhost", proxyServer),
-                    queue, connection, pcc, pccc2, ndrc2,
-                    new AsyncTasksConfiguration(new TimeSpan()),
-                    new AsyncTasksConfiguration(new TimeSpan()),
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var proxy = TestProxySystem(proxyServer, 3, 3);
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build(1, distrServer1, distrServer12, filename);
@@ -1434,8 +1149,6 @@ namespace Qoollo.Tests
                 InitInjection.RestoreHelpFileOut = file4;
                 _writer3.Build(storageServer3, filename, 1);
 
-                #endregion
-
                 #region hell2
 
                 proxy.Build();
@@ -1444,11 +1157,10 @@ namespace Qoollo.Tests
                 _distrTest.Start();
                 _writer1.Start();
 
-                proxy.Distributor.SayIAmHere(new ServerId("localhost", distrServer12));
+                proxy.Distributor.SayIAmHere(ServerId(distrServer12));
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(200));
 
-                const int count = 50;
                 int counter = 0;
 
                 var api = proxy.CreateApi("Int", false, new IntHashConvertor());
@@ -1528,8 +1240,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_TwoServer_RestoreFromDistributor_EnableCommand()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_TwoServer_RestoreFromDistributor_EnableCommand(int count)
         {
             var filename = nameof(Writer_Restore_TwoServer_RestoreFromDistributor_EnableCommand);
             using (new FileCleaner(filename))
@@ -1538,13 +1251,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             using (new FileCleaner(file4))
             {
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 3,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
+                CreateHashFile(filename, 2);
 
                 _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(100), true);
 
@@ -1559,28 +1266,13 @@ namespace Qoollo.Tests
                 _writer1.Start();
 
                 var list = new List<InnerData>();
-                const int count = 50;
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
-                            "default")
-                        {
-                            OperationName = OperationName.Create,
-                            OperationType = OperationType.Async
-                        })
-                        {
-                            Data = CommonDataSerializer.Serialize(i),
-                            Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { Distributor = new ServerId("localhost", distrServer1) }
-                        };
-                    ev.Transaction.TableName = "Int";
+                    var data = InnerData(i);
+                    data.Transaction.Distributor = ServerId(distrServer1);
 
-                    list.Add(ev);
-                }
+                    list.Add(data);
 
-                foreach (var data in list)
-                {
                     _distrTest.Input.ProcessAsync(data);
                 }
 
@@ -1634,8 +1326,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_TwoServer_RestoreFromDistributorWithCommand()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_TwoServer_RestoreFromDistributorWithCommand(int count)
         {
             var filename = nameof(Writer_Restore_TwoServer_RestoreFromDistributorWithCommand);
             using (new FileCleaner(filename))
@@ -1644,13 +1337,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             using (new FileCleaner(file4))
             {
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 3,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
+                CreateHashFile(filename, 2);
 
                 _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(100));
 
@@ -1663,28 +1350,13 @@ namespace Qoollo.Tests
                 _writer1.Start();
 
                 var list = new List<InnerData>();
-                const int count = 50;
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
-                            "default")
-                        {
-                            OperationName = OperationName.Create,
-                            OperationType = OperationType.Async
-                        })
-                        {
-                            Data = CommonDataSerializer.Serialize(i),
-                            Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { Distributor = new ServerId("localhost", distrServer1) }
-                        };
-                    ev.Transaction.TableName = "Int";
+                    var data = InnerData(i);
+                    data.Transaction.Distributor = ServerId(distrServer1);
 
-                    list.Add(ev);
-                }
+                    list.Add(data);
 
-                foreach (var data in list)
-                {
                     _distrTest.Input.ProcessAsync(data);
                 }
 
@@ -1732,8 +1404,9 @@ namespace Qoollo.Tests
             }
         }
 
-        [Fact]
-        public void Writer_Restore_TwoServers_Package()
+        [Theory]
+        [InlineData(50)]
+        public void Writer_Restore_TwoServers_Package(int count)
         {
             var filename = nameof(Writer_Restore_TwoServers_Package);
             using (new FileCleaner(filename))
@@ -1741,13 +1414,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             using (new FileCleaner(file3))
             {
-                var writer =
-                new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 3,
-                    HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", storageServer1, 157);
-                writer.SetServer(1, "localhost", storageServer2, 157);
-                writer.Save();
+                CreateHashFile(filename, 2);
 
                 InitInjection.RestoreUsePackage = true;
                 InitInjection.RestoreHelpFileOut = file1;
@@ -1761,28 +1428,13 @@ namespace Qoollo.Tests
                 _writer1.Start();
 
                 var list = new List<InnerData>();
-                const int count = 50;
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
-                            "default")
-                        {
-                            OperationName = OperationName.Create,
-                            OperationType = OperationType.Async
-                        })
-                        {
-                            Data = CommonDataSerializer.Serialize(i),
-                            Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { Distributor = new ServerId("localhost", distrServer1) }
-                        };
-                    ev.Transaction.TableName = "Int";
+                    var data = InnerData(i);
+                    data.Transaction.Distributor = ServerId(distrServer1);
 
-                    list.Add(ev);
-                }
+                    list.Add(data);
 
-                foreach (var data in list)
-                {
                     _distrTest.Input.ProcessAsync(data);
                 }
 

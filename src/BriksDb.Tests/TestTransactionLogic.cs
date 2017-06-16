@@ -29,7 +29,6 @@ namespace Qoollo.Tests
                 _aliveTimeout = cacheConfiguration.TimeAliveAfterUpdateMls;
             }
 
-
             public void Update(string key, TestData obj)
             {
                 Remove(key);

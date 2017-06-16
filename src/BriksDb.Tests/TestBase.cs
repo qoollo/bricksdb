@@ -14,6 +14,9 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.DistributorModules.Model;
+using Qoollo.Impl.Proxy;
+using Qoollo.Impl.Proxy.Caches;
+using Qoollo.Impl.Proxy.ProxyNet;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
@@ -87,6 +90,12 @@ namespace Qoollo.Tests
             return new ServerId("localhost", serverPort);
         }
 
+        internal ProxyNetModule ProxyNetModule()
+        {
+            return new ProxyNetModule(ConnectionConfiguration,
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+        }
+
         internal DistributorNetModule DistributorNetModule()
         {
             var connection = new ConnectionConfiguration("testService", 10);
@@ -94,17 +103,25 @@ namespace Qoollo.Tests
         }
 
         internal DistributorModule DistributorDistributorModule(string filename, int countReplics,
-            DistributorNetModule net, int pingTo = 200, int asyncCheckTo = 2000)
+            DistributorNetModule net, int pingTo = 200, int asyncCheckTo = 2000,
+            int distrPort1 = distrServer1, int distrPort2 = distrServer12)
         {
             return new DistributorModule(
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(pingTo)),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(asyncCheckTo)),
                 new DistributorHashConfiguration(countReplics),
-                QueueConfiguration,
-                net,
-                new ServerId("localhost", distrServer1),
-                new ServerId("localhost", distrServer12),
+                QueueConfiguration, net,
+                new ServerId("localhost", distrPort1),
+                new ServerId("localhost", distrPort2),
                 new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
+        }
+
+        internal ProxyDistributorModule ProxyDistributorModule(ProxyNetModule net, int proxyPort)
+        {
+            return new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)),
+                net, QueueConfiguration, ServerId(proxyPort),
+                new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
+                new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
         }
 
         internal CollectorModel CollectorModel(string filename, int countReplics)
@@ -135,10 +152,14 @@ namespace Qoollo.Tests
             return new DistributorApi(distrNet, distrConf, CommonConfiguration);
         }
 
-        internal StorageConfiguration StorageConfiguration(string filename, int countReplics, int restoreAnswerMls = 10000000)
+        internal StorageConfiguration StorageConfiguration(string filename, int countReplics, 
+            int restoreAnswerMls = 10000000, int deleteRestoreMls = 1000000, int periodStartDelete = 1000000, 
+            bool isForceDelete = false)
         {
             return new StorageConfiguration(filename, countReplics, 10, TimeSpan.FromHours(1),
-                TimeSpan.FromMilliseconds(restoreAnswerMls), TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
+                TimeSpan.FromMilliseconds(restoreAnswerMls), 
+                TimeSpan.FromMilliseconds(deleteRestoreMls), 
+                TimeSpan.FromMilliseconds(periodStartDelete), isForceDelete);
         }
 
         internal WriterApi WriterApi(StorageConfiguration storageConfiguration, int portForDistr, int portForCollector = 157)
@@ -164,12 +185,13 @@ namespace Qoollo.Tests
                     HashFileType.Distributor));
         }
 
-        internal TestProxySystem TestProxySystem(int proxyPort)
+        internal TestProxySystem TestProxySystem(int proxyPort, int cacheToSec = 2, int asyncCacheToSec = 2)
         {
-            var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(2));
+            var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(cacheToSec));
+            var pcc2 = new ProxyCacheConfiguration(TimeSpan.FromSeconds(asyncCacheToSec));
             return new TestProxySystem(ServerId(proxyPort),
                QueueConfiguration, ConnectionConfiguration, 
-               pcc, pcc,
+               pcc, pcc2,
                NetReceiverConfiguration(proxyPort),
                new AsyncTasksConfiguration(new TimeSpan()),
                new AsyncTasksConfiguration(new TimeSpan()),

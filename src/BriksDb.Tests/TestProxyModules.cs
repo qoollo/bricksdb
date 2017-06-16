@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
@@ -33,24 +32,15 @@ namespace Qoollo.Tests
     public class TestProxyModules:TestBase
     {
         [Fact]
-        public void ProxySystem_CreateSync_SendSyncDataToFakeDistributor_NoError()
+        public void ProxySystem_CreateSync_SendSyncDataToFakeDistributor_NoError()    
         {
-            var queue = new QueueConfiguration(1, 100);
-            var connection = new ConnectionConfiguration("testService", 10);
-            var ndrc2 = new NetReceiverConfiguration(32190, "localhost", "testService");
-            var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(20000000));
-
-            var proxy = new TestProxySystem(new ServerId("", 1), queue, connection, pcc, pcc, ndrc2,
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(60000)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(60000)),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-
+            var proxy = TestProxySystem(proxyServer);
             proxy.Build();
             proxy.Start();
 
-            var distr = new ServerId("localhost", 22190);
-            TestHelper.OpenDistributorHost(distr, connection);
-            proxy.Distributor.SayIAmHere(distr);
+            var distrServer = ServerId(distrServer1);
+            var distributor = TestHelper.OpenDistributorHost(ServerId(distrServer1));
+            proxy.Distributor.SayIAmHere(distrServer);
 
             var provider = new StoredDataHashCalculator();
 
@@ -74,28 +64,19 @@ namespace Qoollo.Tests
             Assert.Equal(TransactionState.Complete, wait.Result.State);
 
             proxy.Dispose();
+            distributor.Dispose();
         }
 
         [Fact]
         public void ProxySystem_Read_ReadFromFakeDistributor_ExpectedData()
         {
-            var queue = new QueueConfiguration(1, 100);
-            var connection = new ConnectionConfiguration("testService", 10);
-            var ndrc2 = new NetReceiverConfiguration(32192, "localhost", "testService");
-            var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(20000000));
-
-            var proxy = new TestProxySystem(new ServerId("", 1), queue, connection, pcc, pcc,
-                ndrc2,
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(60000)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(60000)),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-
+            var proxy = TestProxySystem(proxyServer);
             proxy.Build();
             proxy.Start();
 
-            var distr = new ServerId("localhost", 22194);
-            TestHelper.OpenDistributorHost(distr, connection);
-            proxy.Distributor.SayIAmHere(distr);
+            var distrServer = ServerId(distrServer1);
+            var distributor = TestHelper.OpenDistributorHost(distrServer);
+            proxy.Distributor.SayIAmHere(distrServer);
 
             var provider = new IntHashConvertor();
 
@@ -125,6 +106,7 @@ namespace Qoollo.Tests
             Assert.Equal(TransactionState.Complete, userTransaction.State);
 
             proxy.Dispose();
+            distributor.Dispose();
         }
 
         [Fact]
@@ -135,7 +117,7 @@ namespace Qoollo.Tests
             {
                 Transaction = { UserSupportCallback = new TaskCompletionSource<UserTransaction>() }
             };
-            Task<UserTransaction> wait = ev.Transaction.UserSupportCallback.Task;
+            var wait = ev.Transaction.UserSupportCallback.Task;
 
             cache.AddToCache("123", ev.Transaction);
 
@@ -148,18 +130,16 @@ namespace Qoollo.Tests
         [Fact]
         public void ProxyNetModule_Process_SendDataToDistributors_2SuccessAnd1Fail()
         {
-            var server1 = new ServerId("localhost", 21161);
-            var server2 = new ServerId("localhost", 21162);
-            var server3 = new ServerId("localhost", 21163);
-            var netconfig = new ConnectionConfiguration("testService", 1);
+            var server1 = ServerId(distrServer1);
+            var server2 = ServerId(distrServer12);
+            var server3 = ServerId(distrServer2);
 
-            var s1 = TestHelper.OpenDistributorHost(server1, netconfig);
-            var s2 = TestHelper.OpenDistributorHost(server2, netconfig);
+            var s1 = TestHelper.OpenDistributorHost(server1);
+            var s2 = TestHelper.OpenDistributorHost(server2);
 
-            var net = new ProxyNetModule(netconfig,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-
+            var net = ProxyNetModule();
             var distr = new TestProxyDistributorModule();
+
             net.SetDistributor(distr);
             net.Start();
 
@@ -192,8 +172,8 @@ namespace Qoollo.Tests
         public void ProxyDistributorModule_TransactionDestination_CreateTransAndGetDestination()
         {
             var model = new DistributorSystemModel();
-            var server1 = new ServerId("localhost", 1);
-            var server2 = new ServerId("localhost", 2);
+            var server1 = ServerId(storageServer1);
+            var server2 = ServerId(storageServer2);
 
             model.AddServer(server1);
             model.AddServer(server2);
@@ -226,25 +206,19 @@ namespace Qoollo.Tests
         [Fact]
         public void ProxyMainLogic_Process_SendDataToRealDistributor()
         {
-            var queue = new QueueConfiguration(1, 1000);
+            var server1 = ServerId(distrServer1);
+            var server2 = ServerId(distrServer2);
+            var server3 = ServerId(distrServer12);
 
-            var server1 = new ServerId("localhost", 21171);
-            var server2 = new ServerId("localhost", 21172);
-            var server3 = new ServerId("localhost", 21173);
-            var netconfig = new ConnectionConfiguration("testService", 10);
+            var s1 = TestHelper.OpenDistributorHost(server1);
+            var s2 = TestHelper.OpenDistributorHost(server2);
 
-            var s1 = TestHelper.OpenDistributorHost(server1, netconfig);
-            var s2 = TestHelper.OpenDistributorHost(server2, netconfig);
+            var net = ProxyNetModule();            
+            var distributor = ProxyDistributorModule(net, server1.Port);
 
-            var net = new ProxyNetModule(netconfig,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var cache = new ProxyCache(TimeSpan.FromSeconds(20));
-            var acache = new AsyncProxyCache(TimeSpan.FromMinutes(100));
-            var distributor = new ProxyDistributorModule(acache, net, queue, server1,
-                                                         new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
-                                                         new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
             net.SetDistributor(distributor);
 
+            var cache = new ProxyCache(TimeSpan.FromSeconds(20));
             var main = new ProxyMainLogicModule(distributor, net, cache);
 
             net.Start();
@@ -259,15 +233,13 @@ namespace Qoollo.Tests
             main.Start();
 
             const string hash = "";
-            var ev = new InnerData(new Transaction("", ""));
+            var ev = new InnerData(new Transaction("", ""))
+            {
+                Transaction = distributor.CreateTransaction(hash),
+                DistributorData = new DistributorData {Destination = new List<ServerId> {server1}}
+            };
 
-            ev.Transaction = distributor.CreateTransaction(hash);
-            ev.Transaction = distributor.CreateTransaction(hash);
-            ev.Transaction = distributor.CreateTransaction(hash);
-            
-            ev.DistributorData = new DistributorData { Destination = new List<ServerId> { server1 } };
-
-            bool res = main.Process(ev);
+            var res = main.Process(ev);
 
             var server = cache.Get(ev.Transaction.DataHash);
             Assert.Null(server);
@@ -277,19 +249,15 @@ namespace Qoollo.Tests
             distributor.Dispose();
             net.Dispose();
             cache.Dispose();
-            acache.Dispose();
+
+            s1.Dispose();
+            s2.Dispose();
         }
 
         [Fact]
         public void ProxyDistributorModule_SayIAmHere_AddDistributor()
         {
-            const int server1 = 22250;
-            const int server2 = 22251;
-            const int server3 = 22252;
-            const int server4 = 22253;
-            const int server42 = 23253;
-            const int server5 = 22254;
-            const int server52 = 23254;
+            const int replicsCount = 2;
 
             var filename1 = nameof(ProxyDistributorModule_SayIAmHere_AddDistributor)+"1";
             var filename2 = nameof(ProxyDistributorModule_SayIAmHere_AddDistributor)+"2";
@@ -302,93 +270,62 @@ namespace Qoollo.Tests
                 var q3 = new GlobalQueueInner();
 
                 GlobalQueue.SetQueue(q1);
-                var queue = new QueueConfiguration(1, 1000);
-                var netconfig = new ConnectionConfiguration("testService", 10);
+                var net = ProxyNetModule();
+                var distributor = ProxyDistributorModule(net, storageServer1);
 
-                var netReceive = new NetReceiverConfiguration(server1, "localhost", "testService");
-                var net = new ProxyNetModule(netconfig,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-                var distributor = new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)), net, queue, new ServerId("localhost", server1),
-                                                             new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
-                                                             new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
                 net.SetDistributor(distributor);
-                var receive = new ProxyNetReceiver(distributor, netReceive);
+                var receive = new ProxyNetReceiver(distributor, NetReceiverConfiguration(storageServer1));
 
                 GlobalQueue.SetQueue(q2);
 
-                var netReceive2 = new NetReceiverConfiguration(server2, "localhost", "testService");
-                var net2 = new ProxyNetModule(netconfig,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-                var distributor2 = new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)), net2, queue, new ServerId("localhost", server2),
-                                                              new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
-                                                              new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
+                var net2 = ProxyNetModule();
+                var distributor2 = ProxyDistributorModule(net2, storageServer2);
+                
                 net2.SetDistributor(distributor2);
-                var receive2 = new ProxyNetReceiver(distributor2, netReceive2);
+                var receive2 = new ProxyNetReceiver(distributor2, NetReceiverConfiguration(storageServer2));
 
                 GlobalQueue.SetQueue(q3);
 
-                var netReceive3 = new NetReceiverConfiguration(server3, "localhost", "testService");
-                var net3 = new ProxyNetModule(netconfig,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-                var distributor3 = new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)), net3, queue, new ServerId("localhost", server3),
-                                                              new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
-                                                              new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
-                net3.SetDistributor(distributor3);
-                var receive3 = new ProxyNetReceiver(distributor3, netReceive3);
+                var net3 = ProxyNetModule();
+                var distributor3 = ProxyDistributorModule(net3, storageServer3);
 
-                var distrconfig = new DistributorHashConfiguration(2);
-                var queueconfig = new QueueConfiguration(1, 100);
-                var dnet = new DistributorNetModule(netconfig,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-                var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
-                    new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
-                    queueconfig, dnet, new ServerId("localhost", server4),
-                    new ServerId("localhost", server42),
-                    new HashMapConfiguration(filename1, HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
+                net3.SetDistributor(distributor3);
+                var receive3 = new ProxyNetReceiver(distributor3, NetReceiverConfiguration(storageServer3));
+
+                var dnet = DistributorNetModule();
+                var ddistributor = DistributorDistributorModule(filename1, replicsCount, dnet, 30000, 30000);
                 dnet.SetDistributor(ddistributor);
 
-                var cache = new DistributorTimeoutCache(
-                    new DistributorCacheConfiguration(new TimeSpan(), new TimeSpan()));
+                var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(200000, 200000));
                 var tranc = new TransactionModule(dnet, new TransactionConfiguration(4), 1, cache);
                 var main = new MainLogicModule(ddistributor, tranc, cache);
-                var netReceive4 = new NetReceiverConfiguration(server4, "localhost", "testService");
-                var netReceive42 = new NetReceiverConfiguration(server42, "localhost", "testService");
-
-                var input = new InputModuleWithParallel(new QueueConfiguration(1, 1), main, tranc);
-                var receiver4 = new NetDistributorReceiver(main, input, ddistributor, netReceive4, netReceive42);
-
+                var receiver4 = new NetDistributorReceiver(main,
+                    new InputModuleWithParallel(QueueConfiguration, main, tranc), 
+                    ddistributor,
+                    NetReceiverConfiguration(distrServer1),
+                    NetReceiverConfiguration(distrServer12));
+                
                 GlobalQueue.SetQueue(q1);
-                var dnet2 = new DistributorNetModule(netconfig,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-                var ddistributor2 = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)),
-                    new AsyncTasksConfiguration(TimeSpan.FromMinutes(5)), distrconfig,
-                    queueconfig, dnet2,
-                    new ServerId("localhost", server5),
-                    new ServerId("localhost", server52),
-                    new HashMapConfiguration(filename2, HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
+                var dnet2 = DistributorNetModule();
+                var ddistributor2 = DistributorDistributorModule(filename2, replicsCount, dnet2, 200000, 30000,
+                    distrServer2, distrServer22);
                 dnet2.SetDistributor(ddistributor2);
 
-                var netReceive5 = new NetReceiverConfiguration(server5, "localhost", "testService");
-                var netReceive52 = new NetReceiverConfiguration(server52, "localhost", "testService");
                 var receiver5 = new NetDistributorReceiver(main,
-                                                           new InputModuleWithParallel(new QueueConfiguration(1, 1), main,
-                                                                                       tranc),
-                                                           ddistributor2, netReceive5, netReceive52);
+                    new InputModuleWithParallel(QueueConfiguration, main, tranc),
+                    ddistributor2,
+                    NetReceiverConfiguration(distrServer2),
+                    NetReceiverConfiguration(distrServer22));
 
                 receive.Start();
                 receive2.Start();
                 receive3.Start();
                 receiver4.Start();
                 receiver5.Start();
-                net.Start();
-                net2.Start();
-                net3.Start();
                 distributor.Start();
                 distributor2.Start();
                 distributor3.Start();
 
-                dnet.Start();
-                dnet2.Start();
                 ddistributor.Start();
                 ddistributor2.Start();
 
@@ -396,8 +333,8 @@ namespace Qoollo.Tests
                 q2.Start();
                 q3.Start();
 
-                distributor.SayIAmHere(new ServerId("localhost", server42));
-                distributor2.SayIAmHere(new ServerId("localhost", server42));
+                distributor.SayIAmHere(new ServerId("localhost", distrServer12));
+                distributor2.SayIAmHere(new ServerId("localhost", distrServer12));
 
                 var dsm1 = (DistributorSystemModel)distributor.GetField("_distributorSystemModel");
                 var dsm2 = (DistributorSystemModel)distributor2.GetField("_distributorSystemModel");
@@ -405,7 +342,7 @@ namespace Qoollo.Tests
                 Assert.Equal(1, dsm1.GetDistributorsList().Count);
                 Assert.Equal(1, dsm2.GetDistributorsList().Count);
 
-                ddistributor2.SayIAmHereRemoteResult(new ServerId("localhost", server42));
+                ddistributor2.SayIAmHereRemoteResult(new ServerId("localhost", distrServer12));
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(300));
 
@@ -422,7 +359,7 @@ namespace Qoollo.Tests
                 Assert.Equal(1, mad1.GetDistributorList().Count);
                 Assert.Equal(1, mad2.GetDistributorList().Count);
 
-                distributor3.SayIAmHere(new ServerId("localhost", server52));
+                distributor3.SayIAmHere(new ServerId("localhost", distrServer22));
 
                 var dsm3 = (DistributorSystemModel)distributor3.GetField("_distributorSystemModel");
 
@@ -431,12 +368,6 @@ namespace Qoollo.Tests
                 q1.Dispose();
                 q2.Dispose();
                 q3.Dispose();
-
-                net.Dispose();
-                net2.Dispose();
-                net3.Dispose();
-                dnet.Dispose();
-                dnet2.Dispose();
 
                 ddistributor.Dispose();
                 ddistributor2.Dispose();

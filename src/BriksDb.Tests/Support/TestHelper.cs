@@ -46,11 +46,11 @@ namespace Qoollo.Tests.Support
 
             return ret;
         }
-        public static TestNetDistributorForProxy OpenDistributorHost(ServerId server, ConnectionConfiguration config)
+        public static TestNetDistributorForProxy OpenDistributorHost(ServerId server)
         {
             var ret = new TestNetDistributorForProxy();
 
-            var netConfig = new NetReceiverConfiguration(server.Port, server.RemoteHost, config.ServiceName);
+            var netConfig = new NetReceiverConfiguration(server.Port, server.RemoteHost, "");
 
             //OpenDistributorNetHost(ret, netConfig);
             OpenDistributorMockHost<ICommonNetReceiverForProxy>(ret, netConfig);

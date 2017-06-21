@@ -21,6 +21,8 @@ namespace Qoollo.Impl.Proxy
 {
     internal class ProxyDistributorModule : ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly DistributorSystemModel _distributorSystemModel;
         private readonly QueueConfiguration _queueConfiguration;
         private readonly AsyncTasksConfiguration _asynGetData;
@@ -94,7 +96,7 @@ namespace Qoollo.Impl.Proxy
             }
             else
             {
-                Logger.Logger.Instance.Debug("Complete operation message income, but timeout");
+                _logger.Debug("Complete operation message income, but timeout");
             }
         }
 
@@ -108,7 +110,7 @@ namespace Qoollo.Impl.Proxy
             }
             else
             {
-                Logger.Logger.Instance.Info("Complete read operation message income, but timeout");
+                _logger.Debug("Complete read operation message income, but timeout");
             }
         }
 

@@ -12,6 +12,8 @@ namespace Qoollo.Impl.Collector.Model
 {
     internal class CollectorModel
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public bool UseStart { get; private set; }
         private List<WriterDescription> _servers; 
         private readonly ReaderWriterLockSlim _lock;
@@ -38,7 +40,7 @@ namespace Qoollo.Impl.Collector.Model
 
             if (server == null)
             {
-                Logger.Logger.Instance.ErrorFormat(
+                _logger.ErrorFormat(
                     "Server {0} is missing in model of this file, but command received that it is unavailable", serverId);
             }
             else
@@ -57,7 +59,7 @@ namespace Qoollo.Impl.Collector.Model
 
             if (server == null)
             {
-                Logger.Logger.Instance.ErrorFormat(
+                _logger.ErrorFormat(
                     "Server {0} is missing in model of this file, but command received that it is unavailable", serverId);
             }
             else

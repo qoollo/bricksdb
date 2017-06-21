@@ -16,6 +16,8 @@ namespace Qoollo.Impl.Writer
 {
     internal class InputModule:ControlModule,IRemoteNet
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly QueueConfiguration _queueConfiguration;
         private readonly MainLogicModule _mainLogicModule;
         private readonly GlobalQueueInner _queue;
@@ -39,8 +41,7 @@ namespace Qoollo.Impl.Writer
 
         private void RollbackProcess(InnerData data)
         {
-            Logger.Logger.Instance.DebugFormat("Rollback type {0}, hash {1}", data.Transaction.OperationName,
-                data.Transaction.DataHash);
+            _logger.TraceFormat("Rollback type {0}", data.Transaction.OperationName);
 
             _mainLogicModule.Rollback(data);
         }        
@@ -70,7 +71,6 @@ namespace Qoollo.Impl.Writer
         private RemoteResult ProcessData(InnerData data)
         {
             WriterCounters.Instance.TransactionCount.Increment();
-            Logger.Logger.Instance.DebugFormat("Create hash {0}", data.Transaction.DataHash);
             var timer = WriterCounters.Instance.AverageTimer.StartNew();
 
             var ret = _mainLogicModule.Process(data);

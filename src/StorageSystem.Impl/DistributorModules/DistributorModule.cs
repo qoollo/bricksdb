@@ -26,6 +26,8 @@ namespace Qoollo.Impl.DistributorModules
 {
     internal class DistributorModule : ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public ServerId LocalForDb
         {
             get { return _localfordb; }
@@ -112,7 +114,7 @@ namespace Qoollo.Impl.DistributorModules
 
             RegistrateAsync<NetCommand, NetCommand, RemoteResult>(
                 _queue.DistributorDistributorQueue,
-                command => Logger.Logger.Instance.InfoFormat("Not supported command type = {0}", command.GetType()),
+                command => _logger.InfoFormat("Not supported command type = {0}", command.GetType()),
                 () => new SuccessResult());
 
             RegistrateAsync<Common.Data.TransactionTypes.Transaction,
@@ -136,7 +138,8 @@ namespace Qoollo.Impl.DistributorModules
 
         private void ServerNotAvailableInner(ServerNotAvailableCommand command)
         {
-            Logger.Logger.Instance.Debug("Distributor: Server not available " + command.Server);
+            if (_logger.IsDebugEnabled)
+                _logger.Debug("Distributor: Server not available " + command.Server);
             _modelOfDbWriters.ServerNotAvailable(command.Server);
         }
 
@@ -220,7 +223,7 @@ namespace Qoollo.Impl.DistributorModules
                 {
                     var message = ((InnerFailResult)result).Description;
                     x.SetInfoMessage(ServerState.Update, message);
-                    Logger.Logger.Instance.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
+                    _logger.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
 
                 }
 
@@ -262,7 +265,7 @@ namespace Qoollo.Impl.DistributorModules
                     {
                         var message = ((InnerFailResult)result).Description;
                         x.SetInfoMessage(ServerState.Update, message);
-                        Logger.Logger.Instance.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
+                        _logger.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
 
                     }
                 }
@@ -313,9 +316,6 @@ namespace Qoollo.Impl.DistributorModules
 
         public List<WriterDescription> GetDestination(InnerData data, bool needAllServers)
         {
-            Logger.Logger.Instance.Trace(
-                string.Format("Distributor: Get destination event hash = {0}", data.Transaction.DataHash));
-
             var ret = !needAllServers
                 ? _modelOfDbWriters.GetDestination(data)
                 : _modelOfDbWriters.GetAllAvailableServers();
@@ -345,7 +345,7 @@ namespace Qoollo.Impl.DistributorModules
         {
             mode = mode.ToLower();
             if (mode != "start" && mode != "disable" && mode != "enable" && mode != "run" || string.IsNullOrEmpty(mode))
-                return string.Format("Value {0} is not recognized. Use start, disable, enable, run", mode);
+                return $"Value {mode} is not recognized. Use start, disable, enable, run";
 
             var servers = _modelOfDbWriters.GetAllAvailableServers();
             var command = new DeleteCommand(mode);
@@ -397,7 +397,7 @@ namespace Qoollo.Impl.DistributorModules
 
             var firstOrDefault = _modelOfDbWriters.Servers.FirstOrDefault(x => Equals(x, server));
             if ((state == RestoreState.Default && firstOrDefault.RestoreState == RestoreState.Restored))
-                return string.Format("server {0} is in restore mode. Change restore mode", restoreDest);
+                return $"server {restoreDest} is in restore mode. Change restore mode";
             var result = _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand(state, restoreDest));
 
             return result.IsError ? result.ToString() : Errors.NoErrors;

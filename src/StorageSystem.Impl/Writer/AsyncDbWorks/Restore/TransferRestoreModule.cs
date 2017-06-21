@@ -1,5 +1,4 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
@@ -16,6 +15,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class TransferRestoreModule : CommonAsyncWorkModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public ServerId RemoteServer
         {
             get
@@ -78,8 +79,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 if (IsStartNoLock)
                     return;
 
-                Logger.Logger.Instance.Debug(string.Format("transafer start {0}, {1}", remoteServer, remoteHashRange),
-                    "restore");
+                if (_logger.IsDebugEnabled)
+                    _logger.Debug($"transafer start {remoteServer}, {remoteHashRange}", "restore");
 
                 IsStartNoLock = true;
                 _remoteServer = remoteServer;
@@ -104,8 +105,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if (_restore == null)
                 return;
 
-            Logger.Logger.Instance.Debug(string.Format("Async complete = {0}, start = {1}",
-                _restore.IsComplete, IsStart), "restore");
+            if (_logger.IsDebugEnabled)
+                _logger.Debug($"Async complete = {_restore.IsComplete}, start = {IsStart}", "restore");
 
             if (_restore.IsComplete && IsStart)
             {
@@ -129,8 +130,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if (isUserCall)
             {
                 AsyncTaskModule.StopTask(AsyncTasksNames.RestoreLocal);
-                if (_restore != null)
-                    _restore.Dispose();
+                _restore?.Dispose();
             }
 
             base.Dispose(isUserCall);

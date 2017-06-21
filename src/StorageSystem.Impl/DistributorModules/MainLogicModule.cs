@@ -13,6 +13,8 @@ namespace Qoollo.Impl.DistributorModules
 {
     internal class MainLogicModule : ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly DistributorModule _distributor;
         private readonly TransactionModule _transaction;
         private readonly DistributorTimeoutCache _cache;
@@ -53,7 +55,8 @@ namespace Qoollo.Impl.DistributorModules
 
         public void ProcessWithData(InnerData data, TransactionExecutor executor)
         {
-            Logger.Logger.Instance.Debug(string.Format("Mainlogic: process data = {0}", data.Transaction.DataHash));
+            if(_logger.IsTraceEnabled)
+                _logger.Debug($"Mainlogic: process data = {data.Transaction.OperationName}");
 
             data.DistributorData = new DistributorData();
             CreateTimers(data);
@@ -61,8 +64,8 @@ namespace Qoollo.Impl.DistributorModules
             var dest = _distributor.GetDestination(data, GetCountServers(data));
             if (dest == null)
             {
-                Logger.Logger.Instance.Debug(string.Format("Mainlogic: dont found destination, process data = {0}",
-                    data.Transaction.DataHash));
+                if(_logger.IsTraceEnabled)
+                    _logger.Trace($"Mainlogic: dont found destination, process data = {data.Transaction.DataHash}");
                 data.Transaction.SetError();
                 data.Transaction.AddErrorDescription(Errors.NotAvailableServersForWrite);
             }
@@ -79,8 +82,9 @@ namespace Qoollo.Impl.DistributorModules
             }
             else
             {
-                Logger.Logger.Instance.Trace(string.Format("Mainlogic: process data = {0}, result = {1}",
-                    data.Transaction.DataHash, !data.Transaction.IsError));
+                if (_logger.IsWarnEnabled)
+                    _logger.Warn(
+                        $"Mainlogic: process data = {data.Transaction.DataHash}, result = {data.Transaction.ErrorDescription}");
 
                 WorkWithFailTransaction(data);
 

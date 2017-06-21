@@ -74,6 +74,8 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
 
     internal class ConcurrentConnection: IDisposable
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly IClientChannel _channel;
         private readonly string _targetName;
 
@@ -219,12 +221,14 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
             }
             catch (CommunicationException cex)
             {
-                Logger.Logger.Instance.Debug(cex, "Error during opening the connection to " + TargetName);
+                if(_logger.IsDebugEnabled)
+                    _logger.Debug(cex, "Error during opening the connection to " + TargetName);
                 OnClosed();
             }
             catch (TimeoutException tex)
             {
-                Logger.Logger.Instance.Debug(tex, "Error during opening the connection to " + TargetName);
+                if(_logger.IsDebugEnabled)
+                    _logger.Debug(tex, "Error during opening the connection to " + TargetName);
                 OnClosed();
             }
 
@@ -249,12 +253,14 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
             }
             catch (CommunicationException cex)
             {
-                Logger.Logger.Instance.Debug(cex, "Error during opening the connection to " + TargetName);
+                if(_logger.IsDebugEnabled)
+                    _logger.Debug(cex, "Error during opening the connection to " + TargetName);
                 OnClosed();
             }
             catch (TimeoutException tex)
             {
-                Logger.Logger.Instance.Debug(tex, "Error during opening the connection to " + TargetName);
+                if(_logger.IsDebugEnabled)
+                    _logger.Debug(tex, "Error during opening the connection to " + TargetName);
                 OnClosed();
             }
         }
@@ -271,12 +277,14 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
             }
             catch (CommunicationException cex)
             {
-                Logger.Logger.Instance.Debug(cex, "Error during opening the connection to " + TargetName);
+                if(_logger.IsDebugEnabled)
+                    _logger.Debug(cex, "Error during opening the connection to " + TargetName);
                 OnClosed();
             }
             catch (TimeoutException tex)
             {
-                Logger.Logger.Instance.Debug(tex, "Error during opening the connection to " + TargetName);
+                if(_logger.IsDebugEnabled)
+                    _logger.Debug(tex, "Error during opening the connection to " + TargetName);
                 OnClosed();
             }
         }
@@ -291,7 +299,8 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
             {
                 if (!_concurrencyTrackSemaphore.Wait(timeout))
                 {
-                    Logger.Logger.Instance.Debug("RunRequest failed due to timeout in waiting for concurrent resource. Current Timeout: " + timeout.ToString() + " ms, Target: " + _targetName);
+                    if(_logger.IsDebugEnabled)
+                        _logger.Debug("RunRequest failed due to timeout in waiting for concurrent resource. Current Timeout: " + timeout.ToString() + " ms, Target: " + _targetName);
                     throw new TimeoutException("RunRequest failed due to timeout in waiting for concurrent resource. Current Timeout: " + timeout.ToString() + " ms, Target: " + _targetName);
                 }
             }
@@ -330,7 +339,8 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
             }
             catch (Exception ex)
             {
-                Logger.Logger.Instance.Debug(ex, "WCF channel close exception.");
+                if(_logger.IsDebugEnabled)
+                    _logger.Debug(ex, "WCF channel close exception.");
                 _channel.Abort();
             }
             finally
@@ -383,7 +393,8 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
                     }
                     catch (Exception ex)
                     {
-                        Logger.Logger.Instance.Debug(ex, "WCF channel close exception.");
+                        if(_logger.IsDebugEnabled)
+                            _logger.Debug(ex, "WCF channel close exception.");
                     }
                 }                
             }

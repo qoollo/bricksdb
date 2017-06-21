@@ -17,6 +17,8 @@ namespace Qoollo.Impl.Writer
 {
     internal class MainLogicModule:ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly DbModule _db;
         private readonly DistributorModule _distributor;        
         private readonly GlobalQueueInner _queue;
@@ -35,7 +37,7 @@ namespace Qoollo.Impl.Writer
 
         public RemoteResult Process(InnerData data)
         {
-            Logger.Logger.Instance.TraceFormat("Process hash = {0}", data.Transaction.CacheKey);
+            _logger.TraceFormat("Process operation = {0}", data.Transaction.OperationName);
             RemoteResult ret = null;
             var local = GetLocal(data);
 
@@ -83,7 +85,7 @@ namespace Qoollo.Impl.Writer
 
         public void Rollback(InnerData data)
         {
-            Logger.Logger.Instance.DebugFormat("Rollback hash = {0}", data.Transaction.CacheKey);
+            _logger.TraceFormat("Rollback operation = {0}", data.Transaction.OperationName);
             var local = GetLocal(data);
 
             switch (data.Transaction.OperationName)

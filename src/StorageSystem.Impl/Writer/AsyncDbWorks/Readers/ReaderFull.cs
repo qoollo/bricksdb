@@ -6,7 +6,9 @@ using Qoollo.Impl.Modules.Queue;
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
 {
     internal abstract class ReaderFull<TType> : ReaderFullBase
-    {        
+    {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         protected ReaderFull(Action<TType> process, QueueConfiguration queueConfiguration,
             QueueWithParam<TType> queue)
         {
@@ -30,8 +32,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
         {
             get
             {
-                Logger.Logger.Instance.Trace(
-                    string.Format("remote = {0}, queue = {1}", _reader.IsFinish, _queue.Count), "restore");
+                if(_logger.IsTraceEnabled)
+                    _logger.Trace($"remote = {_reader.IsFinish}, queue = {_queue.Count}", "restore");
                 return _reader.IsFinish && _queue.Count == 0;
             }
         }
@@ -40,8 +42,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
         {
             get
             {
-                Logger.Logger.Instance.Trace(string.Format("remote = {0}, queue = {1}", _reader.IsWait, _queue.Count),
-                    "restore");
+                if (_logger.IsTraceEnabled)
+                    _logger.Trace($"remote = {_reader.IsWait}, queue = {_queue.Count}", "restore");
                 return _reader.IsWait && _queue.Count == 0;
             }
         }

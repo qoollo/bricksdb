@@ -14,6 +14,8 @@ namespace Qoollo.Impl.Collector.CollectorNet
 {
     internal class CollectorNetModule:NetModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly DistributorModule _distributor;
 
         public CollectorNetModule(ConnectionConfiguration connectionConfiguration,
@@ -48,7 +50,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
 
             if (connection == null)
             {
-                Logger.Logger.Instance.DebugFormat("CollectorNetModule: process server not found  server = {0}", server);
+                _logger.DebugFormat("CollectorNetModule: process server not found  server = {0}", server);
                 _distributor.ServerUnavailable(server);
                 return new Tuple<RemoteResult, SelectSearchResult>(new ServerNotFoundResult(), null);
             }
@@ -56,7 +58,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
             var ret = connection.SelectQuery(description);
             if (ret.Item1 is FailNetResult)
             {
-                Logger.Logger.Instance.DebugFormat("CollectorNetModule: process fail result  server = {0}", server);
+                _logger.DebugFormat("CollectorNetModule: process fail result  server = {0}, result = {1}", server, ret.Item1);
                 _distributor.ServerUnavailable(server);
                 RemoveConnection(server);
             }
@@ -91,7 +93,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
 
             if (connection == null)
             {
-                Logger.Logger.Instance.DebugFormat("CollectorNetModule: process server not found  server = {0}", server);
+                _logger.DebugFormat("CollectorNetModule: process server not found  server = {0}", server);
                 _distributor.ServerUnavailable(server);
                 return new ServerNotAvailable(server);
             }

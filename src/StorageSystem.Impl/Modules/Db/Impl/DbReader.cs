@@ -6,6 +6,8 @@ namespace Qoollo.Impl.Modules.Db.Impl
 {
     public abstract class DbReader<TReader>:ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public abstract TReader Reader { get; }
 
         public bool IsFail;
@@ -24,7 +26,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
                 IsFail = true;
             }
         }
@@ -40,7 +42,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");                
+                _logger.Warn(e, "");                
                 throw new ReaderIsFailException(e.Message);
             }
         }
@@ -56,7 +58,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
                 throw new ReaderIsFailException(e.Message);
             }
         }        
@@ -74,7 +76,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
                 throw new ReaderIsFailException(e.Message);
             }
         }
@@ -90,7 +92,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
                 throw new ReaderIsFailException(e.Message);
             }
         }

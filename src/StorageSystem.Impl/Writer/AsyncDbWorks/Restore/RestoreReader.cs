@@ -11,6 +11,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class RestoreReader : SingleReaderBase
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly AsyncDbHolder _holder;        
         private readonly string _tableName;        
         private readonly RestoreDataContainer _restoreData;
@@ -45,7 +47,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             if (ret is FailNetResult)
             {
-                Logger.Logger.Instance.Info("Finish restore table " + db.TableName);
+                if(_logger.IsInfoEnabled)
+                    _logger.Info("Finish restore table " + db.TableName);
 
                 if (_holder.HasAnother)
                 {

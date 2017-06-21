@@ -14,6 +14,8 @@ namespace Qoollo.Impl.Proxy.ProxyNet
 {
     internal class ProxyNetModule:NetModule, IProxyNetModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private ProxyDistributorModule _distributor;
 
         public ProxyNetModule(ConnectionConfiguration connectionConfiguration,
@@ -63,6 +65,7 @@ namespace Qoollo.Impl.Proxy.ProxyNet
             var ret = connection.ProcessData(ev);
             if (ret is FailNetResult)
             {
+                _logger.DebugFormat("ProxyNetModule: process fail result  server: {0}, result: {1}", server, ret);
                 _distributor.ServerNotAvailable(server);
                 RemoveConnection(server);
             }
@@ -117,6 +120,7 @@ namespace Qoollo.Impl.Proxy.ProxyNet
 
             if (ret is FailNetResult)
             {
+                _logger.DebugFormat("ProxyNetModule: process fail result  server: {0}, result: {1}", server, ret);
                 RemoveConnection(server);
             }
 

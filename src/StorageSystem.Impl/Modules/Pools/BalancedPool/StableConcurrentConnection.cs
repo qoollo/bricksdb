@@ -28,6 +28,8 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
 
     internal class StableConcurrentConnection<TApi> : IDisposable
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private const int InitialOpenConnectionPause = 1000;
         private const int MaxOpenConnectionPause = 180000;
 
@@ -107,7 +109,8 @@ namespace Qoollo.Impl.Modules.Pools.BalancedPool
             {
                 _openWaiter.Reset();
 
-                Logger.Logger.Instance.Warn("Connection was closed, due to some error. Target: " + _targetName);
+                if(_logger.IsWarnEnabled)
+                    _logger.Warn("Connection was closed, due to some error. Target: " + _targetName);
 
                 _openConnectionPauseMs = 2 * _openConnectionPauseMs;
                 if (_openConnectionPauseMs > MaxOpenConnectionPause)

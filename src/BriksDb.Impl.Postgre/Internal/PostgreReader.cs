@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Runtime.InteropServices;
 using Npgsql;
 using Qoollo.Impl.Modules.Db.Impl;
 using Qoollo.Turbo.ObjectPools;
@@ -8,6 +9,8 @@ namespace Qoollo.Impl.Postgre.Internal
 {
     class PostgreReader : DbReader<NpgsqlDataReader>
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private NpgsqlCommand _command;
         private readonly RentedElementMonitor<NpgsqlConnection> _connection;
         private NpgsqlDataReader _reader;
@@ -33,11 +36,11 @@ namespace Qoollo.Impl.Postgre.Internal
                 }
                 catch (SqlException e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                 }
                 catch (NpgsqlException e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                 }
                 return false;
             }
@@ -76,7 +79,7 @@ namespace Qoollo.Impl.Postgre.Internal
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Error(e, "Command = " + _command.CommandText);
+                _logger.Error(e, "Command = " + _command.CommandText);
             }
         }
 

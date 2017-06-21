@@ -9,7 +9,9 @@ using Qoollo.Impl.Writer.Db;
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
 {
     internal class TimeoutReader:SingleReaderBase
-    {        
+    {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly AsyncDbHolder _holder;
         private readonly RestoreDataContainer _restoreData;        
 
@@ -40,7 +42,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
 
             if (ret is FailNetResult)
             {
-                Logger.Logger.Instance.Info("Finish delete data in table " + db.TableName);
+                _logger.Info("Finish delete data in table " + db.TableName);
                 
                 if (_holder.HasAnother)
                 {

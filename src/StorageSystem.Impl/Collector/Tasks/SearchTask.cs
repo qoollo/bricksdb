@@ -16,6 +16,8 @@ namespace Qoollo.Impl.Collector.Tasks
     /// </summary>
     internal abstract class SearchTask : ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public List<SingleServerSearchTask> SearchTasks { get; private set; }
         private ReaderWriterLockSlim _lock;
         public SystemSearchStateInner SearchState
@@ -124,7 +126,7 @@ namespace Qoollo.Impl.Collector.Tasks
                     SearchState = getState();
 
                     finish = BackgroundLoad(loader, merge);
-                    Logger.Logger.Instance.DebugFormat("Load background data. Result = {0}", finish);
+                    _logger.DebugFormat("Load background data. Result = {0}", finish);
 
                     SearchState = getState();
 
@@ -133,7 +135,7 @@ namespace Qoollo.Impl.Collector.Tasks
                         _lock.EnterReadLock();
 
                         bool action = _isStop;
-                        Logger.Logger.Instance.DebugFormat("Stop state pos 1. Value = {0}", _isStop);
+                        _logger.DebugFormat("Stop state pos 1. Value = {0}", _isStop);
 
                         _data.Add(false);
 
@@ -147,7 +149,7 @@ namespace Qoollo.Impl.Collector.Tasks
 
                         _lock.EnterReadLock();
                         finish = _isStop;
-                        Logger.Logger.Instance.DebugFormat("Stop state pos 2. Value = {0}", _isStop);
+                        _logger.DebugFormat("Stop state pos 2. Value = {0}", _isStop);
                         _lock.ExitReadLock();
                     }
                     else if (finish)
@@ -159,9 +161,9 @@ namespace Qoollo.Impl.Collector.Tasks
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
             }
-            Logger.Logger.Instance.Info("Finish background merge");
+            _logger.Info("Finish background merge");
         }
 
         protected abstract bool BackgroundLoad(IDataLoader loader, Func<OrderSelectTask, List<SingleServerSearchTask>, List<SearchData>> merge);

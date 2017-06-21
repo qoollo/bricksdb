@@ -25,6 +25,8 @@ namespace Qoollo.Impl.Writer.Db
         where TConnection : class
         where TCommand: IDisposable
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly IHashCalculater _hashCalculater;
         private readonly IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader> _userCommandCreator;
         private readonly IMetaDataCommandCreator<TCommand, TReader> _metaDataCommandCreator;
@@ -131,7 +133,7 @@ namespace Qoollo.Impl.Writer.Db
                 }
                 catch (Exception e)
                 {
-                    Logger.Logger.Instance.Warn(e, "");
+                    _logger.Warn(e, "");
                 }
 
                 timer.Complete();
@@ -277,7 +279,7 @@ namespace Qoollo.Impl.Writer.Db
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn("Custom operation error: " + e);
+                _logger.Warn(e, "Custom operation error");
                 ret = new InnerFailResult(e.Message);
             }
             connection.Dispose();
@@ -330,7 +332,7 @@ namespace Qoollo.Impl.Writer.Db
                 }
                 catch (Exception e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                     ret.Data = null;
 
                     ret.Transaction.SetError();
@@ -404,7 +406,7 @@ namespace Qoollo.Impl.Writer.Db
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn("Custom operation error: " + e);
+                _logger.Warn(e, "Custom operation error");
                 ret = new InnerFailResult(e.Message);
             }
             connection.Dispose();
@@ -459,7 +461,7 @@ namespace Qoollo.Impl.Writer.Db
                 {                                        
                     try
                     {
-                        Logger.Logger.Instance.DebugFormat("Start thread {0}", j1);
+                        _logger.DebugFormat("Start thread {0}", j1);
 
                         int start = j1*ids.Count/threadsCount;
                         int end = (j1+1)*ids.Count/threadsCount;
@@ -473,10 +475,10 @@ namespace Qoollo.Impl.Writer.Db
                     }
                     catch (Exception e)
                     {
-                        Logger.Logger.Instance.ErrorFormat("Fail in thread = {0}", e);
+                        _logger.ErrorFormat("Fail in thread = {0}", e);
                         throw;
                     }
-                    Logger.Logger.Instance.DebugFormat("Finish thread {0}", j1);
+                    _logger.DebugFormat("Finish thread {0}", j1);
                 });
 
                 threads[j] = task;
@@ -503,7 +505,7 @@ namespace Qoollo.Impl.Writer.Db
                 {
                     try
                     {
-                        Logger.Logger.Instance.DebugFormat("Start thread {0}", j1);
+                        _logger.DebugFormat("Start thread {0}", j1);
 
                         int start = j1 * ids.Count / threadsCount;
                         int end = (j1 + 1) * ids.Count / threadsCount;
@@ -514,10 +516,10 @@ namespace Qoollo.Impl.Writer.Db
                     }
                     catch (Exception e)
                     {
-                        Logger.Logger.Instance.ErrorFormat("Fail in thread = {0}", e);
+                        _logger.ErrorFormat("Fail in thread = {0}", e);
                         throw;
                     }
-                    Logger.Logger.Instance.DebugFormat("Finish thread {0}", j1);
+                    _logger.DebugFormat("Finish thread {0}", j1);
                 });
 
                 threads[j] = task;
@@ -570,7 +572,7 @@ namespace Qoollo.Impl.Writer.Db
                 }
                 catch (Exception e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                 }
                 return new List<InnerData>();
             }

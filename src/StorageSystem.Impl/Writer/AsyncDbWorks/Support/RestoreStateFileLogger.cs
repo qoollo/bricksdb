@@ -13,6 +13,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 {
     internal class RestoreStateFileLogger
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public string TableName { get; private set; }
         public List<RestoreServer> RestoreServers { get; private set; }
         public RestoreStateHolder StateHolder { get; private set; }
@@ -85,19 +87,19 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             }
             catch (FileNotFoundException e)
             {
-                Logger.Logger.Instance.DebugFormat(e, "file name = {0}", _filename);
+                _logger.DebugFormat(e, "file name = {0}", _filename);
             }
             catch (System.Security.SecurityException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+                _logger.ErrorFormat(e, "file name = {0}", _filename);
             }
             catch (DirectoryNotFoundException e)
             {
-                Logger.Logger.Instance.DebugFormat(e, "file name = {0}", _filename);
+                _logger.DebugFormat(e, "file name = {0}", _filename);
             }
             catch (IOException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+                _logger.ErrorFormat(e, "file name = {0}", _filename);
             }
             finally
             {
@@ -128,19 +130,19 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             }
             catch (FileNotFoundException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+                _logger.ErrorFormat(e, "file name = {0}", _filename);
             }
             catch (System.Security.SecurityException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+                _logger.ErrorFormat(e, "file name = {0}", _filename);
             }
             catch (DirectoryNotFoundException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+                _logger.ErrorFormat(e, "file name = {0}", _filename);
             }
             catch (IOException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _filename);
+                _logger.ErrorFormat(e, "file name = {0}", _filename);
             }            
         }
 

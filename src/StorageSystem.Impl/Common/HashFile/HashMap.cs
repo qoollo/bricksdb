@@ -13,6 +13,8 @@ namespace Qoollo.Impl.Common.HashFile
 {
     internal class HashMap:IDisposable
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public List<HashMapRecord> Map { get; protected set; }
         public List<WriterDescription> Servers { get; private set; }
         public List<HashMapRecord> AvailableMap { get; private set; }
@@ -112,19 +114,19 @@ namespace Qoollo.Impl.Common.HashFile
             }
             catch (FileNotFoundException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e,"file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e,"file name = {0}", _configuration.Filename);
             }
             catch (System.Security.SecurityException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
             }
             catch (DirectoryNotFoundException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
             }
             catch (IOException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
             }
         }
 
@@ -139,19 +141,19 @@ namespace Qoollo.Impl.Common.HashFile
             }
             catch (FileNotFoundException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
             }
             catch (System.Security.SecurityException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
             }
             catch (DirectoryNotFoundException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
             }
             catch (IOException e)
             {
-                Logger.Logger.Instance.ErrorFormat(e, "file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
             }
         }
 
@@ -212,7 +214,7 @@ namespace Qoollo.Impl.Common.HashFile
                     if(intersect.Count()!=0)
                     {
                         //TODO в системен не хватает серверов для полного хранения реплик
-                        Logger.Logger.Instance.Error("Need more servres to store data");
+                        _logger.Error("Need more servres to store data");
                     }
                     ret.AddRange(list);
                 }

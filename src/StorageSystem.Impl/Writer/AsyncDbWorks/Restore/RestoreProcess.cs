@@ -23,9 +23,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class RestoreProcess : ControlModule
     {
-        public bool IsComplete { get { return _reader.IsComplete; } }
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public bool IsQueueEmpty { get { return _reader.IsQueueEmpty; } }        
+        public bool IsComplete => _reader.IsComplete;
+
+        public bool IsQueueEmpty => _reader.IsQueueEmpty;
 
         public RestoreProcess(List<KeyValuePair<string, string>> remoteHashRange, List<HashMapRecord> localHashRange,
             bool isSystemUpdated, DbModuleCollection db, QueueConfiguration queueConfiguration, string tableName,
@@ -83,7 +85,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             {
                 while (result is FailNetResult || send)
                 {
-                    Logger.Logger.Instance.DebugFormat("Servers {0} unavailable in recover process", _remote);
+                    if (_logger.IsDebugEnabled)
+                        _logger.DebugFormat("Servers {0} unavailable in recover process", _remote);
                     result = _writerNet.ProcessSync(_remote, data);
                     send = false;
                 }
@@ -131,7 +134,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         {
             while (result is FailNetResult)
             {
-                Logger.Logger.Instance.DebugFormat("Servers {0} unavailable in recover process", _remote);
+                if (_logger.IsDebugEnabled)
+                    _logger.DebugFormat("Servers {0} unavailable in recover process", _remote);
                 result = _writerNet.ProcessSync(_remote, data);
             }
 

@@ -24,6 +24,8 @@ namespace Qoollo.Impl.Writer
 {
     internal class DistributorModule : ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly WriterModel _model;
         private readonly WriterNetModule _writerNet;
         private readonly QueueConfiguration _queueConfiguration;
@@ -324,9 +326,9 @@ namespace Qoollo.Impl.Writer
 
         private void RestoreCommand(RestoreCommand comm)
         {
-            Logger.Logger.Instance.Debug(
-                string.Format("First restore server = {0}", _model.Servers.Count(x => !x.Equals(_model.Local))),
-                "restore");
+            if (_logger.IsDebugEnabled)
+                _logger.Debug($"First restore server = {_model.Servers.Count(x => !x.Equals(_model.Local))}",
+                    "restore");
 
             var st = comm.RestoreState;
             if (comm.RestoreState == RestoreState.Default)

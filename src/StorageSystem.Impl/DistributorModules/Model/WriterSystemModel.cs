@@ -13,6 +13,8 @@ namespace Qoollo.Impl.DistributorModules.Model
 {
     internal class WriterSystemModel
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public List<WriterDescription> Servers { get { return new List<WriterDescription>(_servers); } } 
 
         public WriterSystemModel(DistributorHashConfiguration configuration, HashMapConfiguration mapConfiguration)
@@ -38,7 +40,7 @@ namespace Qoollo.Impl.DistributorModules.Model
 
             if (server == null)
             {
-                Logger.Logger.Instance.ErrorFormat(
+                _logger.ErrorFormat(
                     "Server {0} is missing in model of this file, but command received that it is unavailable", serverId);
             }
             else
@@ -57,7 +59,7 @@ namespace Qoollo.Impl.DistributorModules.Model
 
             if (server == null)
             {
-                Logger.Logger.Instance.ErrorFormat(
+                _logger.ErrorFormat(
                     "Server {0} is missing in model of this file, but command received that it is unavailable", serverId);
             }
             else
@@ -132,7 +134,7 @@ namespace Qoollo.Impl.DistributorModules.Model
 
                     if (find == null)
                     {
-                        Logger.Logger.Instance.Error(Errors.NotEnoughServers);
+                        _logger.Error(Errors.NotEnoughServers);
                         ret.Clear();
                         break;
                     }

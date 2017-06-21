@@ -18,6 +18,8 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 {
     internal class TransactionModule : ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public TransactionModule(INetModule net, TransactionConfiguration transactionConfiguration,
             int countReplics, DistributorTimeoutCache cache)
         {
@@ -63,10 +65,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         private void ExecuteTransaction(InnerData data, TransactionExecutor executor)
         {
-            Logger.Logger.Instance.Debug(string.Format("Transaction process data = {0}", data.Transaction.DataHash));
-
             data.Transaction.StartTransaction();
-
             executor.Commit(data);
         }
 
@@ -170,7 +169,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         private void DataTimeout(InnerData data)
         {
-            Logger.Logger.Instance.ErrorFormat("Operation timeout with key {0}", data.Transaction.CacheKey);
+            _logger.ErrorFormat("Operation timeout with key {0}", data.Transaction.OperationName);
 
             data.Transaction.SetError();
             data.Transaction.AddErrorDescription(Errors.TimeoutExpired);
@@ -182,8 +181,9 @@ namespace Qoollo.Impl.DistributorModules.Transaction
         {
             data.Transaction.Complete();
 
-            Logger.Logger.Instance.Trace(string.Format("Mainlogic: process data = {0}, result = {1}",
-                data.Transaction.CacheKey, !data.Transaction.IsError));
+            if (_logger.IsInfoEnabled)
+                _logger.Trace(
+                    $"Mainlogic: process data = {data.Transaction.OperationName}, result = {!data.Transaction.IsError} {data.Transaction.ErrorDescription}");
 
             if (data.Transaction.OperationType == OperationType.Sync)
                 ProcessSyncTransaction(data);

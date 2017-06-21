@@ -12,6 +12,8 @@ namespace Qoollo.Impl.Proxy
 {
     internal class ProxyMainLogicModule : ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly ProxyDistributorModule _distributor;
         private readonly IProxyNetModule _net;
         private readonly ProxyCache _cache;
@@ -35,7 +37,7 @@ namespace Qoollo.Impl.Proxy
             if (dest == null)
             {
                 //конец всего, некуда отправить данные
-                Logger.Logger.Instance.Debug("Cannot send data to distributor. Data = {0}", ev.Transaction.CacheKey);
+                _logger.Warn("Cannot send data to distributor");
                 _cache.AddToCache(ev.Transaction.CacheKey, new ServerId("default", -1));
                 return true;
             }            

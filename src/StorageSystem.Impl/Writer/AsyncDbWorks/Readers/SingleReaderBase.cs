@@ -8,12 +8,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
 {
     internal abstract class SingleReaderBase:ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly Thread _thread;
         private bool _isFinish;
         private bool _isWait;
         private readonly AutoResetEvent _reset;
 
-        public bool IsFinish { get { return _isFinish; } }
+        public bool IsFinish => _isFinish;
 
         public bool IsWait
         {
@@ -61,10 +63,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
                     var result = Read();
                     if (result is FailNetResult)
                     {
-                        Logger.Logger.Instance.Debug("Thread process exit", "restore");
+                        if(_logger.IsDebugEnabled)
+                            _logger.Debug("Thread process exit", "restore");
                         break;
                     }
-                    Logger.Logger.Instance.Debug("Thread process wait", "restore");
+
+                    if (_logger.IsDebugEnabled)
+                        _logger.Debug("Thread process wait", "restore");
+
                     lock (_lock)
                     {
                         _isWait = true;
@@ -76,7 +82,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e,"in restore");
+                if (_logger.IsWarnEnabled)
+                    _logger.Warn(e, "in restore");
                 //todo dispose
             }
             

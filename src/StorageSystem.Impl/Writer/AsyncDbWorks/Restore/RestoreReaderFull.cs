@@ -10,10 +10,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class RestoreReaderFull<TType>:ReaderFull<TType>
     {
-        public Action<TType> ProcessData
-        {
-            get { return ProcessDataWithQueue(); }
-        }
+        public Action<TType> ProcessData => ProcessDataWithQueue();
 
         public RestoreReaderFull(Func<MetaData, bool> isMine, Action<TType> process,
             QueueConfiguration queueConfiguration, DbModuleCollection db, bool isBothTables, string tableName,

@@ -16,26 +16,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class InitiatorRestoreModule : CommonAsyncWorkModule
     {
-        public ServerId RestoreServer
-        {
-            get { return _serversController.RestoreServer; }
-        }
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public List<ServerId> FailedServers
-        {
-            get
-            {
-                return _serversController.FailedServers;
-            }
-        }
+        public ServerId RestoreServer => _serversController.RestoreServer;
 
-        public List<RestoreServer> Servers
-        {
-            get
-            {
-                return _serversController.Servers;
-            }
-        }
+        public List<ServerId> FailedServers => _serversController.FailedServers;
+
+        public List<RestoreServer> Servers => _serversController.Servers;
 
         public InitiatorRestoreModule(RestoreModuleConfiguration configuration, WriterNetModule writerNet,
             AsyncTaskModule asyncTaskModule, RestoreStateHolder stateHolder, RestoreStateFileLogger saver)
@@ -156,7 +143,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             bool result = WriterNet.ConnectToWriter(nextServer);
 
-            Logger.Logger.Instance.Trace(string.Format("Connection result = {0}", result), "restore");
+            if(_logger.IsTraceEnabled)
+                _logger.Trace($"Connection result = {result}", "restore");
             
             var state = nextServer.Equals(_local[0].ServerId)
                 ? RestoreState.SimpleRestoreNeed
@@ -166,8 +154,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             if (ret is FailNetResult)
             {
-                Logger.Logger.Instance.InfoFormat(
-                    "Restore command for server: {0} failed with result: {1}", nextServer, ret.Description);                
+                if (_logger.IsInfoEnabled)
+                    _logger.InfoFormat($"Restore command for server: {nextServer} failed with result: {ret.Description}");
+
                 _serversController.AddServerToFailed(nextServer);                
                 return 1;
             }
@@ -192,7 +181,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
 
            _serversController.Save();
-            Logger.Logger.Instance.Info("Restore current servers complete");
+
+            if (_logger.IsInfoEnabled)
+                _logger.Info("Restore current servers complete");
         }
 
         private void ProcessFailedServers()
@@ -205,7 +196,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         
         public void PeriodMessageIncome(ServerId server)
         {
-            Logger.Logger.Instance.Trace(string.Format("period messge income from {0}", server), "restore");
+            if (_logger.IsTraceEnabled)
+                _logger.Trace($"period messge income from {server}", "restore");
 
             if (server.Equals(RestoreServer))
                 AsyncTaskModule.RestartTask(AsyncTasksNames.RestoreRemote);
@@ -213,7 +205,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         public void LastMessageIncome(ServerId server)
         {
-            Logger.Logger.Instance.Debug(string.Format("last message income from {0}", server), "restore");
+            if (_logger.IsDebugEnabled)
+                _logger.Debug($"last message income from {server}", "restore");
 
             if (server.Equals(RestoreServer))
             {

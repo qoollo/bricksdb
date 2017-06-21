@@ -13,6 +13,8 @@ namespace Qoollo.Impl.Postgre.Internal
 {
     internal class PostgreDbModule : DbImplModuleWithPool<NpgsqlConnection, PostgreConnectionParams, NpgsqlCommand, NpgsqlDataReader>
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public PostgreDbModule(PostgreConnectionParams connectionParam, int maxCountElementInPool, int trimPeriod)
             : base(connectionParam, maxCountElementInPool, trimPeriod)
         {
@@ -27,29 +29,32 @@ namespace Qoollo.Impl.Postgre.Internal
                 try
                 {
                     command.ExecuteNonQuery();
-                    command.Dispose();
                     ret = new SuccessResult();
 
                 }
                 catch (SqlException e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                     ret = new FailNetResult(e.Message);
                 }
                 catch (NpgsqlException e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                     ret = new FailNetResult(e.Message);
                 }
                 catch (IOException e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                     ret = new FailNetResult(e.Message);
                 }
                 catch (InvalidOperationException e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                     ret = new FailNetResult(e.Message);
+                }
+                finally
+                {
+                    command.Dispose();
                 }
             }
 
@@ -78,7 +83,7 @@ namespace Qoollo.Impl.Postgre.Internal
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
                 return false;
             }
             return true;
@@ -98,7 +103,7 @@ namespace Qoollo.Impl.Postgre.Internal
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
             }
         }
     }

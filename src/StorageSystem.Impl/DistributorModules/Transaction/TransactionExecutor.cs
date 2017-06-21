@@ -17,13 +17,13 @@ namespace Qoollo.Impl.DistributorModules.Transaction
         private readonly object _obj = new object();
         private readonly GlobalQueueInner _queue;
 
-        public TransactionExecutor(INetModule net, int countReplics)
+        public TransactionExecutor(INetModule net, int countReplics, GlobalQueueInner queue)
         {
             Contract.Requires(net!=null);
             _net = net;
             _tasks = new List<Task>();
 
-            _queue = GlobalQueue.Queue;
+            _queue = queue;
 
             SetTasksLength(countReplics);
         }

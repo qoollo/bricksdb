@@ -69,6 +69,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Ninject, Version=3.2.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Ninject.3.2.2.0\lib\net45-full\Ninject.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="protobuf-net, Version=2.0.0.668, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\briksdb\src\libs\protobuf-net.2.0.0.668\protobuf-net.dll</HintPath>
@@ -156,8 +160,15 @@
     <Compile Include="Common\Commands\ServerNotAvailableCommand.cs" />
     <Compile Include="Common\Support\delegate.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
+    <Compile Include="Modules\Net\ConnectionBehavior\ConnectionBehaviorBase.cs" />
+    <Compile Include="Modules\Net\ConnectionBehavior\IConnectionBehavior.cs" />
+    <Compile Include="Modules\Net\ConnectionBehavior\WpfConnection.cs" />
+    <Compile Include="Modules\Net\ReceiveBehavior\IReceiveBehavior.cs" />
+    <Compile Include="Modules\Net\ReceiveBehavior\NetReceiveBehavior.cs" />
+    <Compile Include="Modules\Net\ReceiveBehavior\ReceiveBehaviorBase.cs" />
     <Compile Include="PerfCounters\PoolsProfiling.cs" />
     <Compile Include="TestSupport\InitInjection.cs" />
+    <Compile Include="TestSupport\InjectionModule.cs" />
     <Compile Include="Writer\AsyncDbWorks\Readers\ReaderFullBase.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\RestoreProcess.cs" />
     <Compile Include="Writer\AsyncDbWorks\Support\AsyncDbHolder.cs" />

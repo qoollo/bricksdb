@@ -47,7 +47,8 @@ namespace Qoollo.Impl.Writer
 
         public void Rollback(InnerData data)
         {
-            _queue.DbInputRollbackQueue.Add(data);
+            //_queue.DbInputRollbackQueue.Add(data);
+            RollbackProcess(data);
         }
 
         #endregion

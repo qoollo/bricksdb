@@ -22,11 +22,17 @@ namespace Qoollo.Impl.Modules.Async
         {
             Contract.Requires(configuration != null);
             _tasks = new List<AsyncData>();
-            //_threadPool = new DynamicThreadPool(1, configuration.ProcessotCount, configuration.MaxSizeQueue, "AsyncTaskModule");
             _threadPool =
                 new Lazy<StaticThreadPool>(
                     () =>
-                        new StaticThreadPool(configuration.ProcessotCount, configuration.MaxSizeQueue, "AsyncTaskModule", false, new StaticThreadPoolOptions() { FlowExecutionContext = false, UseOwnSyncContext = false, UseOwnTaskScheduler = false }));
+                        new StaticThreadPool(configuration.ProcessotCount, -1, "AsyncTaskModule",
+                            false,
+                            new StaticThreadPoolOptions
+                            {
+                                FlowExecutionContext = false,
+                                UseOwnSyncContext = false,
+                                UseOwnTaskScheduler = false
+                            }));
             _lock = new ReaderWriterLockSlim();
             _event = new AutoResetEvent(false);
             _token = new CancellationTokenSource();
@@ -180,7 +186,7 @@ namespace Qoollo.Impl.Modules.Async
                 _token.Cancel();
                 _event.Set();
                 if (_threadPool.IsValueCreated)
-                    _threadPool.Value.Dispose(false, false, false);
+                    _threadPool.Value.Dispose(true, false, true);
             }
 
             base.Dispose(isUserCall);

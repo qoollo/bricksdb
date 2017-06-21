@@ -5,10 +5,11 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces;
+using Qoollo.Impl.NetInterfaces.Proxy;
 
 namespace Qoollo.Impl.DistributorModules.DistributorNet
 {
-    internal class SingleConnectionToProxy : SingleConnection<ICommonCommunicationNet>, ICommonCommunicationNet, ISingleConnection
+    internal class SingleConnectionToProxy : SingleConnection<ICommonProxyNetReceiver>, ICommonCommunicationNet, ISingleConnection
     {
         public SingleConnectionToProxy(ServerId server, ConnectionConfiguration configuration,
             ConnectionTimeoutConfiguration timeoutConfiguration) : base(server, configuration, timeoutConfiguration)

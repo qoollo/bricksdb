@@ -1,31 +1,35 @@
 ﻿using System.Diagnostics.Contracts;
-using System.ServiceModel;
+using System.Reflection;
+using Ninject;
+using Ninject.Parameters;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.NetInterfaces.Data;
+using Qoollo.Impl.Modules.Net.ReceiveBehavior;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Impl.Modules.Net
 {
     internal abstract class NetReceiveModule<T> : ControlModule
     {
-        private readonly NetReceiverConfiguration _configuration;
-        private ServiceHost _host;
+        private readonly IReceiveBehavior<T> _receive; 
 
         protected NetReceiveModule(NetReceiverConfiguration configuration)
         {
             Contract.Requires(configuration != null);
-            _configuration = configuration;
+
+            _receive = InitInjection.Kernel.Get<IReceiveBehavior<T>>(
+                new ConstructorArgument("configuration", configuration),
+                new ConstructorArgument("server", this));
         }
 
         public override void Start()
         {
-            if (_configuration.Host != "fake" && _configuration.Service != "fake" && _configuration.Port != 157)
-                _host = NetConnector.CreateServer<T>(this, _configuration);
+            _receive.Start();
         }
 
         protected override void Dispose(bool isUserCall)
         {
-            if (isUserCall && _host != null)
-                NetConnector.StopService(_host);
+            if (isUserCall)
+                _receive.Dispose();
 
             base.Dispose(isUserCall);
         }

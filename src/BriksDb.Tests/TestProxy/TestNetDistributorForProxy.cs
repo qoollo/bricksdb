@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.ServiceModel;
+using System.Threading;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -7,8 +9,10 @@ using Qoollo.Impl.NetInterfaces.Distributor;
 
 namespace Qoollo.Tests.TestProxy
 {
-    internal class TestNetDistributorForProxy : ICommonNetReceiverForProxy, ICommonNetReceiverForDb
+    internal class TestNetDistributorForProxy : ICommonNetReceiverForProxy, ICommonNetReceiverForDb, IDisposable
     {
+        public ServiceHost Host;
+
         public int Value = 0;
         public int SendValue = 0;
 
@@ -42,6 +46,17 @@ namespace Qoollo.Tests.TestProxy
         public void TransactionAnswer(Transaction transaction)
         {
             Interlocked.Increment(ref SendValue);
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                Host?.Close();
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 }

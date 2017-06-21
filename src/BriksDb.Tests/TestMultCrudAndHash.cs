@@ -1,492 +1,362 @@
 ﻿using System;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Qoollo.Client.Configuration;
-using Qoollo.Client.DistributorGate;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
-using Qoollo.Client.WriterGate;
-using Qoollo.Impl.Common.HashFile;
-using Qoollo.Impl.Configurations;
 using Qoollo.Tests.Support;
-using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestWriter;
+using Xunit;
+using Consts = Qoollo.Impl.Common.Support.Consts;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
-    public class TestMultCrudAndHash
+    [Collection("test collection 1")]
+    public class TestMultCrudAndHash:TestBase
     {
-        private TestGate _proxy;
-        const int proxyServer = 22378;
-        [TestInitialize]
-        public void Initialize()
+        public TestMultCrudAndHash():base()
         {
-            var common = new CommonConfiguration(1, 100);
-
-            var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
-            var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
-
-            _proxy = new TestGate(netconfig, toconfig, common);
+            _proxy = TestGate(proxyServer, 30000);
             _proxy.Build();
         }
 
-        [TestMethod]
-        public void Proxy_CRUD_TwoTables()
+        [Theory]
+        [InlineData(50)]
+        [InlineData(500)]
+        public void Proxy_CRUD_TwoTables(int count)
         {            
-            const int distrServer1 = 22379;
-            const int distrServer12 = 22380;
-            const int st1 = 22381;
-            const int st2 = 22382;
+            var filename = nameof(Proxy_CRUD_TwoTables);
+            using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
 
-            #region hell
-
-            var writer = new HashWriter(new HashMapConfiguration("Test2Crud", HashMapCreationMode.CreateNew, 1, 1, HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", st1, st2);
-            writer.Save();
-
-            var common = new CommonConfiguration(1, 100);
-
-            var distrNet = new DistributorNetConfiguration("localhost",
-                distrServer1, distrServer12, "testService", 10);
-            var distrConf = new DistributorConfiguration(1, "Test2Crud",
-                TimeSpan.FromMilliseconds(100000), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(10000));
-
-            var distr = new DistributorApi(distrNet, distrConf, common);
-
-            var storageNet = new StorageNetConfiguration("localhost", st1, st2, "testService", 10);
-            var storageConfig = new StorageConfiguration("Test2Crud", 1, 10, TimeSpan.FromHours(1), TimeSpan.FromHours(1),
-                TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
-
-            var storage = new WriterApi(storageNet, storageConfig, common);
-
-            #endregion
-
-            storage.Build();            
-            distr.Build();
-
-            var f = new TestInMemoryDbFactory();
-            var f2 = new TestInMemoryDbFactory("Int2");
-
-            storage.AddDbModule(f);
-            storage.AddDbModule(f2);
-
-            storage.Start();
-            _proxy.Start();
-            distr.Start();
-
-            _proxy.Int.SayIAmHere("localhost", distrServer1);
-
-            const int count = 5;
-
-            for (int i = 0; i < count; i++)
             {
-                RequestDescription result;
+                CreateHashFile(filename, 1);
 
-                _proxy.Int.Read(i, out result);
-                Assert.AreEqual(RequestState.DataNotFound, result.State);
-                _proxy.Int2.Read(i, out result);
-                Assert.AreEqual(RequestState.DataNotFound, result.State);
+                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
+
+                storage.Build();
+                distr.Build();
+
+                var f = new TestInMemoryDbFactory();
+                var f2 = new TestInMemoryDbFactory("Int2");
+
+                storage.AddDbModule(f);
+                storage.AddDbModule(f2);
+
+                storage.Start();
+                _proxy.Start();
+                distr.Start();
+
+                _proxy.Int.SayIAmHere("localhost", distrServer1);
+
+                for (int i = 0; i < count; i++)
+                {
+                    RequestDescription result;
+
+                    _proxy.Int.Read(i, out result);
+                    Assert.Equal(RequestState.DataNotFound, result.State);
+                    _proxy.Int2.Read(i, out result);
+                    Assert.Equal(RequestState.DataNotFound, result.State);
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    RequestDescription result = _proxy.Int.CreateSync(i, i);
+                    Assert.Equal(RequestState.Complete, result.State);
+                    result = _proxy.Int2.CreateSync(i, i);
+                    Assert.Equal(RequestState.Complete, result.State);
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    RequestDescription result;
+
+                    var value = _proxy.Int.Read(i, out result);
+                    Assert.Equal(RequestState.Complete, result.State);
+                    Assert.Equal(i, value);
+                    value = _proxy.Int2.Read(i, out result);
+                    Assert.Equal(i, value);
+                }
+
+                Assert.Equal(count, f.Db.Local);
+                Assert.Equal(count, f2.Db.Local);
+
+                _proxy.Dispose();
+                distr.Dispose();
+                storage.Dispose();
             }
-
-            for (int i = 0; i < count; i++)
-            {
-                RequestDescription result = _proxy.Int.CreateSync(i, i);
-                Assert.AreEqual(RequestState.Complete, result.State);
-                result = _proxy.Int2.CreateSync(i, i);
-                Assert.AreEqual(RequestState.Complete, result.State);
-            }
-
-            for (int i = 0; i < count; i++)
-            {
-                RequestDescription result;
-
-                var value = _proxy.Int.Read(i, out result);
-                Assert.AreEqual(RequestState.Complete, result.State);
-                Assert.AreEqual(i, value);
-                value = _proxy.Int2.Read(i, out result);
-                Assert.AreEqual(i, value);
-            }
-
-            Assert.AreEqual(count, f.Db.Local);
-            Assert.AreEqual(count, f2.Db.Local);
-
-            _proxy.Dispose();
-            distr.Dispose();
-            storage.Dispose();
         }
 
-        [TestMethod]
-        public void Proxy_Restore_TwoTablesOneCommand()
+        [Theory]
+        [InlineData(50)]
+        [InlineData(500)]
+        public void Proxy_Restore_TwoTablesOneCommand(int count)
         {            
-            const int distrServer1 = 22384;
-            const int distrServer12 = 22385;
-            const int st1 = 22386;
-            const int st2 = 22387;
-            const int st3 = 22388;
-            const int st4 = 22389;
-
-            #region hell
-
-            var writer = new HashWriter(new HashMapConfiguration("Test2CrudRestore",
-                HashMapCreationMode.CreateNew, 2, 1, HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", st1, st2);
-            writer.SetServer(1, "localhost", st3, st4);
-            writer.Save();
-
-            var common = new CommonConfiguration(1, 100);
-
-            var distrNet = new DistributorNetConfiguration("localhost",
-                distrServer1, distrServer12, "testService", 10);
-            var distrConf = new DistributorConfiguration(1, "Test2CrudRestore",
-                TimeSpan.FromMilliseconds(100000), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(10000));
-
-            var distr = new DistributorApi(distrNet, distrConf, common);
-
-            var storageNet1 = new StorageNetConfiguration("localhost", st1, st2, "testService", 10);
-            var storageNet2 = new StorageNetConfiguration("localhost", st3, st4, "testService", 10);
-            var storageConfig = new StorageConfiguration("Test2CrudRestore", 1, 10, TimeSpan.FromHours(1),
-                TimeSpan.FromHours(1), TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
-
-            var storage1 = new WriterApi(storageNet1, storageConfig, common);
-            var storage2 = new WriterApi(storageNet2, storageConfig, common);
-
-            #endregion
-
-            storage1.Build();
-            storage2.Build();            
-            distr.Build();
-
-            var f = new TestInMemoryDbFactory();
-            var f2 = new TestInMemoryDbFactory("Int2");
-            storage1.AddDbModule(f);
-            storage1.AddDbModule(f2);
-
-            var f3 = new TestInMemoryDbFactory();
-            var f4 = new TestInMemoryDbFactory("Int2");
-            storage2.AddDbModule(f3);
-            storage2.AddDbModule(f4);
-
-            storage1.Start();
-            _proxy.Start();
-            distr.Start();
-
-            _proxy.Int.SayIAmHere("localhost", distrServer1);
-
-            const int count = 5;
-
-            for (int i = 0; i < count; i++)
+            var filename = nameof(Proxy_Restore_TwoTablesOneCommand);
+            using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
-                _proxy.Int.CreateSync(i, i);
-                _proxy.Int2.CreateSync(i, i);
+                CreateHashFile(filename, 2);
 
-                _proxy.Int.CreateSync(i, i);
-                _proxy.Int2.CreateSync(i, i);
+                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                var storage1 = WriterApi(StorageConfiguration(filename, 1), storageServer1);
+                var storage2 = WriterApi(StorageConfiguration(filename, 1), storageServer2);
+
+                storage1.Build();
+                storage2.Build();
+                distr.Build();
+
+                var f = new TestInMemoryDbFactory();
+                var f2 = new TestInMemoryDbFactory("Int2");
+                storage1.AddDbModule(f);
+                storage1.AddDbModule(f2);
+
+                var f3 = new TestInMemoryDbFactory();
+                var f4 = new TestInMemoryDbFactory("Int2");
+                storage2.AddDbModule(f3);
+                storage2.AddDbModule(f4);
+
+                storage1.Start();
+                _proxy.Start();
+                distr.Start();
+
+                _proxy.Int.SayIAmHere("localhost", distrServer1);
+
+                for (int i = 0; i < count; i++)
+                {
+                    _proxy.Int.CreateSync(i, i);
+                    _proxy.Int2.CreateSync(i, i);
+
+                    _proxy.Int.CreateSync(i, i);
+                    _proxy.Int2.CreateSync(i, i);
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    RequestDescription result;
+
+                    var value = _proxy.Int.Read(i, out result);
+                    Assert.Equal(RequestState.Complete, result.State);
+                    Assert.Equal(i, value);
+                    value = _proxy.Int2.Read(i, out result);
+                    Assert.Equal(i, value);
+                }
+
+                Assert.Equal(count, f.Db.Local + f.Db.Remote);
+                Assert.Equal(count, f2.Db.Local + f2.Db.Remote);
+
+                storage2.Start();
+                storage2.Api.Restore(RestoreMode.SimpleRestoreNeed);
+
+                Thread.Sleep(TimeSpan.FromMilliseconds(2000));
+
+                Assert.Equal(count, f.Db.Local + f3.Db.Local);
+                Assert.Equal(count, f2.Db.Local + f4.Db.Local);
+
+                _proxy.Dispose();
+                distr.Dispose();
+                storage1.Dispose();
+                storage2.Dispose();
             }
-
-            for (int i = 0; i < count; i++)
-            {
-                RequestDescription result;
-
-                var value = _proxy.Int.Read(i, out result);
-                Assert.AreEqual(RequestState.Complete, result.State);
-                Assert.AreEqual(i, value);
-                value = _proxy.Int2.Read(i, out result);
-                Assert.AreEqual(i, value);
-            }
-
-            Assert.AreEqual(count, f.Db.Local + f.Db.Remote);
-            Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
-
-            storage2.Start();
-            storage2.Api.Restore(RestoreMode.SimpleRestoreNeed);
-
-            Thread.Sleep(TimeSpan.FromMilliseconds(2000));
-
-            Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
-            Assert.AreEqual(count, f2.Db.Local + f4.Db.Local);
-
-            _proxy.Dispose();
-            distr.Dispose();
-            storage1.Dispose();
-            storage2.Dispose();
         }
 
-        [TestMethod]
-        public void Proxy_Restore_TwoTablesTwoCommands()
+        [Theory]
+        [InlineData(50)]
+        [InlineData(500)]
+        public void Proxy_Restore_TwoTablesTwoCommands(int count)
         {            
-            const int distrServer1 = 22391;
-            const int distrServer12 = 22392;
-            const int st1 = 22393;
-            const int st2 = 22394;
-            const int st3 = 22395;
-            const int st4 = 22396;
-
-            #region hell
-
-            var writer = new HashWriter(new HashMapConfiguration("TestCrudRestoreSingle",
-                HashMapCreationMode.CreateNew, 2, 1, HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", st1, st2);
-            writer.SetServer(1, "localhost", st3, st4);
-            writer.Save();
-
-            var common = new CommonConfiguration(1, 100);
-
-            var distrNet = new DistributorNetConfiguration("localhost",
-                distrServer1, distrServer12, "testService", 10);
-            var distrConf = new DistributorConfiguration(1, "TestCrudRestoreSingle",
-                TimeSpan.FromMilliseconds(1000000), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(1000000));
-
-            var distr = new DistributorApi(distrNet, distrConf, common);
-
-            var storageNet1 = new StorageNetConfiguration("localhost", st1, st2, "testService", 10);
-            var storageNet2 = new StorageNetConfiguration("localhost", st3, st4, "testService", 10);
-            var storageConfig = new StorageConfiguration("TestCrudRestoreSingle", 1, 10, TimeSpan.FromHours(1),
-                TimeSpan.FromSeconds(1), TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
-
-            var storage1 = new WriterApi(storageNet1, storageConfig, common);
-            var storage2 = new WriterApi(storageNet2, storageConfig, common);
-
-            #endregion
-
-            storage1.Build();
-            storage2.Build();            
-            distr.Build();
-
-            var f = new TestInMemoryDbFactory();
-            var f2 = new TestInMemoryDbFactory("Int2");
-            storage1.AddDbModule(f);
-            storage1.AddDbModule(f2);
-
-            var f3 = new TestInMemoryDbFactory();
-            var f4 = new TestInMemoryDbFactory("Int2");
-            storage2.AddDbModule(f3);
-            storage2.AddDbModule(f4);
-
-            storage1.Start();
-            _proxy.Start();
-            distr.Start();
-
-            _proxy.Int.SayIAmHere("localhost", distrServer1);
-
-            const int count = 5;
-
-            for (int i = 0; i < count; i++)
+            var filename = nameof(Proxy_Restore_TwoTablesTwoCommands);
+            using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
-               var result =  _proxy.Int.CreateSync(i, i);
-                _proxy.Int2.CreateSync(i, i);
+                CreateHashFile(filename, 2);
 
-                result = _proxy.Int.CreateSync(i, i);
-                _proxy.Int2.CreateSync(i, i);
+                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                var storage1 = WriterApi(StorageConfiguration(filename, 1, 1000), storageServer1);
+                var storage2 = WriterApi(StorageConfiguration(filename, 1, 1000), storageServer2);
+
+                storage1.Build();
+                storage2.Build();
+                distr.Build();
+
+                var f = new TestInMemoryDbFactory();
+                var f2 = new TestInMemoryDbFactory("Int2");
+                storage1.AddDbModule(f);
+                storage1.AddDbModule(f2);
+
+                var f3 = new TestInMemoryDbFactory();
+                var f4 = new TestInMemoryDbFactory("Int2");
+                storage2.AddDbModule(f3);
+                storage2.AddDbModule(f4);
+
+                storage1.Start();
+                _proxy.Start();
+                distr.Start();
+
+                _proxy.Int.SayIAmHere("localhost", distrServer1);
+
+                for (int i = 0; i < count; i++)
+                {
+                    _proxy.Int.CreateSync(i, i);
+                    _proxy.Int2.CreateSync(i, i);
+
+                    _proxy.Int.CreateSync(i, i);
+                    _proxy.Int2.CreateSync(i, i);
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    RequestDescription result;
+
+                    var value = _proxy.Int.Read(i, out result);
+                    Assert.Equal(RequestState.Complete, result.State);
+                    Assert.Equal(i, value);
+                    value = _proxy.Int2.Read(i, out result);
+                    Assert.Equal(i, value);
+                }
+
+                Assert.Equal(count, f.Db.Local + f.Db.Remote);
+                Assert.Equal(count, f2.Db.Local + f2.Db.Remote);
+
+                storage2.Start();
+                storage2.Api.Restore(RestoreMode.SimpleRestoreNeed, "Int");
+                Thread.Sleep(TimeSpan.FromMilliseconds(2000));
+
+                Assert.Equal(count, f.Db.Local + f3.Db.Local);
+                Assert.Equal(count, f2.Db.Local + f2.Db.Remote);
+
+                storage2.Api.Restore(RestoreMode.SimpleRestoreNeed, "Int2");
+                Thread.Sleep(TimeSpan.FromMilliseconds(2000));
+
+                Assert.Equal(count, f.Db.Local + f3.Db.Local);
+                Assert.Equal(count, f2.Db.Local + f4.Db.Local);
+
+                _proxy.Dispose();
+                distr.Dispose();
+                storage1.Dispose();
+                storage2.Dispose();
             }
-
-            for (int i = 0; i < count; i++)
-            {
-                RequestDescription result;
-
-                var value = _proxy.Int.Read(i, out result);
-                Assert.AreEqual(RequestState.Complete, result.State);
-                Assert.AreEqual(i, value);
-                value = _proxy.Int2.Read(i, out result);
-                Assert.AreEqual(i, value);
-            }
-
-            Assert.AreEqual(count, f.Db.Local + f.Db.Remote);
-            Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
-
-            storage2.Start();
-            storage2.Api.Restore(RestoreMode.SimpleRestoreNeed, "Int");
-            Thread.Sleep(TimeSpan.FromMilliseconds(2000));
-
-            Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
-            Assert.AreEqual(count, f2.Db.Local + f2.Db.Remote);
-
-            storage2.Api.Restore(RestoreMode.SimpleRestoreNeed, "Int2");
-            Thread.Sleep(TimeSpan.FromMilliseconds(2000));
-
-            Assert.AreEqual(count, f.Db.Local + f3.Db.Local);
-            Assert.AreEqual(count, f2.Db.Local + f4.Db.Local);
-
-            _proxy.Dispose();
-            distr.Dispose();
-            storage1.Dispose();
-            storage2.Dispose();
         }
 
-        [TestMethod]
-        public void Proxy_HashFromValue()
+        [Theory]
+        [InlineData(50)]
+        [InlineData(500)]
+        public void Proxy_HashFromValue(int count)
         {
-            const int distrServer1 = 22398;
-            const int distrServer12 = 22399;
-            const int st1 = 22400;
-            const int st2 = 22401;
-
-            #region hell
-
-            var writer =
-                new HashWriter(new HashMapConfiguration("TestHashFromValue", HashMapCreationMode.CreateNew, 1, 1,
-                    HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", st1, st2);
-            writer.Save();
-
-            var common = new CommonConfiguration(1, 100);
-
-            var distrNet = new DistributorNetConfiguration("localhost",
-                distrServer1, distrServer12, "testService", 10);
-            var distrConf = new DistributorConfiguration(1, "TestHashFromValue",
-                TimeSpan.FromMilliseconds(100000), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMilliseconds(10000));
-
-            var distr = new DistributorApi(distrNet, distrConf, common);
-
-            var storageNet = new StorageNetConfiguration("localhost", st1, st2, "testService", 10);
-            var storageConfig = new StorageConfiguration("TestHashFromValue", 1, 10, TimeSpan.FromHours(1), TimeSpan.FromHours(1),
-                TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
-
-            var storage = new WriterApi(storageNet, storageConfig, common);
-
-            #endregion
-
-            storage.Build();
-            distr.Build();
-
-            var f = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
-
-            storage.AddDbModule(f);
-
-            storage.Start();
-            _proxy.Start();
-            distr.Start();
-
-            _proxy.Int.SayIAmHere("localhost", distrServer1);
-
-            const int count = 5;
-
-            for (int i = 0; i < count; i++)
+            var filename = nameof(Proxy_HashFromValue);
+            using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
-                RequestDescription result;
+                CreateHashFile(filename, 1);
 
-                _proxy.Int3.Read(i, out result);
-                Assert.AreEqual(RequestState.DataNotFound, result.State);
+                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
+
+                storage.Build();
+                distr.Build();
+
+                var f = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
+
+                storage.AddDbModule(f);
+
+                storage.Start();
+                _proxy.Start();
+                distr.Start();
+
+                _proxy.Int.SayIAmHere("localhost", distrServer1);
+
+                for (int i = 0; i < count; i++)
+                {
+                    RequestDescription result;
+
+                    _proxy.Int3.Read(i, out result);
+                    Assert.Equal(RequestState.DataNotFound, result.State);
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    RequestDescription result = _proxy.Int3.CreateSync(i, i);
+                    Assert.Equal(RequestState.Complete, result.State);
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    RequestDescription result;
+
+                    var value = _proxy.Int3.Read(i, out result);
+                    Assert.Equal(RequestState.Complete, result.State);
+                    Assert.Equal(i, value);
+                }
+
+                Assert.Equal(count, f.Db.Local);
+
+                _proxy.Dispose();
+                distr.Dispose();
+                storage.Dispose();
             }
-
-            for (int i = 0; i < count; i++)
-            {
-                RequestDescription result = _proxy.Int3.CreateSync(i, i);
-                Assert.AreEqual(RequestState.Complete, result.State);
-            }
-
-            for (int i = 0; i < count; i++)
-            {
-                RequestDescription result;
-
-                var value = _proxy.Int3.Read(i, out result);
-                Assert.AreEqual(RequestState.Complete, result.State);
-                Assert.AreEqual(i, value);
-            }
-
-            Assert.AreEqual(count, f.Db.Local);
-
-            _proxy.Dispose();
-            distr.Dispose();
-            storage.Dispose();
         }
 
-        [TestMethod]
-        public void Proxy_Restore_HashFromValue()
+        [Theory]
+        [InlineData(50)]
+        [InlineData(500)]
+        public void Proxy_Restore_HashFromValue(int count)
         {
-            const int distrServer1 = 22403;
-            const int distrServer12 = 22404;
-            const int st1 = 22405;
-            const int st2 = 22406;
-            const int st3 = 22407;
-            const int st4 = 22408;
-
-            #region hell
-
-            var writer =
-                new HashWriter(new HashMapConfiguration("TestHashFromValue", HashMapCreationMode.CreateNew, 2, 2,
-                    HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", st1, st2);
-            writer.SetServer(1, "localhost", st3, st4);
-            writer.Save();
-
-            var common = new CommonConfiguration(1, 100);
-
-            var distrNet = new DistributorNetConfiguration("localhost",
-                distrServer1, distrServer12, "testService", 10);
-            var distrConf = new DistributorConfiguration(1, "TestHashFromValue",
-                TimeSpan.FromMilliseconds(100000), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1),
-                TimeSpan.FromMilliseconds(10000));
-
-            var distr = new DistributorApi(distrNet, distrConf, common);
-
-            var storageNet1 = new StorageNetConfiguration("localhost", st1, st2, "testService", 10);
-            var storageNet2 = new StorageNetConfiguration("localhost", st3, st4, "testService", 10);
-            var storageConfig = new StorageConfiguration("TestHashFromValue", 1, 10, TimeSpan.FromHours(1),
-                TimeSpan.FromHours(1), TimeSpan.FromHours(1), TimeSpan.FromHours(1), false);
-
-            var storage1 = new WriterApi(storageNet1, storageConfig, common);
-            var storage2 = new WriterApi(storageNet2, storageConfig, common);
-
-            #endregion
-
-            storage1.Build();
-            storage2.Build();
-            distr.Build();
-
-            var f1 = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
-            var f2 = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
-
-            storage1.AddDbModule(f1);
-            storage2.AddDbModule(f2);
-
-            storage1.Start();
-            _proxy.Start();
-            distr.Start();
-
-            _proxy.Int.SayIAmHere("localhost", distrServer1);
-
-            const int count = 50;
-
-            for (int i = 0; i < count; i++)
+            var filename = nameof(Proxy_Restore_HashFromValue);
+            using (new FileCleaner(filename))
+            using (new FileCleaner(Consts.RestoreHelpFile))
             {
-                _proxy.Int3.CreateSync(i, i);
-                _proxy.Int3.CreateSync(i, i);
+                CreateHashFile(filename, 2);
+
+                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                var storage1 = WriterApi(StorageConfiguration(filename, 1), storageServer1);
+                var storage2 = WriterApi(StorageConfiguration(filename, 1), storageServer2);
+
+                storage1.Build();
+                storage2.Build();
+                distr.Build();
+
+                var f1 = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
+                var f2 = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
+
+                storage1.AddDbModule(f1);
+                storage2.AddDbModule(f2);
+
+                storage1.Start();
+                _proxy.Start();
+                distr.Start();
+
+                _proxy.Int.SayIAmHere("localhost", distrServer1);
+
+                for (int i = 0; i < count; i++)
+                {
+                    _proxy.Int3.CreateSync(i, i);
+                    _proxy.Int3.CreateSync(i, i);
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    RequestDescription result;
+
+                    var value = _proxy.Int3.Read(i, out result);
+                    Assert.Equal(RequestState.Complete, result.State);
+                    Assert.Equal(i, value);
+                }
+
+                Assert.Equal(count, f1.Db.Local + f1.Db.Remote);
+
+                storage2.Start();
+
+                storage2.Api.Restore(RestoreMode.SimpleRestoreNeed);
+                Thread.Sleep(TimeSpan.FromMilliseconds(2000));
+
+                Assert.Equal(count, f1.Db.Local + f2.Db.Local);
+                Assert.Equal(0, f1.Db.Remote);
+                Assert.Equal(0, f2.Db.Remote);
+
+                _proxy.Dispose();
+                distr.Dispose();
+                storage1.Dispose();
+                storage2.Dispose();
             }
-
-            for (int i = 0; i < count; i++)
-            {
-                RequestDescription result;
-
-                var value = _proxy.Int3.Read(i, out result);
-                Assert.AreEqual(RequestState.Complete, result.State);
-                Assert.AreEqual(i, value);
-            }
-
-            Assert.AreEqual(count, f1.Db.Local + f1.Db.Remote);
-
-            storage2.Start();
-
-            storage2.Api.Restore(RestoreMode.SimpleRestoreNeed);
-            Thread.Sleep(TimeSpan.FromMilliseconds(2000));
-
-            Assert.AreEqual(count, f1.Db.Local + f2.Db.Local);
-            Assert.AreEqual(0, f1.Db.Remote);
-            Assert.AreEqual(0, f2.Db.Remote);
-
-            _proxy.Dispose();
-            distr.Dispose();
-            storage1.Dispose();
-            storage2.Dispose();
         }
     }
 }

@@ -1,22 +1,15 @@
 ﻿using System;
-using System.Runtime.Caching;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.Common.Data.Support;
-using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.Modules.Cache;
+using Xunit;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
-    public class TestTransactionLogic
+    [Collection("test collection 1")]
+    public class TestTransactionLogic:TestBase
     {
          class TestData
         {
@@ -24,7 +17,7 @@ namespace Qoollo.Tests
             public DistributorData DistributorData;
         }
 
-         class TestCache : CacheModule<TestData>
+        class TestCache : CacheModule<TestData>
         {
             private readonly TimeSpan _aliveTimeout;
 
@@ -35,7 +28,6 @@ namespace Qoollo.Tests
             {                
                 _aliveTimeout = cacheConfiguration.TimeAliveAfterUpdateMls;
             }
-
 
             public void Update(string key, TestData obj)
             {
@@ -49,24 +41,23 @@ namespace Qoollo.Tests
              }
         }
 
-        [TestMethod]
+        [Fact]
         public void DistributorData_TestCacheLock_TwoThread_IncrementCounter()
         {
             const string key = "123";
-            var cache =
-                new TestCache(new DistributorCacheConfiguration(TimeSpan.FromMinutes(10),
+            var cache = new TestCache(new DistributorCacheConfiguration(TimeSpan.FromMinutes(10),
                     TimeSpan.FromMinutes(10)));
 
-            var data = new TestData { DistributorData = new DistributorData() };
+            var data = new TestData {DistributorData = new DistributorData()};
             cache.AddToCache(key, data);
-            
+
             var action = new Action(() =>
             {
                 var value = cache.Get(key);
                 using (value.DistributorData.GetLock())
                 {
                     value.Counter++;
-                    cache.Update(key, value);                    
+                    cache.Update(key, value);
                 }
             });
 
@@ -74,7 +65,9 @@ namespace Qoollo.Tests
             Task.Factory.StartNew(action);
 
             Thread.Sleep(1000);
-            Assert.AreEqual(2, cache.Get(key).Counter);
+            Assert.Equal(2, cache.Get(key).Counter);
+
+            cache.Dispose();
         }
     }
 }

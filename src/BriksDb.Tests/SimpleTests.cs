@@ -3,29 +3,25 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
-using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
+using Xunit;
 
 namespace Qoollo.Tests
 {
-    [TestClass]
-    public class SimpleTests
+    [Collection("test collection 1")]
+    public class SimpleTests: TestBase
     {
         #region Test cache
 
-        [TestMethod]
+        [Fact]
         public void Cache_AddGetUpdateRemove()
         {
             var cache = new TestCache(TimeSpan.FromMilliseconds(10000000));
@@ -36,14 +32,16 @@ namespace Qoollo.Tests
             cache.AddToCache(key, ev1);
             cache.AddToCache(key, ev2);
             var data = cache.Get(key);
-            Assert.AreEqual(0, cache.CountCallback);
+            Assert.Equal(0, cache.CountCallback);
             cache.Update(key, data, TimeSpan.FromMinutes(1000));
-            Assert.AreEqual(0, cache.CountCallback);
+            Assert.Equal(0, cache.CountCallback);
             cache.Remove(key);
-            Assert.AreEqual(0, cache.CountCallback);
+            Assert.Equal(0, cache.CountCallback);
+
+            cache.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void CachePerformance()
         {
             var ts1 = TimeSpan.FromMilliseconds(400);
@@ -85,6 +83,8 @@ namespace Qoollo.Tests
             min.Add(v1);
             max.Add(v2);
             avg.Add(v3);
+
+            cache.Dispose();
         }
 
         private void TestCachePerfHelper(DistributorCache cache, List<InnerData> obj, int count, ref long min,
@@ -114,7 +114,7 @@ namespace Qoollo.Tests
             avg = avg / count;
         }
 
-        [TestMethod]
+        [Fact]
         public void Cache_AddGet()
         {
             var cache = new TestCache(TimeSpan.FromMilliseconds(100));
@@ -126,27 +126,29 @@ namespace Qoollo.Tests
 
             cache.AddToCache("123", ev);
             var ret = cache.Get("123");
-            Assert.AreEqual(ev, ret);
+            Assert.Equal(ev, ret);
             Thread.Sleep(200);
             ret = cache.Get("123");
-            Assert.AreEqual(null, ret);
+            Assert.Equal(null, ret);
             cache.AddToCache("123", ev);
             ret = cache.Get("123");
-            Assert.AreEqual(ev, ret);
+            Assert.Equal(ev, ret);
 
             cache.AddToCache("1234", ev);
             ret = cache.Get("1234");
-            Assert.AreEqual(ev, ret);
+            Assert.Equal(ev, ret);
             Thread.Sleep(200);
             ret = cache.Get("1234");
-            Assert.AreEqual(null, ret);
+            Assert.Equal(null, ret);
+
+            cache.Dispose();
         }
 
         #endregion
 
         #region Test async tasks
 
-        [TestMethod]
+        [Fact]
         public void AsyncTaskModule_AddAsyncTask_AmountOfOperations()
         {
             var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
@@ -158,21 +160,20 @@ namespace Qoollo.Tests
 
             test.AddAsyncTask(async1, false);
             Thread.Sleep(TimeSpan.FromMilliseconds(600));
-            Assert.AreEqual(1, value);
+            Assert.Equal(1, value);
 
             test.StopTask(name1);
             Thread.Sleep(TimeSpan.FromMilliseconds(600));
-            Assert.AreEqual(1, value);
+            Assert.Equal(1, value);
 
             test.RestartTask(name1, true);
             Thread.Sleep(TimeSpan.FromMilliseconds(700));
-            Assert.AreEqual(3, value);
+            Assert.Equal(3, value);
 
             test.Dispose();
-
         }
 
-        [TestMethod]
+        [Fact]
         public void AsyncTaskModule_AddAsyncTask_AmountOfOperations_2Tasks()
         {
             var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
@@ -188,15 +189,15 @@ namespace Qoollo.Tests
             test.AddAsyncTask(async1, true);
             test.AddAsyncTask(async2, true);
             Thread.Sleep(TimeSpan.FromMilliseconds(300));
-            Assert.AreEqual(2, value);
+            Assert.Equal(2, value);
 
             Thread.Sleep(TimeSpan.FromMilliseconds(500));
-            Assert.AreEqual(4, value);
+            Assert.Equal(4, value);
 
             test.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void AsyncTaskModule_Dispose_StopAsyncTaskAfterNumberOfRetry()
         {
             var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
@@ -208,77 +209,68 @@ namespace Qoollo.Tests
 
             test.AddAsyncTask(async1, true);
             Thread.Sleep(TimeSpan.FromMilliseconds(800));
-            Assert.AreEqual(4, value);
+            Assert.Equal(4, value);
 
             test.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void AsyncTaskModule_PingServers_AvalilableAfterSomeTime()
         {
-            const int storageServer1 = 21132;
-            const int storageServer2 = 22121;
-            const int distrServer1 = 22134;
-            const int distrServer12 = 23134;
+            var filename = nameof(AsyncTaskModule_PingServers_AvalilableAfterSomeTime);
+            using (new FileCleaner(filename))
+            {
+                CreateHashFile(filename, 2);
 
-            var writer = new HashWriter(new HashMapConfiguration("TestAsyncPing", HashMapCreationMode.CreateNew, 2, 3, HashFileType.Distributor));
-            writer.CreateMap();
-            writer.SetServer(0, "localhost", storageServer1, 157);
-            writer.SetServer(1, "localhost", storageServer2, 157);
-            writer.Save();
+                #region hell
 
-            #region hell
+                var dnet = DistributorNetModule();
+                var ddistributor = DistributorDistributorModule(filename, 1, dnet);
+                dnet.SetDistributor(ddistributor);
 
-            var connection = new ConnectionConfiguration("testService", 10);
+                dnet.Start();
+                ddistributor.Start();
+                GlobalQueue.Queue.Start();
 
-            var distrconfig = new DistributorHashConfiguration(1);
-            var queueconfig = new QueueConfiguration(1, 100);
-            var dnet = new DistributorNetModule(connection,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            var ddistributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(2000)), distrconfig, queueconfig, dnet,
-                new ServerId("localhost", distrServer1), new ServerId("localhost", distrServer12),
-                new HashMapConfiguration("TestAsyncPing", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
-            dnet.SetDistributor(ddistributor);
+                #endregion
 
-            dnet.Start();
-            ddistributor.Start();
-            GlobalQueue.Queue.Start();
+                var data1 = new InnerData(new Transaction("", "default"));
+                var data2 = new InnerData(new Transaction("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "default"));
 
-            #endregion
+                var dest = ddistributor.GetDestination(data1, false);
+                var dest2 = ddistributor.GetDestination(data2, false);
 
-            var data1 = new InnerData(new Transaction("", "default"));
-            var data2 = new InnerData(new Transaction("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "default"));
+                dnet.Process(dest.First(), data1);
+                dnet.Process(dest2.First(), data1);
 
-            var dest = ddistributor.GetDestination(data1, false);
-            var dest2 = ddistributor.GetDestination(data2, false);
+                Thread.Sleep(100);
 
-            dnet.Process(dest.First(), data1);
-            dnet.Process(dest2.First(), data1);
+                dest = ddistributor.GetDestination(data1, false);
+                dest2 = ddistributor.GetDestination(data2, false);
 
-            Thread.Sleep(100);
+                Assert.Equal(null, dest);
+                Assert.Equal(null, dest2);
 
-            dest = ddistributor.GetDestination(data1, false);
-            dest2 = ddistributor.GetDestination(data2, false);
+                var h1 = TestHelper.OpenWriterHost(storageServer1);
+                var h2 = TestHelper.OpenWriterHost(storageServer2);
 
-            Assert.AreEqual(null, dest);
-            Assert.AreEqual(null, dest2);
+                Thread.Sleep(TimeSpan.FromMilliseconds(800));
 
-            var h1 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer1),
-                new ConnectionConfiguration("testService", 10));
-            var h2 = TestHelper.OpenWriterHost(new ServerId("localhost", storageServer2),
-                new ConnectionConfiguration("testService", 10));
+                dest = ddistributor.GetDestination(data1, false);
+                dest2 = ddistributor.GetDestination(data2, false);
 
-            Thread.Sleep(TimeSpan.FromMilliseconds(800));
+                Assert.NotEqual(null, dest);
+                Assert.NotEqual(null, dest2);
 
-            Assert.AreEqual(1, ddistributor.GetDestination(data1, false).Count);
-            Assert.AreEqual(1, ddistributor.GetDestination(data2, false).Count);
+                Assert.Equal(1, dest.Count);
+                Assert.Equal(1, dest2.Count);
 
-            ddistributor.Dispose();
-            h1.Dispose();
-            h2.Dispose();
+                GlobalQueue.Queue.Dispose();
 
-            GlobalQueue.Queue.Dispose();            
+                ddistributor.Dispose();
+                h1.Dispose();
+                h2.Dispose();
+            }
         }
 
         #endregion

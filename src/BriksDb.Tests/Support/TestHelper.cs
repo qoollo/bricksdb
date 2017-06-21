@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.ServiceModel;
-using System.Text;
-using System.Threading.Tasks;
+using Ninject;
+using Ninject.Parameters;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Modules.Net.ReceiveBehavior;
 using Qoollo.Impl.NetInterfaces.Distributor;
 using Qoollo.Impl.NetInterfaces.Writer;
+using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestProxy;
 
@@ -33,36 +34,35 @@ namespace Qoollo.Tests.Support
                 Data = calc.SerializeValue(CreateStoredData(id))
             };
             return ev;
-        }        
+        }
 
-        public static TestNetDistributorForProxy OpenDistributorHost(ServerId server, ConnectionConfiguration config)
+        public static TestNetDistributorForProxy OpenDistributorHostForDb(ServerId server, ConnectionConfiguration config)
         {
             var ret = new TestNetDistributorForProxy();
-            var host = new ServiceHost(ret,
-                                       new Uri(string.Format("net.tcp://{0}:{1}/{2}", server.RemoteHost, server.Port,
-                                                             config.ServiceName)));
-            var binding = new NetTcpBinding
-            {
-                Security = { Mode = SecurityMode.None },
-                TransactionFlow = true
-            };
-            var contractType = typeof(ICommonNetReceiverForProxy);
-            host.AddServiceEndpoint(contractType, binding, "");
-            var behavior = host.Description.Behaviors.Find<ServiceBehaviorAttribute>();
-            behavior.InstanceContextMode = InstanceContextMode.Single;
 
-            host.Open();
+            var netConfig = new NetReceiverConfiguration(server.Port, server.RemoteHost, config.ServiceName);
+
+            OpenDistributorMockHost<ICommonNetReceiverForDb>(ret, netConfig);
 
             return ret;
         }
-
-        public static TestWriterServer OpenWriterHost(ServerId server, ConnectionConfiguration config)
+        public static TestNetDistributorForProxy OpenDistributorHost(ServerId server)
         {
-            var ret = new TestWriterServer();
-            var host = new ServiceHost(ret,
-                                       new Uri(string.Format("net.tcp://{0}:{1}/{2}", server.RemoteHost, server.Port,
-                                                             config.ServiceName)));
-            ret.Host = host;
+            var ret = new TestNetDistributorForProxy();
+
+            var netConfig = new NetReceiverConfiguration(server.Port, server.RemoteHost, "");
+
+            //OpenDistributorNetHost(ret, netConfig);
+            OpenDistributorMockHost<ICommonNetReceiverForProxy>(ret, netConfig);
+
+            return ret;
+        }
+        public static void OpenDistributorNetHost(TestNetDistributorForProxy server, NetReceiverConfiguration config)
+        {
+            var host = new ServiceHost(server,
+                new Uri($"net.tcp://{config.Host}:{config.Port}/{config.Service}"));
+
+            server.Host = host;
             var binding = new NetTcpBinding
             {
                 Security = { Mode = SecurityMode.None },
@@ -74,32 +74,52 @@ namespace Qoollo.Tests.Support
             behavior.InstanceContextMode = InstanceContextMode.Single;
 
             host.Open();
+        }
+        public static void OpenDistributorMockHost<TReceive>(TestNetDistributorForProxy server, NetReceiverConfiguration config)
+        {
+            var s = InitInjection.Kernel.Get<IReceiveBehavior<TReceive>>(
+                new ConstructorArgument("configuration", config),
+                new ConstructorArgument("server", server));
+
+            s.Start();
+        }
+
+        public static TestWriterServer OpenWriterHost(int writerPort)
+        {
+            var ret = new TestWriterServer();
+
+            var netConfig = new NetReceiverConfiguration(writerPort, "localhost", "testService");
+
+            //OpenWriterNetHost(ret, netConfig);
+            OpenWriterMockHost(ret, netConfig);
 
             return ret;
         }
-
-        public static IDisposable OpenDistributorHostForDb(ServerId server, ConnectionConfiguration config, out TestNetDistributorForProxy distributor)
+        public static void OpenWriterNetHost(TestWriterServer server, NetReceiverConfiguration config)
         {
-            var ret = new TestNetDistributorForProxy();
-            var host = new ServiceHost(ret,
-                new Uri(string.Format("net.tcp://{0}:{1}/{2}", server.RemoteHost, server.Port,
-                    config.ServiceName)));
-            var binding = new NetTcpBinding { Security = { Mode = SecurityMode.None }, TransactionFlow = true };
-            var contractType = typeof(ICommonNetReceiverForDb);
+            var host = new ServiceHost(server,
+                new Uri($"net.tcp://{config.Host}:{config.Port}/{config.Service}"));
+
+            server.Host = host;
+            var binding = new NetTcpBinding
+            {
+                Security = { Mode = SecurityMode.None },
+                TransactionFlow = true
+            };
+            var contractType = typeof(ICommonNetReceiverWriterForWrite);
             host.AddServiceEndpoint(contractType, binding, "");
             var behavior = host.Description.Behaviors.Find<ServiceBehaviorAttribute>();
             behavior.InstanceContextMode = InstanceContextMode.Single;
 
             host.Open();
-
-            distributor = ret;
-            return host;
         }
-        public static TestNetDistributorForProxy OpenDistributorHostForDb(ServerId server, ConnectionConfiguration config)
+        public static void OpenWriterMockHost(TestWriterServer server, NetReceiverConfiguration config)
         {
-            TestNetDistributorForProxy ret = null;
-            OpenDistributorHostForDb(server, config, out ret);
-            return ret;
+            var s = InitInjection.Kernel.Get<IReceiveBehavior<ICommonNetReceiverWriterForWrite>>(
+                new ConstructorArgument("configuration", config),
+                new ConstructorArgument("server", server));
+
+            s.Start();
         }
 
         public static SearchData CreateData(int data, string name = "Id")
@@ -114,6 +134,14 @@ namespace Qoollo.Tests.Support
         public static string Quote(this string str)
         {
             return "\"" + str + "\"";
+        }
+
+        public static void CatchExceptions()
+        {
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+            {
+                int t = 0;
+            };
         }
     }
 }

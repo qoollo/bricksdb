@@ -44,12 +44,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
 
         #region Package data
 
-        protected override void ProcessDataPackage(List<InnerData> data)
+        protected override void ProcessDataPackage(List<InnerData> dataList)
         {
-            data.ForEach(SetRestoreInfo);
-            var result = WriterNet.ProcessSync(_remoteServer, data);
+            dataList.ForEach(SetRestoreInfo);
+            var result = WriterNet.ProcessSync(_remoteServer, dataList);
 
-            ProcessResultPackage(data, result as PackageResult);
+            ProcessResultPackage(dataList, result as PackageResult);
         }
 
         private void ProcessResultPackage(List<InnerData> data, RemoteResult result)
@@ -60,7 +60,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
                 while (result is FailNetResult || send)
                 {
                     if (_logger.IsDebugEnabled)
-                        _logger.DebugFormat("Servers {0} unavailable in recover process", _remoteServer);
+                        _logger.DebugFormat("Server {0} unavailable in restore process", _remoteServer);
                     result = WriterNet.ProcessSync(_remoteServer, data);
                     send = false;
                 }
@@ -109,7 +109,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
             while (result is FailNetResult)
             {
                 if (_logger.IsDebugEnabled)
-                    _logger.DebugFormat("Servers {0} unavailable in recover process", _remoteServer);
+                    _logger.DebugFormat("Server {0} unavailable in restore process", _remoteServer);
                 result = WriterNet.ProcessSync(_remoteServer, data);
             }
 

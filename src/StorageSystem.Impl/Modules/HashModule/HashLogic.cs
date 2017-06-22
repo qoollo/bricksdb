@@ -11,21 +11,21 @@ namespace Qoollo.Impl.Modules.HashModule
     {
         private static Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public static List<WriterDescription> GetDestination(int countReplics, string current, List<HashMapRecord> map)
+        public static List<WriterDescription> GetDestination(int countReplics, string currentHash, List<HashMapRecord> map)
         {
             var ret = new List<WriterDescription>();
             for (int i = 0; i < countReplics; i++)
             {
                 var find =
                     map.FirstOrDefault(
-                        x => HashComparer.Compare(current, x.End) <= 0 && !ret.Contains(x.ServerId));
+                        x => HashComparer.Compare(currentHash, x.End) <= 0 && !ret.Contains(x.ServerId));
 
                 if (find == null && map.Count > 0)
                 {
-                    current = Consts.StartHashInRing;
+                    currentHash = Consts.StartHashInRing;
                     find =
                         map.FirstOrDefault(
-                            x => HashComparer.Compare(current, x.End) <= 0 && !ret.Contains(x.ServerId));
+                            x => HashComparer.Compare(currentHash, x.End) <= 0 && !ret.Contains(x.ServerId));
                 }
 
                 if (find == null)
@@ -34,7 +34,7 @@ namespace Qoollo.Impl.Modules.HashModule
                     ret.Clear();
                     break;
                 }
-                current = find.End;
+                currentHash = find.End;
                 ret.Add(find.ServerId);
             }
 

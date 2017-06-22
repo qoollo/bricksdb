@@ -8,6 +8,7 @@ using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
+using Qoollo.Impl.Modules.HashModule;
 
 namespace Qoollo.Impl.Writer
 {
@@ -165,12 +166,12 @@ namespace Qoollo.Impl.Writer
             }
         }
 
-        public void GetDestination(string hash)
+        public IEnumerable<ServerId> GetDestination(string hash)
         {
             _lock.EnterReadLock();
             try
             {
-
+                return HashLogic.GetDestination(_hashMapConfiguration.CountReplics, hash, _map.AvailableMap);
             }
             finally
             {

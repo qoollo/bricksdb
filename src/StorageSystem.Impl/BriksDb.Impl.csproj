@@ -166,11 +166,15 @@
     <Compile Include="Modules\Net\ReceiveBehavior\IReceiveBehavior.cs" />
     <Compile Include="Modules\Net\ReceiveBehavior\NetReceiveBehavior.cs" />
     <Compile Include="Modules\Net\ReceiveBehavior\ReceiveBehaviorBase.cs" />
+    <Compile Include="Modules\HashModule\HashLogic.cs" />
     <Compile Include="PerfCounters\PoolsProfiling.cs" />
     <Compile Include="TestSupport\InitInjection.cs" />
     <Compile Include="TestSupport\InjectionModule.cs" />
+    <Compile Include="Writer\AsyncDbWorks\Processes\BroadcastRestoreProcess.cs" />
+    <Compile Include="Writer\AsyncDbWorks\Processes\ProcessBase.cs" />
     <Compile Include="Writer\AsyncDbWorks\Readers\ReaderFullBase.cs" />
-    <Compile Include="Writer\AsyncDbWorks\Restore\RestoreProcess.cs" />
+    <Compile Include="Writer\AsyncDbWorks\Processes\SingleServerRestoreProcess.cs" />
+    <Compile Include="Writer\AsyncDbWorks\Restore\BroadcastRestoreModule.cs" />
     <Compile Include="Writer\AsyncDbWorks\Support\AsyncDbHolder.cs" />
     <Compile Include="Common\Server\RestoreServerSave.cs" />
     <Compile Include="Writer\AsyncDbWorks\Support\RestoreProcessController.cs" />
@@ -253,7 +257,7 @@
     <Compile Include="Writer\WriterNet\WriterNetModule.cs" />
     <Compile Include="Writer\Db\DbModule.cs" />
     <Compile Include="Writer\MainLogicModule.cs" />
-    <Compile Include="Writer\Model\WriterModel.cs" />
+    <Compile Include="Writer\WriterModel.cs" />
     <Compile Include="Writer\PerfCounters\PerfCounters.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\InitiatorRestoreModule.cs" />
     <Compile Include="Writer\AsyncDbWorks\CommonAsyncWorkModule.cs" />
@@ -327,6 +331,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="NetInterfaces\Collector\" />
+    <Folder Include="Writer\Model\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

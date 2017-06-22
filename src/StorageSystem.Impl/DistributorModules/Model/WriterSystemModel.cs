@@ -4,10 +4,9 @@ using System.Linq;
 using System.Threading;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.HashFile;
-using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Modules.HashModule;
 
 namespace Qoollo.Impl.DistributorModules.Model
 {
@@ -114,36 +113,15 @@ namespace Qoollo.Impl.DistributorModules.Model
         public List<WriterDescription> GetDestination(InnerData ev)
         {
             _lock.EnterReadLock();
-            var ret = new List<WriterDescription>();
-            if (_servers.Count(x=>x.IsAvailable)>=_configuration.CountReplics)
+            try
             {
-                string current = ev.Transaction.DataHash;
-                for (int i = 0; i < _configuration.CountReplics; i++)
-                {
-                    var find =
-                        _map.AvailableMap.FirstOrDefault(
-                            x => HashComparer.Compare(current, x.End) <= 0 && !ret.Contains(x.ServerId));
-
-                    if (find == null && _map.AvailableMap.Count > 0)
-                    {
-                        current = Consts.StartHashInRing;
-                        find =
-                        _map.AvailableMap.FirstOrDefault(
-                            x => HashComparer.Compare(current, x.End) <= 0 && !ret.Contains(x.ServerId));
-                    }
-
-                    if (find == null)
-                    {
-                        _logger.Error(Errors.NotEnoughServers);
-                        ret.Clear();
-                        break;
-                    }
-                    current = find.End;
-                    ret.Add(find.ServerId);
-                }                
+                return HashLogic.GetDestination(_configuration.CountReplics, ev.Transaction.DataHash,
+                    _map.AvailableMap);
             }
-            _lock.ExitReadLock();
-            return ret;
+            finally
+            {
+                _lock.ExitReadLock();
+            }
         }
 
         public List<WriterDescription> GetAllAvailableServers()

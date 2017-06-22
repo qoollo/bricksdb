@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
@@ -18,34 +17,16 @@ using Qoollo.Impl.Writer.WriterNet;
 namespace Qoollo.Impl.Writer.AsyncDbWorks
 {
     internal class AsyncDbWorkModule:ControlModule
-    {        
-        public RestoreState RestoreState
-        {
-            get { return _stateHolder.State; }
-        }
+    {
+        public RestoreState RestoreState => _stateHolder.State;
 
-        public TimeoutModule TimeoutModule { get { return _timeout; } }
+        public TimeoutModule TimeoutModule => _timeout;
 
-        internal bool IsNeedRestore
-        {
-            get { return _stateHolder.State != RestoreState.Restored; }
-        }
+        internal bool IsNeedRestore => _stateHolder.State != RestoreState.Restored;
 
-        public bool IsRestoreStarted
-        {
-            get
-            {
-                return _initiatorRestore.IsStart;
-            }
-        }
+        public bool IsRestoreStarted => _initiatorRestore.IsStart;
 
-        public bool IsTransferRestoreStarted
-        {
-            get
-            {
-                return _transferRestore.IsStart;
-            }
-        }
+        public bool IsTransferRestoreStarted => _transferRestore.IsStart;
 
         public Dictionary<string, string> FullState
         {
@@ -76,12 +57,18 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             }
         }
 
-        public AsyncDbWorkModule(WriterNetModule writerNet, AsyncTaskModule async, DbModuleCollection db,
+        public AsyncDbWorkModule(
+            WriterModel writerModel,
+            WriterNetModule writerNet, 
+            AsyncTaskModule async, 
+            DbModuleCollection db,
             RestoreModuleConfiguration initiatorConfiguration,
             RestoreModuleConfiguration transferConfiguration,
             RestoreModuleConfiguration timeoutConfiguration,
-            QueueConfiguration queueConfiguration, ServerId local, bool isNeedRestore = false)
+            QueueConfiguration queueConfiguration, 
+            bool isNeedRestore = false)
         {
+            Contract.Requires(writerModel != null);
             Contract.Requires(initiatorConfiguration != null);
             Contract.Requires(transferConfiguration != null);
             Contract.Requires(timeoutConfiguration != null);
@@ -89,32 +76,28 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             Contract.Requires(db != null);
             Contract.Requires(writerNet != null);
             Contract.Requires(async != null);
-            Contract.Requires(local != null);
+
+            _writerModel = writerModel;
 
             _stateHolder = new RestoreStateHolder(isNeedRestore);
             _saver = LoadRestoreStateFromFile();
-            _initiatorRestore = new InitiatorRestoreModule(initiatorConfiguration, writerNet, async, _stateHolder,
-                _saver);
-            _transferRestore = new TransferRestoreModule(transferConfiguration, writerNet, async, 
-                db, local, queueConfiguration);
+            _initiatorRestore = new InitiatorRestoreModule(initiatorConfiguration, writerNet, async, 
+                _stateHolder, _saver);
+            _transferRestore = new TransferRestoreModule(writerModel, transferConfiguration, 
+                writerNet, async, db,  queueConfiguration);
             _timeout = new TimeoutModule(writerNet, async, queueConfiguration,
                 db,  timeoutConfiguration);
 
         }
 
+        private readonly WriterModel _writerModel;
+
         private readonly InitiatorRestoreModule _initiatorRestore;
         private readonly TransferRestoreModule _transferRestore;
         private readonly TimeoutModule _timeout;
-        
-        private List<HashMapRecord> _localHash;
 
         private RestoreStateHolder _stateHolder;
         private readonly RestoreStateFileLogger _saver;
-
-        public void SetLocalHash(List<HashMapRecord> localHash)
-        {
-            _localHash = localHash;
-        }
 
         public override void Start()
         {
@@ -126,23 +109,23 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             {
                 Task.Delay(Consts.StartRestoreTimeout).ContinueWith(task =>
                 {
-                    RestoreFromFile(_localHash, _saver.RestoreServers, _saver.TableName);
+                    RestoreFromFile(_writerModel.LocalMap, _saver.RestoreServers, _saver.TableName);
                 });
             }
         }
 
-        public void UpdateModel(List<ServerId> servers)
-        {            
-            _initiatorRestore.UpdateModel(servers);
+        public void UpdateModel()
+        {
+            _initiatorRestore.UpdateModel(_writerModel.Servers);
             _stateHolder.LocalSendState(true);
             _saver.Save();
         }
 
         #region Restore process
         
-        public void RestoreIncome(ServerId server, bool isSystemUpdated, List<KeyValuePair<string, string>> hash, string tableName, List<HashMapRecord> localMap)
+        public void RestoreIncome(ServerId server, bool isSystemUpdated, string tableName)
         {
-            _transferRestore.RestoreIncome(server, isSystemUpdated, hash, tableName, localMap);
+            _transferRestore.RestoreIncome(server, isSystemUpdated, tableName);
         }
 
         public void PeriodMessageIncome(ServerId server)
@@ -169,24 +152,19 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         #region Restore start 
 
-        public void Restore(List<RestoreServer> servers, RestoreState state)
-        {
-            if (_initiatorRestore.IsStart)
-                return;
-
-            _stateHolder.LocalSendState(state);
-            _initiatorRestore.Restore(_localHash, servers, _stateHolder.State);
-            _saver.Save();
-        }
-
         public void Restore(List<RestoreServer> servers, RestoreState state, string tableName)
         {
             if (_initiatorRestore.IsStart)
                 return;
 
             _stateHolder.LocalSendState(state);
-            _initiatorRestore.Restore(_localHash, servers, _stateHolder.State, tableName);
+            _initiatorRestore.Restore(_writerModel.LocalMap, servers, _stateHolder.State, tableName);
             _saver.Save();
+        }
+
+        public void Restore(List<RestoreServer> servers, RestoreState state)
+        {
+            Restore(servers, state, Consts.AllTables);
         }
 
         private void RestoreFromFile(List<HashMapRecord> local, List<RestoreServer> servers, string tableName)
@@ -204,7 +182,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             return _initiatorRestore.FailedServers;
         }
 
-        public List<RestoreServer> Servers { get { return _initiatorRestore.Servers; } } 
+        public List<RestoreServer> Servers => _initiatorRestore.Servers;
 
         public ServerId GetRestoreServer()
         {

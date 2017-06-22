@@ -17,7 +17,6 @@ using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks;
 using Qoollo.Impl.Writer.Db;
-using Qoollo.Impl.Writer.Model;
 using Qoollo.Impl.Writer.WriterNet;
 
 namespace Qoollo.Impl.Writer
@@ -33,7 +32,9 @@ namespace Qoollo.Impl.Writer
         private readonly AsyncDbWorkModule _asyncDbWork;
         private readonly GlobalQueueInner _queue;
 
-        public DistributorModule(AsyncTaskModule async, AsyncDbWorkModule asyncDbWork,
+        public DistributorModule(WriterModel model, 
+            AsyncTaskModule async, 
+            AsyncDbWorkModule asyncDbWork,
             WriterNetModule writerNet,
             ServerId local,
             HashMapConfiguration hashMapConfiguration,
@@ -49,7 +50,7 @@ namespace Qoollo.Impl.Writer
             Contract.Requires(dbModuleCollection != null);
 
             _asyncDbWork = asyncDbWork;
-            _model = new WriterModel(local, hashMapConfiguration);
+            _model = model;
             _writerNet = writerNet;
             _queueConfiguration = configuration;
             _dbModuleCollection = dbModuleCollection;
@@ -67,7 +68,7 @@ namespace Qoollo.Impl.Writer
         public override void Start()
         {
             _model.Start();
-            _asyncDbWork.SetLocalHash(_model.LocalMap);
+            _asyncDbWork.Start();            
             RegistrateCommands();
         }
 
@@ -91,7 +92,7 @@ namespace Qoollo.Impl.Writer
             RegistrateAsync<RestoreCommandWithData, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue,
                 comm =>
                     _asyncDbWork.RestoreIncome(comm.ServerId, comm.RestoreState == RestoreState.FullRestoreNeed,
-                        comm.Hash, comm.TableName, _model.LocalMap), () => new SuccessResult());
+                        comm.TableName), () => new SuccessResult());
 
             RegistrateAsync<DeleteCommand, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue, DeleteCommand,
                 () => new SuccessResult());
@@ -127,8 +128,7 @@ namespace Qoollo.Impl.Writer
             if (!_asyncDbWork.IsRestoreStarted)
             {
                 _model.UpdateModel();
-                _asyncDbWork.SetLocalHash(_model.LocalMap);
-                _asyncDbWork.UpdateModel(_model.Servers);
+                _asyncDbWork.UpdateModel();
 
                 return Errors.NoErrors;
             }
@@ -386,8 +386,7 @@ namespace Qoollo.Impl.Writer
             if (result == string.Empty)
             {
                 ret = new SuccessResult();
-                _asyncDbWork.SetLocalHash(_model.LocalMap);
-                _asyncDbWork.UpdateModel(_model.Servers);
+                _asyncDbWork.UpdateModel();
             }
             else
                 ret = new InnerFailResult(result);

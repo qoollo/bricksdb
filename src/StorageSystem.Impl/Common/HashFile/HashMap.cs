@@ -199,7 +199,7 @@ namespace Qoollo.Impl.Common.HashFile
                 new List<ServerId>(Map.Where(x => x.ServerId.IsAvailable).Select(x => x.ServerId)).Distinct().ToList();
         }
 
-        public List<HashMapRecord> GetLocalMap(ServerId server)
+        public List<HashMapRecord> GetHashMap(ServerId server)
         {
             var ret = new List<HashMapRecord>();
 
@@ -211,9 +211,8 @@ namespace Qoollo.Impl.Common.HashFile
                     var list = Copy(i, _configuration.CountReplics);
 
                     var intersect = ret.Intersect(list);
-                    if(intersect.Count()!=0)
+                    if (intersect.Count() != 0)
                     {
-                        //TODO в системен не хватает серверов для полного хранения реплик
                         _logger.Error("Need more servres to store data");
                     }
                     ret.AddRange(list);

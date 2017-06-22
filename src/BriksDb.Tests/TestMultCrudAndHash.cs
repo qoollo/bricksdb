@@ -2,6 +2,7 @@
 using System.Threading;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
+using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestWriter;
 using Xunit;
@@ -12,6 +13,9 @@ namespace Qoollo.Tests
     [Collection("test collection 1")]
     public class TestMultCrudAndHash:TestBase
     {
+        private string file1 = "restoreHelp1.txt";
+        private string file2 = "restoreHelp2.txt";
+
         public TestMultCrudAndHash():base()
         {
             _proxy = TestGate(proxyServer, 30000);
@@ -166,12 +170,17 @@ namespace Qoollo.Tests
         {            
             var filename = nameof(Proxy_Restore_TwoTablesTwoCommands);
             using (new FileCleaner(filename))
-            using (new FileCleaner(Consts.RestoreHelpFile))
+            using (new FileCleaner(file1))
+            using (new FileCleaner(file2))
             {
                 CreateHashFile(filename, 2);
 
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+
+                InitInjection.RestoreHelpFileOut = file1;
                 var storage1 = WriterApi(StorageConfiguration(filename, 1, 1000), storageServer1);
+
+                InitInjection.RestoreHelpFileOut = file2;
                 var storage2 = WriterApi(StorageConfiguration(filename, 1, 1000), storageServer2);
 
                 storage1.Build();

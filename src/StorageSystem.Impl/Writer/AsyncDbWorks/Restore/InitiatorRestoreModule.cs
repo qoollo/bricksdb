@@ -54,11 +54,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             StartRestore();
         }
 
-        public void Restore(List<HashMapRecord> local, List<RestoreServer> servers, RestoreState state)
-        {
-            Restore(local, servers, state, Consts.AllTables);
-        }
-
         public void RestoreFromFile(List<HashMapRecord> local, List<RestoreServer> servers, RestoreState state,
             string tableName)
         {
@@ -150,7 +145,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 ? RestoreState.SimpleRestoreNeed
                 : _state;
             var ret = WriterNet.SendToWriter(nextServer,
-                new RestoreCommandWithData(_local[0].ServerId, _local.ToList(), _tableName, state));            
+                new RestoreCommandWithData(_local[0].ServerId, _tableName, state));            
 
             if (ret is FailNetResult)
             {
@@ -232,8 +227,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             var state = remoteServer.Equals(_local[0].ServerId)
               ? RestoreState.SimpleRestoreNeed
               : _state;
-            var ret = WriterNet.SendToWriter(remoteServer, new RestoreCommandWithData(_local[0].ServerId,
-                _local.ToList(), _tableName, state));
+            var ret = WriterNet.SendToWriter(remoteServer,
+                new RestoreCommandWithData(_local[0].ServerId, _tableName, state));
 
             if (ret is FailNetResult)
             {

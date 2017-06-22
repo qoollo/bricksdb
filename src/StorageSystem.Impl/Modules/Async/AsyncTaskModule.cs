@@ -186,7 +186,7 @@ namespace Qoollo.Impl.Modules.Async
                 _token.Cancel();
                 _event.Set();
                 if (_threadPool.IsValueCreated)
-                    _threadPool.Value.Dispose(true, false, true);
+                    _threadPool.Value.Dispose(true, false, false);
             }
 
             base.Dispose(isUserCall);

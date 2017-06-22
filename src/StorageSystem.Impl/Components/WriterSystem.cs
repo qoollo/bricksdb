@@ -76,11 +76,13 @@ namespace Qoollo.Impl.Components
             var net = new WriterNetModule(_connectionConfiguration, _connectionTimeoutConfiguration);
 
             var async = new AsyncTaskModule(_queueConfiguration);
-            var restore = new AsyncDbWorkModule(net, async, db, _initiatorRestoreConfiguration,
-                _transferRestoreConfiguration, _timeoutRestoreConfiguration, 
-                _queueConfigurationRestore, _local, _isNeedRestore);
+            var model = new WriterModel(_local, _hashMapConfiguration);
 
-            var distributor = new DistributorModule(async, restore, net, _local, _hashMapConfiguration,
+            var restore = new AsyncDbWorkModule(model, net, async, db, _initiatorRestoreConfiguration,
+                _transferRestoreConfiguration, _timeoutRestoreConfiguration, 
+                _queueConfigurationRestore, _isNeedRestore);
+
+            var distributor = new DistributorModule(model, async, restore, net, _local, _hashMapConfiguration,
                 _queueConfiguration, db);
 
             Distributor = distributor;

@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.Writer.AsyncDbWorks.Processes;
 using Qoollo.Impl.Writer.Db;
 using Qoollo.Impl.Writer.WriterNet;
 
@@ -35,7 +35,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 try
                 {
                     Lock.EnterReadLock();
-                    return _lastDateTime;                    
+                    return _lastDateTime;
                 }
                 finally
                 {
@@ -44,34 +44,36 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
-        public TransferRestoreModule(RestoreModuleConfiguration configuration, WriterNetModule writerNet,
-            AsyncTaskModule asyncTaskModule, DbModuleCollection db, ServerId local,
+        public TransferRestoreModule(
+            WriterModel writerModel, 
+            RestoreModuleConfiguration configuration, 
+            WriterNetModule writerNet,
+            AsyncTaskModule asyncTaskModule, 
+            DbModuleCollection db, 
             QueueConfiguration queueConfiguration)
             : base(writerNet, asyncTaskModule)
         {
+            Contract.Requires(writerModel != null);
             Contract.Requires(configuration != null);
             Contract.Requires(db != null);
-            Contract.Requires(local != null);
             Contract.Requires(queueConfiguration != null);
 
+            _writerModel = writerModel;
             _db = db;
             _configuration = configuration;
-            _local = local;
             _queueConfiguration = queueConfiguration;
             _lastDateTime = string.Empty;
         }
 
         private readonly RestoreModuleConfiguration _configuration;
+        private readonly WriterModel _writerModel;
         private readonly DbModuleCollection _db;
-        private readonly ServerId _local;
         private ServerId _remoteServer;
         private readonly QueueConfiguration _queueConfiguration;
-        private RestoreProcess _restore;
+        private SingleServerRestoreProcess _restore;
         private string _lastDateTime;
 
-        public void RestoreIncome(ServerId remoteServer, bool isSystemUpdated,
-            List<KeyValuePair<string, string>> remoteHashRange, string tableName,
-            List<HashMapRecord> localHashRange)
+        public void RestoreIncome(ServerId remoteServer, bool isSystemUpdated, string tableName)
         {
             Lock.EnterWriteLock();
             try
@@ -79,8 +81,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 if (IsStartNoLock)
                     return;
 
-                if (_logger.IsDebugEnabled)
-                    _logger.Debug($"transafer start {remoteServer}, {remoteHashRange}", "restore");
+                if (_logger.IsInfoEnabled)
+                    _logger.Info($"transafer start: {remoteServer}", "restore");
 
                 IsStartNoLock = true;
                 _remoteServer = remoteServer;
@@ -91,14 +93,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 Lock.ExitWriteLock();
             }
 
-
             AsyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_configuration.PeriodRetry, RestoreAnswerCallback, AsyncTasksNames.RestoreLocal,
-                    -1), false);
+                new AsyncDataPeriod(_configuration.PeriodRetry, RestoreAnswerCallback,
+                    AsyncTasksNames.RestoreLocal, -1), false);
 
-            _restore = new RestoreProcess(remoteHashRange, localHashRange, isSystemUpdated, _db, _queueConfiguration,
-                tableName, WriterNet, _remoteServer);
-        }        
+            _restore = new SingleServerRestoreProcess(_db, _writerModel, WriterNet, 
+                tableName, _remoteServer, isSystemUpdated, _queueConfiguration);
+            _restore.Start();
+        }
 
         private void RestoreAnswerCallback(AsyncData obj)
         {
@@ -112,7 +114,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             {
                 AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreLocal);
 
-                WriterNet.SendToWriter(_remoteServer, new RestoreCompleteCommand(_local));
+                WriterNet.SendToWriter(_remoteServer, new RestoreCompleteCommand(_writerModel.Local));
                 _restore.Dispose();
                 IsStart = false;
             }
@@ -121,7 +123,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 if (_restore.IsQueueEmpty && IsStart)
                     _restore.GetAnotherData();
 
-                WriterNet.SendToWriter(_remoteServer, new RestoreInProcessCommand(_local));
+                WriterNet.SendToWriter(_remoteServer, new RestoreInProcessCommand(_writerModel.Local));
             }
         }
 

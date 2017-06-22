@@ -15,7 +15,6 @@ using Qoollo.Impl.Postgre.Internal;
 using Qoollo.Impl.Writer;
 using Qoollo.Impl.Writer.AsyncDbWorks;
 using Qoollo.Impl.Writer.Db;
-using Qoollo.Impl.Writer.Model;
 using Qoollo.Impl.Writer.WriterNet;
 using Qoollo.Tests.TestWriter;
 
@@ -61,13 +60,15 @@ namespace Qoollo.Tests.Support
             Db.AddDbModule(new TestDbInMemory());
 
             _async = new AsyncTaskModule(new QueueConfiguration(1, 10));
-            Restore = new AsyncDbWorkModule(_net, _async, Db,
+            var model = new WriterModel(local, hashMapConfiguration);
+
+            Restore = new AsyncDbWorkModule(model, _net, _async, Db,
                 new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(300)),
                 new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(100)),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 100), local);
+                new QueueConfiguration(1, 100));
 
-            Distributor = new DistributorModule(_async, Restore, _net, local,
+            Distributor = new DistributorModule(model, _async, Restore, _net, local,
                 hashMapConfiguration, new QueueConfiguration(2, 10), Db);
 
             WriterModel = GetPrivtaeField<WriterModel>(Distributor);

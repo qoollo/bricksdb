@@ -36,73 +36,82 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         protected override void ProcessDataPackage(List<InnerData> dataList)
         {
             var destination = GetDestinationCollection();
+            var dataListWrap = dataList.Select(d => new InnerDataWrapper(d));
 
-            foreach (var data in dataList)
+            foreach (var data in dataListWrap)
             {
-                SetRestoreInfo(data);
-                var destinationServers = WriterModel.GetDestination(data.MetaData.Hash);
+                SetRestoreInfo(data.Data);
+                var destinationServers = WriterModel.GetDestination(data.Hash);
                 foreach (var serverId in destinationServers)
                 {
                     destination[serverId].Add(data);
                 }
             }
 
-            var failData = new HashSet<InnerData>();
-
             foreach (var serverWithData in destination)
             {
-                var result = WriterNet.ProcessSync(serverWithData.Key, serverWithData.Value);
+                var result = WriterNet.ProcessSync(serverWithData.Key, serverWithData.Value.Select(d => d.Data).ToList());
 
-                var data = new List<InnerData>();
+                bool isSomeFail;
 
                 if (result is PackageResult)
-                    data = ProcessSuccessResult(serverWithData.Value, result as PackageResult);
+                    isSomeFail = ProcessSuccessResult(serverWithData.Value, result as PackageResult);
                 else
-                    data = ProcessFailPackage(serverWithData.Key, serverWithData.Value);
+                    isSomeFail = ProcessFailPackage(serverWithData.Key, serverWithData.Value);
 
-                data.ForEach(d => failData.Add(d));
-                TryAddFailedServer(serverWithData.Key);
+                if (isSomeFail)
+                    TryAddFailedServer(serverWithData.Key);
             }
 
-            //todo delete non local data
+            dataListWrap
+                .Where(d => d.CanDelete())
+                .ToList()
+                .ForEach(d => Db.Delete(d.Data));
         }
 
-        private List<InnerData> ProcessFailPackage(ServerId server, List<InnerData> data)
+        private bool ProcessFailPackage(ServerId server, List<InnerDataWrapper> data)
         {
             int counter = 0;
+            var dataToSend = data.Select(d => d.Data).ToList();
+
             RemoteResult result;
             do
             {
                 if (_logger.IsDebugEnabled)
                     _logger.DebugFormat("Server {0} unavailable in restore process", server);
-                result = WriterNet.ProcessSync(server, data);
+                result = WriterNet.ProcessSync(server, dataToSend);
             } while (result is FailNetResult && counter++ < 3);
 
             if (result is PackageResult)
-                data = ProcessSuccessResult(data, result as PackageResult);
+                return ProcessSuccessResult(data, result as PackageResult);
 
-            return data;
+            data.ForEach(d => d.IsSomeFail = true);
+            return true;
         }
 
-        private List<InnerData> ProcessSuccessResult(List<InnerData> data, PackageResult resultList)
+        private bool ProcessSuccessResult(List<InnerDataWrapper> data, PackageResult resultList)
         {
             var results = resultList.Result;
-            var fail = new List<InnerData>();
+            int countFail = 0;
             for (int i = 0; i < results.Length; i++)
             {
                 if (results[i])
                     PerfCounters.WriterCounters.Instance.RestoreSendPerSec.OperationFinished();
                 else
-                    fail.Add(data[i]);
+                {
+                    data[i].IsSomeFail = true;
+                    countFail ++;
+                }
             }
-            PerfCounters.WriterCounters.Instance.RestoreCountSend.IncrementBy(data.Count - fail.Count);
-            return fail;
+            PerfCounters.WriterCounters.Instance.RestoreCountSend.IncrementBy(data.Count - countFail);
+
+            return countFail != 0;
         }
 
-        private Dictionary<ServerId, List<InnerData>> GetDestinationCollection()
+        private Dictionary<ServerId, List<InnerDataWrapper>> GetDestinationCollection()
         {
-            var destination = new Dictionary<ServerId, List<InnerData>>();
-            WriterModel.Servers.ForEach(s => destination.Add(s, new List<InnerData>()));
+            var destination = new Dictionary<ServerId, List<InnerDataWrapper>>();
+            WriterModel.Servers.ForEach(s => destination.Add(s, new List<InnerDataWrapper>()));
             return destination;
         }
 
@@ -171,6 +180,27 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         protected override bool IsNeedSendData(MetaData data)
         {
             return true;
+        }
+
+        internal class InnerDataWrapper
+        {
+            public InnerDataWrapper(InnerData data)
+            {
+                Data = data;
+                IsLocal = false;
+                IsSomeFail = false;
+            }
+
+            public InnerData Data { get; }
+            public bool IsLocal { get; set; }
+            public bool IsSomeFail { get; set; }
+
+            public string Hash => Data.MetaData.Hash;
+
+            public bool CanDelete()
+            {
+                return !IsLocal && !IsSomeFail;
+            }
         }
     }
 }

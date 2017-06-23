@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
@@ -25,8 +27,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         internal bool IsNeedRestore => _stateHolder.State != RestoreState.Restored;
 
         public bool IsRestoreStarted => _initiatorRestore.IsStart;
-
-        public bool IsTransferRestoreStarted => _transferRestore.IsStart;
 
         public Dictionary<string, string> FullState
         {
@@ -81,17 +81,24 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
             _stateHolder = new RestoreStateHolder(isNeedRestore);
             _saver = LoadRestoreStateFromFile();
+
             _initiatorRestore = new InitiatorRestoreModule(initiatorConfiguration, writerNet, async, 
                 _stateHolder, _saver);
+
             _transferRestore = new TransferRestoreModule(writerModel, transferConfiguration, 
                 writerNet, async, db,  queueConfiguration);
+
             _timeout = new TimeoutModule(writerNet, async, queueConfiguration,
                 db,  timeoutConfiguration);
+
+            _broadcastRestore = new BroadcastRestoreModule(writerModel, transferConfiguration,
+                writerNet, async, db, queueConfiguration);
 
         }
 
         private readonly WriterModel _writerModel;
 
+        private readonly BroadcastRestoreModule _broadcastRestore;
         private readonly InitiatorRestoreModule _initiatorRestore;
         private readonly TransferRestoreModule _transferRestore;
         private readonly TimeoutModule _timeout;
@@ -103,12 +110,15 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         {
             _initiatorRestore.Start();
             _transferRestore.Start();
+            _broadcastRestore.Start();
+
             _timeout.Start();
 
             if (_saver.IsNeedRestore())
             {
                 Task.Delay(Consts.StartRestoreTimeout).ContinueWith(task =>
                 {
+                    //Todo broadcast
                     RestoreFromFile(_writerModel.LocalMap, _saver.RestoreServers, _saver.TableName);
                 });
             }
@@ -125,7 +135,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         
         public void RestoreIncome(ServerId server, bool isSystemUpdated, string tableName)
         {
-            _transferRestore.RestoreIncome(server, isSystemUpdated, tableName);
+            _transferRestore.Restore(server, isSystemUpdated, tableName);
         }
 
         public void PeriodMessageIncome(ServerId server)
@@ -184,16 +194,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         public List<RestoreServer> Servers => _initiatorRestore.Servers;
 
-        public ServerId GetRestoreServer()
-        {
-            return _initiatorRestore.RestoreServer;
-        }
-
-        public ServerId GetTransferServer()
-        {
-            return _transferRestore.RemoteServer;
-        }
-
         public RestoreState DistributorReceive(RestoreState state)
         {
             var old = _stateHolder.State;
@@ -205,10 +205,45 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             return _stateHolder.State;
         }
 
+        public string GetAllState()
+        {
+            string result = string.Empty;
+
+            result += $"restore state: {Enum.GetName(typeof (RestoreState), RestoreState)}\n";
+            result += $"restore is running: {_initiatorRestore.IsStart}\n";
+
+            if (_initiatorRestore.IsStart)
+            {
+                result += $"current server: {GetCurrentRestoreServer()}\n";
+                result += $"servers:{GetServersList()}\n";
+            }
+
+            result += $"restore transfer is running: {_transferRestore.IsStart}\n";
+
+            if (_transferRestore.IsStart)
+                result += $"transfert server: {_transferRestore.RemoteServer}\n";
+
+            return result;
+        }
+
+        private string GetCurrentRestoreServer()
+        {
+            var server = _initiatorRestore.RestoreServer;
+            if (server != null)
+                return server.ToString();
+            return string.Empty;
+        }
+
+        private string GetServersList(string start = "\n")
+        {
+            return Servers.Aggregate(start, (current, server) => current + $"\t{server}\n");
+        }
+
         protected override void Dispose(bool isUserCall)
         {
             if (isUserCall)
             {                
+                _broadcastRestore.Dispose();
                 _transferRestore.Dispose();
                 _initiatorRestore.Dispose();
                 _timeout.Dispose();

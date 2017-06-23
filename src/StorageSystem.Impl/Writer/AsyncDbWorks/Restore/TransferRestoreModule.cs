@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using Qoollo.Impl.Common.NetResults.System.Writer;
@@ -73,7 +72,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private SingleServerRestoreProcess _restore;
         private string _lastDateTime;
 
-        public void RestoreIncome(ServerId remoteServer, bool isSystemUpdated, string tableName)
+        public void Restore(ServerId remoteServer, bool isSystemUpdated, string tableName)
         {
             Lock.EnterWriteLock();
             try
@@ -108,7 +107,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 return;
 
             if (_logger.IsDebugEnabled)
-                _logger.Debug($"Async complete = {_restore.IsComplete}, start = {IsStart}", "restore");
+                _logger.Debug($"Async transfer complete: {_restore.IsComplete}, start: {IsStart}", "restore");
 
             if (_restore.IsComplete && IsStart)
             {

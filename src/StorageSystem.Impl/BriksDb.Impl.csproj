@@ -331,7 +331,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="NetInterfaces\Collector\" />
-    <Folder Include="Writer\Model\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -14,6 +14,7 @@ namespace Qoollo.Impl.Common.Support
         public static string GetInfo = "getInfo";
         public static string RestoreRemote = "restoreRemote";
         public static string RestoreLocal = "restoreLocal";
+        public static string RestoreBroadcast = nameof(RestoreBroadcast);
         public static string AsyncPing = "asyncPing";
         public static string CheckRestore = "checkRestore";
         public static string CheckDistributors = "checkDistributors";

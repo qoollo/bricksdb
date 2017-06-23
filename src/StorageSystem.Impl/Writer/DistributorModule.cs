@@ -203,14 +203,6 @@ namespace Qoollo.Impl.Writer
             return _asyncDbWork.GetFailedServers();
         }
 
-        public string GetCurrentRestoreServer()
-        {
-            var server = _asyncDbWork.GetRestoreServer();
-            if (server != null)
-                return server.ToString();
-            return string.Empty;
-        }
-
         public RestoreState GetRestoreRequiredState()
         {
             return _asyncDbWork.RestoreState;
@@ -218,24 +210,7 @@ namespace Qoollo.Impl.Writer
 
         public string GetAllState()
         {
-            string result = string.Empty;
-            result += string.Format("restore state: {0}\n",
-                Enum.GetName(typeof (RestoreState), GetRestoreRequiredState()));
-            if (_asyncDbWork.IsRestoreStarted)
-            {
-                result += string.Format("current server: {0}\n", GetCurrentRestoreServer());
-                result += "servers:\n";
-                result = GetServersList(result);
-            }
-            else
-                result += string.Format("restore is running: {0}\n", _asyncDbWork.IsRestoreStarted);
-
-            if (_asyncDbWork.IsTransferRestoreStarted)
-                result += string.Format("transfert server: {0}\n", _asyncDbWork.GetTransferServer());
-            else
-                result += string.Format("restore transfer is running: {0}\n", _asyncDbWork.IsTransferRestoreStarted);
-
-            return result;
+            return _asyncDbWork.GetAllState();
         }
 
         private string GetServersList(string start = "\n")

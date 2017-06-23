@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Globalization;
-using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
@@ -17,6 +17,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private readonly DbModuleCollection _db;
         private readonly QueueConfiguration _queueConfiguration;
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
+        private BroadcastRestoreProcess _restoreProcess;
 
         public string LastStartedTime
         {
@@ -47,6 +49,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _configuration = configuration;
             _db = db;
             _queueConfiguration = queueConfiguration;
+            _lastDateTime = string.Empty;
         }
 
         private string _lastDateTime;
@@ -67,9 +70,58 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 Lock.ExitWriteLock();
             }
 
-            //_restore = new SingleServerRestoreProcess(_db, _writerModel, WriterNet,
-            //    tableName, _remoteServer, isSystemUpdated, _queueConfiguration);
-            //_restore.Start();
+            AsyncTaskModule.AddAsyncTask(
+                new AsyncDataPeriod(_configuration.PeriodRetry, RestoreCheckStateCallback,
+                    AsyncTasksNames.RestoreBroadcast, -1), false);
+
+            _restoreProcess = new BroadcastRestoreProcess(_db, _writerModel, WriterNet, isSystemUpdated, _queueConfiguration);
+            _restoreProcess.Start();
+        }
+
+        private void RestoreCheckStateCallback(AsyncData obj)
+        {
+            if (_restoreProcess == null)
+                return;
+
+            if (_logger.IsDebugEnabled)
+                _logger.Debug($"Async broadcast complete: {_restoreProcess.IsComplete}, start: {IsStart}", "restore");
+
+            if (_restoreProcess.IsComplete && IsStart)
+            {
+                AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreBroadcast);
+
+                SendRestoreStatus();
+                _restoreProcess.Dispose();
+
+                IsStart = false;
+            }
+            else
+            {
+                if (_restoreProcess.IsQueueEmpty && IsStart)
+                    _restoreProcess.GetAnotherData();
+            }
+        }
+
+        private void SendRestoreStatus()
+        {
+            foreach (var serverId in _writerModel.Servers)
+            {
+                if (!_restoreProcess.FailedServers.Contains(serverId))
+                {
+                    WriterNet.SendToWriter(serverId, new RestoreCompleteCommand(_writerModel.Local));
+                }
+            }
+        }
+
+        protected override void Dispose(bool isUserCall)
+        {
+            if (isUserCall)
+            {
+                AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreBroadcast);
+                _restoreProcess?.Dispose();
+            }
+
+            base.Dispose(isUserCall);
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using Qoollo.Impl.Common.Server;
@@ -68,16 +67,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         private List<RestoreServer> _restoreServers;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
-        public void SetServers(List<ServerId> servers)
-        {
-            _restoreServers = servers.Select(x =>
-            {
-                var ret = new RestoreServer(x);
-                ret.NeedRestoreInitiate();
-                return ret;
-            }).ToList();
-        }
-
         public void SetServers(List<RestoreServer> servers)
         {
             if (_restoreServers.Count > 0)
@@ -126,9 +115,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             _lock.ExitWriteLock();
         }
 
-        public void SetRestoreDate(string tableName, RestoreState state)
+        public void SetRestoreDate(RestoreState state, List<RestoreServer> servers)
         {
-            _saver.SetRestoreDate(tableName, state, _restoreServers);
+            SetServers(servers);
+            _saver.SetRestoreDate(RestoreType.Single, state, _restoreServers);
             Save();
         }
 
@@ -168,6 +158,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             server.IsFailed = false;
             server.IsCurrentServer = true;
 
+            Save();
             _lock.ExitWriteLock();
         }
 
@@ -205,13 +196,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             Save();
 
             _lock.ExitWriteLock();
-        }
-
-        public void Save()
-        {
-            if (_saver != null)
-                _saver.Save();
-        }
+        }        
 
         public bool IsAllServersRestored()
         {
@@ -232,11 +217,18 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             try
             {
                 _restoreServers.Clear();
+                Save();
+                _saver?.RemoveFile();
             }
             finally
             {
                 _lock.ExitWriteLock();
             }
+        }
+
+        private void Save()
+        {
+            _saver?.Save();
         }
     }
 }

@@ -20,6 +20,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         private BroadcastRestoreProcess _restoreProcess;
 
+        private string _lastDateTime;
         public string LastStartedTime
         {
             get
@@ -52,9 +53,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _lastDateTime = string.Empty;
         }
 
-        private string _lastDateTime;
-
-        public void RestoreIncome(bool isSystemUpdated)
+        public void RestoreIncome(RestoreState state)
         {
             Lock.EnterWriteLock();
             try
@@ -74,7 +73,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 new AsyncDataPeriod(_configuration.PeriodRetry, RestoreCheckStateCallback,
                     AsyncTasksNames.RestoreBroadcast, -1), false);
 
-            _restoreProcess = new BroadcastRestoreProcess(_db, _writerModel, WriterNet, isSystemUpdated, _queueConfiguration);
+            _restoreProcess = new BroadcastRestoreProcess(_db, _writerModel, WriterNet,
+                state == RestoreState.FullRestoreNeed, _queueConfiguration);
             _restoreProcess.Start();
         }
 

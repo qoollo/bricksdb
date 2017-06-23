@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.System.Writer;
@@ -24,18 +23,17 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         public List<RestoreServer> Servers => _serversController.Servers;
 
-        public InitiatorRestoreModule(RestoreModuleConfiguration configuration, WriterNetModule writerNet,
+        public InitiatorRestoreModule(WriterModel model, RestoreModuleConfiguration configuration, WriterNetModule writerNet,
             AsyncTaskModule asyncTaskModule, RestoreStateHolder stateHolder, RestoreStateFileLogger saver)
             : base(writerNet, asyncTaskModule)
         {
-            Contract.Requires(configuration != null);
-            Contract.Requires(stateHolder != null);
+            _model = model;
             _configuration = configuration;
             _stateHolder = stateHolder;            
             _serversController = new RestoreProcessController(saver);
         }
 
-        private List<HashMapRecord> _local;        
+        private readonly WriterModel _model;
         private readonly RestoreModuleConfiguration _configuration;
         private readonly RestoreStateHolder _stateHolder;
         private string _tableName;
@@ -44,41 +42,38 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         #region Restore start
 
-        public void Restore(List<HashMapRecord> local, List<RestoreServer> servers, RestoreState state, string tableName)
+        public void Restore(List<RestoreServer> servers, RestoreState state, string tableName)
         {
-            if (ParametersCheck(local, state, tableName, servers))
+            if (ParametersCheck(state, tableName, servers))
                 return;
 
-            _serversController.SetServers(servers);
+            _serversController.SetRestoreDate(_state, servers);
 
             StartRestore();
         }
 
-        public void RestoreFromFile(List<HashMapRecord> local, List<RestoreServer> servers, RestoreState state,
-            string tableName)
+        public void RestoreFromFile(List<RestoreServer> servers, RestoreState state, string tableName)
         {
-            if (ParametersCheck(local, state, tableName, servers))
+            if (ParametersCheck(state, tableName, servers))
                 return;
             
-            _serversController.SetServers(servers);
+            _serversController.SetRestoreDate(_state, servers);
 
             StartRestore();
         }
 
-        private bool ParametersCheck(List<HashMapRecord> local, RestoreState state, string tableName,
-            IReadOnlyCollection<ServerId> servers)
+        private bool ParametersCheck(RestoreState state, string tableName, IReadOnlyCollection<ServerId> servers)
         {
             Lock.EnterWriteLock();
 
             try
             {
-                if (IsStartNoLock || !(servers.Count > 0 && local.Count > 0))
+                if (IsStartNoLock || servers.Count == 0)
                     return true;
 
                 _state = state;
                 _tableName = tableName;
                 IsStartNoLock = true;
-                _local = local;
             }
             finally
             {
@@ -89,15 +84,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         private void StartRestore()
         {
-            _serversController.SetRestoreDate(_tableName, _state);            
-
             AsyncTaskModule.AddAsyncTask(
                 new AsyncDataPeriod(_configuration.PeriodRetry, NoAnswerCallback, AsyncTasksNames.RestoreRemote,
                     _configuration.CountRetry), false);
 
             AsyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
 
-            _serversController.Save();
             CurrentProcess();
         }
 
@@ -141,11 +133,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if(_logger.IsTraceEnabled)
                 _logger.Trace($"Connection result = {result}", "restore");
             
-            var state = nextServer.Equals(_local[0].ServerId)
+            var state = nextServer.Equals(_model.Local)
                 ? RestoreState.SimpleRestoreNeed
                 : _state;
             var ret = WriterNet.SendToWriter(nextServer,
-                new RestoreCommandWithData(_local[0].ServerId, _tableName, state));            
+                new RestoreCommandWithData(_model.Local, _tableName, state));            
 
             if (ret is FailNetResult)
             {
@@ -158,7 +150,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             _serversController.RemoveCurrentServer();
             _serversController.SetCurrentServer(nextServer);                        
-            _serversController.Save();
 
             return 0;
         }
@@ -174,8 +165,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 _stateHolder.FinishRestore(_state);
                 _serversController.FinishRestore();
             }
-
-           _serversController.Save();
 
             if (_logger.IsInfoEnabled)
                 _logger.Info("Restore current servers complete");
@@ -224,11 +213,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 return;
             }
 
-            var state = remoteServer.Equals(_local[0].ServerId)
+            var state = remoteServer.Equals(_model.Local)
               ? RestoreState.SimpleRestoreNeed
               : _state;
             var ret = WriterNet.SendToWriter(remoteServer,
-                new RestoreCommandWithData(_local[0].ServerId, _tableName, state));
+                new RestoreCommandWithData(_model.Local, _tableName, state));
 
             if (ret is FailNetResult)
             {

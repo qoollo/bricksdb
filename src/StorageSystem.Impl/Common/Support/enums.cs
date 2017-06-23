@@ -104,4 +104,13 @@ namespace Qoollo.Impl.Common.Support
         [EnumMemberAttribute]
         Default = 3
     }
+
+    [DataContract]
+    public enum RestoreType
+    {
+        [EnumMember]
+        Single = 0,
+        [EnumMember]
+        Broadcast = 1
+    }
 }

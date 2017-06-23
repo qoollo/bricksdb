@@ -6,58 +6,36 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
     {
         public RestoreState State { get { return _state; } }
 
-        public RestoreStateHolder(bool isNeedRestore)
+        public RestoreStateHolder(bool needRestore)
         {
-            _state = isNeedRestore ? RestoreState.SimpleRestoreNeed : RestoreState.Restored;
-            _isRestoreFinish = false;
+            _state = needRestore ? RestoreState.SimpleRestoreNeed : RestoreState.Restored;
+            _canRemoteStateUpdate = true;
         }
 
         public RestoreStateHolder(RestoreState state)
         {
             _state = state; 
-            _isRestoreFinish = false;
+            _canRemoteStateUpdate = true;
         }
 
-        private bool _isRestoreFinish;
+        private bool _canRemoteStateUpdate;
         private RestoreState _state;
 
         public void DistributorSendState(RestoreState state)
         {
-            if (state == RestoreState.Restored && !_isRestoreFinish)
-                return;
+            if (_canRemoteStateUpdate)
+                LocalSendState(state);
 
-            switch (_state)
-            {
-               case RestoreState.Restored:
-                    if(!_isRestoreFinish)
-                        _state = state;
-                    break;
-               case RestoreState.SimpleRestoreNeed:
-                    if (state == RestoreState.FullRestoreNeed)
-                        _state = state;
-                    break;
-            }
-
-            _isRestoreFinish = false;
+            _canRemoteStateUpdate = true;
         }
 
-        public void LocalSendState(bool isModelUpdate)
+        public void ModelUpdate()
         {            
-            var state = isModelUpdate ? RestoreState.FullRestoreNeed : RestoreState.SimpleRestoreNeed;
+            var state = RestoreState.FullRestoreNeed;
 
             if (state > _state)
                 _state = state;
         }        
-
-        public void FinishRestore(bool isModelUpdate)
-        {
-            if (isModelUpdate && _state == RestoreState.FullRestoreNeed ||
-                !isModelUpdate && _state == RestoreState.SimpleRestoreNeed)
-            {
-                _state = RestoreState.Restored;
-                _isRestoreFinish = true;
-            }
-        }
 
         public void LocalSendState(RestoreState state)
         {
@@ -70,7 +48,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             if (state == _state)
             {
                 _state = RestoreState.Restored;
-                _isRestoreFinish = true;
+                _canRemoteStateUpdate = false;
             }
         }
     }

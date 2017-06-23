@@ -35,8 +35,7 @@ namespace Qoollo.Tests
             {
                 writer.WriteLine("<?xml version=\"1.0\"?>");
                 writer.WriteLine(
-                    "<RestoreSaveHelper xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"  TableName=\"{0}\" RestoreState=\"{1}\">",
-                    string.IsNullOrEmpty(tableName) ? "AllTablesyNameThatMustntBeUsedAsTableName" : tableName,
+                    "<RestoreSaveHelper xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" RestoreState=\"{0}\">", 
                     Enum.GetName(typeof (RestoreState), state));
 
                 if (servers != null)

@@ -82,8 +82,7 @@ namespace Qoollo.Impl.Components
                 _transferRestoreConfiguration, _timeoutRestoreConfiguration, 
                 _queueConfigurationRestore, _isNeedRestore);
 
-            var distributor = new DistributorModule(model, async, restore, net, _local, _hashMapConfiguration,
-                _queueConfiguration, db);
+            var distributor = new DistributorModule(model, async, restore, net, _queueConfiguration);
 
             Distributor = distributor;
             DbModule = db;

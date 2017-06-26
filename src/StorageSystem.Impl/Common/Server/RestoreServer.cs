@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
+using Qoollo.Impl.Common.HashFile;
+using Qoollo.Impl.Common.HashHelp;
 
 namespace Qoollo.Impl.Common.Server
 {
@@ -12,26 +10,33 @@ namespace Qoollo.Impl.Common.Server
     [DataContract]
     public class RestoreServer : ServerId
     {
-        [DataMember]        
+        [DataMember]
         public bool IsNeedRestore { get; set; }
-        [DataMember]        
+
+        [DataMember]
         public bool IsRestored { get; set; }
+
         [DataMember]
         public bool IsFailed { get; set; }
+
         public bool IsCurrentServer { get; set; }
+
+        private readonly List<HashMapRecord> _getHashMap;
+
         public RestoreServer(string remoteHost, int port)
             : base(remoteHost, port)
         {
             CommonServer();
         }
 
-        public RestoreServer(ServerId server)
+        public RestoreServer(ServerId server, List<HashMapRecord> getHashMap)
             : base(server)
         {
-            CommonServer();            
+            _getHashMap = getHashMap;
+            CommonServer();
         }
 
-        public RestoreServer():base("default", -1)
+        public RestoreServer() : base("default", -1)
         {
         }
 
@@ -66,9 +71,17 @@ namespace Qoollo.Impl.Common.Server
             return IsRestored && !IsFailed;
         }
 
+        public bool IsHahsInRange(string hash)
+        {
+            return _getHashMap.Exists(
+                x =>
+                    HashComparer.Compare(x.Begin, hash) <= 0 &&
+                    HashComparer.Compare(hash, x.End) <= 0);
+        }
+
         public override string ToString()
         {
-            return string.Format("{0}, restored = {1}, failed = {2}",base.ToString(), IsRestored, IsFailed);
+            return $"{base.ToString()}, restored = {IsRestored}, failed = {IsFailed}";
         }
     }
 }

@@ -17,12 +17,17 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
+        private readonly List<RestoreServer> _serversToRestore;
+        private readonly bool _allServersForRestore;
         public readonly HashSet<ServerId> FailedServers = new HashSet<ServerId>();
-         
+
         public BroadcastRestoreProcess(DbModuleCollection db, WriterModel writerModel, WriterNetModule writerNet,
-            bool isSystemUpdated, QueueConfiguration queueConfiguration)
+            List<RestoreServer> serversToRestore, bool isSystemUpdated, QueueConfiguration queueConfiguration)
             : base(db, writerModel, writerNet, Consts.AllTables, isSystemUpdated, queueConfiguration)
         {
+            _serversToRestore = serversToRestore;
+
+            _allServersForRestore = serversToRestore.Count == writerModel.Servers.Count;
         }
 
         private void SetRestoreInfo(InnerData data)
@@ -178,8 +183,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         }
 
         protected override bool IsNeedSendData(MetaData data)
-        {
-            return true;
+        {            
+            if (_allServersForRestore)
+                return true;
+
+            //todo save servers to meta
+            return _serversToRestore.Exists(s => s.IsHahsInRange(data.Hash));
         }
 
         internal class InnerDataWrapper

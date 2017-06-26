@@ -16,7 +16,6 @@ using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks;
-using Qoollo.Impl.Writer.Db;
 using Qoollo.Impl.Writer.WriterNet;
 
 namespace Qoollo.Impl.Writer
@@ -28,7 +27,6 @@ namespace Qoollo.Impl.Writer
         private readonly WriterModel _model;
         private readonly WriterNetModule _writerNet;
         private readonly QueueConfiguration _queueConfiguration;
-        private readonly DbModuleCollection _dbModuleCollection;
         private readonly AsyncDbWorkModule _asyncDbWork;
         private readonly GlobalQueueInner _queue;
 
@@ -36,24 +34,19 @@ namespace Qoollo.Impl.Writer
             AsyncTaskModule async, 
             AsyncDbWorkModule asyncDbWork,
             WriterNetModule writerNet,
-            ServerId local,
-            HashMapConfiguration hashMapConfiguration,
             QueueConfiguration configuration,
-            DbModuleCollection dbModuleCollection,
             AsyncTasksConfiguration pingConfiguration = null)
         {
-            Contract.Requires(local != null);
             Contract.Requires(writerNet != null);
             Contract.Requires(configuration != null);
             Contract.Requires(asyncDbWork != null);
             Contract.Requires(async != null);
-            Contract.Requires(dbModuleCollection != null);
 
             _asyncDbWork = asyncDbWork;
             _model = model;
             _writerNet = writerNet;
             _queueConfiguration = configuration;
-            _dbModuleCollection = dbModuleCollection;
+
             _queue = GlobalQueue.Queue;
 
             var ping = InitInjection.PingPeriod;
@@ -135,49 +128,35 @@ namespace Qoollo.Impl.Writer
             return Errors.RestoreAlreadyStarted;
         }
 
-        /// <summary>
-        /// Start servers recover
-        /// </summary>        
-        /// <param name="state"></param>
-        public string Restore(RestoreState state)
-        {
-            return Restore(null, state, Consts.AllTables);
-        }
-
         public string Restore()
         {
-            return Restore(null, RestoreState.Default, Consts.AllTables);
+            return Restore(null, RestoreState.Default);
         }
 
-        public string Restore(RestoreState state, string tableName)
+        public string Restore(RestoreType type)
         {
-            return Restore(null, state, tableName);
+            return Restore(null, RestoreState.Default, type);
         }
 
-        public string Restore(List<ServerId> servers, RestoreState state)
+        public string Restore(RestoreState state)
         {
-            return Restore(servers, state, Consts.AllTables);
+            return Restore(null, state);
         }
 
-        public string Restore(List<ServerId> servers, RestoreState state, string tableName)
+        public string Restore(List<ServerId> servers, RestoreState state, RestoreType type = RestoreType.Single)
         {
             if (_asyncDbWork.IsRestoreStarted)
                 return Errors.RestoreAlreadyStarted;
 
             RestoreState st = state;
-            if (state == RestoreState.Default)
+            if (state == RestoreState.Default && type == RestoreType.Single)
             {
                 st = _asyncDbWork.RestoreState;
                 if (st == RestoreState.Restored)
                     return Errors.RestoreDefaultStartError;
             }
 
-            //_queue.DbDistributorInnerQueue.Add(new RestoreCommand(_model.Local, st)
-            //{
-            //    FailedServers = servers
-            //});
-
-            Execute<RestoreCommand, RemoteResult>(new RestoreCommand(_model.Local, st)
+            Execute<RestoreCommand, RemoteResult>(new RestoreCommand(st, type)
             {
                 FailedServers = servers
             });
@@ -269,7 +248,7 @@ namespace Qoollo.Impl.Writer
         {
             return servers.Select(x =>
             {
-                var ret = new RestoreServer(x);
+                var ret = new RestoreServer(x, _model.GetHashMap(x));
                 ret.NeedRestoreInitiate();
                 return ret;
             }).ToList();
@@ -283,7 +262,7 @@ namespace Qoollo.Impl.Writer
 
             return servers.Select(x =>
             {
-                var ret = new RestoreServer(x);
+                var ret = new RestoreServer(x, _model.GetHashMap(x));
                 if (failedServers.Contains(x))
                     ret.NeedRestoreInitiate();
                 return ret;
@@ -292,12 +271,13 @@ namespace Qoollo.Impl.Writer
 
         private void RestoreCommand(RestoreCommand comm)
         {
-            if (_logger.IsDebugEnabled)
-                _logger.Debug($"First restore server = {_model.Servers.Count(x => !x.Equals(_model.Local))}",
+            if (_logger.IsWarnEnabled)
+                _logger.Info(
+                    $"Attempt to start restore mode: {comm.RestoreState}, type: {Enum.GetName(typeof (RestoreType), comm.Type)}",
                     "restore");
 
             var st = comm.RestoreState;
-            if (comm.RestoreState == RestoreState.Default)
+            if (comm.RestoreState == RestoreState.Default && comm.Type == RestoreType.Single)
             {
                 st = _asyncDbWork.RestoreState;
                 if (st == RestoreState.Restored)
@@ -306,15 +286,21 @@ namespace Qoollo.Impl.Writer
 
             if (comm.FailedServers != null)
             {
+                //todo check failed servers
                 _asyncDbWork.Restore(ServersOnDirectRestore(st, comm.FailedServers),
                     comm.RestoreState, comm.Type);
             }
-            else
+            else if (comm.Type == RestoreType.Single)
             {
                 var servers = st == RestoreState.FullRestoreNeed
                     ? _model.Servers
                     : _model.Servers.Where(x => !x.Equals(_model.Local));
+
                 _asyncDbWork.Restore(ConvertRestoreServers(servers), st, comm.Type);
+            }
+            else if (comm.Type == RestoreType.Broadcast)
+            {
+                _asyncDbWork.Restore(ConvertRestoreServers(_model.Servers), st, comm.Type);
             }
         }
 

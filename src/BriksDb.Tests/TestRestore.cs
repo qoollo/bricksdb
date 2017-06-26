@@ -23,11 +23,6 @@ namespace Qoollo.Tests
     [Collection("test collection 1")]
     public class TestRestore : TestBase
     {
-        private string file1 = "restoreHelp1.txt";
-        private string file2 = "restoreHelp2.txt";
-        private string file3 = "restoreHelp3.txt";
-        private string file4 = "restoreFile4.txt";
-
         private void CreateRestoreFile(string filename, string tableName, RestoreState state,
             List<RestoreServerSave> servers = null)
         {

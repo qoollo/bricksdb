@@ -28,6 +28,7 @@ namespace Qoollo.Client.WriterGate
             return new RequestDescription(result);
         }
 
+
         public RequestDescription Restore(RestoreMode mode)
         {
             string result = _writer.Distributor.Restore(RestoreModeConverter.Convert(mode));
@@ -37,22 +38,8 @@ namespace Qoollo.Client.WriterGate
         public RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode)
         {
             var list = new List<ServerId>();
-            list.AddRange(servers.Select(x => x.ConvertServer()));
-            string result = _writer.Distributor.Restore(list, RestoreModeConverter.Convert(mode));
-            return new RequestDescription(result);
-        }
-
-        public RequestDescription Restore(RestoreMode mode, string tableName)
-        {
-            string result = _writer.Distributor.Restore(RestoreModeConverter.Convert(mode), tableName);
-            return new RequestDescription(result);
-        }
-
-        public RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode, string tableName)
-        {
-            var list = new List<ServerId>();
             servers.ForEach(x => list.Add(new ServerId(x.Host, x.Port)));
-            var result = _writer.Distributor.Restore(list, RestoreModeConverter.Convert(mode), tableName);
+            var result = _writer.Distributor.Restore(list, RestoreModeConverter.Convert(mode));
             return new RequestDescription(result);
         }
 

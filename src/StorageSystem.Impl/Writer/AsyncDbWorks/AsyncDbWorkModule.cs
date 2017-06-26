@@ -25,7 +25,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         internal bool IsNeedRestore => _stateHolder.State != RestoreState.Restored;
 
-        public bool IsRestoreStarted => _initiatorRestore.IsStart;
+        public bool IsRestoreStarted => _initiatorRestore.IsStart || _broadcastRestore.IsStart;
 
         public Dictionary<string, string> FullState
         {
@@ -178,9 +178,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                 if (_broadcastRestore.IsStart)
                     return;
 
-                _stateHolder.LocalSendState(state);
-                _broadcastRestore.RestoreIncome(_stateHolder.State);
+                //todo add type to state and server
+                //_stateHolder.LocalSendState(state);
+                _saver.SetRestoreDate(type, state, servers);
                 _saver.Save();
+
+                _broadcastRestore.Restore(servers, _stateHolder.State);                
             }
         }
 

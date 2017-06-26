@@ -42,6 +42,11 @@ namespace Qoollo.Tests
         internal const int storageServer3 = 22157;
         internal const int storageServer4 = 22158;
 
+        internal string file1 = "restoreHelp1.txt";
+        internal string file2 = "restoreHelp2.txt";
+        internal string file3 = "restoreHelp3.txt";
+        internal string file4 = "restoreFile4.txt";
+
         private readonly List<int> _writerPorts;
 
         private static readonly object Lock = new object();

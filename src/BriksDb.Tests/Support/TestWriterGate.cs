@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
-using Qoollo.Impl.Postgre;
-using Qoollo.Impl.Postgre.Internal;
 using Qoollo.Impl.Writer;
 using Qoollo.Impl.Writer.AsyncDbWorks;
 using Qoollo.Impl.Writer.Db;
@@ -68,8 +63,7 @@ namespace Qoollo.Tests.Support
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
                 new QueueConfiguration(1, 100));
 
-            Distributor = new DistributorModule(model, _async, Restore, _net, local,
-                hashMapConfiguration, new QueueConfiguration(2, 10), Db);
+            Distributor = new DistributorModule(model, _async, Restore, _net, new QueueConfiguration(2, 10));
 
             WriterModel = GetPrivtaeField<WriterModel>(Distributor);
 

@@ -95,14 +95,16 @@ namespace Qoollo.Impl.Common.Support
     [DataContract]
     public enum RestoreState
     {
-        [EnumMemberAttribute]
+        [EnumMember]
         Restored = 0,        
-        [EnumMemberAttribute]
+        [EnumMember]
         SimpleRestoreNeed = 1,
-        [EnumMemberAttribute]
+        [EnumMember]
         FullRestoreNeed = 2,
-        [EnumMemberAttribute]
-        Default = 3
+        [EnumMember]
+        BroadcastRestoreNeed = 3,
+        [EnumMember]
+        Default = 4
     }
 
     [DataContract]

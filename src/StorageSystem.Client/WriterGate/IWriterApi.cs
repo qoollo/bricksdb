@@ -15,10 +15,6 @@ namespace Qoollo.Client.WriterGate
 
         RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode);
 
-        RequestDescription Restore(RestoreMode mode, string tableName);
-
-        RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode, string tableName);
-
         bool IsRestoreCompleted();
 
         List<ServerAddress> FailedServers();

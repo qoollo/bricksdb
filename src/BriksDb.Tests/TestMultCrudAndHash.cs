@@ -2,7 +2,6 @@
 using System.Threading;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
-using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestWriter;
 using Xunit;
@@ -13,9 +12,6 @@ namespace Qoollo.Tests
     [Collection("test collection 1")]
     public class TestMultCrudAndHash:TestBase
     {
-        private string file1 = "restoreHelp1.txt";
-        private string file2 = "restoreHelp2.txt";
-
         public TestMultCrudAndHash():base()
         {
             _proxy = TestGate(proxyServer, 30000);

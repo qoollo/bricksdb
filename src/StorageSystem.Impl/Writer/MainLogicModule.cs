@@ -8,7 +8,6 @@ using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Modules;
-using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.NetInterfaces.Data;
 using Qoollo.Impl.Writer.Db;
 using Qoollo.Impl.Writer.PerfCounters;
@@ -21,7 +20,6 @@ namespace Qoollo.Impl.Writer
 
         private readonly DbModule _db;
         private readonly DistributorModule _distributor;        
-        private readonly GlobalQueueInner _queue;
 
         public MainLogicModule(DistributorModule distributor, DbModule db)
         {
@@ -30,7 +28,6 @@ namespace Qoollo.Impl.Writer
 
             _db = db;
             _distributor = distributor;
-            _queue = GlobalQueue.Queue;
         }
 
         #region Process
@@ -138,7 +135,6 @@ namespace Qoollo.Impl.Writer
                 data.Transaction.AddErrorDescription(result.Description);
             }
             _distributor.Execute<Transaction, RemoteResult>(data.Transaction);
-            //_queue.TransactionAnswerQueue.Add(data.Transaction);
 
             if (data.Transaction.OperationType == OperationType.Sync)
                 return result;

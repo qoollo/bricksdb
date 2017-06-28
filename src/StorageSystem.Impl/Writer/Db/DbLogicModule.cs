@@ -615,7 +615,7 @@ namespace Qoollo.Impl.Writer.Db
                 foreach (var searchData in result.Data)
                 {
                     var meta = _metaDataCommandCreator.ReadMetaFromSearchData(searchData);
-
+                    
                     WriterCounters.Instance.RestoreCheckPerSec.OperationFinished();
                     WriterCounters.Instance.RestoreCheckCount.Increment();
                     if (restoreData.IsMine(meta))

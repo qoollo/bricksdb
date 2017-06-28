@@ -71,7 +71,7 @@ namespace Qoollo.Impl.Common.Server
             return IsRestored && !IsFailed;
         }
 
-        public bool IsHahsInRange(string hash)
+        public bool IsHashInRange(string hash)
         {
             return _getHashMap.Exists(
                 x =>

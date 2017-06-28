@@ -19,7 +19,7 @@ namespace Qoollo.Tests.NetMock
             _configuration = configuration;
             Server = server;
 
-            _netMock = InitInjection.Kernel.Get<INetMock>();
+            _netMock = NetMock.Instance;
         }
 
         public override void Start()

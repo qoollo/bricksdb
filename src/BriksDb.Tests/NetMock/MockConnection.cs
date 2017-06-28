@@ -15,7 +15,7 @@ namespace Qoollo.Tests.NetMock
 
         public MockConnection(ServerId server) : base(server)
         {
-            _netMock = InitInjection.Kernel.Get<INetMock>();
+            _netMock = NetMock.Instance;
         }
 
         public override bool Connect()

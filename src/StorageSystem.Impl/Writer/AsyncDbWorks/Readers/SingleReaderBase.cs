@@ -15,6 +15,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
         private bool _isWait;
         private readonly AutoResetEvent _reset;
 
+        private bool _isDisposed = false;
+
         public bool IsFinish => _isFinish;
 
         public bool IsWait
@@ -47,7 +49,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
 
         public void GetAnotherData()
         {
-            _reset.Set();
+            if(!_isDisposed)
+                _reset.Set();
         }
 
         private void ThreadProcess()
@@ -96,6 +99,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
         {
             if (isUserCall)
             {
+                _isDisposed = true;
                 _reset.Dispose();
                 if (_thread.ThreadState == ThreadState.Running && !_thread.Join(500))
                     _thread.Abort();

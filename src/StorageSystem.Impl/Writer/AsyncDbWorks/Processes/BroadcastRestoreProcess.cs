@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -21,9 +22,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         private readonly bool _allServersForRestore;
         public readonly HashSet<ServerId> FailedServers = new HashSet<ServerId>();
 
-        public BroadcastRestoreProcess(DbModuleCollection db, WriterModel writerModel, WriterNetModule writerNet,
-            List<RestoreServer> serversToRestore, bool isSystemUpdated, QueueConfiguration queueConfiguration)
-            : base(db, writerModel, writerNet, Consts.AllTables, isSystemUpdated, queueConfiguration)
+        public BroadcastRestoreProcess(StandardKernel kernel, DbModuleCollection db, WriterModel writerModel, WriterNetModule writerNet, List<RestoreServer> serversToRestore, bool isSystemUpdated, QueueConfiguration queueConfiguration)
+            : base(kernel, db, writerModel, writerNet, Consts.AllTables, isSystemUpdated, queueConfiguration)
         {
             _serversToRestore = serversToRestore;
 
@@ -46,8 +46,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
             foreach (var data in dataListWrap)
             {
                 SetRestoreInfo(data.Data);
-                var destinationServers = WriterModel.GetDestination(data.Hash);
-                foreach (var serverId in destinationServers)
+                foreach (var serverId in data.Data.MetaData.ServersToSend)
                 {
                     destination[serverId].Add(data);
                 }
@@ -55,7 +54,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
 
             foreach (var serverWithData in destination)
             {
-                var result = WriterNet.ProcessSync(serverWithData.Key, serverWithData.Value.Select(d => d.Data).ToList());
+                var result = WriterNet.ProcessSync(serverWithData.Key, serverWithData.Value.Select(d => d.Data)
+                    .ToList());
 
                 bool isSomeFail;
 
@@ -127,12 +127,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         protected override async void ProcessData(InnerData data)
         {
             SetRestoreInfo(data);
-            var destinationServers = WriterModel.GetDestination(data.MetaData.Hash);
 
             bool isLocalData = false;
             bool isSomeFail = false;
 
-            foreach (var serverId in destinationServers)
+            foreach (var serverId in data.MetaData.ServersToSend)
             {
                 if (Equals(serverId, WriterModel.Local))
                 {
@@ -144,7 +143,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
                     continue;
                 }
 
-                var result = await WriterNet.ProcessAsync(serverId, data);
+                if (!data.MetaData.IsLocal && isLocalData)
+                {
+                    int t = 0;
+                }
+
+                //var result = await WriterNet.ProcessAsync(serverId, data);
+                var result = WriterNet.ProcessSync(serverId, data);
+
                 if (result.IsError && ProcessFailResult(data, serverId))
                 {
                     isSomeFail = true;
@@ -183,12 +189,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         }
 
         protected override bool IsNeedSendData(MetaData data)
-        {            
+        {
             if (_allServersForRestore)
+            {
+                data.ServersToSend = _serversToRestore;
                 return true;
+            }
 
-            //todo save servers to meta
-            return _serversToRestore.Exists(s => s.IsHahsInRange(data.Hash));
+            data.ServersToSend = _serversToRestore.Where(s => s.IsHashInRange(data.Hash)).ToList();
+
+            return data.ServersToSend.Count != 0;
         }
 
         internal class InnerDataWrapper

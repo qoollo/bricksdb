@@ -36,11 +36,11 @@ namespace Qoollo.Tests
             return ev;
         }
 
-        //[Theory]
-        //[InlineData(50)]
-        public void Writer_CheckData_TwoServers(int count)
+        [Theory]
+        [InlineData(50)]
+        public void Writer_SimpleRestore_TwoServers(int count)
         {
-            var filename = nameof(Writer_CheckData_TwoServers);
+            var filename = nameof(Writer_SimpleRestore_TwoServers);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
@@ -95,7 +95,7 @@ namespace Qoollo.Tests
                 Assert.Equal(count, mem.Local + mem.Remote);
 
                 _writer2.Start();
-                _writer2.Distributor.Restore(RestoreState.BroadcastRestoreNeed);
+                _writer1.Distributor.Restore(RestoreState.SimpleRestoreNeed, RestoreType.Broadcast);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
@@ -110,5 +110,168 @@ namespace Qoollo.Tests
                 _writer2.Dispose();
             }
         }
+
+        [Theory]
+        [InlineData(50)]
+        public void Writer_SimpleRestore_ThreeServers_OneBroadcast(int count)
+        {
+            var filename = nameof(Writer_SimpleRestore_ThreeServers_OneBroadcast);
+            using (new FileCleaner(filename))
+            using (new FileCleaner(file1))
+            using (new FileCleaner(file2))
+            using (new FileCleaner(file3))
+            {
+                CreateHashFile(filename, 3);
+
+                _distrTest.Build(1, distrServer1, distrServer12, filename);
+
+                InitInjection.RestoreHelpFileOut = file1;
+                _writer1.Build(storageServer1, filename, 1);
+
+                InitInjection.RestoreHelpFileOut = file2;
+                _writer2.Build(storageServer2, filename, 1);
+
+                InitInjection.RestoreHelpFileOut = file3;
+                _writer3.Build(storageServer3, filename, 1);
+
+                _distrTest.Start();
+                _writer1.Start();
+
+                var list = new List<InnerData>();
+                for (int i = 1; i < count + 1; i++)
+                {
+                    var data = InnerData(i);
+                    data.Transaction.Distributor = ServerId(distrServer1);
+
+                    list.Add(data);
+
+                    _distrTest.Input.ProcessAsync(data);
+                }
+
+                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+
+                foreach (var data in list)
+                {
+                    var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
+                    if (tr.IsError)
+                    {
+                        data.Transaction = new Transaction(data.Transaction);
+                        data.Transaction.ClearError();
+                        _distrTest.Input.ProcessAsync(data);
+                    }
+                }
+
+                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+
+                var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+                var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
+                var mem3 = _writer3.Db.GetDbModules.First() as TestDbInMemory;
+
+                if (count > 1)
+                {
+                    Assert.NotEqual(count, mem.Local);
+                    Assert.NotEqual(count, mem.Remote);
+                }
+                Assert.Equal(count, mem.Local + mem.Remote);
+
+                _writer2.Start();
+                _writer3.Start();
+                _writer1.Distributor.Restore(RestoreState.SimpleRestoreNeed, RestoreType.Broadcast);
+
+                Thread.Sleep(TimeSpan.FromMilliseconds(2000));
+
+                Assert.Equal(0, mem.Remote);
+                Assert.Equal(0, mem2.Remote);
+                Assert.Equal(0, mem3.Remote);
+                Assert.Equal(count, mem.Local + mem2.Local + mem3.Local);
+                Assert.Equal(false, _writer1.Restore.IsNeedRestore);
+                Assert.Equal(false, _writer2.Restore.IsNeedRestore);
+                Assert.Equal(false, _writer3.Restore.IsNeedRestore);
+
+                _distrTest.Dispose();
+                _writer1.Dispose();
+                _writer2.Dispose();
+                _writer3.Dispose();
+            }
+        }
+
+        [Theory]
+        [InlineData(50, 1)]
+        [InlineData(50, 2)]
+        public void Writer_SimpleRestore_ThreeServers_TwoBroadcast(int count, int replics)
+        {
+            var filename = nameof(Writer_SimpleRestore_ThreeServers_TwoBroadcast);
+            using (new FileCleaner(filename))
+            using (new FileCleaner(file1))
+            using (new FileCleaner(file2))
+            using (new FileCleaner(file3))
+            {
+                CreateHashFile(filename, 3);
+
+                _distrTest.Build(replics, distrServer1, distrServer12, filename);
+
+                InitInjection.RestoreHelpFileOut = file1;
+                _writer1.Build(storageServer1, filename, replics, "w1");
+
+                InitInjection.RestoreHelpFileOut = file2;
+                _writer2.Build(storageServer2, filename, replics, "w2");
+
+                InitInjection.RestoreHelpFileOut = file3;
+                _writer3.Build(storageServer3, filename, replics, "w3");
+
+                _distrTest.Start();
+                _writer1.Start();
+                _writer2.Start();
+
+                var list = new List<InnerData>();
+                for (int i = 1; i < count + 1; i++)
+                {
+                    var data = InnerData(i);
+                    data.Transaction.Distributor = ServerId(distrServer1);
+
+                    list.Add(data);
+
+                    _distrTest.Input.ProcessAsync(data);
+                }
+
+                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+
+                foreach (var data in list)
+                {
+                    var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
+                    if (tr.IsError)
+                    {
+                        data.Transaction = new Transaction(data.Transaction);
+                        data.Transaction.ClearError();
+                        _distrTest.Input.ProcessAsync(data);
+                    }
+                }
+
+                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+
+                var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
+                var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
+                var mem3 = _writer3.Db.GetDbModules.First() as TestDbInMemory;
+
+                Assert.Equal(count * replics, mem.Local + mem.Remote + mem2.Local + mem2.Remote);
+
+                _writer3.Start();
+
+                _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed, RestoreType.Broadcast);
+                _writer1.Distributor.Restore(RestoreState.SimpleRestoreNeed, RestoreType.Broadcast);
+
+                Thread.Sleep(TimeSpan.FromMilliseconds(2000));
+
+                Assert.Equal(0, mem.Remote);
+                Assert.Equal(0, mem2.Remote);
+                Assert.Equal(count* replics, mem.Local + mem2.Local + mem3.Local);
+
+                _distrTest.Dispose();
+                _writer1.Dispose();
+                _writer2.Dispose();
+                _writer3.Dispose();
+            }
+        }
+
     }
 }

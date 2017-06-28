@@ -167,6 +167,7 @@
     <Compile Include="Modules\Net\ReceiveBehavior\NetReceiveBehavior.cs" />
     <Compile Include="Modules\Net\ReceiveBehavior\ReceiveBehaviorBase.cs" />
     <Compile Include="Modules\HashModule\HashLogic.cs" />
+    <Compile Include="Modules\Queue\IGlobalQueue.cs" />
     <Compile Include="PerfCounters\PoolsProfiling.cs" />
     <Compile Include="TestSupport\InitInjection.cs" />
     <Compile Include="TestSupport\InjectionModule.cs" />

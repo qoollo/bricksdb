@@ -102,9 +102,7 @@ namespace Qoollo.Impl.Common.Support
         [EnumMember]
         FullRestoreNeed = 2,
         [EnumMember]
-        BroadcastRestoreNeed = 3,
-        [EnumMember]
-        Default = 4
+        Default = 3
     }
 
     [DataContract]
@@ -113,6 +111,8 @@ namespace Qoollo.Impl.Common.Support
         [EnumMember]
         Single = 0,
         [EnumMember]
-        Broadcast = 1
+        Broadcast = 1,
+        [EnumMember]
+        None = 2,
     }
 }

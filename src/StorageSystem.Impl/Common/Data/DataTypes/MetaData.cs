@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Runtime.Serialization;
+using System.Collections.Generic;
+using Qoollo.Impl.Common.Server;
 
 namespace Qoollo.Impl.Common.Data.DataTypes
 {    
@@ -26,6 +27,11 @@ namespace Qoollo.Impl.Common.Data.DataTypes
         public bool IsDeleted { get; private set; }
         
         public object Id { get; set; }        
-        public string Hash { get; private set; }        
+        public string Hash { get; private set; }      
+        
+        /// <summary>
+        /// Server for restore process
+        /// </summary>
+        public List<RestoreServer> ServersToSend { get; set; }   
     }
 }

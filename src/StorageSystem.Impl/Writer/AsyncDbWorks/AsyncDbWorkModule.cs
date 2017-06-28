@@ -178,9 +178,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                 if (_broadcastRestore.IsStart)
                     return;
 
-                //todo add type to state and server
-                //_stateHolder.LocalSendState(state);
-                _saver.SetRestoreDate(type, state, servers);
+                _saver.SetRestoreDate(type, _stateHolder.State, state, servers);
                 _saver.Save();
 
                 _broadcastRestore.Restore(servers, _stateHolder.State);                

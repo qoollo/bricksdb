@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -17,9 +18,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
         
-        public SingleServerRestoreProcess(DbModuleCollection db, WriterModel writerModel, WriterNetModule writerNet,
-            string tableName, ServerId remoteServer, bool isSystemUpdated, QueueConfiguration queueConfiguration)
-            :base(db, writerModel, writerNet, tableName, isSystemUpdated, queueConfiguration)
+        public SingleServerRestoreProcess(StandardKernel kernel, DbModuleCollection db, WriterModel writerModel, WriterNetModule writerNet, string tableName, ServerId remoteServer, bool isSystemUpdated, QueueConfiguration queueConfiguration)
+            :base(kernel, db, writerModel, writerNet, tableName, isSystemUpdated, queueConfiguration)
         {
             _remoteHashRange = writerModel.GetHashMap(remoteServer)
                 .Select(x => new KeyValuePair<string, string>(x.Begin, x.End))

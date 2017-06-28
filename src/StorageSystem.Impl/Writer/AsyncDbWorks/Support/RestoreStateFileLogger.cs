@@ -18,8 +18,17 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         public List<RestoreServer> RestoreServers { get; private set; }
         public RestoreStateHolder StateHolder { get; private set; }
 
+        /// <summary>
+        /// Server needs this restore
+        /// </summary>
         public RestoreState RestoreState { get; private set; }
-        public RestoreType RestoreMode { get; private set; }
+
+        /// <summary>
+        /// Restore run in this state
+        /// </summary>
+        public RestoreState RestoreStateRun { get; private set; }
+
+        public RestoreType RestoreType { get; private set; }
 
         public RestoreStateFileLogger(string filename, RestoreStateHolder stateHolder)
             : this(filename)
@@ -37,12 +46,25 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         private readonly string _filename;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
-        public void SetRestoreDate(RestoreType mode, RestoreState state, List<RestoreServer> restoreServers)
+        public void SetRestoreDate(RestoreType type, RestoreState localState, RestoreState runState,
+            List<RestoreServer> restoreServers)
         {
             _lock.EnterWriteLock();
 
-            RestoreState = state;
-            RestoreMode = mode;
+            RestoreState = localState;
+            RestoreStateRun = runState;
+            RestoreType = type;
+            RestoreServers = restoreServers;
+
+            _lock.ExitWriteLock();
+        }
+
+        public void SetRestoreDate(RestoreState localState, List<RestoreServer> restoreServers)
+        {
+            _lock.EnterWriteLock();
+
+            RestoreState = localState;
+            RestoreType = RestoreType.Single;
             RestoreServers = restoreServers;
 
             _lock.ExitWriteLock();
@@ -68,7 +90,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
                 RestoreServers = load.RestoreServers;
                 StateHolder = new RestoreStateHolder(load.State);
                 RestoreState = load.State;
-                RestoreMode = load.Mode;
+                RestoreType = load.Mode;
+                RestoreStateRun = load.RunState;
 
                 stream.Close();
 
@@ -99,7 +122,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public bool IsNeedRestore()
         {
-            return StateHolder.State != RestoreState.Restored && RestoreServers != null && RestoreServers.Count != 0;
+            return StateHolder.State != RestoreState.Restored
+                   && RestoreServers != null
+                   && RestoreServers.Count != 0
+                   || RestoreType == RestoreType.Broadcast;
         }
 
         private bool IsNeedSave()
@@ -111,7 +137,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         {
             try
             {
-                var save = new RestoreSaveHelper(RestoreMode, StateHolder.State, RestoreServers);
+                var save = new RestoreSaveHelper(RestoreType, StateHolder.State, RestoreStateRun, RestoreServers);
                 var formatter = new XmlSerializer(save.GetType());
                 var stream = new FileStream(_filename, FileMode.Create);
                 formatter.Serialize(stream, save);
@@ -149,8 +175,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         {
         }
 
-        public RestoreSaveHelper(RestoreType mode, RestoreState state, IEnumerable<RestoreServer> servers)
-        {            
+        public RestoreSaveHelper(RestoreType mode, RestoreState state, RestoreState runState, IEnumerable<RestoreServer> servers)
+        {
+            RunState = runState;
             State = state;
             Mode = mode;
             if (servers != null)
@@ -162,7 +189,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         public RestoreState State { get; set; }
 
         [DataMember]
-        [XmlAttribute("RestoreMode")]
+        [XmlAttribute("RestoreStateRun")]
+        public RestoreState RunState { get; set; }
+
+        [DataMember]
+        [XmlAttribute("RestoreType")]
         public RestoreType Mode { get; set; }
 
         [DataMember]

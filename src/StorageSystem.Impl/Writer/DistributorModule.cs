@@ -133,14 +133,19 @@ namespace Qoollo.Impl.Writer
             return Restore(null, RestoreState.Default);
         }
 
-        public string Restore(RestoreType type)
-        {
-            return Restore(null, RestoreState.Default, type);
-        }
-
         public string Restore(RestoreState state)
         {
             return Restore(null, state);
+        }
+
+        public string Restore(RestoreState state, RestoreType type)
+        {
+            return Restore(null, state, type);
+        }
+
+        public string Restore(RestoreType type)
+        {
+            return Restore(null, RestoreState.Default, type);
         }
 
         public string Restore(List<ServerId> servers, RestoreState state, RestoreType type = RestoreType.Single)
@@ -290,7 +295,7 @@ namespace Qoollo.Impl.Writer
                 _asyncDbWork.Restore(ServersOnDirectRestore(st, comm.FailedServers),
                     comm.RestoreState, comm.Type);
             }
-            else if (comm.Type == RestoreType.Single)
+            else if (comm.Type == RestoreType.Single || comm.RestoreState == RestoreState.SimpleRestoreNeed)
             {
                 var servers = st == RestoreState.FullRestoreNeed
                     ? _model.Servers

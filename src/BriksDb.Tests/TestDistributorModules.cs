@@ -226,7 +226,7 @@ namespace Qoollo.Tests
         [Fact]
         public void TransactionModule_ProcessSyncWithExecutor_RollbackNoEnoughServers()
         {
-            var filename = nameof(TransactionModule_ProcessSyncWithExecutor_SuccessSendDataToServers);
+            var filename = nameof(TransactionModule_ProcessSyncWithExecutor_RollbackNoEnoughServers);
             using (new FileCleaner(filename))
             {
                 var server1 = ServerId(storageServer1);

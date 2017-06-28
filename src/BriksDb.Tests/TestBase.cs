@@ -59,6 +59,7 @@ namespace Qoollo.Tests
             Monitor.Enter(Lock);
 
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
+            NetMock.NetMock.Instance = new NetMock.NetMock();
 
             _writerPorts = new List<int> {storageServer1, storageServer2, storageServer3, storageServer4};
 

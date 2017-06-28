@@ -19,15 +19,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
         private readonly List<RestoreServer> _serversToRestore;
-        private readonly bool _allServersForRestore;
         public readonly HashSet<ServerId> FailedServers = new HashSet<ServerId>();
 
         public BroadcastRestoreProcess(StandardKernel kernel, DbModuleCollection db, WriterModel writerModel, WriterNetModule writerNet, List<RestoreServer> serversToRestore, bool isSystemUpdated, QueueConfiguration queueConfiguration)
             : base(kernel, db, writerModel, writerNet, Consts.AllTables, isSystemUpdated, queueConfiguration)
         {
             _serversToRestore = serversToRestore;
-
-            _allServersForRestore = serversToRestore.Count == writerModel.Servers.Count;
         }
 
         private void SetRestoreInfo(InnerData data)
@@ -143,13 +140,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
                     continue;
                 }
 
-                if (!data.MetaData.IsLocal && isLocalData)
-                {
-                    int t = 0;
-                }
-
-                //var result = await WriterNet.ProcessAsync(serverId, data);
-                var result = WriterNet.ProcessSync(serverId, data);
+                var result = await WriterNet.ProcessAsync(serverId, data);
 
                 if (result.IsError && ProcessFailResult(data, serverId))
                 {
@@ -190,12 +181,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
 
         protected override bool IsNeedSendData(MetaData data)
         {
-            if (_allServersForRestore)
-            {
-                data.ServersToSend = _serversToRestore;
-                return true;
-            }
-
             data.ServersToSend = _serversToRestore.Where(s => s.IsHashInRange(data.Hash)).ToList();
 
             return data.ServersToSend.Count != 0;

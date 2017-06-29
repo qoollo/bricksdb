@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
+using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
@@ -19,6 +20,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 {
     internal class AsyncDbWorkModule:ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public RestoreState RestoreState => _stateHolder.State;
 
         public TimeoutModule TimeoutModule => _timeout;
@@ -133,9 +136,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         #region Restore process
         
-        public void RestoreIncome(ServerId server, bool isSystemUpdated, string tableName)
+        public void RestoreIncome(ServerId server, RestoreState state, string tableName)
         {
-            _transferRestore.Restore(server, isSystemUpdated, tableName);
+            _transferRestore.Restore(server, state == RestoreState.FullRestoreNeed, tableName);
         }
 
         public void PeriodMessageIncome(ServerId server)
@@ -162,7 +165,68 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         #region Restore start 
 
-        public void Restore(List<RestoreServer> servers, RestoreState state, RestoreType type)
+        public void Restore(RestoreFromDistributorCommand comm)
+        {
+            var state = comm.RestoreState;
+            var type = comm.Type;
+            var destServers = comm.Server == null ? null : new List<ServerId> {comm.Server};
+
+            Restore(state, type, destServers);
+        }
+
+        public void Restore(RestoreCommand comm)
+        {
+            var state = comm.RestoreState;
+            var type = comm.Type;
+            var destServers = comm.DirectServers;
+
+            Restore(state, type, destServers);
+        }
+
+        public void Restore(RestoreState state, RestoreType type, List<ServerId> destServers)
+        {
+            if (_logger.IsWarnEnabled)
+                _logger.Warn(
+                    $"Attempt to start restore state: {Enum.GetName(typeof(RestoreState), state)}, type: {Enum.GetName(typeof(RestoreType), type)}",
+                    "restore");
+
+            var st = state;
+            if (state == RestoreState.Default && type == RestoreType.Single)
+            {
+                st = RestoreState;
+                if (st == RestoreState.Restored)
+                {
+                    if (_logger.IsWarnEnabled)
+                        _logger.Warn(
+                            $"Cant run restore in {Enum.GetName(typeof(RestoreState), RestoreState.Restored)} state",
+                            "restore");
+                    return;
+                }
+            }
+
+            if (destServers != null)
+            {
+                var servers = st == RestoreState.FullRestoreNeed
+                    ? _writerModel.Servers
+                    : _writerModel.OtherServers;
+
+                RestoreRun(ServersOnDirectRestore(servers, destServers), st, type);
+            }
+            else if (type == RestoreType.Single || state == RestoreState.SimpleRestoreNeed)
+            {
+                var servers = st == RestoreState.FullRestoreNeed
+                    ? _writerModel.Servers
+                    : _writerModel.OtherServers;
+
+                RestoreRun(ConvertRestoreServers(servers), st, type);
+            }
+            else if (type == RestoreType.Broadcast)
+            {
+                RestoreRun(ConvertRestoreServers(_writerModel.Servers), st, type);
+            }
+        }
+
+        private void RestoreRun(List<RestoreServer> servers, RestoreState state, RestoreType type)
         {
             if (type == RestoreType.Single)
             {
@@ -191,9 +255,32 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                 return;
 
             _initiatorRestore.RestoreFromFile(servers, _stateHolder.State, Consts.AllTables);
-        }       
+        }
+
+        private List<RestoreServer> ServersOnDirectRestore(List<ServerId> servers, List<ServerId> failedServers)
+        {
+            return servers.Select(x =>
+            {
+                var ret = new RestoreServer(x, _writerModel.GetHashMap(x));
+                if (failedServers.Contains(x))
+                    ret.NeedRestoreInitiate();
+                return ret;
+            }).ToList();
+        }
+
+        private List<RestoreServer> ConvertRestoreServers(IEnumerable<ServerId> servers)
+        {
+            return servers.Select(x =>
+            {
+                var ret = new RestoreServer(x, _writerModel.GetHashMap(x));
+                ret.NeedRestoreInitiate();
+                return ret;
+            }).ToList();
+        }
 
         #endregion
+
+        #region Support
 
         public List<ServerId> GetFailedServers()
         {
@@ -206,10 +293,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         {
             var old = _stateHolder.State;
             _stateHolder.DistributorSendState(state);
-                       
+
             if (old != _stateHolder.State)
                 _saver.Save();
-            
+
             return _stateHolder.State;
         }
 
@@ -217,7 +304,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         {
             string result = string.Empty;
 
-            result += $"restore state: {Enum.GetName(typeof (RestoreState), RestoreState)}\n";
+            result += $"restore state: {Enum.GetName(typeof(RestoreState), RestoreState)}\n";
             result += $"restore is running: {_initiatorRestore.IsStart}\n";
 
             if (_initiatorRestore.IsStart)
@@ -246,6 +333,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         {
             return Servers.Aggregate(start, (current, server) => current + $"\t{server}\n");
         }
+
+        #endregion
 
         protected override void Dispose(bool isUserCall)
         {

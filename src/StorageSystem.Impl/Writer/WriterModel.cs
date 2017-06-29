@@ -56,6 +56,25 @@ namespace Qoollo.Impl.Writer
             }
         }
 
+        public List<ServerId> OtherServers
+        {
+            get
+            {
+                _lock.EnterReadLock();
+                try
+                {
+                    return _map.Servers
+                        .Select(x => new ServerId(x))
+                        .Where(x => !x.Equals(_local))
+                        .ToList();
+                }
+                finally
+                {
+                    _lock.ExitReadLock();
+                }
+            }
+        }
+
         public int CountReplics => _hashMapConfiguration.CountReplics;
 
         public WriterModel(ServerId local, HashMapConfiguration hashMapConfiguration)

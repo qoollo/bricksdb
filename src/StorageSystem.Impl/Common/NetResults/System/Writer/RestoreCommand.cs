@@ -12,7 +12,7 @@ namespace Qoollo.Impl.Common.NetResults.System.Writer
         public RestoreState RestoreState { get; private set; }
         [DataMember]
         public RestoreType Type { get; set; }
-        public List<ServerId> FailedServers { get; set; } 
+        public List<ServerId> DirectServers { get; set; } 
 
         public RestoreCommand(RestoreState state, RestoreType type = RestoreType.Single)
         {

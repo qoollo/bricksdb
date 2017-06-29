@@ -71,10 +71,10 @@ namespace Qoollo.Impl.Writer
                () => new SuccessResult());
 
             RegistrateAsync<RestoreFromDistributorCommand, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue,
-                RestoreCommand, () => new SuccessResult());
+                _asyncDbWork.Restore, () => new SuccessResult());
 
             RegistrateAsync<RestoreCommand, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue,
-                RestoreCommand, () => new SuccessResult());
+                _asyncDbWork.Restore, () => new SuccessResult());
 
             RegistrateAsync<RestoreInProcessCommand, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue,
                 command => _asyncDbWork.PeriodMessageIncome(command.ServerId), () => new SuccessResult());
@@ -83,9 +83,8 @@ namespace Qoollo.Impl.Writer
                 command => _asyncDbWork.LastMessageIncome(command.ServerId), () => new SuccessResult());
 
             RegistrateAsync<RestoreCommandWithData, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue,
-                comm =>
-                    _asyncDbWork.RestoreIncome(comm.ServerId, comm.RestoreState == RestoreState.FullRestoreNeed,
-                        comm.TableName), () => new SuccessResult());
+                comm => _asyncDbWork.RestoreIncome(comm.ServerId, comm.RestoreState, comm.TableName),
+                () => new SuccessResult());
 
             RegistrateAsync<DeleteCommand, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue, DeleteCommand,
                 () => new SuccessResult());
@@ -163,7 +162,7 @@ namespace Qoollo.Impl.Writer
 
             Execute<RestoreCommand, RemoteResult>(new RestoreCommand(st, type)
             {
-                FailedServers = servers
+                DirectServers = servers
             });
 
             return Errors.RestoreStartedWithoutErrors;
@@ -197,7 +196,7 @@ namespace Qoollo.Impl.Writer
         private Dictionary<string, string> GetAllStateDict()
         {
             var ret = _asyncDbWork.FullState;
-            if (GetRestoreRequiredState() != RestoreState.Restored)
+            if (_asyncDbWork.RestoreState != RestoreState.Restored)
                 ret.Add(ServerState.RestoreServers, GetServersList());
             return ret;
         }
@@ -247,83 +246,6 @@ namespace Qoollo.Impl.Writer
                     RunDelete();
                     break;
             }
-        }
-
-        private List<RestoreServer> ConvertRestoreServers(IEnumerable<ServerId> servers)
-        {
-            return servers.Select(x =>
-            {
-                var ret = new RestoreServer(x, _model.GetHashMap(x));
-                ret.NeedRestoreInitiate();
-                return ret;
-            }).ToList();
-        }
-
-        private List<RestoreServer> ServersOnDirectRestore(RestoreState state, List<ServerId> failedServers)
-        {
-            var servers = state == RestoreState.FullRestoreNeed
-                ? _model.Servers
-                : _model.Servers.Where(x => !x.Equals(_model.Local));
-
-            return servers.Select(x =>
-            {
-                var ret = new RestoreServer(x, _model.GetHashMap(x));
-                if (failedServers.Contains(x))
-                    ret.NeedRestoreInitiate();
-                return ret;
-            }).ToList();
-        }
-
-        private void RestoreCommand(RestoreCommand comm)
-        {
-            if (_logger.IsWarnEnabled)
-                _logger.Info(
-                    $"Attempt to start restore mode: {comm.RestoreState}, type: {Enum.GetName(typeof (RestoreType), comm.Type)}",
-                    "restore");
-
-            var st = comm.RestoreState;
-            if (comm.RestoreState == RestoreState.Default && comm.Type == RestoreType.Single)
-            {
-                st = _asyncDbWork.RestoreState;
-                if (st == RestoreState.Restored)
-                    return;
-            }            
-
-            if (comm.FailedServers != null)
-            {
-                //todo check failed servers
-                _asyncDbWork.Restore(ServersOnDirectRestore(st, comm.FailedServers),
-                    comm.RestoreState, comm.Type);
-            }
-            else if (comm.Type == RestoreType.Single || comm.RestoreState == RestoreState.SimpleRestoreNeed)
-            {
-                var servers = st == RestoreState.FullRestoreNeed
-                    ? _model.Servers
-                    : _model.Servers.Where(x => !x.Equals(_model.Local));
-
-                _asyncDbWork.Restore(ConvertRestoreServers(servers), st, comm.Type);
-            }
-            else if (comm.Type == RestoreType.Broadcast)
-            {
-                _asyncDbWork.Restore(ConvertRestoreServers(_model.Servers), st, comm.Type);
-            }
-        }
-
-        private void RestoreCommand(RestoreFromDistributorCommand comm)
-        {
-            var st = comm.RestoreState;
-            if (comm.RestoreState == RestoreState.Default)
-            {
-                st = _asyncDbWork.RestoreState;
-                if (st == RestoreState.Restored)
-                    return;
-            }
-
-            if (comm.Server != null)
-                _asyncDbWork.Restore(ServersOnDirectRestore(st, new List<ServerId> { comm.Server }), st, comm.Type);
-            else
-                _asyncDbWork.Restore(ConvertRestoreServers(_model.Servers.Where(x => !x.Equals(_model.Local))),
-                    st, comm.Type);
         }
 
         private void ProcessTransaction(Transaction transaction)

@@ -61,6 +61,8 @@ namespace Qoollo.Tests
             InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
             NetMock.NetMock.Instance = new NetMock.NetMock();
 
+            InitInjection.RestoreUsePackage = false;
+
             _writerPorts = new List<int> {storageServer1, storageServer2, storageServer3, storageServer4};
 
             ConnectionConfiguration = new ConnectionConfiguration("testService", 10);

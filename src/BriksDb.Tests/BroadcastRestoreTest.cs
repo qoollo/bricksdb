@@ -37,8 +37,9 @@ namespace Qoollo.Tests
         }
 
         [Theory]
-        [InlineData(50)]
-        public void Writer_SimpleRestore_TwoServers(int count)
+        [InlineData(50, false)]
+        [InlineData(50, true)]
+        public void Writer_SimpleRestore_TwoServers(int count, bool packageRestore)
         {
             var filename = nameof(Writer_SimpleRestore_TwoServers);
             using (new FileCleaner(filename))
@@ -46,6 +47,8 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             {
                 CreateHashFile(filename, 2);
+
+                InitInjection.RestoreUsePackage = packageRestore;
 
                 _distrTest.Build(1, distrServer1, distrServer12, filename);
 
@@ -112,8 +115,9 @@ namespace Qoollo.Tests
         }
 
         [Theory]
-        [InlineData(50)]
-        public void Writer_SimpleRestore_ThreeServers_OneBroadcast(int count)
+        [InlineData(50, false)]
+        [InlineData(50, true)]
+        public void Writer_SimpleRestore_ThreeServers_OneBroadcast(int count, bool packageRestore)
         {
             var filename = nameof(Writer_SimpleRestore_ThreeServers_OneBroadcast);
             using (new FileCleaner(filename))
@@ -122,6 +126,8 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 3);
+
+                InitInjection.RestoreUsePackage = packageRestore;
 
                 _distrTest.Build(1, distrServer1, distrServer12, filename);
 
@@ -196,9 +202,11 @@ namespace Qoollo.Tests
         }
 
         [Theory]
-        [InlineData(50, 1)]
-        [InlineData(50, 2)]
-        public void Writer_SimpleRestore_ThreeServers_TwoBroadcast(int count, int replics)
+        [InlineData(50, 1, false)]
+        [InlineData(50, 1, true)]
+        [InlineData(50, 2, false)]        
+        [InlineData(50, 2, true)]
+        public void Writer_SimpleRestore_ThreeServers_TwoBroadcast(int count, int replics, bool packageRestore)
         {
             var filename = nameof(Writer_SimpleRestore_ThreeServers_TwoBroadcast);
             using (new FileCleaner(filename))
@@ -207,6 +215,8 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 3);
+
+                InitInjection.RestoreUsePackage = packageRestore;
 
                 _distrTest.Build(replics, distrServer1, distrServer12, filename);
 
@@ -274,8 +284,9 @@ namespace Qoollo.Tests
         }
 
         [Theory]
-        [InlineData(50)]
-        public void Writer_FullRestore_TwoServers(int count)
+        [InlineData(50, false)]
+        [InlineData(50, true)]
+        public void Writer_FullRestore_TwoServers(int count, bool packageRestore)
         {
             var filename = nameof(Writer_FullRestore_TwoServers);
             using (new FileCleaner(filename))
@@ -283,6 +294,8 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             {
                 CreateHashFile(filename, 1);
+
+                InitInjection.RestoreUsePackage = packageRestore;
 
                 _distrTest.Build(1, distrServer1, distrServer12, filename);
 
@@ -344,9 +357,11 @@ namespace Qoollo.Tests
         }
 
         [Theory]
-        [InlineData(50, 1)]
-        [InlineData(50, 2)]
-        public void Writer_FullRestore_ThreeServers(int count, int replics)
+        [InlineData(50, 1, false)]
+        [InlineData(50, 1, true)]
+        [InlineData(50, 2, false)]
+        [InlineData(50, 2, true)]
+        public void Writer_FullRestore_ThreeServers(int count, int replics, bool packageRestore)
         {
             var filename = nameof(Writer_FullRestore_ThreeServers);
             using (new FileCleaner(filename))
@@ -355,6 +370,8 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
+
+                InitInjection.RestoreUsePackage = packageRestore;
 
                 _distrTest.Build(replics, distrServer1, distrServer12, filename);
 

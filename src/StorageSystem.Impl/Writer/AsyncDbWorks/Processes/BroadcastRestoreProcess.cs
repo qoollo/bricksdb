@@ -38,21 +38,32 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         protected override void ProcessDataPackage(List<InnerData> dataList)
         {
             var destination = GetDestinationCollection();
-            var dataListWrap = dataList.Select(d => new InnerDataWrapper(d));
+            var dataListWrap = dataList.Select(d => new InnerDataWrapper(d)).ToList();
 
-            foreach (var data in dataListWrap)
+
+            foreach (var server in destination)
             {
-                SetRestoreInfo(data.Data);
-                foreach (var serverId in data.Data.MetaData.ServersToSend)
+                var data = dataListWrap
+                    .Where(s => s.Data.MetaData.ServersToSend.Contains(server.Key))
+                    .ToList();
+
+                if (data.Count > 0)
                 {
-                    destination[serverId].Add(data);
+                    if (Equals(server.Key, WriterModel.Local))
+                    {
+                        data.ForEach(d => d.IsLocal = true);
+                        data.RemoveAll(d => d.IsLocal);
+                    }
+
+                    data.ForEach(d => SetRestoreInfo(d.Data));
+                    server.Value.AddRange(data);
                 }
             }
 
-            foreach (var serverWithData in destination)
+            foreach (var serverWithData in destination.Where(s => s.Value.Count != 0))
             {
-                var result = WriterNet.ProcessSync(serverWithData.Key, serverWithData.Value.Select(d => d.Data)
-                    .ToList());
+                var result = WriterNet.ProcessSync(serverWithData.Key,
+                    serverWithData.Value.Select(d => d.Data).ToList());
 
                 bool isSomeFail;
 

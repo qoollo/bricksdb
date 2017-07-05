@@ -62,6 +62,7 @@ namespace Qoollo.Tests
             NetMock.NetMock.Instance = new NetMock.NetMock();
 
             InitInjection.RestoreUsePackage = false;
+            InitInjection.RestoreHelpFileOut = Impl.Common.Support.Consts.RestoreHelpFile;
 
             _writerPorts = new List<int> {storageServer1, storageServer2, storageServer3, storageServer4};
 

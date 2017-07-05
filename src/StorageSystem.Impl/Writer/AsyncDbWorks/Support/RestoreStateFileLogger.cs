@@ -19,11 +19,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         public RestoreStateHolder StateHolder { get; private set; }
 
         /// <summary>
-        /// Server needs this restore
-        /// </summary>
-        public RestoreState RestoreState { get; private set; }
-
-        /// <summary>
         /// Restore run in this state
         /// </summary>
         public RestoreState RestoreStateRun { get; private set; }
@@ -46,12 +41,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         private readonly string _filename;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
-        public void SetRestoreDate(RestoreType type, RestoreState localState, RestoreState runState,
+        public void SetRestoreDate(RestoreType type, RestoreState runState,
             List<RestoreServer> restoreServers)
         {
             _lock.EnterWriteLock();
 
-            RestoreState = localState;
             RestoreStateRun = runState;
             RestoreType = type;
             RestoreServers = restoreServers;
@@ -63,7 +57,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         {
             _lock.EnterWriteLock();
 
-            RestoreState = localState;
             RestoreType = RestoreType.Single;
             RestoreServers = restoreServers;
 
@@ -89,7 +82,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
                 RestoreServers = load.RestoreServers;
                 StateHolder = new RestoreStateHolder(load.State);
-                RestoreState = load.State;
                 RestoreType = load.Mode;
                 RestoreStateRun = load.RunState;
 

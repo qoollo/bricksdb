@@ -233,8 +233,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                 if (_initiatorRestore.IsStart)
                     return;
 
-                _stateHolder.LocalSendState(state);
-                _initiatorRestore.Restore(servers, _stateHolder.State, Consts.AllTables);
+                _initiatorRestore.Restore(servers, state, Consts.AllTables);
                 _saver.Save();
             }
             if (type == RestoreType.Broadcast)
@@ -242,7 +241,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                 if (_broadcastRestore.IsStart)
                     return;
 
-                _saver.SetRestoreDate(type, _stateHolder.State, state, servers);
+                _saver.SetRestoreDate(type, state, servers);
                 _saver.Save();
 
                 _broadcastRestore.Restore(servers, _stateHolder.State);                

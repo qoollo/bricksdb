@@ -646,17 +646,17 @@ namespace Qoollo.Tests
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
-            var merge = new OrderMerge(loader, parser, new CollectorModel(new DistributorHashConfiguration(1),
+            var merge = new OrderMerge(null, loader, parser, new CollectorModel(new DistributorHashConfiguration(1),
                     new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
-            var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+            var async = new AsyncTaskModule(null, new QueueConfiguration(4, 10));
 
             var distributor =
-                new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
+                new DistributorModule(null, new CollectorModel(new DistributorHashConfiguration(1),
                     new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
                         HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
-            var back = new BackgroundModule(new QueueConfiguration(5, 10));
+            var back = new BackgroundModule(null, new QueueConfiguration(5, 10));
 
-            var searchModule = new SearchTaskModule("Test", merge, loader, distributor, back, parser);
+            var searchModule = new SearchTaskModule(null, "Test", merge, loader, distributor, back, parser);
 
             #region hell
 
@@ -747,18 +747,18 @@ namespace Qoollo.Tests
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
-            var merge = new OrderMerge(loader, parser, 
+            var merge = new OrderMerge(null, loader, parser, 
                 new CollectorModel(new DistributorHashConfiguration(1), 
                     new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
-            var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+            var async = new AsyncTaskModule(null,new QueueConfiguration(4, 10));
 
             var distributor =
-                new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
+                new DistributorModule(null, new CollectorModel(new DistributorHashConfiguration(1),
                     new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
                         HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
-            var back = new BackgroundModule(new QueueConfiguration(5, 10));
+            var back = new BackgroundModule(null, new QueueConfiguration(5, 10));
 
-            var searchModule = new SearchTaskModule("Test", merge, loader, distributor, back, parser);
+            var searchModule = new SearchTaskModule(null, "Test", merge, loader, distributor, back, parser);
 
             #region hell
 

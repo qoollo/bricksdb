@@ -138,7 +138,7 @@ namespace Qoollo.Tests
             var s2 = TestHelper.OpenDistributorHost(server2);
 
             var net = ProxyNetModule();
-            var distr = new TestProxyDistributorModule();
+            var distr = new TestProxyDistributorModule(_kernel);
 
             net.SetDistributor(distr);
             net.Start();
@@ -219,7 +219,7 @@ namespace Qoollo.Tests
             net.SetDistributor(distributor);
 
             var cache = new ProxyCache(TimeSpan.FromSeconds(20));
-            var main = new ProxyMainLogicModule(distributor, net, cache);
+            var main = new ProxyMainLogicModule(_kernel, distributor, net, cache);
 
             net.Start();
 
@@ -274,7 +274,7 @@ namespace Qoollo.Tests
                 var distributor = ProxyDistributorModule(net, storageServer1);
 
                 net.SetDistributor(distributor);
-                var receive = new ProxyNetReceiver(distributor, NetReceiverConfiguration(storageServer1));
+                var receive = new ProxyNetReceiver(_kernel, distributor, NetReceiverConfiguration(storageServer1));
 
                 GlobalQueue.SetQueue(q2);
 
@@ -282,7 +282,7 @@ namespace Qoollo.Tests
                 var distributor2 = ProxyDistributorModule(net2, storageServer2);
                 
                 net2.SetDistributor(distributor2);
-                var receive2 = new ProxyNetReceiver(distributor2, NetReceiverConfiguration(storageServer2));
+                var receive2 = new ProxyNetReceiver(_kernel, distributor2, NetReceiverConfiguration(storageServer2));
 
                 GlobalQueue.SetQueue(q3);
 
@@ -290,17 +290,17 @@ namespace Qoollo.Tests
                 var distributor3 = ProxyDistributorModule(net3, storageServer3);
 
                 net3.SetDistributor(distributor3);
-                var receive3 = new ProxyNetReceiver(distributor3, NetReceiverConfiguration(storageServer3));
+                var receive3 = new ProxyNetReceiver(_kernel, distributor3, NetReceiverConfiguration(storageServer3));
 
                 var dnet = DistributorNetModule();
                 var ddistributor = DistributorDistributorModule(filename1, replicsCount, dnet, 30000, 30000);
                 dnet.SetDistributor(ddistributor);
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(200000, 200000));
-                var tranc = new TransactionModule(dnet, new TransactionConfiguration(4), 1, cache);
-                var main = new MainLogicModule(ddistributor, tranc, cache);
-                var receiver4 = new NetDistributorReceiver(main,
-                    new InputModuleWithParallel(QueueConfiguration, main, tranc), 
+                var tranc = new TransactionModule(_kernel, dnet, new TransactionConfiguration(4), 1, cache);
+                var main = new MainLogicModule(_kernel, ddistributor, tranc, cache);
+                var receiver4 = new NetDistributorReceiver(_kernel, main,
+                    new InputModuleWithParallel(_kernel, QueueConfiguration, main, tranc), 
                     ddistributor,
                     NetReceiverConfiguration(distrServer1),
                     NetReceiverConfiguration(distrServer12));
@@ -311,8 +311,8 @@ namespace Qoollo.Tests
                     distrServer2, distrServer22);
                 dnet2.SetDistributor(ddistributor2);
 
-                var receiver5 = new NetDistributorReceiver(main,
-                    new InputModuleWithParallel(QueueConfiguration, main, tranc),
+                var receiver5 = new NetDistributorReceiver(_kernel, main,
+                    new InputModuleWithParallel(_kernel, QueueConfiguration, main, tranc),
                     ddistributor2,
                     NetReceiverConfiguration(distrServer2),
                     NetReceiverConfiguration(distrServer22));

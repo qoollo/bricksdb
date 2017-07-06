@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Configurations;
@@ -14,8 +13,8 @@ namespace Qoollo.Impl.DistributorModules.Caches
 
         public Action<InnerData> DataTimeout = data => { };
 
-        public DistributorTimeoutCache(StandardKernel kernel, DistributorCacheConfiguration cacheConfiguration)
-            : base(kernel, cacheConfiguration.TimeAliveBeforeDeleteMls)
+        public DistributorTimeoutCache(DistributorCacheConfiguration cacheConfiguration)
+            : base(cacheConfiguration.TimeAliveBeforeDeleteMls)
         {
             Contract.Requires(cacheConfiguration != null);
             _aliveTimeout = cacheConfiguration.TimeAliveAfterUpdateMls;

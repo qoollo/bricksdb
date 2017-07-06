@@ -56,28 +56,28 @@ namespace Qoollo.Tests.Support
                     HashMapCreationMode.ReadFromFile, 1, countReplics, HashFileType.Writer);
                 var local = new ServerId("localhost", storageServer);
 
-                _net = new WriterNetModule(new ConnectionConfiguration("testService", 10),
+                _net = new WriterNetModule(_kernel, new ConnectionConfiguration("testService", 10),
                     new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
 
-                Db = new DbModuleCollection();
-                Db.AddDbModule(new TestDbInMemory());
+                Db = new DbModuleCollection(_kernel);
+                Db.AddDbModule(new TestDbInMemory(_kernel));
 
-                _async = new AsyncTaskModule(new QueueConfiguration(1, 10));
-                var model = new WriterModel(local, hashMapConfiguration);
+                _async = new AsyncTaskModule(_kernel, new QueueConfiguration(1, 10));
+                var model = new WriterModel(_kernel, local, hashMapConfiguration);
 
-                Restore = new AsyncDbWorkModule(model, _net, _async, Db,
+                Restore = new AsyncDbWorkModule(_kernel, model, _net, _async, Db,
                     new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(300)),
                     new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(100)),
                     new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
                     new QueueConfiguration(1, 100));
 
-                Distributor = new DistributorModule(model, _async, Restore, _net, new QueueConfiguration(2, 10));
+                Distributor = new DistributorModule(_kernel, model, _async, Restore, _net, new QueueConfiguration(2, 10));
 
                 WriterModel = GetPrivtaeField<WriterModel>(Distributor);
 
-                _mainС = new MainLogicModule(Distributor, Db);
-                Input = new InputModule(_mainС, queueConfiguration);
-                _netRc = new NetWriterReceiver(Input, Distributor,
+                _mainС = new MainLogicModule(_kernel, Distributor, Db);
+                Input = new InputModule(_kernel, _mainС, queueConfiguration);
+                _netRc = new NetWriterReceiver(_kernel, Input, Distributor,
                     new NetReceiverConfiguration(storageServer, "localhost", "testService"),
                     new NetReceiverConfiguration(1, "fake", "fake"));
             }

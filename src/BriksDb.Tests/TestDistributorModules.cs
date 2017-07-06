@@ -94,11 +94,11 @@ namespace Qoollo.Tests
                 dnet.SetDistributor(ddistributor);
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
-                var tranc = new TransactionModule(dnet, new TransactionConfiguration(4), distrconfig.CountReplics, cache);
-                var main = new MainLogicModule(ddistributor, tranc, cache);
+                var tranc = new TransactionModule(_kernel, dnet, new TransactionConfiguration(4), distrconfig.CountReplics, cache);
+                var main = new MainLogicModule(_kernel, ddistributor, tranc, cache);
 
-                var input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), main, tranc);
-                var netDistributorReceiver = new NetDistributorReceiver(main, input, ddistributor,
+                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000), main, tranc);
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel, main, input, ddistributor,
                     NetReceiverConfiguration(distrServer1),
                     NetReceiverConfiguration(distrServer12));
 
@@ -142,7 +142,7 @@ namespace Qoollo.Tests
             var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
 
             var net = new NetModuleTest(new Dictionary<ServerId, bool> {{s1, false}, {s2, true}});
-            var trm = new TransactionModule(net, new TransactionConfiguration(1), 2, cache);
+            var trm = new TransactionModule(_kernel, net, new TransactionConfiguration(1), 2, cache);
 
             trm.Start();
 
@@ -202,7 +202,7 @@ namespace Qoollo.Tests
                     DistributorData = new DistributorData {Destination = new List<ServerId> {server1, server2}},
                 };
 
-                var trm = new TransactionModule(net, new TransactionConfiguration(1), countReplics,
+                var trm = new TransactionModule(_kernel, net, new TransactionConfiguration(1), countReplics,
                     new DistributorTimeoutCache(DistributorCacheConfiguration()));
                 trm.Start();
 
@@ -245,7 +245,7 @@ namespace Qoollo.Tests
                 net.Start();
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
-                var trm = new TransactionModule(net, new TransactionConfiguration(1), 3, cache);
+                var trm = new TransactionModule(_kernel, net, new TransactionConfiguration(1), 3, cache);
                 trm.Start();
 
                 GlobalQueue.Queue.Start();
@@ -372,7 +372,7 @@ namespace Qoollo.Tests
         {
             var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(200, 500));
             var net = DistributorNetModule();
-            var trans = new TransactionModule(net, new TransactionConfiguration(1), 1, cache);
+            var trans = new TransactionModule(_kernel, net, new TransactionConfiguration(1), 1, cache);
 
             var ev = new InnerData(new Transaction("123", "") {OperationName = OperationName.Create})
             {
@@ -475,9 +475,9 @@ namespace Qoollo.Tests
 
                 net.SetDistributor(distributor);
 
-                var transaction = new TransactionModule(net, new TransactionConfiguration(1),
+                var transaction = new TransactionModule(_kernel, net, new TransactionConfiguration(1),
                     distrconfig.CountReplics, cache);
-                var main = new MainLogicModule(distributor, transaction, cache);
+                var main = new MainLogicModule(_kernel, distributor, transaction, cache);
 
                 var server1 = ServerId(storageServer1);
                 var server2 = ServerId(storageServer2);
@@ -594,12 +594,12 @@ namespace Qoollo.Tests
                 dnet.SetDistributor(ddistributor);
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(20000, 20000));
-                var tranc = new TransactionModule(dnet, new TransactionConfiguration(4), 1, cache);
+                var tranc = new TransactionModule(_kernel, dnet, new TransactionConfiguration(4), 1, cache);
 
-                var main = new MainLogicModule(ddistributor, tranc, cache);
+                var main = new MainLogicModule(_kernel, ddistributor, tranc, cache);
 
-                var input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), main, tranc);
-                var netDistributorReceiver = new NetDistributorReceiver(main, input, ddistributor,
+                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000), main, tranc);
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel, main, input, ddistributor,
                     NetReceiverConfiguration(distrServer1),
                     NetReceiverConfiguration(distrServer12));
 
@@ -689,11 +689,11 @@ namespace Qoollo.Tests
                 dnet.SetDistributor(ddistributor);
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(2000000, 200000));
-                var tranc = new TransactionModule(dnet, new TransactionConfiguration(4), 2, cache);
-                var main = new MainLogicModule(ddistributor, tranc, cache);
+                var tranc = new TransactionModule(_kernel, dnet, new TransactionConfiguration(4), 2, cache);
+                var main = new MainLogicModule(_kernel, ddistributor, tranc, cache);
 
-                var input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), main, tranc);
-                var netDistributorReceiver = new NetDistributorReceiver(main, input, ddistributor,
+                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000), main, tranc);
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel, main, input, ddistributor,
                     NetReceiverConfiguration(distrServer1),
                     NetReceiverConfiguration(distrServer12));
 
@@ -791,11 +791,11 @@ namespace Qoollo.Tests
                 dnet.SetDistributor(ddistributor);
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
-                var tranc = new TransactionModule(dnet, new TransactionConfiguration(4), 1, cache);
-                var main = new MainLogicModule(ddistributor, tranc, cache);
+                var tranc = new TransactionModule(_kernel, dnet, new TransactionConfiguration(4), 1, cache);
+                var main = new MainLogicModule(_kernel, ddistributor, tranc, cache);
 
-                var input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), main, tranc);
-                var netDistributorReceiver = new NetDistributorReceiver(main, input, ddistributor,
+                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000), main, tranc);
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel, main, input, ddistributor,
                     NetReceiverConfiguration(distrServer1),
                     NetReceiverConfiguration(distrServer12));
 

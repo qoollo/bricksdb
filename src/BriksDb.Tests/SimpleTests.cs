@@ -151,7 +151,7 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncTaskModule_AddAsyncTask_AmountOfOperations()
         {
-            var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
+            var test = new AsyncTaskModule(null, new QueueConfiguration(2, -1));
             int value = 0;
             const string name1 = "test1";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(500), async => Interlocked.Increment(ref value),
@@ -176,7 +176,7 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncTaskModule_AddAsyncTask_AmountOfOperations_2Tasks()
         {
-            var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
+            var test = new AsyncTaskModule(null, new QueueConfiguration(2, -1));
             int value = 0;
             const string name1 = "test1";
             const string name2 = "test2";
@@ -200,7 +200,7 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncTaskModule_Dispose_StopAsyncTaskAfterNumberOfRetry()
         {
-            var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
+            var test = new AsyncTaskModule(null, new QueueConfiguration(2, -1));
             int value = 0;
             const string name1 = "test1";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(100), async => Interlocked.Increment(ref value),

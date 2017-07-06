@@ -1,5 +1,4 @@
 ﻿using System;
-using Ninject;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Modules.Cache;
@@ -8,7 +7,7 @@ namespace Qoollo.Impl.Proxy.Caches
 {
     internal class AsyncProxyCache:CacheModule<Transaction>
     {
-        public AsyncProxyCache(StandardKernel kernel, TimeSpan timeout) : base(kernel, timeout)
+        public AsyncProxyCache(TimeSpan timeout) : base(timeout)
         {
         }
 

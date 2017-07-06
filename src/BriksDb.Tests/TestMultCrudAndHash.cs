@@ -36,8 +36,8 @@ namespace Qoollo.Tests
                 storage.Build();
                 distr.Build();
 
-                var f = new TestInMemoryDbFactory();
-                var f2 = new TestInMemoryDbFactory("Int2");
+                var f = new TestInMemoryDbFactory(_kernel);
+                var f2 = new TestInMemoryDbFactory(_kernel, "Int2");
 
                 storage.AddDbModule(f);
                 storage.AddDbModule(f2);
@@ -105,13 +105,13 @@ namespace Qoollo.Tests
                 storage2.Build();
                 distr.Build();
 
-                var f = new TestInMemoryDbFactory();
-                var f2 = new TestInMemoryDbFactory("Int2");
+                var f = new TestInMemoryDbFactory(_kernel);
+                var f2 = new TestInMemoryDbFactory(_kernel, "Int2");
                 storage1.AddDbModule(f);
                 storage1.AddDbModule(f2);
 
-                var f3 = new TestInMemoryDbFactory();
-                var f4 = new TestInMemoryDbFactory("Int2");
+                var f3 = new TestInMemoryDbFactory(_kernel);
+                var f4 = new TestInMemoryDbFactory(_kernel, "Int2");
                 storage2.AddDbModule(f3);
                 storage2.AddDbModule(f4);
 
@@ -176,7 +176,7 @@ namespace Qoollo.Tests
                 storage.Build();
                 distr.Build();
 
-                var f = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
+                var f = new TestInMemoryDbFactory(_kernel, "Int3", new IntHashConvertor());
 
                 storage.AddDbModule(f);
 
@@ -236,8 +236,8 @@ namespace Qoollo.Tests
                 storage2.Build();
                 distr.Build();
 
-                var f1 = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
-                var f2 = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
+                var f1 = new TestInMemoryDbFactory(_kernel, "Int3", new IntHashConvertor());
+                var f2 = new TestInMemoryDbFactory(_kernel, "Int3", new IntHashConvertor());
 
                 storage1.AddDbModule(f1);
                 storage2.AddDbModule(f2);

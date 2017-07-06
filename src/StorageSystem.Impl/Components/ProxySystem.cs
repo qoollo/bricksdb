@@ -63,14 +63,14 @@ namespace Qoollo.Impl.Components
 
             var kernel = new StandardKernel();
 
-            var asyncCache = new AsyncProxyCache(kernel, _asyncCacheConfiguration.TimeAliveSec);
+            var asyncCache = new AsyncProxyCache(_asyncCacheConfiguration.TimeAliveSec);
 
             var net = new ProxyNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
             var distributor = new ProxyDistributorModule(kernel, asyncCache, net, new QueueConfiguration(1, 1000), _local,
                 _asyncGetData, _asyncPing);
 
             net.SetDistributor(distributor);
-            var cache = new ProxyCache(kernel, _cacheConfiguration.TimeAliveSec);
+            var cache = new ProxyCache(_cacheConfiguration.TimeAliveSec);
             var main = new ProxyMainLogicModule(kernel, distributor, net, cache);
             var input = new ProxyInputModuleCommon(kernel, main, _queueConfiguration, distributor, asyncCache);
 

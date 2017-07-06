@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
@@ -46,13 +47,15 @@ namespace Qoollo.Tests.Support
             _q = new GlobalQueueInner();
             GlobalQueue.SetQueue(_q);
 
+            var kernel = new StandardKernel();
+
             var connection = new ConnectionConfiguration("testService", 10);
 
             var distrconfig = new DistributorHashConfiguration(countReplics);
             var queueconfig = new QueueConfiguration(1, 100);
-            _dnet = new DistributorNetModule(connection,
+            _dnet = new DistributorNetModule(kernel, connection,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            Distributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
+            Distributor = new DistributorModule(kernel, new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
                 new AsyncTasksConfiguration(asyncCheck), distrconfig, queueconfig, _dnet,
                 new ServerId("localhost", distrServer1),
                 new ServerId("localhost", distrServer12),
@@ -65,14 +68,14 @@ namespace Qoollo.Tests.Support
 
             var cache = new DistributorTimeoutCache(
                 new DistributorCacheConfiguration(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)));
-            _tranc = new TransactionModule(_dnet, new TransactionConfiguration(4),
+            _tranc = new TransactionModule(kernel, _dnet, new TransactionConfiguration(4),
                 distrconfig.CountReplics, cache);
-            Main = new MainLogicModule(Distributor, _tranc, cache);
+            Main = new MainLogicModule(kernel, Distributor, _tranc, cache);
 
             var netReceive1 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
             var netReceive2 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
-            Input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), Main, _tranc);
-            _receiver = new NetDistributorReceiver(Main, Input, Distributor, netReceive1, netReceive2);
+            Input = new InputModuleWithParallel(kernel, new QueueConfiguration(2, 100000), Main, _tranc);
+            _receiver = new NetDistributorReceiver(kernel, Main, Input, Distributor, netReceive1, netReceive2);
         }
 
         public void Build(int countReplics, string hashFile)

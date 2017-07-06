@@ -41,7 +41,7 @@ namespace Qoollo.Tests
                 <TestCommand, Type, TestCommand, int, int, TestDbReader>(
                 new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
-            _back = new BackgroundModule(new QueueConfiguration(5, 10));
+            _back = new BackgroundModule(_kernel, new QueueConfiguration(5, 10));
         }
 
         [Fact]
@@ -124,7 +124,7 @@ namespace Qoollo.Tests
         [Fact]
         public void BackgroundModule_CountLoads_CountLoads()
         {
-            var background = new BackgroundModule(new QueueConfiguration(1, 100));
+            var background = new BackgroundModule(_kernel, new QueueConfiguration(1, 100));
             background.Start();
 
             var search = new TestSelectTask("", new List<ServerId>(), "", new FieldDescription("", typeof (int)));
@@ -159,7 +159,7 @@ namespace Qoollo.Tests
         {
             var loader = new TestDataLoader(pageSize);
 
-            var merge = new OrderMerge(loader, new TestIntParser(), null);
+            var merge = new OrderMerge(_kernel, loader, new TestIntParser(), null);
             var server1 = ServerId(storageServer1);
             var server2 = ServerId(storageServer2);
             var server3 = ServerId(storageServer3);
@@ -249,13 +249,13 @@ namespace Qoollo.Tests
 
                 var loader = new TestDataLoader(pageSize);
                 var serversModel = CollectorModel(filename, 1);
-                var merge = new OrderMerge(loader, _parser, serversModel);
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+                var merge = new OrderMerge(_kernel, loader, _parser, serversModel);
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
 
-                var distributor = new DistributorModule(serversModel, async,
+                var distributor = new DistributorModule(_kernel, serversModel, async,
                     new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
 
-                var searchModule = new SearchTaskModule("Test", merge, loader, distributor, _back, _parser);
+                var searchModule = new SearchTaskModule(_kernel, "Test", merge, loader, distributor, _back, _parser);
 
                 #region hell
 
@@ -336,13 +336,13 @@ namespace Qoollo.Tests
 
                 var loader = new TestDataLoader(pageSize);
                 var serversModel = CollectorModel(filename, 1);
-                var merge = new OrderMerge(loader, _parser, serversModel);
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+                var merge = new OrderMerge(_kernel, loader, _parser, serversModel);
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
 
-                var distributor = new DistributorModule(serversModel, async,
+                var distributor = new DistributorModule(_kernel, serversModel, async,
                     new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
 
-                var searchModule = new SearchTaskModule("Test", merge, loader, distributor, _back, _parser);
+                var searchModule = new SearchTaskModule(_kernel, "Test", merge, loader, distributor, _back, _parser);
 
                 #region hell
 
@@ -442,12 +442,12 @@ namespace Qoollo.Tests
 
                 var loader = new TestDataLoader(pageSize);
                 var serversModel = CollectorModel(filename, 1);
-                var merge = new OrderMerge(loader, _parser, serversModel);
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+                var merge = new OrderMerge(_kernel, loader, _parser, serversModel);
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
                 var distributor =
-                    new DistributorModule(serversModel, async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                    new DistributorModule(_kernel, serversModel, async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
 
-                var searchModule = new SearchTaskModule("Test", merge, loader, distributor, _back, _parser);
+                var searchModule = new SearchTaskModule(_kernel, "Test", merge, loader, distributor, _back, _parser);
 
                 #region hell
 
@@ -528,12 +528,12 @@ namespace Qoollo.Tests
 
                 var loader = new TestDataLoader(pageSize);
                 var serversModel = CollectorModel(filename, 1);
-                var merge = new OrderMerge(loader, _parser, serversModel);
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
-                var distributor = new DistributorModule(serversModel, async,
+                var merge = new OrderMerge(_kernel, loader, _parser, serversModel);
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                var distributor = new DistributorModule(_kernel, serversModel, async,
                     new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
 
-                var searchModule = new SearchTaskModule("Test", merge, loader, distributor, _back, _parser);
+                var searchModule = new SearchTaskModule(_kernel, "Test", merge, loader, distributor, _back, _parser);
 
                 #region hell
 
@@ -614,12 +614,12 @@ namespace Qoollo.Tests
 
                 var loader = new TestDataLoader(pageSize);
                 var serversModel = CollectorModel(filename, 1);
-                var merge = new OrderMerge(loader, _parser, serversModel);
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
-                var distributor = new DistributorModule(serversModel, async,
+                var merge = new OrderMerge(_kernel, loader, _parser, serversModel);
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                var distributor = new DistributorModule(_kernel, serversModel, async,
                     new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
 
-                var searchModule = new SearchTaskModule("", merge, loader, distributor, _back, _parser);
+                var searchModule = new SearchTaskModule(_kernel, "", merge, loader, distributor, _back, _parser);
 
                 #region hell
 
@@ -715,29 +715,29 @@ namespace Qoollo.Tests
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 var storage = WriterApi(StorageConfiguration(filename, 1), st1, st2);
 
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
                 var serversModel = new CollectorModel(new DistributorHashConfiguration(1),
                     new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Collector));
 
-                var distributor = new DistributorModule(serversModel, async,
+                var distributor = new DistributorModule(_kernel, serversModel, async,
                     new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
 
-                var net = new CollectorNetModule(ConnectionConfiguration,
+                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
                     new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout), distributor);
 
                 distributor.SetNetModule(net);
 
-                var loader = new DataLoader(net, 100, _back);
-                var merge = new OrderMerge(loader, _parser, serversModel);
+                var loader = new DataLoader(_kernel, net, 100, _back);
+                var merge = new OrderMerge(_kernel, loader, _parser, serversModel);
 
-                var searchModule = new SearchTaskModule("Int", merge, loader, distributor, _back, _parser);
+                var searchModule = new SearchTaskModule(_kernel, "Int", merge, loader, distributor, _back, _parser);
 
                 q1.Start();
                 storage.Build();
                 proxy.Build();
                 distr.Build();
 
-                storage.AddDbModule(new TestInMemoryDbFactory());
+                storage.AddDbModule(new TestInMemoryDbFactory(_kernel));
 
                 storage.Start();
                 proxy.Start();

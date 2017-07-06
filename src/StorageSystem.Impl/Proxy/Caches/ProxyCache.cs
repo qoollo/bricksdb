@@ -7,7 +7,7 @@ namespace Qoollo.Impl.Proxy.Caches
 {
     internal class ProxyCache:CacheModule<ServerId>
     {
-        public ProxyCache(StandardKernel kernel, TimeSpan timeout) : base(kernel, timeout)
+        public ProxyCache(TimeSpan timeout) : base(timeout)
         {
         }
 

@@ -27,6 +27,8 @@ namespace Qoollo.Tests
 {
     public class TestBase:IDisposable
     {
+        internal  StandardKernel _kernel = new StandardKernel();
+
         internal TestWriterGate _writer1;
         internal TestWriterGate _writer2;
         internal TestWriterGate _writer3;
@@ -101,21 +103,21 @@ namespace Qoollo.Tests
 
         internal ProxyNetModule ProxyNetModule()
         {
-            return new ProxyNetModule(ConnectionConfiguration,
+            return new ProxyNetModule(_kernel, ConnectionConfiguration,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
         }
 
         internal DistributorNetModule DistributorNetModule()
         {
             var connection = new ConnectionConfiguration("testService", 10);
-            return new DistributorNetModule(connection, new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            return new DistributorNetModule(_kernel, connection, new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
         }
 
         internal DistributorModule DistributorDistributorModule(string filename, int countReplics,
             DistributorNetModule net, int pingTo = 200, int asyncCheckTo = 2000,
             int distrPort1 = distrServer1, int distrPort2 = distrServer12)
         {
-            return new DistributorModule(
+            return new DistributorModule(_kernel, 
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(pingTo)),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(asyncCheckTo)),
                 new DistributorHashConfiguration(countReplics),
@@ -127,7 +129,7 @@ namespace Qoollo.Tests
 
         internal ProxyDistributorModule ProxyDistributorModule(ProxyNetModule net, int proxyPort)
         {
-            return new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)),
+            return new ProxyDistributorModule(_kernel, new AsyncProxyCache(TimeSpan.FromMinutes(100)),
                 net, QueueConfiguration, ServerId(proxyPort),
                 new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
                 new AsyncTasksConfiguration(TimeSpan.FromDays(1)));

@@ -350,7 +350,7 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 2);
 
-                var factory = new TestInMemoryDbFactory();
+                var factory = new TestInMemoryDbFactory(_kernel);
                 var storage1 = WriterApi(StorageConfiguration(filename, 1, 200), storageServer1);
 
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
@@ -404,7 +404,7 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 1);
 
-                var factory = new TestInMemoryDbFactory();
+                var factory = new TestInMemoryDbFactory(_kernel);
                 var storage1 = WriterApi(StorageConfiguration(filename, 1, 200, 1, 60, true), storageServer1);
 
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);

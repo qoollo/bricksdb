@@ -9,6 +9,7 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.TestSupport;
 using Consts = Qoollo.Client.Support.Consts;
 
 namespace Qoollo.Client.ProxyGate
@@ -20,6 +21,8 @@ namespace Qoollo.Client.ProxyGate
         private bool _isBuild;
         private bool _isStarted;
         private bool _isDispose;
+
+        internal InjectionModule Module = null;
 
         protected ProxyApi(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
             CommonConfiguration commonConfiguration, TimeoutConfiguration timeoutConfiguration)
@@ -108,7 +111,7 @@ namespace Qoollo.Client.ProxyGate
 
         public void Build()
         {
-            _proxySystem.Build();
+            _proxySystem.Build(Module);
             InnerBuild();
 
             _isBuild = true;

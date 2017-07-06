@@ -7,7 +7,6 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
-using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks.Processes;
 using Qoollo.Impl.Writer.Db;
 using Qoollo.Impl.Writer.WriterNet;
@@ -16,8 +15,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class BroadcastRestoreModule: CommonAsyncWorkModule
     {
-        private readonly Ninject.StandardKernel _kernel;
-
         private readonly WriterModel _writerModel;
         private readonly RestoreModuleConfiguration _configuration;
         private readonly DbModuleCollection _db;
@@ -58,7 +55,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _db = db;
             _queueConfiguration = queueConfiguration;
             _lastDateTime = string.Empty;
-            _kernel = InitInjection.Kernel;
             
         }
 
@@ -78,7 +74,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 Lock.ExitWriteLock();
             }
 
-            _restoreProcess = new BroadcastRestoreProcess(_kernel, _db, _writerModel, WriterNet, servers,
+            _restoreProcess = new BroadcastRestoreProcess(Kernel, _db, _writerModel, WriterNet, servers,
                 state == RestoreState.FullRestoreNeed, _queueConfiguration);
             _restoreProcess.Start();
 

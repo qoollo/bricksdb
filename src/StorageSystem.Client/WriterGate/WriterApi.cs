@@ -7,6 +7,7 @@ using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Client.WriterGate
 {
@@ -18,6 +19,8 @@ namespace Qoollo.Client.WriterGate
         private bool _isBuild;
         private bool _isStarted;
         private bool _isDispose;
+
+        internal InjectionModule Module = null;
 
         public WriterApi(StorageNetConfiguration netConfiguration,
             StorageConfiguration storageConfiguration, CommonConfiguration commonConfiguration,
@@ -99,7 +102,7 @@ namespace Qoollo.Client.WriterGate
 
         public void Build()
         {
-            _writerSystem.Build();
+            _writerSystem.Build(Module);
             _isBuild = true;
         }
 

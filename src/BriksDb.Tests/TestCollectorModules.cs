@@ -20,6 +20,7 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Sql.Internal;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestCollector;
 using Qoollo.Tests.TestWriter;
@@ -733,8 +734,14 @@ namespace Qoollo.Tests
                 var searchModule = new SearchTaskModule(_kernel, "Int", merge, loader, distributor, _back, _parser);
 
                 q1.Start();
+
+                storage.Module = new TestInjectionModule();
                 storage.Build();
+
+                proxy.Module = new TestInjectionModule();
                 proxy.Build();
+
+                distr.Module = new TestInjectionModule();
                 distr.Build();
 
                 storage.AddDbModule(new TestInMemoryDbFactory(_kernel));

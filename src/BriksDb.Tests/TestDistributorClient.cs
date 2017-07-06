@@ -2,6 +2,7 @@
 using System.Threading;
 using Qoollo.Client.Request;
 using Qoollo.Impl.Common.Support;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestWriter;
 using Xunit;
@@ -26,14 +27,17 @@ namespace Qoollo.Tests
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
 
+                proxy.Module = new TestInjectionModule();
                 proxy.Build();
                 proxy.Start();
 
+                distr.Module = new TestInjectionModule();
                 distr.Build();
                 distr.Start();
 
                 proxy.Int.SayIAmHere("localhost", distrServer1);
 
+                storage.Module = new TestInjectionModule();
                 storage.Build();
                 storage.AddDbModule(new TestInMemoryDbFactory(_kernel));
                 storage.Start();
@@ -88,14 +92,17 @@ namespace Qoollo.Tests
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
 
+                proxy.Module = new TestInjectionModule();
                 proxy.Build();
                 proxy.Start();
 
+                distr.Module = new TestInjectionModule();
                 distr.Build();
                 distr.Start();
 
                 proxy.Int.SayIAmHere("localhost", distrServer1);
 
+                storage.Module = new TestInjectionModule();
                 storage.Build();
                 storage.AddDbModule(new TestInMemoryDbFactory(_kernel));
                 storage.Start();

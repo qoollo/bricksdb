@@ -39,7 +39,7 @@ namespace Qoollo.Tests
             proxy.Start();
 
             var distrServer = ServerId(distrServer1);
-            var distributor = TestHelper.OpenDistributorHost(ServerId(distrServer1));
+            var distributor = TestHelper.OpenDistributorHost(_kernel, ServerId(distrServer1));
             proxy.Distributor.SayIAmHere(distrServer);
 
             var provider = new StoredDataHashCalculator();
@@ -75,7 +75,7 @@ namespace Qoollo.Tests
             proxy.Start();
 
             var distrServer = ServerId(distrServer1);
-            var distributor = TestHelper.OpenDistributorHost(distrServer);
+            var distributor = TestHelper.OpenDistributorHost(_kernel, distrServer);
             proxy.Distributor.SayIAmHere(distrServer);
 
             var provider = new IntHashConvertor();
@@ -134,8 +134,8 @@ namespace Qoollo.Tests
             var server2 = ServerId(distrServer12);
             var server3 = ServerId(distrServer2);
 
-            var s1 = TestHelper.OpenDistributorHost(server1);
-            var s2 = TestHelper.OpenDistributorHost(server2);
+            var s1 = TestHelper.OpenDistributorHost(_kernel, server1);
+            var s2 = TestHelper.OpenDistributorHost(_kernel, server2);
 
             var net = ProxyNetModule();
             var distr = new TestProxyDistributorModule(_kernel);
@@ -210,8 +210,8 @@ namespace Qoollo.Tests
             var server2 = ServerId(distrServer2);
             var server3 = ServerId(distrServer12);
 
-            var s1 = TestHelper.OpenDistributorHost(server1);
-            var s2 = TestHelper.OpenDistributorHost(server2);
+            var s1 = TestHelper.OpenDistributorHost(_kernel, server1);
+            var s2 = TestHelper.OpenDistributorHost(_kernel, server2);
 
             var net = ProxyNetModule();            
             var distributor = ProxyDistributorModule(net, server1.Port);

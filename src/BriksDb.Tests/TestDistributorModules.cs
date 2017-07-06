@@ -107,12 +107,11 @@ namespace Qoollo.Tests
 
                 #endregion
 
-                var kernel = new StandardKernel();
                 var t = 0;
                 GlobalQueue.Queue.TransactionQueue.Registrate(data => Interlocked.Increment(ref t));
                 GlobalQueue.Queue.Start();
 
-                var connection = new SingleConnectionToDistributor(kernel, ServerId(distrServer1), ConnectionConfiguration,
+                var connection = new SingleConnectionToDistributor(_kernel, ServerId(distrServer1), ConnectionConfiguration,
                     new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
                 connection.Connect();
 
@@ -189,8 +188,8 @@ namespace Qoollo.Tests
                 distributor.Start();
                 net.Start();
 
-                var s1 = TestHelper.OpenWriterHost(server1.Port);
-                var s2 = TestHelper.OpenWriterHost(server2.Port);
+                var s1 = TestHelper.OpenWriterHost(_kernel, server1.Port);
+                var s2 = TestHelper.OpenWriterHost(_kernel, server2.Port);
 
                 net.ConnectToWriter(server1);
                 net.ConnectToWriter(server2);
@@ -250,8 +249,8 @@ namespace Qoollo.Tests
 
                 GlobalQueue.Queue.Start();
 
-                var s1 = TestHelper.OpenWriterHost(server1.Port);
-                var s2 = TestHelper.OpenWriterHost(server2.Port);
+                var s1 = TestHelper.OpenWriterHost(_kernel, server1.Port);
+                var s2 = TestHelper.OpenWriterHost(_kernel, server2.Port);
 
                 net.ConnectToWriter(server1);
                 net.ConnectToWriter(server2);
@@ -303,8 +302,8 @@ namespace Qoollo.Tests
                 var server2 = ServerId(storageServer2);
                 var server3 = ServerId(storageServer3);
 
-                var s1 = TestHelper.OpenWriterHost(server1.Port);
-                var s2 = TestHelper.OpenWriterHost(server2.Port);
+                var s1 = TestHelper.OpenWriterHost(_kernel, server1.Port);
+                var s2 = TestHelper.OpenWriterHost(_kernel, server2.Port);
 
                 var net = DistributorNetModule();
                 var distributor = DistributorDistributorModule(filename, 2, net, 3000, 3000);
@@ -482,8 +481,8 @@ namespace Qoollo.Tests
                 var server1 = ServerId(storageServer1);
                 var server2 = ServerId(storageServer2);
 
-                var s1 = TestHelper.OpenWriterHost(server1.Port);
-                var s2 = TestHelper.OpenWriterHost(server2.Port);
+                var s1 = TestHelper.OpenWriterHost(_kernel, server1.Port);
+                var s2 = TestHelper.OpenWriterHost(_kernel, server2.Port);
 
                 cache.Start();
                 distributor.Start();
@@ -605,7 +604,7 @@ namespace Qoollo.Tests
 
                 #endregion
 
-                var s = TestHelper.OpenWriterHost(storageServer1);
+                var s = TestHelper.OpenWriterHost(_kernel, storageServer1);
 
                 tranc.Start();
                 main.Start();
@@ -699,8 +698,8 @@ namespace Qoollo.Tests
 
                 #endregion
 
-                var s1 = TestHelper.OpenWriterHost(storageServer1);
-                var s2 = TestHelper.OpenWriterHost(storageServer2);
+                var s1 = TestHelper.OpenWriterHost(_kernel, storageServer1);
+                var s2 = TestHelper.OpenWriterHost(_kernel, storageServer2);
 
                 tranc.Start();
                 main.Start();
@@ -801,7 +800,7 @@ namespace Qoollo.Tests
 
                 #endregion
 
-                var s = TestHelper.OpenWriterHost(storageServer1);
+                var s = TestHelper.OpenWriterHost(_kernel, storageServer1);
 
                 main.Start();
                 netDistributorReceiver.Start();

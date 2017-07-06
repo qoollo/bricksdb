@@ -27,7 +27,7 @@ namespace Qoollo.Tests
 {
     public class TestBase:IDisposable
     {
-        internal  StandardKernel _kernel = new StandardKernel();
+        internal  StandardKernel _kernel = new StandardKernel(new TestInjectionModule());
 
         internal TestWriterGate _writer1;
         internal TestWriterGate _writer2;
@@ -77,6 +77,7 @@ namespace Qoollo.Tests
                 TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
 
             _proxy = new TestGate(netconfig, toconfig, CommonConfiguration);
+            _proxy.Module = new TestInjectionModule();
             _proxy.Build();
 
             _distrTest = new TestDistributorGate();

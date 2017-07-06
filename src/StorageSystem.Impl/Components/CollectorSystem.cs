@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using Ninject;
+using Ninject.Modules;
 using Qoollo.Impl.Collector;
 using Qoollo.Impl.Collector.Background;
 using Qoollo.Impl.Collector.CollectorNet;
@@ -11,6 +12,7 @@ using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Impl.Components
 {
@@ -51,9 +53,11 @@ namespace Qoollo.Impl.Components
 
         public Func<string, ScriptParser,  SearchTaskModule> CreateApi { get; private set; }
 
-        public override void Build()
+        public override void Build(NinjectModule module = null)
         {
-            var kernel = new StandardKernel();
+            module = module ?? new InjectionModule();
+
+            var kernel = new StandardKernel(module);
 
             var async = new AsyncTaskModule(kernel, new QueueConfiguration(4, 10));
 

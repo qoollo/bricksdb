@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using Ninject;
+using Ninject.Modules;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
@@ -9,6 +10,7 @@ using Qoollo.Impl.DistributorModules.ParallelWork;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Impl.Components
 {
@@ -73,12 +75,14 @@ namespace Qoollo.Impl.Components
             return new DistributorNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
         }
 
-        public override void Build()
+        public override void Build(NinjectModule module = null)
         {
+            module = module ?? new InjectionModule();
+
             var q = new GlobalQueueInner();
             GlobalQueue.SetQueue(q);
 
-            var kernel = new StandardKernel();
+            var kernel = new StandardKernel(module);
 
             var cache = new DistributorTimeoutCache(_cacheConfiguration);
             var net = CreateNetModule(kernel, _connectionConfiguration);

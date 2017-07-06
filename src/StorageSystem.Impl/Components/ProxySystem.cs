@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using Ninject;
+using Ninject.Modules;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
@@ -11,6 +12,7 @@ using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
 using Qoollo.Impl.Proxy.Input;
 using Qoollo.Impl.Proxy.ProxyNet;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Impl.Components
 {
@@ -56,12 +58,14 @@ namespace Qoollo.Impl.Components
 
         public Func<string, bool, IHashCalculater, IStorageInner> CreateApi { get; private set; }
 
-        public override void Build()
+        public override void Build(NinjectModule module = null)
         {
+            module = module ?? new InjectionModule();
+
             var q = new GlobalQueueInner();
             GlobalQueue.SetQueue(q);
 
-            var kernel = new StandardKernel();
+            var kernel = new StandardKernel(module);
 
             var asyncCache = new AsyncProxyCache(_asyncCacheConfiguration.TimeAliveSec);
 

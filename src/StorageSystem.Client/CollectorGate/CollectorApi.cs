@@ -9,6 +9,7 @@ using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Client.CollectorGate
 {
@@ -19,6 +20,8 @@ namespace Qoollo.Client.CollectorGate
         private bool _isBuild;
         private bool _isStarted;
         private bool _isDispose;
+
+        internal InjectionModule Module = null;
 
         protected CollectorApi(CollectorConfiguration collectorConfiguration, CollectorNetConfiguration netConfiguration,
             CommonConfiguration commonConfiguration, TimeoutConfiguration timeoutConfiguration)
@@ -89,7 +92,7 @@ namespace Qoollo.Client.CollectorGate
 
         public void Build()
         {
-            _collectorSystem.Build();
+            _collectorSystem.Build(Module);
             InnerBuild();
 
             _isBuild = true;

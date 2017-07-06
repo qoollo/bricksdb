@@ -58,7 +58,7 @@ namespace Qoollo.Tests
                     Assert.NotNull(transaction);
                     Assert.Equal(TransactionState.DontExist, transaction.State);
 
-                    var s = TestHelper.OpenWriterHost(storageServer1);
+                    var s = TestHelper.OpenWriterHost(_kernel, storageServer1);
 
                     Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
@@ -129,9 +129,9 @@ namespace Qoollo.Tests
                     _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
                     _proxySystem.Distributor.SayIAmHere(ServerId(distrServer2));
 
-                    var s1 = TestHelper.OpenWriterHost(storageServer1);
-                    var s2 = TestHelper.OpenWriterHost(storageServer2);
-                    var s3 = TestHelper.OpenWriterHost(storageServer3);
+                    var s1 = TestHelper.OpenWriterHost(_kernel, storageServer1);
+                    var s2 = TestHelper.OpenWriterHost(_kernel, storageServer2);
+                    var s3 = TestHelper.OpenWriterHost(_kernel, storageServer3);
 
                     Thread.Sleep(TimeSpan.FromMilliseconds(300));
 
@@ -179,7 +179,7 @@ namespace Qoollo.Tests
 
                 _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
-                var s = TestHelper.OpenWriterHost(storageServer1);
+                var s = TestHelper.OpenWriterHost(_kernel, storageServer1);
 
                 s.retData = TestHelper.CreateEvent(new StoredDataHashCalculator(), 10);
 

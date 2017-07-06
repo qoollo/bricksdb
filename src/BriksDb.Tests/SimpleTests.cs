@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Server;
@@ -10,6 +11,7 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Xunit;
@@ -251,8 +253,8 @@ namespace Qoollo.Tests
                 Assert.Equal(null, dest);
                 Assert.Equal(null, dest2);
 
-                var h1 = TestHelper.OpenWriterHost(storageServer1);
-                var h2 = TestHelper.OpenWriterHost(storageServer2);
+                var h1 = TestHelper.OpenWriterHost(_kernel, storageServer1);
+                var h2 = TestHelper.OpenWriterHost(_kernel, storageServer2);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(800));
 

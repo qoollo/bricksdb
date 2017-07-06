@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics.Contracts;
 using Ninject;
+using Ninject.Modules;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer;
 using Qoollo.Impl.Writer.AsyncDbWorks;
 using Qoollo.Impl.Writer.Db;
@@ -67,12 +69,14 @@ namespace Qoollo.Impl.Components
 
         public DbModuleCollection DbModule { get; private set; }
 
-        public override void Build()
+        public override void Build(NinjectModule module = null)
         {
+            module = module ?? new InjectionModule();
+
             var q = new GlobalQueueInner();
             GlobalQueue.SetQueue(q);
 
-            var kernel = new StandardKernel();
+            var kernel = new StandardKernel(module);
 
             var db = new DbModuleCollection(kernel);
 

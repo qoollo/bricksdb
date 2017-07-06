@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
@@ -30,12 +31,14 @@ namespace Qoollo.Impl.Writer
         private readonly AsyncDbWorkModule _asyncDbWork;
         private readonly GlobalQueueInner _queue;
 
-        public DistributorModule(WriterModel model, 
+        public DistributorModule(StandardKernel kernel,
+            WriterModel model, 
             AsyncTaskModule async, 
             AsyncDbWorkModule asyncDbWork,
             WriterNetModule writerNet,
             QueueConfiguration configuration,
             AsyncTasksConfiguration pingConfiguration = null)
+            :base(kernel)
         {
             Contract.Requires(writerNet != null);
             Contract.Requires(configuration != null);

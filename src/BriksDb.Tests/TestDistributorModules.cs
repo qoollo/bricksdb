@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
+using Ninject;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -106,11 +107,12 @@ namespace Qoollo.Tests
 
                 #endregion
 
+                var kernel = new StandardKernel();
                 var t = 0;
                 GlobalQueue.Queue.TransactionQueue.Registrate(data => Interlocked.Increment(ref t));
                 GlobalQueue.Queue.Start();
 
-                var connection = new SingleConnectionToDistributor(ServerId(distrServer1), ConnectionConfiguration,
+                var connection = new SingleConnectionToDistributor(kernel, ServerId(distrServer1), ConnectionConfiguration,
                     new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
                 connection.Connect();
 

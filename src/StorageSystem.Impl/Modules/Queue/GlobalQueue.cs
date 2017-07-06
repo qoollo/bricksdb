@@ -62,7 +62,7 @@ namespace Qoollo.Impl.Modules.Queue
         public QueueWithParam<InnerData> DbTimeoutQueue { get { return _dbTimeoutQueue; } }
 
         public string Name { get; }
-        public GlobalQueueInner(string name = "")
+        public GlobalQueueInner(string name = ""):base(null)
         {
             Name = name;
             _proxyInputWriteAndUpdateQueue = new QueueWithParam<InnerData>("proxyInputWriteAndUpdateQueue");

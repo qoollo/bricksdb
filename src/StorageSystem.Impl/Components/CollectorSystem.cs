@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Collector;
 using Qoollo.Impl.Collector.Background;
 using Qoollo.Impl.Collector.CollectorNet;
@@ -52,20 +53,22 @@ namespace Qoollo.Impl.Components
 
         public override void Build()
         {
-            var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+            var kernel = new StandardKernel();
+
+            var async = new AsyncTaskModule(kernel, new QueueConfiguration(4, 10));
 
             var serversModel = new CollectorModel(_distributorHashConfiguration, _hashMapConfiguration, _useHashFile);
-            var distributor = new DistributorModule(serversModel, async,
+            var distributor = new DistributorModule(kernel, serversModel, async,
                 new AsyncTasksConfiguration(TimeSpan.FromSeconds(10)));
 
-            var net = new CollectorNetModule(_connectionConfiguration, _connectionTimeoutConfiguration, distributor);
+            var net = new CollectorNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration, distributor);
 
             distributor.SetNetModule(net);
             
-            var back = new BackgroundModule(_queueConfiguration);
-            var loader = new DataLoader(net, _serverPageSize, back);
+            var back = new BackgroundModule(kernel, _queueConfiguration);
+            var loader = new DataLoader(kernel, net, _serverPageSize, back);
 
-            var searchModule = new SearchTaskCommonModule(loader, distributor, back, serversModel);
+            var searchModule = new SearchTaskCommonModule(kernel, loader, distributor, back, serversModel);
             CreateApi = searchModule.CreateApi;
             Distributor = distributor;
 

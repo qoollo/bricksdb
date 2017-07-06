@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Configurations;
 using Qoollo.Turbo.Threading.ThreadPools;
 
@@ -18,7 +19,8 @@ namespace Qoollo.Impl.Modules.Async
         private readonly AutoResetEvent _event;
         private readonly CancellationTokenSource _token;
 
-        public AsyncTaskModule(QueueConfiguration configuration)
+        public AsyncTaskModule(StandardKernel kernel, QueueConfiguration configuration)
+            :base(kernel)
         {
             Contract.Requires(configuration != null);
             _tasks = new List<AsyncData>();

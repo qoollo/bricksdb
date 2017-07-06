@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
 
@@ -9,8 +10,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        protected ReaderFull(Action<TType> process, QueueConfiguration queueConfiguration,
-            QueueWithParam<TType> queue)
+        protected ReaderFull(StandardKernel kernel, Action<TType> process, QueueConfiguration queueConfiguration,
+            QueueWithParam<TType> queue):base(kernel)
         {
             Contract.Requires(process != null);
             Contract.Requires(queueConfiguration != null);

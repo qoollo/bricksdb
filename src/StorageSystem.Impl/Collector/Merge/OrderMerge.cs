@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Collector.Comparer;
 using Qoollo.Impl.Collector.Load;
 using Qoollo.Impl.Collector.Model;
@@ -18,8 +19,8 @@ namespace Qoollo.Impl.Collector.Merge
         private readonly ScriptParser _scriptParser;
         private readonly CollectorModel _serversModel;
 
-        public OrderMerge(IDataLoader dataLoader, ScriptParser scriptParser, CollectorModel serversModel)
-            : base(dataLoader)
+        public OrderMerge(StandardKernel kernel, IDataLoader dataLoader, ScriptParser scriptParser, CollectorModel serversModel)
+            : base(kernel, dataLoader)
         {
             _scriptParser = scriptParser;
             _serversModel = serversModel;

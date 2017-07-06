@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using System.ServiceModel;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Configurations;
@@ -12,9 +13,9 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
     {        
         private readonly DistributorModule _distributorModule;
 
-        public NetDistributorReceiverForDb(DistributorModule distributorModule,
+        public NetDistributorReceiverForDb(StandardKernel kernel, DistributorModule distributorModule,
             NetReceiverConfiguration receiverConfiguration)
-            : base(receiverConfiguration)
+            : base(kernel, receiverConfiguration)
         {
             Contract.Requires(distributorModule != null);
             _distributorModule = distributorModule;

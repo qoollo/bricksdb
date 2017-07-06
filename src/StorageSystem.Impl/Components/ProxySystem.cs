@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
@@ -60,20 +61,22 @@ namespace Qoollo.Impl.Components
             var q = new GlobalQueueInner();
             GlobalQueue.SetQueue(q);
 
-            var asyncCache = new AsyncProxyCache(_asyncCacheConfiguration.TimeAliveSec);
+            var kernel = new StandardKernel();
 
-            var net = new ProxyNetModule(_connectionConfiguration, _connectionTimeoutConfiguration);
-            var distributor = new ProxyDistributorModule(asyncCache, net, new QueueConfiguration(1, 1000), _local,
+            var asyncCache = new AsyncProxyCache(kernel, _asyncCacheConfiguration.TimeAliveSec);
+
+            var net = new ProxyNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
+            var distributor = new ProxyDistributorModule(kernel, asyncCache, net, new QueueConfiguration(1, 1000), _local,
                 _asyncGetData, _asyncPing);
 
             net.SetDistributor(distributor);
-            var cache = new ProxyCache(_cacheConfiguration.TimeAliveSec);
-            var main = new ProxyMainLogicModule(distributor, net, cache);
-            var input = new ProxyInputModuleCommon(main, _queueConfiguration, distributor, asyncCache);
+            var cache = new ProxyCache(kernel, _cacheConfiguration.TimeAliveSec);
+            var main = new ProxyMainLogicModule(kernel, distributor, net, cache);
+            var input = new ProxyInputModuleCommon(kernel, main, _queueConfiguration, distributor, asyncCache);
 
             CreateApi = input.CreateApi;
 
-            var receive = new ProxyNetReceiver(distributor, _netReceiverConfiguration);
+            var receive = new ProxyNetReceiver(kernel, distributor, _netReceiverConfiguration);
 
             AddModule(input);
             AddModule(main);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
@@ -17,7 +18,8 @@ namespace Qoollo.Impl.Modules.Net
         private readonly ConnectionConfiguration _configuration;
         private readonly ConnectionTimeoutConfiguration _connectionTimeout;
 
-        protected NetModule(ConnectionConfiguration connectionConfiguration, ConnectionTimeoutConfiguration connectionTimeout)
+        protected NetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration, ConnectionTimeoutConfiguration connectionTimeout)
+            :base(kernel)
         {
             Contract.Requires(connectionConfiguration != null);
             Contract.Requires(connectionTimeout != null);

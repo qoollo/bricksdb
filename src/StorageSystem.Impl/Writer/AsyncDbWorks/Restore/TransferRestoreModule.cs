@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using Ninject;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
@@ -46,13 +47,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         }
 
         public TransferRestoreModule(
+            StandardKernel kernel,
             WriterModel writerModel, 
             RestoreModuleConfiguration configuration, 
             WriterNetModule writerNet,
             AsyncTaskModule asyncTaskModule, 
             DbModuleCollection db, 
             QueueConfiguration queueConfiguration)
-            : base(writerNet, asyncTaskModule)
+            : base(kernel, writerNet, asyncTaskModule)
         {
             Contract.Requires(writerModel != null);
             Contract.Requires(configuration != null);

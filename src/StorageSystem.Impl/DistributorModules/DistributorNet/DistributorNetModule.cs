@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults;
@@ -19,8 +20,8 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 
         private DistributorModule _distributor;
 
-        public DistributorNetModule(ConnectionConfiguration connectionConfiguration,
-            ConnectionTimeoutConfiguration connectionTimeout) : base(connectionConfiguration, connectionTimeout)
+        public DistributorNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration,
+            ConnectionTimeoutConfiguration connectionTimeout) : base(kernel, connectionConfiguration, connectionTimeout)
         {
         }
 
@@ -41,7 +42,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         public virtual bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (serverId, configuration, time) => new SingleConnectionToDistributor(serverId, configuration, time));
+                (serverId, configuration, time) => new SingleConnectionToDistributor(Kernel, serverId, configuration, time));
         }
 
         public RemoteResult SendToDistributor(ServerId server, NetCommand command)
@@ -87,7 +88,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         protected virtual ISingleConnection CreateConnectionToProxy(ServerId server,
             ConnectionConfiguration configuration, ConnectionTimeoutConfiguration time)
         {
-            return new SingleConnectionToProxy(server, configuration, time);
+            return new SingleConnectionToProxy(Kernel, server, configuration, time);
         }
 
         public RemoteResult SendToProxy(ServerId server, NetCommand command)
@@ -161,7 +162,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         protected virtual ISingleConnection CreateConnectionToWriter(ServerId server,
             ConnectionConfiguration configuration, ConnectionTimeoutConfiguration time)
         {
-            return new SingleConnectionToWriter(server, configuration, time);
+            return new SingleConnectionToWriter(Kernel, server, configuration, time);
         }
 
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.ServiceModel;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults;
@@ -17,8 +18,8 @@ namespace Qoollo.Impl.Writer.WriterNet
         private readonly InputModule _inputModule;
         private readonly DistributorModule _distributor;
 
-        public NetWriterReceiverForWrite(InputModule inputModule, DistributorModule distributor, NetReceiverConfiguration receiverConfiguration)
-            :base(receiverConfiguration)
+        public NetWriterReceiverForWrite(StandardKernel kernel, InputModule inputModule, DistributorModule distributor, NetReceiverConfiguration receiverConfiguration)
+            :base(kernel, receiverConfiguration)
         {
             Contract.Requires(inputModule!=null);
             Contract.Requires(distributor!=null);

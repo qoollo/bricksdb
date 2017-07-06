@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.Transaction;
@@ -11,8 +12,8 @@ namespace Qoollo.Impl.DistributorModules.ParallelWork
         private readonly MainLogicModule _main;
         private readonly TransactionModule _transactionModule;
 
-        public InputModuleWithParallel(QueueConfiguration configuration, MainLogicModule main, TransactionModule transactionModule)
-            : base(configuration)
+        public InputModuleWithParallel(StandardKernel kernel, QueueConfiguration configuration, MainLogicModule main, TransactionModule transactionModule)
+            : base(kernel, configuration)
         {
             Contract.Requires(main!=null);
             Contract.Requires(transactionModule!=null);
@@ -22,7 +23,7 @@ namespace Qoollo.Impl.DistributorModules.ParallelWork
 
         protected override bool CreateWorker(out SingleParallelWorkBase<InnerData> worker)
         {
-            worker = new OneThreadProcess(_main, _transactionModule);
+            worker = new OneThreadProcess(Kernel, _main, _transactionModule);
             return true;
         }
 

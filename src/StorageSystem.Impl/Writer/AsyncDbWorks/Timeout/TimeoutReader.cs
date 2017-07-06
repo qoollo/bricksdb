@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Writer.AsyncDbWorks.Readers;
@@ -15,7 +16,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
         private readonly AsyncDbHolder _holder;
         private readonly RestoreDataContainer _restoreData;        
 
-        public TimeoutReader(DbModuleCollection db, RestoreDataContainer restoreData)
+        public TimeoutReader(StandardKernel kernel, DbModuleCollection db, RestoreDataContainer restoreData)
+            :base(kernel)
         {
             Contract.Requires(db != null);
             Contract.Requires(restoreData != null);            

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -20,8 +21,9 @@ namespace Qoollo.Impl.Proxy.Input
         private ProxyMainLogicModule _mainLogic;        
         private GlobalQueueInner _queue;
 
-        public ProxyInputModuleCommon(ProxyMainLogicModule mainLogic, QueueConfiguration queueConfiguration,
+        public ProxyInputModuleCommon(StandardKernel kernel, ProxyMainLogicModule mainLogic, QueueConfiguration queueConfiguration,
             ProxyDistributorModule distributor, AsyncProxyCache asyncProxyCache)
+            :base(kernel)
         {
             Contract.Requires(queueConfiguration != null);
             Contract.Requires(mainLogic != null);
@@ -64,8 +66,8 @@ namespace Qoollo.Impl.Proxy.Input
             if (_apis.ContainsKey(tableName))
                 return null;
 
-            var api = new ProxyInputModule(
-                tableName, hashFromValue, _asyncProxyCache, hashCalculater, _distributor, this);
+            var api = new ProxyInputModule(Kernel, tableName, hashFromValue, _asyncProxyCache, hashCalculater,
+                _distributor, this);
             _apis.Add(tableName, api);
 
             return api;

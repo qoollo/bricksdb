@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.System.Writer;
@@ -23,9 +24,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         public List<RestoreServer> Servers => _serversController.Servers;
 
-        public InitiatorRestoreModule(WriterModel model, RestoreModuleConfiguration configuration, WriterNetModule writerNet,
+        public InitiatorRestoreModule(StandardKernel kernel, WriterModel model, RestoreModuleConfiguration configuration, WriterNetModule writerNet,
             AsyncTaskModule asyncTaskModule, RestoreStateHolder stateHolder, RestoreStateFileLogger saver)
-            : base(writerNet, asyncTaskModule)
+            : base(kernel, writerNet, asyncTaskModule)
         {
             _model = model;
             _configuration = configuration;

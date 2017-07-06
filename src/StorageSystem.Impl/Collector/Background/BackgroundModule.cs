@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Collector.Tasks;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
@@ -13,7 +14,8 @@ namespace Qoollo.Impl.Collector.Background
         private readonly DynamicThreadPool _threadPool;
         private readonly List<SearchTask> _tasks;
 
-        public BackgroundModule(QueueConfiguration queueConfiguration)
+        public BackgroundModule(StandardKernel kernel, QueueConfiguration queueConfiguration)
+            :base(kernel)
         {
             _tasks = new List<SearchTask>();
             //_threadPool = new DynamicThreadPool(1, queueConfiguration.ProcessotCount, queueConfiguration.MaxSizeQueue, "BackgroundModule");

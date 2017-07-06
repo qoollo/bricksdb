@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Ninject;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
@@ -43,13 +44,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         }
 
         public BroadcastRestoreModule(
+            StandardKernel kernel,
             WriterModel writerModel,
             RestoreModuleConfiguration configuration,
             WriterNetModule writerNet,
             AsyncTaskModule asyncTaskModule,
             DbModuleCollection db,
             QueueConfiguration queueConfiguration)
-            : base(writerNet, asyncTaskModule)
+            : base(kernel, writerNet, asyncTaskModule)
         {
             _writerModel = writerModel;
             _configuration = configuration;

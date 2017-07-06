@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
@@ -60,15 +61,17 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         }
 
         public AsyncDbWorkModule(
+            StandardKernel kernel,
             WriterModel writerModel,
-            WriterNetModule writerNet, 
-            AsyncTaskModule async, 
+            WriterNetModule writerNet,
+            AsyncTaskModule async,
             DbModuleCollection db,
             RestoreModuleConfiguration initiatorConfiguration,
             RestoreModuleConfiguration transferConfiguration,
             RestoreModuleConfiguration timeoutConfiguration,
-            QueueConfiguration queueConfiguration, 
+            QueueConfiguration queueConfiguration,
             bool needRestore = false)
+            : base(kernel)
         {
             Contract.Requires(writerModel != null);
             Contract.Requires(initiatorConfiguration != null);
@@ -84,18 +87,17 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _stateHolder = new RestoreStateHolder(needRestore);
             _saver = LoadRestoreStateFromFile();
 
-            _initiatorRestore = new InitiatorRestoreModule(writerModel, initiatorConfiguration, writerNet, async, 
+            _initiatorRestore = new InitiatorRestoreModule(kernel, writerModel, initiatorConfiguration, writerNet, async,
                 _stateHolder, _saver);
 
-            _transferRestore = new TransferRestoreModule(writerModel, transferConfiguration, 
-                writerNet, async, db,  queueConfiguration);
-
-            _timeout = new TimeoutModule(writerNet, async, queueConfiguration,
-                db,  timeoutConfiguration);
-
-            _broadcastRestore = new BroadcastRestoreModule(writerModel, transferConfiguration,
+            _transferRestore = new TransferRestoreModule(kernel, writerModel, transferConfiguration,
                 writerNet, async, db, queueConfiguration);
 
+            _timeout = new TimeoutModule(kernel, writerNet, async, queueConfiguration,
+                db, timeoutConfiguration);
+
+            _broadcastRestore = new BroadcastRestoreModule(kernel, writerModel, transferConfiguration,
+                writerNet, async, db, queueConfiguration);
         }
 
         private readonly WriterModel _writerModel;

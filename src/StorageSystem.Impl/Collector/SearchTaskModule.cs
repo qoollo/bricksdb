@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Ninject;
 using Qoollo.Impl.Collector.Background;
 using Qoollo.Impl.Collector.Distributor;
 using Qoollo.Impl.Collector.Load;
@@ -21,9 +22,10 @@ namespace Qoollo.Impl.Collector
         private readonly BackgroundModule _backgroundModule;
         private readonly ScriptParser _scriptParser;
 
-        public SearchTaskModule(string tableName, MergeBase mergeBase, IDataLoader dataLoader,
+        public SearchTaskModule(StandardKernel kernel, string tableName, MergeBase mergeBase, IDataLoader dataLoader,
             DistributorModule distributor,
             BackgroundModule backgroundModule, ScriptParser scriptParser)
+            :base(kernel)
         {
             _tableName = tableName;
             _mergeBase = mergeBase;

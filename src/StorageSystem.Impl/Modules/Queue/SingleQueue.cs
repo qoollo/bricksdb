@@ -8,7 +8,7 @@ namespace Qoollo.Impl.Modules.Queue
     {
         public string Name { get; private set; }        
 
-        public SingleQueue(string name)
+        public SingleQueue(string name):base(null)
         {
             Name = PoolsProfiler.ConvertStringForCounters(name);
         }

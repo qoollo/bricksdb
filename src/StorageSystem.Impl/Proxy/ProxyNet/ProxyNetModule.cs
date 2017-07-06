@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -18,8 +19,8 @@ namespace Qoollo.Impl.Proxy.ProxyNet
 
         private ProxyDistributorModule _distributor;
 
-        public ProxyNetModule(ConnectionConfiguration connectionConfiguration,
-            ConnectionTimeoutConfiguration connectionTimeout) : base(connectionConfiguration, connectionTimeout)
+        public ProxyNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration,
+            ConnectionTimeoutConfiguration connectionTimeout) : base(kernel, connectionConfiguration, connectionTimeout)
         {
         }
 
@@ -40,7 +41,7 @@ namespace Qoollo.Impl.Proxy.ProxyNet
         public bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToDistributor(id, configuration, time));
+                (id, configuration, time) => new SingleConnectionToDistributor(Kernel, id, configuration, time));
         }
 
         #endregion

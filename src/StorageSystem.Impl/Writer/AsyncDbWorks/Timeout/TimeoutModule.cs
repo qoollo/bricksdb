@@ -1,4 +1,5 @@
 ﻿using System;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
@@ -18,10 +19,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
         private readonly QueueWithParam<InnerData> _queue;
         private readonly TimeSpan _deleteTimeout;
 
-        public TimeoutModule(WriterNetModule net, AsyncTaskModule asyncTaskModule,
+        public TimeoutModule(
+            StandardKernel kernel,
+            WriterNetModule net, AsyncTaskModule asyncTaskModule,
             QueueConfiguration queueConfiguration, DbModuleCollection db,
             RestoreModuleConfiguration configuration)
-            : base(net, asyncTaskModule)
+            : base(kernel, net, asyncTaskModule)
         {
             _configuration = configuration;
             _queueConfiguration = queueConfiguration;
@@ -68,13 +71,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
         {
             if (_reader == null)
             {
-                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, _queue);
+                _reader = new TimeoutReaderFull(Kernel, IsMine, Process, _queueConfiguration, _db, _queue);
                 _reader.Start();
             }
             else if (_reader.IsComplete)
             {
                 _reader.Dispose();
-                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, _queue);
+                _reader = new TimeoutReaderFull(Kernel, IsMine, Process, _queueConfiguration, _db, _queue);
                 _reader.Start();
             }
         }

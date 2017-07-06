@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Ninject;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
 
@@ -155,8 +156,14 @@ namespace Qoollo.Impl.Modules
 
     public abstract class ControlModule:IDisposable
     {
+        public StandardKernel Kernel { get;}
         private readonly Dictionary<Type, FunctionHandlerBase> _sync = new Dictionary<Type, FunctionHandlerBase>();
         private readonly Dictionary<string, QueueHandlerBase>  _async = new Dictionary<string, QueueHandlerBase>();
+
+        protected ControlModule(StandardKernel kernel)
+        {
+            Kernel = kernel;
+        }
 
         internal void RegistrateSync<TValue, TResult>(Func<TValue, TResult> func)
         {

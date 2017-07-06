@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -21,7 +22,8 @@ namespace Qoollo.Impl.Writer
         private readonly DbModule _db;
         private readonly DistributorModule _distributor;        
 
-        public MainLogicModule(DistributorModule distributor, DbModule db)
+        public MainLogicModule(StandardKernel kernel, DistributorModule distributor, DbModule db)
+            :base(kernel)
         {
             Contract.Requires(distributor != null);
             Contract.Requires(db != null);

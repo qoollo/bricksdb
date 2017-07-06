@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Writer.WriterNet;
@@ -31,7 +32,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         protected bool IsStartNoLock { get; set; }
 
-        public CommonAsyncWorkModule(WriterNetModule writerNet, AsyncTaskModule asyncTaskModule)
+        public CommonAsyncWorkModule(StandardKernel kernel, WriterNetModule writerNet, AsyncTaskModule asyncTaskModule)
+            :base(kernel)
         {
             Contract.Requires(writerNet!=null);            
             Contract.Requires(asyncTaskModule!=null);

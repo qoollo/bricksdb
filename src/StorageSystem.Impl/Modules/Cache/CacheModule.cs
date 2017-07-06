@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.Caching;
+using Ninject;
 
 namespace Qoollo.Impl.Modules.Cache
 {
@@ -9,7 +10,8 @@ namespace Qoollo.Impl.Modules.Cache
         private readonly MemoryCache _cache;
         private readonly TimeSpan _timeout;
 
-        protected CacheModule(TimeSpan timeout)
+        protected CacheModule(StandardKernel kernel, TimeSpan timeout)
+            :base(kernel)
         {
             Contract.Requires(timeout!=null);
             _timeout = timeout;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Commands;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -34,6 +35,7 @@ namespace Qoollo.Impl.DistributorModules
         }
 
         public DistributorModule(
+            StandardKernel kernel,
             AsyncTasksConfiguration asyncPing,
             AsyncTasksConfiguration asyncCheck,
             DistributorHashConfiguration configuration,
@@ -42,6 +44,7 @@ namespace Qoollo.Impl.DistributorModules
             ServerId localfordb,
             ServerId localforproxy,
             HashMapConfiguration hashMapConfiguration, bool autoRestoreEnable = false)
+            :base(kernel)
         {
             Contract.Requires(configuration != null);
             Contract.Requires(queueConfiguration != null);
@@ -50,7 +53,7 @@ namespace Qoollo.Impl.DistributorModules
             Contract.Requires(localforproxy != null);
             Contract.Requires(asyncPing != null);
             _asyncPing = asyncPing;
-            _asyncTaskModule = new AsyncTaskModule(queueConfiguration);
+            _asyncTaskModule = new AsyncTaskModule(kernel, queueConfiguration);
 
             _queueConfiguration = queueConfiguration;
             _modelOfDbWriters = new WriterSystemModel(configuration, hashMapConfiguration);

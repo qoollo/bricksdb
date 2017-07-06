@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -20,8 +21,9 @@ namespace Qoollo.Impl.DistributorModules.Transaction
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public TransactionModule(INetModule net, TransactionConfiguration transactionConfiguration,
+        public TransactionModule(StandardKernel kernel, INetModule net, TransactionConfiguration transactionConfiguration,
             int countReplics, DistributorTimeoutCache cache)
+            :base(kernel)
         {
             Contract.Requires(net != null);
             Contract.Requires(transactionConfiguration != null);

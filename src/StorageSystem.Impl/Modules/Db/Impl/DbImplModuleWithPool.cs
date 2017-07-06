@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Modules.Pools;
 using Qoollo.Turbo.ObjectPools;
 
@@ -14,7 +15,8 @@ namespace Qoollo.Impl.Modules.Db.Impl
         private readonly TConnectionParam _connectionParam;
         private const int MinElements = 50;
 
-        protected DbImplModuleWithPool(TConnectionParam connectionParam, int maxCountElementInPool, int trimPeriod)
+        protected DbImplModuleWithPool(StandardKernel kernel, TConnectionParam connectionParam, int maxCountElementInPool, int trimPeriod)
+            :base(kernel)
         {
             Contract.Requires(connectionParam != null);            
 

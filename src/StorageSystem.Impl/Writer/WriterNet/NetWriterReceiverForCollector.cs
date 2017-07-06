@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ServiceModel;
+using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
@@ -15,8 +16,8 @@ namespace Qoollo.Impl.Writer.WriterNet
         private readonly InputModule _inputModule;
         private readonly DistributorModule _distributor;
 
-        public NetWriterReceiverForCollector(InputModule inputModule, DistributorModule distributor, NetReceiverConfiguration configuration)
-            : base(configuration)
+        public NetWriterReceiverForCollector(StandardKernel kernel, InputModule inputModule, DistributorModule distributor, NetReceiverConfiguration configuration)
+            : base(kernel, configuration)
         {
             _inputModule = inputModule;
             _distributor = distributor;

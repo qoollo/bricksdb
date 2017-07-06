@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
@@ -71,25 +72,27 @@ namespace Qoollo.Impl.Components
             var q = new GlobalQueueInner();
             GlobalQueue.SetQueue(q);
 
-            var db = new DbModuleCollection();
+            var kernel = new StandardKernel();
 
-            var net = new WriterNetModule(_connectionConfiguration, _connectionTimeoutConfiguration);
+            var db = new DbModuleCollection(kernel);
 
-            var async = new AsyncTaskModule(_queueConfiguration);
-            var model = new WriterModel(_local, _hashMapConfiguration);
+            var net = new WriterNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
 
-            var restore = new AsyncDbWorkModule(model, net, async, db, _initiatorRestoreConfiguration,
+            var async = new AsyncTaskModule(kernel, _queueConfiguration);
+            var model = new WriterModel(kernel, _local, _hashMapConfiguration);
+
+            var restore = new AsyncDbWorkModule(kernel, model, net, async, db, _initiatorRestoreConfiguration,
                 _transferRestoreConfiguration, _timeoutRestoreConfiguration, 
                 _queueConfigurationRestore, _isNeedRestore);
 
-            var distributor = new DistributorModule(model, async, restore, net, _queueConfiguration);
+            var distributor = new DistributorModule(kernel, model, async, restore, net, _queueConfiguration);
 
             Distributor = distributor;
             DbModule = db;
 
-            var main = new MainLogicModule(distributor, db);
-            var input = new InputModule(main, _queueConfiguration);
-            var receiver = new NetWriterReceiver(input, distributor, _receiverConfigurationForWrite,
+            var main = new MainLogicModule(kernel, distributor, db);
+            var input = new InputModule(kernel, main, _queueConfiguration);
+            var receiver = new NetWriterReceiver(kernel, input, distributor, _receiverConfigurationForWrite,
                 _receiverConfigurationForCollector);
                         
             AddModule(distributor);

@@ -5,6 +5,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -36,10 +37,11 @@ namespace Qoollo.Impl.Writer.Db
 
         private readonly DbLogicCreateAndUpdateHelper<TCommand, TKey, TValue, TConnection, TReader> _createAndUpdate;
 
-        public DbLogicModule(IHashCalculater hashCalc,
+        public DbLogicModule(StandardKernel kernel, IHashCalculater hashCalc,
             IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader> userCommandCreator,
             IMetaDataCommandCreator<TCommand, TReader> metaDataCommandCreator,
             DbImplModule<TCommand, TConnection, TReader> implModule)
+            :base(kernel)
         {
             Contract.Requires(hashCalc != null);
             Contract.Requires(userCommandCreator != null);

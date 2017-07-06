@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Modules;
@@ -34,7 +35,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
 
         private readonly object _lock = new object();
 
-        protected SingleReaderBase()
+        protected SingleReaderBase(StandardKernel kernel):base(kernel)
         {            
             _isFinish = false;
             _isWait = false;

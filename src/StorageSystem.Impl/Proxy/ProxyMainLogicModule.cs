@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
@@ -18,8 +19,8 @@ namespace Qoollo.Impl.Proxy
         private readonly IProxyNetModule _net;
         private readonly ProxyCache _cache;
 
-        public ProxyMainLogicModule(ProxyDistributorModule distributorModule, IProxyNetModule net,
-                                    ProxyCache proxyCache)
+        public ProxyMainLogicModule(StandardKernel kernel, ProxyDistributorModule distributorModule, IProxyNetModule net,
+            ProxyCache proxyCache) : base(kernel)
         {
             Contract.Requires(distributorModule != null);
             Contract.Requires(net != null);
@@ -27,7 +28,7 @@ namespace Qoollo.Impl.Proxy
             _net = net;
             _distributor = distributorModule;
             _cache = proxyCache;
-        }       
+        }
 
         public bool Process(InnerData ev)
         {

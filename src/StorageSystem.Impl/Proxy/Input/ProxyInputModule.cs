@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -22,8 +23,9 @@ namespace Qoollo.Impl.Proxy.Input
         private readonly ProxyInputModuleCommon _processTransaction;
         private readonly bool _hashFromValue;
 
-        public ProxyInputModule(string tableName, bool hashFromValue, AsyncProxyCache asyncProxyCache,
+        public ProxyInputModule(StandardKernel kernel, string tableName, bool hashFromValue, AsyncProxyCache asyncProxyCache,
             IHashCalculater hashCalculater, ProxyDistributorModule distributor, ProxyInputModuleCommon processTransaction)
+            :base(kernel)
         {
             Contract.Requires(distributor != null);
             Contract.Requires(hashCalculater != null);

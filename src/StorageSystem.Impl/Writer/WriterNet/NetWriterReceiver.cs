@@ -1,20 +1,22 @@
-﻿using Qoollo.Impl.Configurations;
+﻿using Ninject;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 
 namespace Qoollo.Impl.Writer.WriterNet
 {
     internal class NetWriterReceiver:ControlModule
     {
-        private NetWriterReceiverForWrite _writerReceiverForWrite;
-        private NetWriterReceiverForCollector _writerReceiverForCollector;
+        private readonly NetWriterReceiverForWrite _writerReceiverForWrite;
+        private readonly NetWriterReceiverForCollector _writerReceiverForCollector;
 
-        public NetWriterReceiver(InputModule inputModule, DistributorModule distributor,
+        public NetWriterReceiver(StandardKernel kernel, InputModule inputModule, DistributorModule distributor,
             NetReceiverConfiguration receiverConfigurationForWrite,
             NetReceiverConfiguration receiverConfigurationForCollector)
+            :base(kernel)
         {
-            _writerReceiverForWrite = new NetWriterReceiverForWrite(inputModule, distributor,
+            _writerReceiverForWrite = new NetWriterReceiverForWrite(kernel, inputModule, distributor,
                 receiverConfigurationForWrite);
-            _writerReceiverForCollector = new NetWriterReceiverForCollector(inputModule, distributor,
+            _writerReceiverForCollector = new NetWriterReceiverForCollector(kernel, inputModule, distributor,
                 receiverConfigurationForCollector);
         }
 

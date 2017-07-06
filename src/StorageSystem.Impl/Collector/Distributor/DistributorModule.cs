@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Ninject;
 using Qoollo.Impl.Collector.CollectorNet;
 using Qoollo.Impl.Collector.Model;
 using Qoollo.Impl.Common.Data.Support;
@@ -20,8 +21,8 @@ namespace Qoollo.Impl.Collector.Distributor
         private readonly AsyncTaskModule _asyncTaskModule;
         private readonly AsyncTasksConfiguration _asyncPing;
 
-        public DistributorModule(CollectorModel model,  AsyncTaskModule asyncTaskModule,
-            AsyncTasksConfiguration asyncPing)
+        public DistributorModule(StandardKernel kernel, CollectorModel model,  AsyncTaskModule asyncTaskModule,
+            AsyncTasksConfiguration asyncPing):base(kernel)
         {
             _model = model;
             _asyncTaskModule = asyncTaskModule;

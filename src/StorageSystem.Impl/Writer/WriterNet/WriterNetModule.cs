@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -18,9 +19,9 @@ namespace Qoollo.Impl.Writer.WriterNet
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public WriterNetModule(ConnectionConfiguration connectionConfiguration,
+        public WriterNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration,
             ConnectionTimeoutConfiguration connectionTimeout)
-            : base(connectionConfiguration, connectionTimeout)
+            : base(kernel, connectionConfiguration, connectionTimeout)
         {
         }
 
@@ -29,7 +30,7 @@ namespace Qoollo.Impl.Writer.WriterNet
         public bool ConnectToWriter(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToWriter(id, configuration, time));
+                (id, configuration, time) => new SingleConnectionToWriter(Kernel, id, configuration, time));
         }
 
         public void PingWriter(List<ServerId> servers)
@@ -160,7 +161,7 @@ namespace Qoollo.Impl.Writer.WriterNet
         public bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToDistributor(id, configuration, time));
+                (id, configuration, time) => new SingleConnectionToDistributor(Kernel, id, configuration, time));
         }
 
         public void PingDistributors(List<ServerId> servers)

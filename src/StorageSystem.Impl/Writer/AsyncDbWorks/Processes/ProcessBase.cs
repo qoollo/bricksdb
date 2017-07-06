@@ -14,8 +14,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
 {
     internal abstract class ProcessBase:ControlModule
     {
-        private readonly StandardKernel _kernel;
-
         public bool IsComplete => _reader.IsComplete;
 
         public bool IsQueueEmpty => _reader.IsQueueEmpty;
@@ -27,19 +25,19 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         private readonly ReaderFullBase _reader;
 
         protected ProcessBase(StandardKernel kernel, DbModuleCollection db, WriterModel writerModel, WriterNetModule writerNet, string tableName, bool isSystemUpdated, QueueConfiguration queueConfiguration)
+            :base(kernel)
         {
-            _kernel = kernel;
             Db = db;
             WriterModel = writerModel;
             WriterNet = writerNet;
 
-            var queue = _kernel.Get<IGlobalQueue>();
+            var queue = kernel.Get<IGlobalQueue>();
 
             if (InitInjection.RestoreUsePackage)
-                _reader = new RestoreReaderFull<List<InnerData>>(IsNeedSendData, ProcessDataPackage,
+                _reader = new RestoreReaderFull<List<InnerData>>(kernel, IsNeedSendData, ProcessDataPackage,
                     queueConfiguration, db, isSystemUpdated, tableName, queue.DbRestorePackageQueue, true);
             else
-                _reader = new RestoreReaderFull<InnerData>(IsNeedSendData, ProcessData,
+                _reader = new RestoreReaderFull<InnerData>(kernel, IsNeedSendData, ProcessData,
                     queueConfiguration, db, isSystemUpdated, tableName, queue.DbRestoreQueue, false);
         }
 

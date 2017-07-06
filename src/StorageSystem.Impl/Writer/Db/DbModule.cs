@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -10,6 +11,10 @@ namespace Qoollo.Impl.Writer.Db
 {
     public abstract class DbModule:ControlModule
     {
+        protected DbModule(StandardKernel kernel) : base(kernel)
+        {
+        }
+
         public abstract string TableName { get; }
 
         public abstract RemoteResult InitDb();

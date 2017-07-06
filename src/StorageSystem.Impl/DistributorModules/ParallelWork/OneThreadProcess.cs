@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules.ParallelWork;
@@ -11,7 +12,8 @@ namespace Qoollo.Impl.DistributorModules.ParallelWork
         private readonly MainLogicModule _main;
         private RentedElementMonitor<TransactionExecutor> _transaction;
 
-        public OneThreadProcess(MainLogicModule main, TransactionModule transactionModule)
+        public OneThreadProcess(StandardKernel kernel, MainLogicModule main, TransactionModule transactionModule)
+            :base(kernel)
         {
             Contract.Requires(main != null);
             Contract.Requires(transactionModule != null);

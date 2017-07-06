@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -19,7 +20,8 @@ namespace Qoollo.Impl.DistributorModules
         private readonly TransactionModule _transaction;
         private readonly DistributorTimeoutCache _cache;
 
-        public MainLogicModule(DistributorModule distributor, TransactionModule transaction, DistributorTimeoutCache cache)
+        public MainLogicModule(StandardKernel kernel, DistributorModule distributor, TransactionModule transaction, DistributorTimeoutCache cache)
+            :base(kernel)
         {            
             Contract.Requires(distributor != null);
             Contract.Requires(transaction != null);

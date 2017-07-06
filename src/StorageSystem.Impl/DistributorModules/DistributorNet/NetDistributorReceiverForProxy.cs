@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using System.ServiceModel;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -17,12 +18,13 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         private readonly IInputModule _input;
         private readonly DistributorModule _distributorModule;
 
-        public NetDistributorReceiverForProxy(MainLogicModule main, IInputModule input, DistributorModule distributorModule,
-                                      NetReceiverConfiguration receiverConfiguration):base(receiverConfiguration)
+        public NetDistributorReceiverForProxy(StandardKernel kernel, MainLogicModule main, IInputModule input,
+            DistributorModule distributorModule,
+            NetReceiverConfiguration receiverConfiguration) : base(kernel, receiverConfiguration)
         {
             Contract.Requires(main != null);
             Contract.Requires(input != null);
-            Contract.Requires(distributorModule!=null);
+            Contract.Requires(distributorModule != null);
             _mainLogic = main;
             _input = input;
             _distributorModule = distributorModule;

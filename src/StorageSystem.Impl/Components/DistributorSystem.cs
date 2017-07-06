@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
@@ -67,9 +68,9 @@ namespace Qoollo.Impl.Components
 
         public DistributorModule Distributor { get; private set; }
 
-        protected virtual DistributorNetModule CreateNetModule(ConnectionConfiguration connectionConfiguration)
+        protected virtual DistributorNetModule CreateNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration)
         {
-            return new DistributorNetModule(_connectionConfiguration, _connectionTimeoutConfiguration);
+            return new DistributorNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
         }
 
         public override void Build()
@@ -77,20 +78,22 @@ namespace Qoollo.Impl.Components
             var q = new GlobalQueueInner();
             GlobalQueue.SetQueue(q);
 
-            var cache = new DistributorTimeoutCache(_cacheConfiguration);
-            var net = CreateNetModule(_connectionConfiguration);
-            var distributor = new DistributorModule(_pingConfig, _checkConfig, _distributorHashConfiguration,
+            var kernel = new StandardKernel();
+
+            var cache = new DistributorTimeoutCache(kernel, _cacheConfiguration);
+            var net = CreateNetModule(kernel, _connectionConfiguration);
+            var distributor = new DistributorModule(kernel, _pingConfig, _checkConfig, _distributorHashConfiguration,
                 new QueueConfiguration(1, 1000), net, _localfordb, _localforproxy, _hashMapConfiguration);
 
             Distributor = distributor;
 
             net.SetDistributor(distributor);
-            var transaction = new TransactionModule(net, _transactionConfiguration,
+            var transaction = new TransactionModule(kernel, net, _transactionConfiguration,
                 _distributorHashConfiguration.CountReplics, cache);
-            var main = new MainLogicModule(distributor, transaction, cache);
+            var main = new MainLogicModule(kernel, distributor, transaction, cache);
             
-            var input = new InputModuleWithParallel(_queueConfiguration, main, transaction);
-            var receive = new NetDistributorReceiver(main, input, distributor, _receiverConfigurationForDb,
+            var input = new InputModuleWithParallel(kernel, _queueConfiguration, main, transaction);
+            var receive = new NetDistributorReceiver(kernel, main, input, distributor, _receiverConfigurationForDb,
                 _receiverConfigurationForProxy);
 
             AddModule(receive);            

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Ninject;
 using Qoollo.Impl.Collector.Load;
 using Qoollo.Impl.Collector.Tasks;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -12,7 +13,8 @@ namespace Qoollo.Impl.Collector.Merge
     {
         private readonly IDataLoader _dataLoader;
 
-        protected MergeBase(IDataLoader dataLoader)
+        protected MergeBase(StandardKernel kernel, IDataLoader dataLoader)
+            :base(kernel)
         {
             _dataLoader = dataLoader;
         }

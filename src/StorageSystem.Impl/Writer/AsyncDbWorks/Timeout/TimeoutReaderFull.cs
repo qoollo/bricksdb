@@ -1,4 +1,5 @@
 ﻿using System;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
@@ -12,9 +13,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
         private readonly Func<MetaData, bool> _isMine;        
         private readonly DbModuleCollection _db;
 
-        public TimeoutReaderFull(Func<MetaData, bool> isMine, Action<InnerData> process,
+        public TimeoutReaderFull(StandardKernel kernel, Func<MetaData, bool> isMine, Action<InnerData> process,
             QueueConfiguration queueConfiguration, DbModuleCollection db, QueueWithParam<InnerData> queue)
-            : base(process, queueConfiguration, queue)
+            : base(kernel, process, queueConfiguration, queue)
         {
             _isMine = isMine;            
             _db = db;
@@ -22,7 +23,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
 
         protected override SingleReaderBase CreateReader(int countElements)
         {
-            return new TimeoutReader(_db,
+            return new TimeoutReader(Kernel, _db,
                 new RestoreDataContainer(true, true, countElements, ProcessDataWithQueue(), _isMine, false));
         }
     }

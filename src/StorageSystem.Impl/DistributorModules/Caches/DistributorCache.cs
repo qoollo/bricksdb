@@ -1,4 +1,5 @@
 ﻿using System;
+using Ninject;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Modules.Cache;
 
@@ -8,7 +9,8 @@ namespace Qoollo.Impl.DistributorModules.Caches
     {
         private readonly TimeSpan _aliveTimeout;
 
-        public DistributorCache(TimeSpan timeout, TimeSpan aliveTimeout) : base(timeout)
+        public DistributorCache(StandardKernel kernel, TimeSpan timeout, TimeSpan aliveTimeout) 
+            : base(kernel, timeout)
         {
             _aliveTimeout = aliveTimeout;
         }

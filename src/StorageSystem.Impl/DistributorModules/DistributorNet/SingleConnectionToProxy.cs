@@ -1,4 +1,5 @@
-﻿using Qoollo.Impl.Common;
+﻿using Ninject;
+using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
@@ -11,8 +12,9 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 {
     internal class SingleConnectionToProxy : SingleConnection<ICommonProxyNetReceiver>, ICommonCommunicationNet, ISingleConnection
     {
-        public SingleConnectionToProxy(ServerId server, ConnectionConfiguration configuration,
-            ConnectionTimeoutConfiguration timeoutConfiguration) : base(server, configuration, timeoutConfiguration)
+        public SingleConnectionToProxy(StandardKernel kernel, ServerId server, ConnectionConfiguration configuration,
+            ConnectionTimeoutConfiguration timeoutConfiguration) 
+            : base(kernel, server, configuration, timeoutConfiguration)
         {
         }
 

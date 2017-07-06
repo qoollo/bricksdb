@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using System.ServiceModel;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Configurations;
@@ -10,10 +11,10 @@ namespace Qoollo.Impl.Proxy.ProxyNet
 {
     internal class ProxyNetReceiver : NetReceiveModule<ICommonProxyNetReceiver>, ICommonProxyNetReceiver
     {
-        private ProxyDistributorModule _distributorModule;
+        private readonly ProxyDistributorModule _distributorModule;
 
-        public ProxyNetReceiver(ProxyDistributorModule distributorModule, NetReceiverConfiguration receiverConfiguration)
-            :base(receiverConfiguration)
+        public ProxyNetReceiver(StandardKernel kernel, ProxyDistributorModule distributorModule, NetReceiverConfiguration receiverConfiguration)
+            :base(kernel, receiverConfiguration)
         {
             Contract.Requires(distributorModule!=null);
             _distributorModule = distributorModule;

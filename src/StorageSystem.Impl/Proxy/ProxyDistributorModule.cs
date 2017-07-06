@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Commands;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -35,9 +36,10 @@ namespace Qoollo.Impl.Proxy
 
         public ServerId ProxyServerId { get { return _local; } }
 
-        public ProxyDistributorModule(AsyncProxyCache asyncProxyCache, ProxyNetModule net,
-                                      QueueConfiguration queueConfiguration, ServerId local,
-                                      AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing)
+        public ProxyDistributorModule(StandardKernel kernel, AsyncProxyCache asyncProxyCache, ProxyNetModule net,
+            QueueConfiguration queueConfiguration, ServerId local,
+            AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing)
+            : base(kernel)
         {
             _asyncProxyCache = asyncProxyCache;
             _asynPing = asyncPing;
@@ -45,8 +47,8 @@ namespace Qoollo.Impl.Proxy
             _distributorSystemModel = new DistributorSystemModel();
             _asynGetData = asyncGetData;
             _net = net;
-            _local = local;            
-            _async = new AsyncTaskModule(queueConfiguration);
+            _local = local;
+            _async = new AsyncTaskModule(kernel, queueConfiguration);
             _queue = GlobalQueue.Queue;
         }
 

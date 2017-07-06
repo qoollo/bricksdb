@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -22,7 +23,8 @@ namespace Qoollo.Impl.Writer
         private readonly MainLogicModule _mainLogicModule;
         private readonly GlobalQueueInner _queue;
 
-        public InputModule(MainLogicModule mainLogic, QueueConfiguration queueConfiguration)
+        public InputModule(StandardKernel kernel, MainLogicModule mainLogic, QueueConfiguration queueConfiguration)
+            :base(kernel)
         {
             Contract.Requires(queueConfiguration!=null);
             Contract.Requires(mainLogic!=null);

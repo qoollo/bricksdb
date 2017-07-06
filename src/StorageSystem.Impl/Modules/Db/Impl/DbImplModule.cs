@@ -6,7 +6,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
 {
     public abstract class DbImplModule<TCommand, TConnection, TReader> : ControlModule where TConnection : class
     {
-        protected DbImplModule(StandardKernel kernel) : base(kernel)
+        protected DbImplModule() : base(null)
         {
         }
 

@@ -31,8 +31,9 @@ namespace Qoollo.Impl.Postgre
 
         public override DbModule Build()
         {
+            //todo change init
             return
-                new DbLogicModule<NpgsqlCommand, TKey, TValue, NpgsqlConnection, NpgsqlDataReader>(
+                new DbLogicModule<NpgsqlCommand, TKey, TValue, NpgsqlConnection, NpgsqlDataReader>(null,
                     new HashFakeImpl<TKey, TValue>(_dataProvider), _userCommandCreator,
                     new PostgreMetaDataCommandCreator<TKey, TValue>(_userCommandCreator),
                     new PostgreDbModule(_connectionParams, _connectionParams.CountDbConnections,

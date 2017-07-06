@@ -15,8 +15,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
         private readonly TConnectionParam _connectionParam;
         private const int MinElements = 50;
 
-        protected DbImplModuleWithPool(StandardKernel kernel, TConnectionParam connectionParam, int maxCountElementInPool, int trimPeriod)
-            :base(kernel)
+        protected DbImplModuleWithPool(TConnectionParam connectionParam, int maxCountElementInPool, int trimPeriod)
         {
             Contract.Requires(connectionParam != null);            
 

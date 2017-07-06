@@ -45,7 +45,7 @@ namespace Qoollo.Impl.Collector
             }
         }
 
-        public SelectReader(SearchTask searchTask, List<SearchData> list, int limitCount):base(null)
+        public SelectReader(SearchTask searchTask, List<SearchData> list, int limitCount)
         {
             _searchTask = searchTask;
             _pos = -1;

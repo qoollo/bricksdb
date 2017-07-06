@@ -31,8 +31,9 @@ namespace Qoollo.Impl.Sql
 
         public override DbModule Build()
         {
+            //todo change init
             return
-                new DbLogicModule<SqlCommand, TKey, TValue, SqlConnection, SqlDataReader>(
+                new DbLogicModule<SqlCommand, TKey, TValue, SqlConnection, SqlDataReader>(null, 
                     new HashFakeImpl<TKey, TValue>(_dataProvider),_userCommandCreator,
                     new SqlMetaDataCommandCreator<TKey, TValue>(_userCommandCreator),
                     new SqlDbModule(_connectionParams, _connectionParams.CountDbConnections,

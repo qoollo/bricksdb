@@ -13,7 +13,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
 
         public bool IsFail;
 
-        protected DbReader(StandardKernel kernel):base(kernel)
+        protected DbReader():base(null)
         {
             IsFail = false;
         }

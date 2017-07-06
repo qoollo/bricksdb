@@ -21,6 +21,7 @@ using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
 using Qoollo.Impl.Proxy.Model;
 using Qoollo.Impl.Proxy.ProxyNet;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Xunit;
@@ -32,10 +33,10 @@ namespace Qoollo.Tests
     public class TestProxyModules:TestBase
     {
         [Fact]
-        public void ProxySystem_CreateSync_SendSyncDataToFakeDistributor_NoError()    
+        public void ProxySystem_CreateSync_SendSyncDataToFakeDistributor_NoError()
         {
             var proxy = TestProxySystem(proxyServer);
-            proxy.Build();
+            proxy.Build(new TestInjectionModule());
             proxy.Start();
 
             var distrServer = ServerId(distrServer1);
@@ -71,7 +72,7 @@ namespace Qoollo.Tests
         public void ProxySystem_Read_ReadFromFakeDistributor_ExpectedData()
         {
             var proxy = TestProxySystem(proxyServer);
-            proxy.Build();
+            proxy.Build(new TestInjectionModule());
             proxy.Start();
 
             var distrServer = ServerId(distrServer1);

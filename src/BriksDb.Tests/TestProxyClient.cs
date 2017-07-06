@@ -1,5 +1,6 @@
 ﻿using System;
 using Qoollo.Client.Request;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestWriter;
 using Xunit;
@@ -12,6 +13,8 @@ namespace Qoollo.Tests
         public TestProxyClient():base()
         {
             _proxy = TestGate(proxyServer);
+
+            _proxy.Module = new TestInjectionModule();
             _proxy.Build();
             _proxy.Start();
         }
@@ -37,12 +40,12 @@ namespace Qoollo.Tests
 
                 var storage = WriterSystem(filename, 2, storageServer1);
 
-                distr.Build();
+                distr.Build(new TestInjectionModule());
                 distr.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
 
-                storage.Build();
+                storage.Build(new TestInjectionModule());
                 storage.DbModule.AddDbModule(new TestDbInMemory(_kernel));
                 storage.Start();
 
@@ -96,12 +99,12 @@ namespace Qoollo.Tests
 
                 var storage = WriterSystem(filename, 2, storageServer1);
 
-                distr.Build();
+                distr.Build(new TestInjectionModule());
                 distr.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
 
-                storage.Build();
+                storage.Build(new TestInjectionModule());
                 storage.DbModule.AddDbModule(new TestDbInMemory(_kernel));
                 storage.Start();
 

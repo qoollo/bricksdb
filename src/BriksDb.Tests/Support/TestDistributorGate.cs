@@ -16,6 +16,7 @@ using Qoollo.Impl.DistributorModules.Model;
 using Qoollo.Impl.DistributorModules.ParallelWork;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Tests.NetMock;
 
 namespace Qoollo.Tests.Support
 {
@@ -47,7 +48,7 @@ namespace Qoollo.Tests.Support
             _q = new GlobalQueueInner();
             GlobalQueue.SetQueue(_q);
 
-            var kernel = new StandardKernel();
+            var kernel = new StandardKernel(new TestInjectionModule());
 
             var connection = new ConnectionConfiguration("testService", 10);
 

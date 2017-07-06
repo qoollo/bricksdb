@@ -6,6 +6,7 @@ using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
@@ -21,7 +22,7 @@ namespace Qoollo.Tests
         public TestProxyAndDistributor():base()
         {
             _proxySystem = TestProxySystem(proxyServer);
-            _proxySystem.Build();
+            _proxySystem.Build(new TestInjectionModule());
         }
 
         [Fact]
@@ -38,7 +39,7 @@ namespace Qoollo.Tests
 
                 try
                 {
-                    distr.Build();
+                    distr.Build(new TestInjectionModule());
                     _proxySystem.Start();
                     distr.Start();
 
@@ -119,8 +120,8 @@ namespace Qoollo.Tests
 
                 try
                 {
-                    distr.Build();
-                    distr2.Build();
+                    distr.Build(new TestInjectionModule());
+                    distr2.Build(new TestInjectionModule());
 
                     _proxySystem.Start();
                     distr.Start();
@@ -170,7 +171,7 @@ namespace Qoollo.Tests
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000), filename, 1, 
                     distrServer1, distrServer12, 30000);
 
-                distr.Build();
+                distr.Build(new TestInjectionModule());
 
                 _proxySystem.Start();
                 distr.Start();
@@ -210,8 +211,8 @@ namespace Qoollo.Tests
                     distrServer1, distrServer12, 30000);
 
                 var storage = WriterSystem(filename, 1, storageServer1);
-                storage.Build();
-                distr.Build();
+                storage.Build(new TestInjectionModule());
+                distr.Build(new TestInjectionModule());
 
                 storage.DbModule.AddDbModule(new TestDbInMemory(_kernel));
 
@@ -267,9 +268,9 @@ namespace Qoollo.Tests
                 var storage1 = WriterSystem(filename, 1, storageServer1);
                 var storage2 = WriterSystem(filename, 1, storageServer2);
 
-                storage1.Build();
-                storage2.Build();
-                distr.Build();
+                storage1.Build(new TestInjectionModule());
+                storage2.Build(new TestInjectionModule());
+                distr.Build(new TestInjectionModule());
 
                 storage1.DbModule.AddDbModule(new TestDbInMemory(_kernel));
                 storage2.DbModule.AddDbModule(new TestDbInMemory(_kernel));
@@ -323,9 +324,9 @@ namespace Qoollo.Tests
                 var storage1 = WriterSystem(filename, 2, storageServer1);
                 var storage2 = WriterSystem(filename, 2, storageServer2);
 
-                storage1.Build();
-                storage2.Build();
-                distr.Build();
+                storage1.Build(new TestInjectionModule());
+                storage2.Build(new TestInjectionModule());
+                distr.Build(new TestInjectionModule());
 
                 storage1.DbModule.AddDbModule(new TestDbInMemory(_kernel));
                 storage2.DbModule.AddDbModule(new TestDbInMemory(_kernel));
@@ -379,9 +380,9 @@ namespace Qoollo.Tests
                 var storage1 = WriterSystem(filename, 2, storageServer1);
                 var storage2 = WriterSystem(filename, 2, storageServer2);
 
-                storage1.Build();
-                storage2.Build();
-                distr.Build();
+                storage1.Build(new TestInjectionModule());
+                storage2.Build(new TestInjectionModule());
+                distr.Build(new TestInjectionModule());
 
                 storage1.DbModule.AddDbModule(new TestDbInMemory(_kernel));
                 storage2.DbModule.AddDbModule(new TestDbInMemory(_kernel));
@@ -423,9 +424,9 @@ namespace Qoollo.Tests
                 var storage1 = WriterSystem(filename, 2, storageServer1);
                 var storage2 = WriterSystem(filename, 2, storageServer2);
 
-                storage1.Build();
-                storage2.Build();
-                distr.Build();
+                storage1.Build(new TestInjectionModule());
+                storage2.Build(new TestInjectionModule());
+                distr.Build(new TestInjectionModule());
 
                 storage1.DbModule.AddDbModule(new TestDbInMemory(_kernel));
                 storage2.DbModule.AddDbModule(new TestDbInMemory(_kernel));

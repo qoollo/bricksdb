@@ -19,6 +19,7 @@ using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
+using Qoollo.Impl.Proxy.Interfaces;
 using Qoollo.Impl.Proxy.Model;
 using Qoollo.Impl.Proxy.ProxyNet;
 using Qoollo.Tests.NetMock;
@@ -141,9 +142,11 @@ namespace Qoollo.Tests
             var queue = GetBindedQueue();
 
             var net = ProxyNetModule();
-            var distr = new TestProxyDistributorModule(_kernel);
+            AsyncProxyCache();
 
-            net.SetDistributor(distr);
+            var distr = new TestProxyDistributorModule(_kernel);
+            _kernel.Bind<IProxyDistributorModule>().ToConstant(distr);
+
             net.Start();
 
             net.ConnectToDistributor(server1);
@@ -220,11 +223,12 @@ namespace Qoollo.Tests
 
             var net = ProxyNetModule();            
             var distributor = ProxyDistributorModule(net, server1.Port);
-
-            net.SetDistributor(distributor);
+            _kernel.Bind<IProxyDistributorModule>().ToConstant(distributor);
 
             var cache = new ProxyCache(TimeSpan.FromSeconds(20));
-            var main = new ProxyMainLogicModule(_kernel, distributor, net, cache);
+            _kernel.Bind<IProxyCache>().ToConstant(cache);
+
+            var main = new ProxyMainLogicModule(_kernel);
 
             net.Start();
 
@@ -271,28 +275,28 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 var q1 = GetBindedQueue();
-
                 var net = ProxyNetModule();
                 var distributor = ProxyDistributorModule(net, storageServer1);
+                _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor);
 
-                net.SetDistributor(distributor);
-                var receive = new ProxyNetReceiver(_kernel, distributor, NetReceiverConfiguration(storageServer1));
+                var receive = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer1));
+                receive.Start();
 
                 var q2 = GetBindedQueue();
-
                 var net2 = ProxyNetModule();
                 var distributor2 = ProxyDistributorModule(net2, storageServer2);
-                
-                net2.SetDistributor(distributor2);
-                var receive2 = new ProxyNetReceiver(_kernel, distributor2, NetReceiverConfiguration(storageServer2));
+                _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor2);
+
+                var receive2 = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer2));
+                receive2.Start();
 
                 var q3 = GetBindedQueue();
-
                 var net3 = ProxyNetModule();
                 var distributor3 = ProxyDistributorModule(net3, storageServer3);
+                _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor3);
 
-                net3.SetDistributor(distributor3);
-                var receive3 = new ProxyNetReceiver(_kernel, distributor3, NetReceiverConfiguration(storageServer3));
+                var receive3 = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer3));
+                receive3.Start();
 
                 var dnet = DistributorNetModule();
                 var ddistributor = DistributorDistributorModule(filename1, replicsCount, dnet, 30000, 30000);
@@ -320,9 +324,6 @@ namespace Qoollo.Tests
                     NetReceiverConfiguration(distrServer2),
                     NetReceiverConfiguration(distrServer22));
 
-                receive.Start();
-                receive2.Start();
-                receive3.Start();
                 receiver4.Start();
                 receiver5.Start();
                 distributor.Start();

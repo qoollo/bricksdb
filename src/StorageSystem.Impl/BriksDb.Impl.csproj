@@ -164,6 +164,7 @@
     <Compile Include="Common\Commands\ServerNotAvailableCommand.cs" />
     <Compile Include="Common\Support\delegate.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
+    <Compile Include="Modules\Interfaces\ICacheModule.cs" />
     <Compile Include="Modules\Interfaces\IAsyncTaskModule.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\ConnectionBehaviorBase.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\IConnectionBehavior.cs" />
@@ -174,6 +175,12 @@
     <Compile Include="Modules\HashModule\HashLogic.cs" />
     <Compile Include="Modules\Queue\IGlobalQueue.cs" />
     <Compile Include="PerfCounters\PoolsProfiling.cs" />
+    <Compile Include="Proxy\Interfaces\IProxyInputModuleCommon.cs" />
+    <Compile Include="Proxy\Interfaces\IProxyCache.cs" />
+    <Compile Include="Proxy\Interfaces\IAsyncProxyCache.cs" />
+    <Compile Include="Proxy\Interfaces\IProxyDistributorModule.cs" />
+    <Compile Include="Proxy\Interfaces\IProxyMainLogicModule.cs" />
+    <Compile Include="Proxy\Interfaces\IProxyNetModule.cs" />
     <Compile Include="TestSupport\InitInjection.cs" />
     <Compile Include="TestSupport\InjectionModule.cs" />
     <Compile Include="Writer\AsyncDbWorks\IAsyncDbWorkModule.cs" />
@@ -325,7 +332,6 @@
     <Compile Include="Proxy\ProxyDistributorModule.cs" />
     <Compile Include="Proxy\Caches\ProxyCache.cs" />
     <Compile Include="NetInterfaces\Proxy\ICommonProxyNetReceiver.cs" />
-    <Compile Include="Proxy\ProxyNet\IProxyNetModule.cs" />
     <Compile Include="NetInterfaces\Distributor\IProxyRemoteNet.cs" />
     <Compile Include="Proxy\ProxyNet\ProxyNetModule.cs" />
     <Compile Include="Proxy\ProxyNet\ProxyNetReceiver.cs" />

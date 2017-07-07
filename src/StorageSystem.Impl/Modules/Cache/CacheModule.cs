@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.Caching;
+using Qoollo.Impl.Modules.Interfaces;
 
 namespace Qoollo.Impl.Modules.Cache
 {
-    internal abstract class CacheModule<T>:ControlModule where T :class 
+    internal abstract class CacheModule<T> : ControlModule, ICacheModule<T> where T :class 
     {
         private readonly MemoryCache _cache;
         private readonly TimeSpan _timeout;

@@ -10,18 +10,24 @@ using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
+using Qoollo.Impl.Proxy.Interfaces;
 
 namespace Qoollo.Impl.Proxy.ProxyNet
 {
-    internal class ProxyNetModule:NetModule, IProxyNetModule
+    internal class ProxyNetModule : NetModule, IProxyNetModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        private ProxyDistributorModule _distributor;
+        private IProxyDistributorModule _distributor;
 
         public ProxyNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration,
             ConnectionTimeoutConfiguration connectionTimeout) : base(kernel, connectionConfiguration, connectionTimeout)
         {
+        }
+
+        public override void Start()
+        {
+            _distributor = Kernel.Get<IProxyDistributorModule>();
         }
 
         public void PingDistributors(List<ServerId> servers, Action<ServerId> serverAvailable)
@@ -30,21 +36,11 @@ namespace Qoollo.Impl.Proxy.ProxyNet
                 ConnectToDistributor);
         }        
 
-        #region Support
-
-        public void SetDistributor(ProxyDistributorModule distributor)
-        {
-            Contract.Requires(distributor!=null);
-            _distributor = distributor;
-        }
-
         public bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
                 (id, configuration, time) => new SingleConnectionToDistributor(Kernel, id, configuration, time));
         }
-
-        #endregion
 
         #region Interface
 

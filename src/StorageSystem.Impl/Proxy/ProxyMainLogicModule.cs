@@ -1,33 +1,31 @@
-﻿using System.Diagnostics.Contracts;
-using Ninject;
+﻿using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Modules;
-using Qoollo.Impl.Proxy.Caches;
-using Qoollo.Impl.Proxy.ProxyNet;
+using Qoollo.Impl.Proxy.Interfaces;
 
 namespace Qoollo.Impl.Proxy
 {
-    internal class ProxyMainLogicModule : ControlModule
+    internal class ProxyMainLogicModule : ControlModule, IProxyMainLogicModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        private readonly ProxyDistributorModule _distributor;
-        private readonly IProxyNetModule _net;
-        private readonly ProxyCache _cache;
+        private IProxyDistributorModule _distributor;
+        private IProxyNetModule _net;
+        private IProxyCache _cache;
 
-        public ProxyMainLogicModule(StandardKernel kernel, ProxyDistributorModule distributorModule, IProxyNetModule net,
-            ProxyCache proxyCache) : base(kernel)
+        public ProxyMainLogicModule(StandardKernel kernel) : base(kernel)
         {
-            Contract.Requires(distributorModule != null);
-            Contract.Requires(net != null);
-            Contract.Requires(proxyCache != null);
-            _net = net;
-            _distributor = distributorModule;
-            _cache = proxyCache;
+        }
+
+        public override void Start()
+        {
+            _distributor = Kernel.Get<IProxyDistributorModule>();
+            _net = Kernel.Get<IProxyNetModule>();
+            _cache = Kernel.Get<IProxyCache>();
         }
 
         public bool Process(InnerData ev)

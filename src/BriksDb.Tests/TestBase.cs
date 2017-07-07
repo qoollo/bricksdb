@@ -17,6 +17,7 @@ using Qoollo.Impl.DistributorModules.Model;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
+using Qoollo.Impl.Proxy.Interfaces;
 using Qoollo.Impl.Proxy.ProxyNet;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.NetMock;
@@ -104,8 +105,10 @@ namespace Qoollo.Tests
 
         internal ProxyNetModule ProxyNetModule()
         {
-            return new ProxyNetModule(_kernel, ConnectionConfiguration,
+            var net = new ProxyNetModule(_kernel, ConnectionConfiguration,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            _kernel.Rebind<IProxyNetModule>().ToConstant(net);
+            return net;
         }
 
         internal DistributorNetModule DistributorNetModule()
@@ -128,10 +131,18 @@ namespace Qoollo.Tests
                 new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
         }
 
+        internal AsyncProxyCache AsyncProxyCache()
+        {
+            var cache = new AsyncProxyCache(TimeSpan.FromMinutes(100));
+            _kernel.Rebind<IAsyncProxyCache>().ToConstant(cache);
+            return cache;
+        }
+
         internal ProxyDistributorModule ProxyDistributorModule(ProxyNetModule net, int proxyPort)
         {
-            return new ProxyDistributorModule(_kernel, new AsyncProxyCache(TimeSpan.FromMinutes(100)),
-                net, QueueConfiguration, ServerId(proxyPort),
+            AsyncProxyCache();
+                        
+            return new ProxyDistributorModule(_kernel, QueueConfiguration, ServerId(proxyPort),
                 new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
                 new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
         }

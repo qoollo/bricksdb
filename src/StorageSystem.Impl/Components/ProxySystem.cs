@@ -11,6 +11,7 @@ using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
 using Qoollo.Impl.Proxy.Input;
+using Qoollo.Impl.Proxy.Interfaces;
 using Qoollo.Impl.Proxy.ProxyNet;
 using Qoollo.Impl.TestSupport;
 
@@ -67,19 +68,27 @@ namespace Qoollo.Impl.Components
             kernel.Bind<IGlobalQueue>().ToConstant(q);
 
             var asyncCache = new AsyncProxyCache(_asyncCacheConfiguration.TimeAliveSec);
+            kernel.Bind<IAsyncProxyCache>().ToConstant(asyncCache);
 
             var net = new ProxyNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
-            var distributor = new ProxyDistributorModule(kernel, asyncCache, net, new QueueConfiguration(1, 1000), _local,
-                _asyncGetData, _asyncPing);
+            kernel.Bind<IProxyNetModule>().ToConstant(net);
 
-            net.SetDistributor(distributor);
+            var distributor = new ProxyDistributorModule(kernel, new QueueConfiguration(1, 1000), _local,
+                _asyncGetData, _asyncPing);
+            kernel.Bind<IProxyDistributorModule>().ToConstant(distributor);
+
             var cache = new ProxyCache(_cacheConfiguration.TimeAliveSec);
-            var main = new ProxyMainLogicModule(kernel, distributor, net, cache);
-            var input = new ProxyInputModuleCommon(kernel, main, _queueConfiguration, distributor, asyncCache);
+            kernel.Bind<IProxyCache>().ToConstant(cache);
+
+            var main = new ProxyMainLogicModule(kernel);
+            kernel.Bind<IProxyMainLogicModule>().ToConstant(main);
+
+            var input = new ProxyInputModuleCommon(kernel, _queueConfiguration);
+            kernel.Bind<IProxyInputModuleCommon>().ToConstant(input);
 
             CreateApi = input.CreateApi;
 
-            var receive = new ProxyNetReceiver(kernel, distributor, _netReceiverConfiguration);
+            var receive = new ProxyNetReceiver(kernel, _netReceiverConfiguration);
 
             AddModule(input);
             AddModule(main);

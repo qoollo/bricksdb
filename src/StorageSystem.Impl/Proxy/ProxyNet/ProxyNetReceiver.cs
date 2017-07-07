@@ -1,23 +1,28 @@
-﻿using System.Diagnostics.Contracts;
-using System.ServiceModel;
+﻿using System.ServiceModel;
 using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Proxy;
+using Qoollo.Impl.Proxy.Interfaces;
 
 namespace Qoollo.Impl.Proxy.ProxyNet
 {
     internal class ProxyNetReceiver : NetReceiveModule<ICommonProxyNetReceiver>, ICommonProxyNetReceiver
     {
-        private readonly ProxyDistributorModule _distributorModule;
+        private IProxyDistributorModule _distributorModule;
 
-        public ProxyNetReceiver(StandardKernel kernel, ProxyDistributorModule distributorModule, NetReceiverConfiguration receiverConfiguration)
+        public ProxyNetReceiver(StandardKernel kernel, NetReceiverConfiguration receiverConfiguration)
             :base(kernel, receiverConfiguration)
         {
-            Contract.Requires(distributorModule!=null);
-            _distributorModule = distributorModule;
+        }
+
+        public override void Start()
+        {
+            _distributorModule = Kernel.Get<IProxyDistributorModule>();
+
+            base.Start();
         }
 
         [OperationBehavior(TransactionScopeRequired = true)]

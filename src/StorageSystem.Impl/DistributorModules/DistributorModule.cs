@@ -63,7 +63,7 @@ namespace Qoollo.Impl.DistributorModules
             _localforproxy = localforproxy;
             _autoRestoreEnable = autoRestoreEnable;
             _asyncCheck = asyncCheck;
-            _queue = GlobalQueue.Queue;
+            _queue = kernel.Get<IGlobalQueue>();
         }
 
         private readonly WriterSystemModel _modelOfDbWriters;
@@ -72,7 +72,7 @@ namespace Qoollo.Impl.DistributorModules
         private readonly DistributorNetModule _distributorNet;
         private readonly ServerId _localfordb;
         private readonly ServerId _localforproxy;
-        private readonly GlobalQueueInner _queue;
+        private readonly IGlobalQueue _queue;
         private readonly AsyncTaskModule _asyncTaskModule;
         private readonly AsyncTasksConfiguration _asyncPing;
         private readonly AsyncTasksConfiguration _asyncCheck;

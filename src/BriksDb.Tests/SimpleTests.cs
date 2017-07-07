@@ -3,15 +3,12 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.Modules.Async;
-using Qoollo.Impl.Modules.Queue;
-using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Xunit;
@@ -226,13 +223,15 @@ namespace Qoollo.Tests
 
                 #region hell
 
+                var queue = GetBindedQueue("q1");
+
                 var dnet = DistributorNetModule();
                 var ddistributor = DistributorDistributorModule(filename, 1, dnet);
                 dnet.SetDistributor(ddistributor);
 
                 dnet.Start();
                 ddistributor.Start();
-                GlobalQueue.Queue.Start();
+                queue.Start();
 
                 #endregion
 
@@ -245,7 +244,7 @@ namespace Qoollo.Tests
                 dnet.Process(dest.First(), data1);
                 dnet.Process(dest2.First(), data1);
 
-                Thread.Sleep(100);
+                Thread.Sleep(1000);
 
                 dest = ddistributor.GetDestination(data1, false);
                 dest2 = ddistributor.GetDestination(data2, false);
@@ -267,7 +266,7 @@ namespace Qoollo.Tests
                 Assert.Equal(1, dest.Count);
                 Assert.Equal(1, dest2.Count);
 
-                GlobalQueue.Queue.Dispose();
+                queue.Dispose();
 
                 ddistributor.Dispose();
                 h1.Dispose();

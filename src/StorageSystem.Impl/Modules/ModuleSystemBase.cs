@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Ninject.Modules;
-using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Impl.Modules
 {

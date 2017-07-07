@@ -30,9 +30,9 @@ namespace Qoollo.Impl.DistributorModules.Transaction
             Contract.Requires(countReplics>0);            
             Contract.Requires(cache != null);
 
-            _queue = GlobalQueue.Queue;
+            _queue = kernel.Get<IGlobalQueue>();
 
-            _transactionPool = new TransactionPool(transactionConfiguration.ElementsCount, net, countReplics);
+            _transactionPool = new TransactionPool(kernel, transactionConfiguration.ElementsCount, net, countReplics);
             _countReplics = countReplics;
             _net = net;
             _cache = cache;
@@ -43,7 +43,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
         private readonly DistributorTimeoutCache _cache;
         private readonly TransactionPool _transactionPool;
         private readonly INetModule _net;
-        private readonly GlobalQueueInner _queue;
+        private readonly IGlobalQueue _queue;
 
         #region ControlModule
 

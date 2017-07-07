@@ -18,7 +18,6 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
-using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Sql.Internal;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
@@ -708,8 +707,7 @@ namespace Qoollo.Tests
                 writer.SetServer(0, "localhost", st1, st2);
                 writer.Save();
 
-                var q1 = new GlobalQueueInner();
-                GlobalQueue.SetQueue(q1);
+                var q1 = GetBindedQueue();
 
                 var proxy = TestGate(proxyServer);
 

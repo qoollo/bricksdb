@@ -19,8 +19,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
         private readonly QueueWithParam<InnerData> _queue;
         private readonly TimeSpan _deleteTimeout;
 
-        public TimeoutModule(
-            StandardKernel kernel,
+        public TimeoutModule(StandardKernel kernel,
             WriterNetModule net, AsyncTaskModule asyncTaskModule,
             QueueConfiguration queueConfiguration, DbModuleCollection db,
             RestoreModuleConfiguration configuration)
@@ -29,7 +28,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
             _configuration = configuration;
             _queueConfiguration = queueConfiguration;
             _db = db;
-            _queue = GlobalQueue.Queue.DbTimeoutQueue;
+            _queue = kernel.Get<IGlobalQueue>().DbTimeoutQueue;
             _deleteTimeout = configuration.DeleteTimeout;
 
             if (_configuration.IsForceStart)

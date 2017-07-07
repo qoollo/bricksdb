@@ -21,9 +21,9 @@ namespace Qoollo.Tests.TestProxy
         {
         }
 
-        public GlobalQueueInner Queue
+        public GlobalQueue Queue
         {
-            get { return Modules.First(x => x is GlobalQueueInner) as GlobalQueueInner; }
+            get { return Modules.First(x => x is GlobalQueue) as GlobalQueue; }
         }
 
         public ProxyDistributorModule Distributor

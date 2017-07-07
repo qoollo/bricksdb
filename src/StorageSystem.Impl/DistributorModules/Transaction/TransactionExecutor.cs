@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.DistributorModules.DistributorNet.Interfaces;
@@ -15,15 +16,15 @@ namespace Qoollo.Impl.DistributorModules.Transaction
         private readonly INetModule _net;
         private readonly List<Task> _tasks;
         private readonly object _obj = new object();
-        private readonly GlobalQueueInner _queue;
+        private readonly IGlobalQueue _queue;
 
-        public TransactionExecutor(INetModule net, int countReplics, GlobalQueueInner queue)
+        public TransactionExecutor(INetModule net, int countReplics, StandardKernel kernel)
         {
             Contract.Requires(net!=null);
             _net = net;
             _tasks = new List<Task>();
 
-            _queue = queue;
+            _queue = kernel.Get<IGlobalQueue>();
 
             SetTasksLength(countReplics);
         }

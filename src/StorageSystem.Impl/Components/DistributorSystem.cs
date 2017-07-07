@@ -78,26 +78,25 @@ namespace Qoollo.Impl.Components
         public override void Build(NinjectModule module = null)
         {
             module = module ?? new InjectionModule();
+            Kernel = new StandardKernel(module);
 
-            var q = new GlobalQueueInner();
-            GlobalQueue.SetQueue(q);
-
-            var kernel = new StandardKernel(module);
+            var q = new GlobalQueue();
+            Kernel.Bind<IGlobalQueue>().ToConstant(q);
 
             var cache = new DistributorTimeoutCache(_cacheConfiguration);
-            var net = CreateNetModule(kernel, _connectionConfiguration);
-            var distributor = new DistributorModule(kernel, _pingConfig, _checkConfig, _distributorHashConfiguration,
+            var net = CreateNetModule(Kernel, _connectionConfiguration);
+            var distributor = new DistributorModule(Kernel, _pingConfig, _checkConfig, _distributorHashConfiguration,
                 new QueueConfiguration(1, 1000), net, _localfordb, _localforproxy, _hashMapConfiguration);
 
             Distributor = distributor;
 
             net.SetDistributor(distributor);
-            var transaction = new TransactionModule(kernel, net, _transactionConfiguration,
+            var transaction = new TransactionModule(Kernel, net, _transactionConfiguration,
                 _distributorHashConfiguration.CountReplics, cache);
-            var main = new MainLogicModule(kernel, distributor, transaction, cache);
+            var main = new MainLogicModule(Kernel, distributor, transaction, cache);
             
-            var input = new InputModuleWithParallel(kernel, _queueConfiguration, main, transaction);
-            var receive = new NetDistributorReceiver(kernel, main, input, distributor, _receiverConfigurationForDb,
+            var input = new InputModuleWithParallel(Kernel, _queueConfiguration, main, transaction);
+            var receive = new NetDistributorReceiver(Kernel, main, input, distributor, _receiverConfigurationForDb,
                 _receiverConfigurationForProxy);
 
             AddModule(receive);            
@@ -117,5 +116,7 @@ namespace Qoollo.Impl.Components
             AddModuleDispose(distributor);            
             AddModuleDispose(net);            
         }
+
+        internal StandardKernel Kernel { get; set; }
     }
 }

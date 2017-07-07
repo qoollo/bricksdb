@@ -61,11 +61,10 @@ namespace Qoollo.Impl.Components
         public override void Build(NinjectModule module = null)
         {
             module = module ?? new InjectionModule();
-
-            var q = new GlobalQueueInner();
-            GlobalQueue.SetQueue(q);
-
             var kernel = new StandardKernel(module);
+
+            var q = new GlobalQueue();
+            kernel.Bind<IGlobalQueue>().ToConstant(q);
 
             var asyncCache = new AsyncProxyCache(_asyncCacheConfiguration.TimeAliveSec);
 

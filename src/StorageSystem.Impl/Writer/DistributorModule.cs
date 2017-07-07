@@ -29,7 +29,7 @@ namespace Qoollo.Impl.Writer
         private readonly WriterNetModule _writerNet;
         private readonly QueueConfiguration _queueConfiguration;
         private readonly AsyncDbWorkModule _asyncDbWork;
-        private readonly GlobalQueueInner _queue;
+        private readonly IGlobalQueue _queue;
 
         public DistributorModule(StandardKernel kernel,
             WriterModel model, 
@@ -50,7 +50,7 @@ namespace Qoollo.Impl.Writer
             _writerNet = writerNet;
             _queueConfiguration = configuration;
 
-            _queue = GlobalQueue.Queue;
+            _queue = kernel.Get<IGlobalQueue>();
 
             var ping = InitInjection.PingPeriod;
 

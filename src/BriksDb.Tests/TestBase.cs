@@ -14,6 +14,7 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.DistributorModules.Model;
+using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
 using Qoollo.Impl.Proxy.ProxyNet;
@@ -237,6 +238,13 @@ namespace Qoollo.Tests
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
+        }
+
+        internal GlobalQueue GetBindedQueue(string name = "")
+        {
+            var queue = new GlobalQueue(name);
+            _kernel.Rebind<IGlobalQueue>().ToConstant(queue);
+            return queue;
         }
 
         protected virtual void Dispose(bool isUserCall)

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Commands;
@@ -31,7 +32,7 @@ namespace Qoollo.Impl.Proxy
         private readonly ProxyNetModule _net;
         private readonly AsyncTaskModule _async;
         private readonly ServerId _local;
-        private readonly GlobalQueueInner _queue;
+        private readonly IGlobalQueue _queue;
         private readonly AsyncProxyCache _asyncProxyCache;
 
         public ServerId ProxyServerId { get { return _local; } }
@@ -49,7 +50,7 @@ namespace Qoollo.Impl.Proxy
             _net = net;
             _local = local;
             _async = new AsyncTaskModule(kernel, queueConfiguration);
-            _queue = GlobalQueue.Queue;
+            _queue = kernel.Get<IGlobalQueue>();
         }
 
         public override void Start()

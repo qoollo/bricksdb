@@ -22,7 +22,7 @@ namespace Qoollo.Tests.Support
 {
     internal class TestDistributorGate
     {
-        private GlobalQueueInner _q;
+        private GlobalQueue _q;
         private DistributorNetModule _dnet;
         public DistributorModule Distributor { get; set; }
         private TransactionModule _tranc;
@@ -43,12 +43,13 @@ namespace Qoollo.Tests.Support
 
         public void Build(int countReplics, int distrServer1, int distrServer12, string hashFile,
             TimeSpan asyncCheck = default(TimeSpan), bool autoRestoreEnable = false)
-        {
-            asyncCheck = asyncCheck == default(TimeSpan) ? TimeSpan.FromMinutes(5) : asyncCheck;
-            _q = new GlobalQueueInner();
-            GlobalQueue.SetQueue(_q);
-
+        {            
             var kernel = new StandardKernel(new TestInjectionModule());
+
+            _q = new GlobalQueue();
+            kernel.Bind<IGlobalQueue>().ToConstant(_q);
+
+            asyncCheck = asyncCheck == default(TimeSpan) ? TimeSpan.FromMinutes(5) : asyncCheck;
 
             var connection = new ConnectionConfiguration("testService", 10);
 

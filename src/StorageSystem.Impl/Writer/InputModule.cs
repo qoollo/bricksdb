@@ -21,7 +21,7 @@ namespace Qoollo.Impl.Writer
 
         private readonly QueueConfiguration _queueConfiguration;
         private readonly MainLogicModule _mainLogicModule;
-        private readonly GlobalQueueInner _queue;
+        private readonly IGlobalQueue _queue;
 
         public InputModule(StandardKernel kernel, MainLogicModule mainLogic, QueueConfiguration queueConfiguration)
             :base(kernel)
@@ -30,7 +30,7 @@ namespace Qoollo.Impl.Writer
             Contract.Requires(mainLogic!=null);
             _queueConfiguration = queueConfiguration;
             _mainLogicModule = mainLogic;
-            _queue = GlobalQueue.Queue;
+            _queue = kernel.Get<IGlobalQueue>();
         }
 
         public override void Start()

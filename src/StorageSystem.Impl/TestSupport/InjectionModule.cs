@@ -23,7 +23,7 @@ namespace Qoollo.Impl.TestSupport
 
             BindClientAndServer<ICommonCommunicationNet>();
 
-            Bind<IGlobalQueue>().To<GlobalQueueInner>();
+            //Bind<IGlobalQueue>().To<GlobalQueue>();
         }
 
         protected virtual void BindClientAndServer<TType>()

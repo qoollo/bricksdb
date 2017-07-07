@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashFile;
@@ -43,8 +44,6 @@ namespace Qoollo.Tests
                     _proxySystem.Start();
                     distr.Start();
 
-                    GlobalQueue.Queue.Start();
-
                     _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
                     var api = _proxySystem.CreateApi("", false, new StoredDataHashCalculator());
@@ -67,7 +66,10 @@ namespace Qoollo.Tests
                     Assert.NotNull(transaction);
                     Thread.Sleep(200);
                     transaction = _proxySystem.GetTransaction(transaction);
-                    GlobalQueue.Queue.TransactionQueue.Add(new Transaction(transaction));
+
+                    var queue = distr.Kernel.Get<IGlobalQueue>();
+                    queue.TransactionQueue.Add(new Transaction(transaction));
+
                     Thread.Sleep(100);
                     transaction = _proxySystem.GetTransaction(transaction);
                     Assert.NotNull(transaction);
@@ -176,8 +178,6 @@ namespace Qoollo.Tests
                 _proxySystem.Start();
                 distr.Start();
 
-                GlobalQueue.Queue.Start();
-
                 _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
                 var s = TestHelper.OpenWriterHost(_kernel, storageServer1);
@@ -219,8 +219,6 @@ namespace Qoollo.Tests
                 storage.Start();
                 _proxySystem.Start();
                 distr.Start();
-
-                GlobalQueue.Queue.Start();
 
                 _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
@@ -280,8 +278,6 @@ namespace Qoollo.Tests
                 _proxySystem.Start();
                 distr.Start();
 
-                GlobalQueue.Queue.Start();
-
                 _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
                 var api = _proxySystem.CreateApi("Int", false, new IntHashConvertor());
@@ -336,8 +332,6 @@ namespace Qoollo.Tests
                 _proxySystem.Start();
                 distr.Start();
 
-                GlobalQueue.Queue.Start();
-
                 _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
                 Thread.Sleep(100);
@@ -391,8 +385,6 @@ namespace Qoollo.Tests
                 storage2.Start();
                 _proxySystem.Start();
                 distr.Start();
-
-                GlobalQueue.Queue.Start();
 
                 _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 

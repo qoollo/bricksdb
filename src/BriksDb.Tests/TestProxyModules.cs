@@ -138,6 +138,8 @@ namespace Qoollo.Tests
             var s1 = TestHelper.OpenDistributorHost(_kernel, server1);
             var s2 = TestHelper.OpenDistributorHost(_kernel, server2);
 
+            var queue = GetBindedQueue();
+
             var net = ProxyNetModule();
             var distr = new TestProxyDistributorModule(_kernel);
 
@@ -214,6 +216,8 @@ namespace Qoollo.Tests
             var s1 = TestHelper.OpenDistributorHost(_kernel, server1);
             var s2 = TestHelper.OpenDistributorHost(_kernel, server2);
 
+            var queue = GetBindedQueue();
+
             var net = ProxyNetModule();            
             var distributor = ProxyDistributorModule(net, server1.Port);
 
@@ -266,18 +270,15 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename2))
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
-                var q1 = new GlobalQueueInner();
-                var q2 = new GlobalQueueInner();
-                var q3 = new GlobalQueueInner();
+                var q1 = GetBindedQueue();
 
-                GlobalQueue.SetQueue(q1);
                 var net = ProxyNetModule();
                 var distributor = ProxyDistributorModule(net, storageServer1);
 
                 net.SetDistributor(distributor);
                 var receive = new ProxyNetReceiver(_kernel, distributor, NetReceiverConfiguration(storageServer1));
 
-                GlobalQueue.SetQueue(q2);
+                var q2 = GetBindedQueue();
 
                 var net2 = ProxyNetModule();
                 var distributor2 = ProxyDistributorModule(net2, storageServer2);
@@ -285,7 +286,7 @@ namespace Qoollo.Tests
                 net2.SetDistributor(distributor2);
                 var receive2 = new ProxyNetReceiver(_kernel, distributor2, NetReceiverConfiguration(storageServer2));
 
-                GlobalQueue.SetQueue(q3);
+                var q3 = GetBindedQueue();
 
                 var net3 = ProxyNetModule();
                 var distributor3 = ProxyDistributorModule(net3, storageServer3);
@@ -306,7 +307,8 @@ namespace Qoollo.Tests
                     NetReceiverConfiguration(distrServer1),
                     NetReceiverConfiguration(distrServer12));
                 
-                GlobalQueue.SetQueue(q1);
+                _kernel.Rebind<IGlobalQueue>().ToConstant(q1);
+
                 var dnet2 = DistributorNetModule();
                 var ddistributor2 = DistributorDistributorModule(filename2, replicsCount, dnet2, 200000, 30000,
                     distrServer2, distrServer22);

@@ -1,5 +1,4 @@
-﻿using Ninject.Planning.Bindings;
-using Qoollo.Impl.Modules.Net.ConnectionBehavior;
+﻿using Qoollo.Impl.Modules.Net.ConnectionBehavior;
 using Qoollo.Impl.Modules.Net.ReceiveBehavior;
 using Qoollo.Impl.TestSupport;
 

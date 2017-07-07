@@ -30,7 +30,7 @@ namespace Qoollo.Tests.Support
         public DbModuleCollection Db { get; set; }
         private WriterNetModule _net;
         private StandardKernel _kernel;
-        public GlobalQueueInner Q { get; set; }
+        public GlobalQueue Q { get; set; }
 
         private TRet GetPrivtaeField<TRet>(object obj) where TRet : class
         {
@@ -43,11 +43,10 @@ namespace Qoollo.Tests.Support
 
         public void Build(int storageServer, string hashFile, int countReplics, string name = "")
         {
-            Q = new GlobalQueueInner(name);
-            GlobalQueue.SetQueue(Q);
-
             _kernel = new StandardKernel(new TestInjectionModule());
-            _kernel.Rebind<IGlobalQueue>().ToConstant(Q);
+
+            Q = new GlobalQueue(name);
+            _kernel.Bind<IGlobalQueue>().ToConstant(Q);
 
             var queueConfiguration = new QueueConfiguration(1, 1000);
             var hashMapConfiguration = new HashMapConfiguration(hashFile,

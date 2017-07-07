@@ -2,19 +2,18 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Ninject;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Tasks;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
-using Qoollo.Turbo.Threading.ThreadPools;
 
-namespace Qoollo.Impl.Collector.Background
+namespace Qoollo.Impl.Collector
 {
-    internal class BackgroundModule : ControlModule
+    internal class BackgroundModule : ControlModule, IBackgroundModule
     {
-        private readonly DynamicThreadPool _threadPool;
+        //private readonly DynamicThreadPool _threadPool;
         private readonly List<SearchTask> _tasks;
 
-        public BackgroundModule(StandardKernel kernel, QueueConfiguration queueConfiguration)
+        public BackgroundModule(StandardKernel kernel)
             :base(kernel)
         {
             _tasks = new List<SearchTask>();

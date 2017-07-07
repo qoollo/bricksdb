@@ -100,20 +100,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Collector\Background\BackgroundModule.cs" />
+    <Compile Include="Collector\BackgroundModule.cs" />
     <Compile Include="Collector\CollectorNet\CollectorNetModule.cs" />
+    <Compile Include="Collector\Interfaces\IBackgroundModule.cs" />
+    <Compile Include="Collector\Interfaces\ICollectorNetModule.cs" />
     <Compile Include="Collector\CollectorNet\SingleConnectionToWriter.cs" />
     <Compile Include="Collector\CollectorNet\SingleConnectionToDistributor.cs" />
     <Compile Include="Collector\Comparer\DateTimeComparer.cs" />
     <Compile Include="Collector\Comparer\Int64Comparer.cs" />
     <Compile Include="Collector\Comparer\IntComparer.cs" />
+    <Compile Include="Collector\Interfaces\IDistributorModule.cs" />
     <Compile Include="Collector\Load\DataLoader.cs" />
     <Compile Include="Collector\Distributor\DistributorModule.cs" />
-    <Compile Include="Collector\Load\IDataLoader.cs" />
+    <Compile Include="Collector\Interfaces\IDataLoader.cs" />
     <Compile Include="Collector\Comparer\DataComparer.cs" />
     <Compile Include="Collector\Merge\MergeBase.cs" />
     <Compile Include="Collector\Merge\OrderMerge.cs" />
     <Compile Include="Collector\Model\CollectorModel.cs" />
+    <Compile Include="Collector\Interfaces\ICollectorModel.cs" />
     <Compile Include="Collector\Parser\IUserCommandsHandler.cs" />
     <Compile Include="Collector\Parser\FieldDescription.cs" />
     <Compile Include="Collector\Parser\ScriptParser.cs" />

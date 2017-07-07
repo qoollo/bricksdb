@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Load;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common.Data.DataTypes;

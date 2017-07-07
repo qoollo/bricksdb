@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Ninject;
-using Qoollo.Impl.Collector.Background;
-using Qoollo.Impl.Collector.Distributor;
-using Qoollo.Impl.Collector.Load;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Merge;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Collector.Tasks;
@@ -17,22 +15,24 @@ namespace Qoollo.Impl.Collector
     {
         private readonly string _tableName;
         private readonly MergeBase _mergeBase;
-        private readonly DistributorModule _distributor;
-        private readonly IDataLoader _dataLoader;
-        private readonly BackgroundModule _backgroundModule;
+        private IDistributorModule _distributor;
+        private IDataLoader _dataLoader;
+        private IBackgroundModule _backgroundModule;
         private readonly ScriptParser _scriptParser;
 
-        public SearchTaskModule(StandardKernel kernel, string tableName, MergeBase mergeBase, IDataLoader dataLoader,
-            DistributorModule distributor,
-            BackgroundModule backgroundModule, ScriptParser scriptParser)
+        public SearchTaskModule(StandardKernel kernel, string tableName, MergeBase mergeBase, ScriptParser scriptParser)
             :base(kernel)
         {
             _tableName = tableName;
             _mergeBase = mergeBase;
-            _dataLoader = dataLoader;
-            _distributor = distributor;
-            _backgroundModule = backgroundModule;
             _scriptParser = scriptParser;
+        }
+
+        public override void Start()
+        {
+            _distributor = Kernel.Get<IDistributorModule>();
+            _dataLoader = Kernel.Get<IDataLoader>();
+            _backgroundModule = Kernel.Get<IBackgroundModule>();
         }
 
         public SelectReader CreateReader(string query, bool isUserScript = false, FieldDescription field = null)

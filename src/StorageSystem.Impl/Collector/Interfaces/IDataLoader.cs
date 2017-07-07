@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Qoollo.Impl.Collector.Tasks;
 
-namespace Qoollo.Impl.Collector.Load
+namespace Qoollo.Impl.Collector.Interfaces
 {
     internal interface IDataLoader
     {

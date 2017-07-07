@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Ninject;
-using Qoollo.Impl.Collector.Distributor;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
@@ -13,17 +13,21 @@ using Qoollo.Impl.NetInterfaces.Data;
 
 namespace Qoollo.Impl.Collector.CollectorNet
 {
-    internal class CollectorNetModule:NetModule
+    internal class CollectorNetModule : NetModule, ICollectorNetModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        private readonly DistributorModule _distributor;
+        private IDistributorModule _distributor;
 
         public CollectorNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration,
-            ConnectionTimeoutConfiguration connectionTimeout, DistributorModule distributor)
+            ConnectionTimeoutConfiguration connectionTimeout)
             : base(kernel, connectionConfiguration, connectionTimeout)
         {
-            _distributor = distributor;
+        }
+
+        public override void Start()
+        {
+            _distributor = Kernel.Get<IDistributorModule>();
         }
 
         #region Connect to Writer
@@ -103,6 +107,11 @@ namespace Qoollo.Impl.Collector.CollectorNet
         }
 
         #endregion
+
+        public new List<ServerId> GetServersByType(Type type)
+        {
+            return base.GetServersByType(type);
+        }
     }
 
 }

@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Ninject;
-using Qoollo.Impl.Collector.Background;
 using Qoollo.Impl.Collector.CollectorNet;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Collector.Tasks;
 using Qoollo.Impl.Modules;

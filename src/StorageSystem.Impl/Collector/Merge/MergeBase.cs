@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Ninject;
-using Qoollo.Impl.Collector.Load;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Tasks;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -11,12 +11,16 @@ namespace Qoollo.Impl.Collector.Merge
 {
     internal abstract class MergeBase:ControlModule
     {
-        private readonly IDataLoader _dataLoader;
+        private IDataLoader _dataLoader;
 
-        protected MergeBase(StandardKernel kernel, IDataLoader dataLoader)
+        protected MergeBase(StandardKernel kernel)
             :base(kernel)
         {
-            _dataLoader = dataLoader;
+        }
+
+        public override void Start()
+        {
+            _dataLoader = Kernel.Get<IDataLoader>();
         }
 
         protected void LoadPage(SingleServerSearchTask searchTask)

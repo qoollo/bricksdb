@@ -18,7 +18,6 @@ using Qoollo.Impl.Collector.Merge;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Collector.Model;
 using Qoollo.Impl.Collector.Distributor;
-using Qoollo.Impl.Collector.Background;
 using Qoollo.Impl.Collector;
 using Qoollo.Impl.Postgre.Internal;
 using Xunit;
@@ -646,17 +645,17 @@ namespace Qoollo.Tests
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
-            var merge = new OrderMerge(null, loader, parser, new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
+            var merge = new OrderMerge(null, parser);
+            //, new CollectorModel(new DistributorHashConfiguration(1),
+            //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
             var async = new AsyncTaskModule(null, new QueueConfiguration(4, 10));
+            //new CollectorModel(new DistributorHashConfiguration(1),
+            //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
+            //            HashFileType.Writer)), async
+            var distributor = new DistributorModule(null, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+            var back = new BackgroundModule(null);
 
-            var distributor =
-                new DistributorModule(null, new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
-            var back = new BackgroundModule(null, new QueueConfiguration(5, 10));
-
-            var searchModule = new SearchTaskModule(null, "Test", merge, loader, distributor, back, parser);
+            var searchModule = new SearchTaskModule(null, "Test", merge, parser);
 
             #region hell
 
@@ -742,23 +741,26 @@ namespace Qoollo.Tests
             writer.Save();
 
             var loader = new TestDataLoader(pageSize);
+            //_kernel.Bind<IDataLoader>().ToConstant(loader);
+
             var parser = new PostgreScriptParser();
             parser.SetCommandsHandler(
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
-            var merge = new OrderMerge(null, loader, parser, 
-                new CollectorModel(new DistributorHashConfiguration(1), 
-                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
+            var merge = new OrderMerge(null, parser); 
+                //new CollectorModel(new DistributorHashConfiguration(1), 
+                //    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
             var async = new AsyncTaskModule(null,new QueueConfiguration(4, 10));
 
-            var distributor =
-                new DistributorModule(null, new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
-            var back = new BackgroundModule(null, new QueueConfiguration(5, 10));
+            //new CollectorModel(new DistributorHashConfiguration(1),
+            //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
+            //            HashFileType.Writer)), async,
 
-            var searchModule = new SearchTaskModule(null, "Test", merge, loader, distributor, back, parser);
+            var distributor = new DistributorModule(null, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+            var back = new BackgroundModule(null);
+
+            var searchModule = new SearchTaskModule(null, "Test", merge, parser);
 
             #region hell
 

@@ -8,8 +8,7 @@ using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Writer.AsyncDbWorks.Processes;
-using Qoollo.Impl.Writer.Db;
-using Qoollo.Impl.Writer.WriterNet;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
@@ -44,35 +43,33 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
-        public TransferRestoreModule(
-            StandardKernel kernel,
-            WriterModel writerModel, 
-            RestoreModuleConfiguration configuration, 
-            WriterNetModule writerNet,
-            AsyncTaskModule asyncTaskModule, 
-            DbModuleCollection db, 
+        public TransferRestoreModule(StandardKernel kernel, RestoreModuleConfiguration configuration,
             QueueConfiguration queueConfiguration)
-            : base(kernel, writerNet, asyncTaskModule)
+            : base(kernel)
         {
-            Contract.Requires(writerModel != null);
             Contract.Requires(configuration != null);
-            Contract.Requires(db != null);
             Contract.Requires(queueConfiguration != null);
 
-            _writerModel = writerModel;
-            _db = db;
             _configuration = configuration;
             _queueConfiguration = queueConfiguration;
             _lastDateTime = string.Empty;
         }
 
         private readonly RestoreModuleConfiguration _configuration;
-        private readonly WriterModel _writerModel;
-        private readonly DbModuleCollection _db;
+        private IWriterModel _writerModel;
+        private IDbModule _db;
         private ServerId _remoteServer;
         private readonly QueueConfiguration _queueConfiguration;
         private SingleServerRestoreProcess _restore;
         private string _lastDateTime;
+
+        public override void Start()
+        {
+            base.Start();
+
+            _db = Kernel.Get<IDbModule>();
+            _writerModel = Kernel.Get<IWriterModel>();
+        }
 
         public void Restore(ServerId remoteServer, bool isSystemUpdated, string tableName)
         {

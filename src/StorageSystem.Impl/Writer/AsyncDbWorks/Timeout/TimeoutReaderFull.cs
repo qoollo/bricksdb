@@ -5,16 +5,17 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Writer.AsyncDbWorks.Readers;
 using Qoollo.Impl.Writer.Db;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
 {
     internal class TimeoutReaderFull:ReaderFull<InnerData>
     {
         private readonly Func<MetaData, bool> _isMine;        
-        private readonly DbModuleCollection _db;
+        private readonly IDbModule _db;
 
         public TimeoutReaderFull(StandardKernel kernel, Func<MetaData, bool> isMine, Action<InnerData> process,
-            QueueConfiguration queueConfiguration, DbModuleCollection db, QueueWithParam<InnerData> queue)
+            QueueConfiguration queueConfiguration, IDbModule db, QueueWithParam<InnerData> queue)
             : base(kernel, process, queueConfiguration, queue)
         {
             _isMine = isMine;            

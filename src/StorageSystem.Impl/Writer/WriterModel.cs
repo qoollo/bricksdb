@@ -10,10 +10,11 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.HashModule;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer
 {
-    internal class WriterModel : ControlModule
+    internal class WriterModel : ControlModule, IWriterModel
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using Ninject;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
@@ -10,7 +8,7 @@ using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Writer.AsyncDbWorks.Support;
-using Qoollo.Impl.Writer.WriterNet;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
@@ -24,22 +22,28 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         public List<RestoreServer> Servers => _serversController.Servers;
 
-        public InitiatorRestoreModule(StandardKernel kernel, WriterModel model, RestoreModuleConfiguration configuration, WriterNetModule writerNet,
-            AsyncTaskModule asyncTaskModule, RestoreStateHolder stateHolder, RestoreStateFileLogger saver)
-            : base(kernel, writerNet, asyncTaskModule)
+        public InitiatorRestoreModule(StandardKernel kernel, RestoreModuleConfiguration configuration, 
+            RestoreStateHolder stateHolder, RestoreStateFileLogger saver)
+            : base(kernel)
         {
-            _model = model;
             _configuration = configuration;
             _stateHolder = stateHolder;            
             _serversController = new RestoreProcessController(saver);
         }
 
-        private readonly WriterModel _model;
+        private IWriterModel _model;
         private readonly RestoreModuleConfiguration _configuration;
         private readonly RestoreStateHolder _stateHolder;
         private string _tableName;
         private RestoreState _state;
         private readonly RestoreProcessController _serversController;
+
+        public override void Start()
+        {
+            base.Start();
+
+            _model = Kernel.Get<IWriterModel>();
+        }
 
         #region Restore start
 

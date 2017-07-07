@@ -9,15 +9,13 @@ namespace Qoollo.Impl.Writer.WriterNet
         private readonly NetWriterReceiverForWrite _writerReceiverForWrite;
         private readonly NetWriterReceiverForCollector _writerReceiverForCollector;
 
-        public NetWriterReceiver(StandardKernel kernel, InputModule inputModule, DistributorModule distributor,
+        public NetWriterReceiver(StandardKernel kernel, 
             NetReceiverConfiguration receiverConfigurationForWrite,
             NetReceiverConfiguration receiverConfigurationForCollector)
             :base(kernel)
         {
-            _writerReceiverForWrite = new NetWriterReceiverForWrite(kernel, inputModule, distributor,
-                receiverConfigurationForWrite);
-            _writerReceiverForCollector = new NetWriterReceiverForCollector(kernel, inputModule, distributor,
-                receiverConfigurationForCollector);
+            _writerReceiverForWrite = new NetWriterReceiverForWrite(kernel, receiverConfigurationForWrite);
+            _writerReceiverForCollector = new NetWriterReceiverForCollector(kernel, receiverConfigurationForCollector);
         }
 
         public override void Start()

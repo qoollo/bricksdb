@@ -442,7 +442,7 @@ namespace Qoollo.Impl.Writer.Db
 
         #region Restore
 
-        internal override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
+        public override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
         {
             var script = _metaDataCommandCreator.ReadWithDeleteAndLocal(restoreData.IsDeleted, restoreData.Local);
             

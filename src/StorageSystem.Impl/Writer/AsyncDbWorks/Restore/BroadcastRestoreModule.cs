@@ -8,16 +8,15 @@ using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Writer.AsyncDbWorks.Processes;
-using Qoollo.Impl.Writer.Db;
-using Qoollo.Impl.Writer.WriterNet;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class BroadcastRestoreModule: CommonAsyncWorkModule
     {
-        private readonly WriterModel _writerModel;
+        private IWriterModel _writerModel;
         private readonly RestoreModuleConfiguration _configuration;
-        private readonly DbModuleCollection _db;
+        private IDbModule _db;
         private readonly QueueConfiguration _queueConfiguration;
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
@@ -42,20 +41,22 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         public BroadcastRestoreModule(
             StandardKernel kernel,
-            WriterModel writerModel,
             RestoreModuleConfiguration configuration,
-            WriterNetModule writerNet,
-            AsyncTaskModule asyncTaskModule,
-            DbModuleCollection db,
             QueueConfiguration queueConfiguration)
-            : base(kernel, writerNet, asyncTaskModule)
+            : base(kernel)
         {
-            _writerModel = writerModel;
             _configuration = configuration;
-            _db = db;
             _queueConfiguration = queueConfiguration;
             _lastDateTime = string.Empty;
             
+        }
+
+        public override void Start()
+        {
+            base.Start();
+
+            _db = Kernel.Get<IDbModule>();
+            _writerModel = Kernel.Get<IWriterModel>();
         }
 
         public void Restore(List<RestoreServer> servers, RestoreState state)

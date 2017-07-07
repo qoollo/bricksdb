@@ -5,11 +5,13 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer;
 using Qoollo.Impl.Writer.AsyncDbWorks;
 using Qoollo.Impl.Writer.Db;
+using Qoollo.Impl.Writer.Interfaces;
 using Qoollo.Impl.Writer.WriterNet;
 
 namespace Qoollo.Impl.Components
@@ -78,26 +80,38 @@ namespace Qoollo.Impl.Components
             kernel.Bind<IGlobalQueue>().ToConstant(q);
 
             var db = new DbModuleCollection(kernel);
+            kernel.Bind<IDbModule>().ToConstant(db);
 
             var net = new WriterNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
+            kernel.Bind<IWriterNetModule>().ToConstant(net);
 
             var async = new AsyncTaskModule(kernel, _queueConfiguration);
-            var model = new WriterModel(kernel, _local, _hashMapConfiguration);
+            kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-            var restore = new AsyncDbWorkModule(kernel, model, net, async, db, _initiatorRestoreConfiguration,
+            var model = new WriterModel(kernel, _local, _hashMapConfiguration);
+            kernel.Bind<IWriterModel>().ToConstant(model);
+
+            var restore = new AsyncDbWorkModule(kernel, _initiatorRestoreConfiguration,
                 _transferRestoreConfiguration, _timeoutRestoreConfiguration, 
                 _queueConfigurationRestore, _isNeedRestore);
+            kernel.Bind<IAsyncDbWorkModule>().ToConstant(restore);
 
-            var distributor = new DistributorModule(kernel, model, async, restore, net, _queueConfiguration);
+            var distributor = new DistributorModule(kernel, _queueConfiguration);
+            kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             Distributor = distributor;
             DbModule = db;
 
-            var main = new MainLogicModule(kernel, distributor, db);
-            var input = new InputModule(kernel, main, _queueConfiguration);
-            var receiver = new NetWriterReceiver(kernel, input, distributor, _receiverConfigurationForWrite,
+            var main = new MainLogicModule(kernel);
+            kernel.Bind<IMainLogicModule>().ToConstant(main);
+
+            var input = new InputModule(kernel, _queueConfiguration);
+            kernel.Bind<IInputModule>().ToConstant(input);
+
+            var receiver = new NetWriterReceiver(kernel, _receiverConfigurationForWrite,
                 _receiverConfigurationForCollector);
                         
+            AddModule(model);
             AddModule(distributor);
             AddModule(input);
             AddModule(db);

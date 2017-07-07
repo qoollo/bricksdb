@@ -7,6 +7,7 @@ using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Writer.AsyncDbWorks.Readers;
 using Qoollo.Impl.Writer.AsyncDbWorks.Support;
 using Qoollo.Impl.Writer.Db;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
@@ -18,14 +19,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private readonly string _tableName;        
         private readonly RestoreDataContainer _restoreData;
 
-        public RestoreReader(StandardKernel kernel, string tableName, DbModuleCollection db, RestoreDataContainer restoreData)
+        public RestoreReader(StandardKernel kernel, string tableName, IDbModule db, RestoreDataContainer restoreData)
             :base(kernel)
         {
             Contract.Requires(db != null);
             Contract.Requires(restoreData != null);
 
-            _tableName = tableName;            
-            _holder = new AsyncDbHolder(db.GetDbModules);
+            _tableName = tableName;
+
+            var dbcollection = db as DbModuleCollection;
+            _holder = new AsyncDbHolder(dbcollection.GetDbModules);
 
             _restoreData = restoreData;
             _restoreData.StartNewDb();

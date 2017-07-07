@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Qoollo.Impl.Common.Data.DataTypes;
 
 namespace Qoollo.Impl.Writer.Db
 {
-    internal class RestoreDataContainer
+    public class RestoreDataContainer
     {
         public bool IsDeleted { get; private set; }
         public bool Local { get; private set; }

@@ -11,11 +11,12 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces;
+using Qoollo.Impl.Writer.Interfaces;
 using Qoollo.Impl.Writer.WriterNet.Interfaces;
 
 namespace Qoollo.Impl.Writer.WriterNet
 {
-    internal class WriterNetModule:NetModule, INetModule
+    internal class WriterNetModule : NetModule, INetModule, IWriterNetModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 

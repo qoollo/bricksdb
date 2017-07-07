@@ -6,6 +6,7 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Writer.AsyncDbWorks.Readers;
 using Qoollo.Impl.Writer.Db;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
@@ -14,7 +15,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         public Action<TType> ProcessData => ProcessDataWithQueue();
 
         public RestoreReaderFull(StandardKernel kernel, Func<MetaData, bool> isMine, Action<TType> process,
-            QueueConfiguration queueConfiguration, DbModuleCollection db, bool isBothTables, string tableName,
+            QueueConfiguration queueConfiguration, IDbModule db, bool isBothTables, string tableName,
             QueueWithParam<TType> queue, bool usePackage)
             : base(kernel, process, queueConfiguration, queue)
         {
@@ -26,7 +27,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         }
 
         private readonly Func<MetaData, bool> _isMine;        
-        private readonly DbModuleCollection _db;
+        private readonly IDbModule _db;
         private readonly bool _isBothTables;
         private readonly string _tableName;
         private readonly bool _usePackage;

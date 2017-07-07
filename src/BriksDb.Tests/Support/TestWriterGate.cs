@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Linq;
-using System.Reflection;
 using Ninject;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Writer;
 using Qoollo.Impl.Writer.AsyncDbWorks;
 using Qoollo.Impl.Writer.Db;
+using Qoollo.Impl.Writer.Interfaces;
 using Qoollo.Impl.Writer.WriterNet;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.TestWriter;
@@ -32,15 +32,6 @@ namespace Qoollo.Tests.Support
         private StandardKernel _kernel;
         public GlobalQueue Q { get; set; }
 
-        private TRet GetPrivtaeField<TRet>(object obj) where TRet : class
-        {
-            var list = obj.GetType().GetFields(BindingFlags.Public |
-                                               BindingFlags.NonPublic |
-                                               BindingFlags.Instance);
-
-            return list.First(x => x.FieldType.FullName == typeof (TRet).ToString()).GetValue(obj) as TRet;
-        }
-
         public void Build(int storageServer, string hashFile, int countReplics, string name = "")
         {
             _kernel = new StandardKernel(new TestInjectionModule());
@@ -55,33 +46,45 @@ namespace Qoollo.Tests.Support
 
             _net = new WriterNetModule(_kernel, new ConnectionConfiguration("testService", 10),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            _kernel.Bind<IWriterNetModule>().ToConstant(_net);
 
             Db = new DbModuleCollection(_kernel);
+            _kernel.Bind<IDbModule>().ToConstant(Db);
+
             Db.AddDbModule(new TestDbInMemory(_kernel));
 
             _async = new AsyncTaskModule(_kernel, new QueueConfiguration(1, 10));
-            var model = new WriterModel(_kernel, local, hashMapConfiguration);
+            _kernel.Bind<IAsyncTaskModule>().ToConstant(_async);
 
-            Restore = new AsyncDbWorkModule(_kernel, model, _net, _async, Db,
+            WriterModel = new WriterModel(_kernel, local, hashMapConfiguration);
+            _kernel.Bind<IWriterModel>().ToConstant(WriterModel);
+
+            Restore = new AsyncDbWorkModule(_kernel, 
                 new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(300)),
                 new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(100)),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
                 new QueueConfiguration(1, 100));
+            _kernel.Bind<IAsyncDbWorkModule>().ToConstant(Restore);
 
-            Distributor = new DistributorModule(_kernel, model, _async, Restore, _net, new QueueConfiguration(2, 10));
+            Distributor = new DistributorModule(_kernel, new QueueConfiguration(2, 10));
+            _kernel.Bind<IDistributorModule>().ToConstant(Distributor);
 
-            WriterModel = GetPrivtaeField<WriterModel>(Distributor);
+            _mainС = new MainLogicModule(_kernel);
+            _kernel.Bind<IMainLogicModule>().ToConstant(_mainС);
 
-            _mainС = new MainLogicModule(_kernel, Distributor, Db);
-            Input = new InputModule(_kernel, _mainС, queueConfiguration);
-            _netRc = new NetWriterReceiver(_kernel, Input, Distributor,
+            Input = new InputModule(_kernel, queueConfiguration);
+            _kernel.Bind<IInputModule>().ToConstant(Input);
+
+            _netRc = new NetWriterReceiver(_kernel, 
                 new NetReceiverConfiguration(storageServer, "localhost", "testService"),
                 new NetReceiverConfiguration(1, "fake", "fake"));
         }
 
         public void Start()
         {
+            WriterModel.Start();
             Input.Start();
+            _mainС.Start();
             Distributor.Start();
             _netRc.Start();
             _async.Start();

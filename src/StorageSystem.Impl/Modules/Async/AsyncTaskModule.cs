@@ -6,11 +6,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ninject;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Turbo.Threading.ThreadPools;
 
 namespace Qoollo.Impl.Modules.Async
 {
-    internal class AsyncTaskModule:ControlModule
+    internal class AsyncTaskModule : ControlModule, IAsyncTaskModule
     {
         private readonly ReaderWriterLockSlim _lock;
         private readonly List<AsyncData> _tasks;

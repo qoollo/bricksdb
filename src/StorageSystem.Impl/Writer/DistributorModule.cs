@@ -14,57 +14,52 @@ using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks;
+using Qoollo.Impl.Writer.Interfaces;
 using Qoollo.Impl.Writer.WriterNet;
 
 namespace Qoollo.Impl.Writer
 {
-    internal class DistributorModule : ControlModule
+    internal class DistributorModule : ControlModule, IDistributorModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        private readonly WriterModel _model;
-        private readonly WriterNetModule _writerNet;
+        private IWriterModel _model;
+        private IWriterNetModule _writerNet;
         private readonly QueueConfiguration _queueConfiguration;
-        private readonly AsyncDbWorkModule _asyncDbWork;
-        private readonly IGlobalQueue _queue;
+        private IAsyncDbWorkModule _asyncDbWork;
+        private IGlobalQueue _queue;
+        private readonly TimeSpan _pingPeriod;
 
         public DistributorModule(StandardKernel kernel,
-            WriterModel model, 
-            AsyncTaskModule async, 
-            AsyncDbWorkModule asyncDbWork,
-            WriterNetModule writerNet,
             QueueConfiguration configuration,
             AsyncTasksConfiguration pingConfiguration = null)
             :base(kernel)
         {
-            Contract.Requires(writerNet != null);
             Contract.Requires(configuration != null);
-            Contract.Requires(asyncDbWork != null);
-            Contract.Requires(async != null);
 
-            _asyncDbWork = asyncDbWork;
-            _model = model;
-            _writerNet = writerNet;
             _queueConfiguration = configuration;
 
-            _queue = kernel.Get<IGlobalQueue>();
-
-            var ping = InitInjection.PingPeriod;
+            _pingPeriod = InitInjection.PingPeriod;
 
             if (pingConfiguration != null)
-                ping = pingConfiguration.TimeoutPeriod;
-
-            async.AddAsyncTask(
-                new AsyncDataPeriod(ping, Ping, AsyncTasksNames.AsyncPing, -1), false);
+                _pingPeriod = pingConfiguration.TimeoutPeriod;
         }
 
         public override void Start()
         {
-            _model.Start();
-            _asyncDbWork.Start();            
+            _queue = Kernel.Get<IGlobalQueue>();
+            _model = Kernel.Get<IWriterModel>();
+            _writerNet = Kernel.Get<IWriterNetModule>();
+            _asyncDbWork = Kernel.Get<IAsyncDbWorkModule>();
+
+            var asyncTasks = Kernel.Get<IAsyncTaskModule>();
+            asyncTasks.AddAsyncTask(
+                new AsyncDataPeriod(_pingPeriod, Ping, AsyncTasksNames.AsyncPing, -1), false);
+
             RegistrateCommands();
         }
 
@@ -228,6 +223,11 @@ namespace Qoollo.Impl.Writer
             return Errors.NoErrors;
         }
 
+        public new TResult Execute<TValue, TResult>(TValue value) where TValue : class
+        {
+            return base.Execute<TValue, TResult>(value);
+        }
+
         #endregion
 
         #region Commands
@@ -277,10 +277,5 @@ namespace Qoollo.Impl.Writer
         }
 
         #endregion
-
-        public bool IsMine(string hash)
-        {
-            return _model.IsMine(hash);
-        }
     }
 }

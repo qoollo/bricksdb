@@ -8,19 +8,26 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Data;
 using Qoollo.Impl.NetInterfaces.Writer;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.WriterNet
 {
     internal class NetWriterReceiverForCollector:NetReceiveModule<ICommonNetReceiverWriterForCollector>, ICommonNetReceiverWriterForCollector
     {
-        private readonly InputModule _inputModule;
-        private readonly DistributorModule _distributor;
+        private IInputModule _inputModule;
+        private IDistributorModule _distributor;
 
-        public NetWriterReceiverForCollector(StandardKernel kernel, InputModule inputModule, DistributorModule distributor, NetReceiverConfiguration configuration)
+        public NetWriterReceiverForCollector(StandardKernel kernel, NetReceiverConfiguration configuration)
             : base(kernel, configuration)
         {
-            _inputModule = inputModule;
-            _distributor = distributor;
+        }
+
+        public override void Start()
+        {
+            _inputModule = Kernel.Get<IInputModule>();
+            _distributor = Kernel.Get<IDistributorModule>();
+
+            base.Start();
         }
 
         [OperationBehavior(TransactionScopeRequired = true)]

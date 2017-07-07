@@ -7,8 +7,7 @@ using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks.Readers;
 using Qoollo.Impl.Writer.AsyncDbWorks.Restore;
-using Qoollo.Impl.Writer.Db;
-using Qoollo.Impl.Writer.WriterNet;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
 {
@@ -18,14 +17,15 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
 
         public bool IsQueueEmpty => _reader.IsQueueEmpty;
 
-        protected WriterModel WriterModel { get; }
-        protected WriterNetModule WriterNet { get; }
-        protected DbModuleCollection Db { get; }
+        protected IWriterModel WriterModel { get; }
+        protected IWriterNetModule WriterNet { get; }
+        protected IDbModule Db { get; }
 
         private readonly ReaderFullBase _reader;
 
-        protected ProcessBase(StandardKernel kernel, DbModuleCollection db, WriterModel writerModel, WriterNetModule writerNet, string tableName, bool isSystemUpdated, QueueConfiguration queueConfiguration)
-            :base(kernel)
+        protected ProcessBase(StandardKernel kernel, IDbModule db, IWriterModel writerModel,
+            IWriterNetModule writerNet, string tableName, bool isSystemUpdated, QueueConfiguration queueConfiguration)
+            : base(kernel)
         {
             Db = db;
             WriterModel = writerModel;

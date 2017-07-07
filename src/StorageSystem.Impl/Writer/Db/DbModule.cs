@@ -6,10 +6,11 @@ using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.NetInterfaces.Data;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.Db
 {
-    public abstract class DbModule:ControlModule
+    public abstract class DbModule:ControlModule, IDbModule
     {
         protected DbModule(StandardKernel kernel) : base(kernel)
         {
@@ -27,7 +28,7 @@ namespace Qoollo.Impl.Writer.Db
 
         public abstract RemoteResult DeleteFull(InnerData obj);        
 
-        internal abstract RemoteResult AsyncProcess(RestoreDataContainer restoreData);
+        public abstract RemoteResult AsyncProcess(RestoreDataContainer restoreData);
 
         public abstract RemoteResult SelectRead(SelectDescription description, out SelectSearchResult searchResult);
 

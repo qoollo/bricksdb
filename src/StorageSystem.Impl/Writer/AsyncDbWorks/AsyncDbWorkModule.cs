@@ -9,17 +9,15 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
-using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks.Restore;
 using Qoollo.Impl.Writer.AsyncDbWorks.Support;
 using Qoollo.Impl.Writer.AsyncDbWorks.Timeout;
-using Qoollo.Impl.Writer.Db;
-using Qoollo.Impl.Writer.WriterNet;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks
 {
-    internal class AsyncDbWorkModule:ControlModule
+    internal class AsyncDbWorkModule : ControlModule, IAsyncDbWorkModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
@@ -62,10 +60,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         public AsyncDbWorkModule(
             StandardKernel kernel,
-            WriterModel writerModel,
-            WriterNetModule writerNet,
-            AsyncTaskModule async,
-            DbModuleCollection db,
             RestoreModuleConfiguration initiatorConfiguration,
             RestoreModuleConfiguration transferConfiguration,
             RestoreModuleConfiguration timeoutConfiguration,
@@ -73,45 +67,44 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             bool needRestore = false)
             : base(kernel)
         {
-            Contract.Requires(writerModel != null);
             Contract.Requires(initiatorConfiguration != null);
             Contract.Requires(transferConfiguration != null);
             Contract.Requires(timeoutConfiguration != null);
             Contract.Requires(queueConfiguration != null);
-            Contract.Requires(db != null);
-            Contract.Requires(writerNet != null);
-            Contract.Requires(async != null);
 
-            _writerModel = writerModel;
+            _initiatorConfiguration = initiatorConfiguration;
+            _transferConfiguration = transferConfiguration;
+            _timeoutConfiguration = timeoutConfiguration;
+            _queueConfiguration = queueConfiguration;            
 
             _stateHolder = new RestoreStateHolder(needRestore);
             _saver = LoadRestoreStateFromFile();
-
-            _initiatorRestore = new InitiatorRestoreModule(kernel, writerModel, initiatorConfiguration, writerNet, async,
-                _stateHolder, _saver);
-
-            _transferRestore = new TransferRestoreModule(kernel, writerModel, transferConfiguration,
-                writerNet, async, db, queueConfiguration);
-
-            _timeout = new TimeoutModule(kernel, writerNet, async, queueConfiguration,
-                db, timeoutConfiguration);
-
-            _broadcastRestore = new BroadcastRestoreModule(kernel, writerModel, transferConfiguration,
-                writerNet, async, db, queueConfiguration);
         }
 
-        private readonly WriterModel _writerModel;
+        private IWriterModel _writerModel;
 
-        private readonly BroadcastRestoreModule _broadcastRestore;
-        private readonly InitiatorRestoreModule _initiatorRestore;
-        private readonly TransferRestoreModule _transferRestore;
-        private readonly TimeoutModule _timeout;
+        private BroadcastRestoreModule _broadcastRestore;
+        private InitiatorRestoreModule _initiatorRestore;
+        private TransferRestoreModule _transferRestore;
+        private TimeoutModule _timeout;
 
         private RestoreStateHolder _stateHolder;
         private readonly RestoreStateFileLogger _saver;
 
+        private readonly RestoreModuleConfiguration _initiatorConfiguration;
+        private readonly RestoreModuleConfiguration _transferConfiguration;
+        private readonly RestoreModuleConfiguration _timeoutConfiguration;
+        private readonly QueueConfiguration _queueConfiguration;
+
         public override void Start()
         {
+            _writerModel = Kernel.Get<IWriterModel>();
+
+            _initiatorRestore = new InitiatorRestoreModule(Kernel, _initiatorConfiguration, _stateHolder, _saver);
+            _transferRestore = new TransferRestoreModule(Kernel, _transferConfiguration, _queueConfiguration);
+            _timeout = new TimeoutModule(Kernel, _queueConfiguration, _timeoutConfiguration);
+            _broadcastRestore = new BroadcastRestoreModule(Kernel, _transferConfiguration, _queueConfiguration);
+
             _initiatorRestore.Start();
             _transferRestore.Start();
             _broadcastRestore.Start();

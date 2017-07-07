@@ -160,6 +160,7 @@
     <Compile Include="Common\Commands\ServerNotAvailableCommand.cs" />
     <Compile Include="Common\Support\delegate.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
+    <Compile Include="Modules\Interfaces\IAsyncTaskModule.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\ConnectionBehaviorBase.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\IConnectionBehavior.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\WpfConnection.cs" />
@@ -171,6 +172,7 @@
     <Compile Include="PerfCounters\PoolsProfiling.cs" />
     <Compile Include="TestSupport\InitInjection.cs" />
     <Compile Include="TestSupport\InjectionModule.cs" />
+    <Compile Include="Writer\AsyncDbWorks\IAsyncDbWorkModule.cs" />
     <Compile Include="Writer\AsyncDbWorks\Processes\BroadcastRestoreProcess.cs" />
     <Compile Include="Writer\AsyncDbWorks\Processes\ProcessBase.cs" />
     <Compile Include="Writer\AsyncDbWorks\Readers\ReaderFullBase.cs" />
@@ -182,6 +184,12 @@
     <Compile Include="Writer\AsyncDbWorks\Support\RestoreStateFileLogger.cs" />
     <Compile Include="Writer\Db\DbLogicCreateAndUpdateHelper.cs" />
     <Compile Include="Writer\Db\RestoreDataContainer.cs" />
+    <Compile Include="Writer\Interfaces\IInputModule.cs" />
+    <Compile Include="Writer\Interfaces\IMainLogicModule.cs" />
+    <Compile Include="Writer\Interfaces\IDbModule.cs" />
+    <Compile Include="Writer\Interfaces\IDistributorModule.cs" />
+    <Compile Include="Writer\Interfaces\IWriterModel.cs" />
+    <Compile Include="Writer\Interfaces\IWriterNetModule.cs" />
     <Compile Include="Writer\WriterNet\NetWriterReceiverForCollector.cs" />
     <Compile Include="Writer\WriterNet\NetWriterReceiverForWrite.cs" />
     <Compile Include="Writer\Db\Commands\UserCommandCreatorBase.cs" />

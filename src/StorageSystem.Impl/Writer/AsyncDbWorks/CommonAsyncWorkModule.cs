@@ -3,8 +3,8 @@ using System.Diagnostics.Contracts;
 using System.Threading;
 using Ninject;
 using Qoollo.Impl.Modules;
-using Qoollo.Impl.Modules.Async;
-using Qoollo.Impl.Writer.WriterNet;
+using Qoollo.Impl.Modules.Interfaces;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks
 {
@@ -32,19 +32,21 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         protected bool IsStartNoLock { get; set; }
 
-        public CommonAsyncWorkModule(StandardKernel kernel, WriterNetModule writerNet, AsyncTaskModule asyncTaskModule)
+        public CommonAsyncWorkModule(StandardKernel kernel)
             :base(kernel)
         {
-            Contract.Requires(writerNet!=null);            
-            Contract.Requires(asyncTaskModule!=null);
-            AsyncTaskModule = asyncTaskModule;
-            WriterNet = writerNet;
             IsStartNoLock = false;
             _lock = new ReaderWriterLockSlim();
         }
 
-        protected WriterNetModule WriterNet;
-        protected AsyncTaskModule AsyncTaskModule;
+        public override void Start()
+        {
+            WriterNet = Kernel.Get<IWriterNetModule>();
+            AsyncTaskModule = Kernel.Get<IAsyncTaskModule>();
+        }
+
+        protected IWriterNetModule WriterNet;
+        protected IAsyncTaskModule AsyncTaskModule;
         private readonly ReaderWriterLockSlim _lock;
     }
 }

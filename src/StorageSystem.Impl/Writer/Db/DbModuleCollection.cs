@@ -186,7 +186,7 @@ namespace Qoollo.Impl.Writer.Db
             get { throw new NotImplementedException(); }
         }
 
-        internal override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
+        public override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
         {
             throw new NotImplementedException();
         }

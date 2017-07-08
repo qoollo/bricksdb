@@ -14,6 +14,7 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.ParallelWork;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules.Queue;
@@ -300,37 +301,46 @@ namespace Qoollo.Tests
 
                 var dnet = DistributorNetModule();
                 var ddistributor = DistributorDistributorModule(filename1, replicsCount, dnet, 30000, 30000);
-                dnet.SetDistributor(ddistributor);
+                _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
+                dnet.Start();
+
+                ddistributor.Start();
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(200000, 200000));
-                var tranc = new TransactionModule(_kernel, dnet, new TransactionConfiguration(4), 1, cache);
-                var main = new MainLogicModule(_kernel, ddistributor, tranc, cache);
-                var receiver4 = new NetDistributorReceiver(_kernel, main,
-                    new InputModuleWithParallel(_kernel, QueueConfiguration, main, tranc), 
-                    ddistributor,
+                _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
+
+                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 1);
+                _kernel.Bind<ITransactionModule>().ToConstant(tranc);
+
+                var main = new MainLogicModule(_kernel);
+                _kernel.Bind<IMainLogicModule>().ToConstant(main);
+                main.Start();
+
+                var input = new InputModuleWithParallel(_kernel, QueueConfiguration);
+                _kernel.Bind<IInputModule>().ToConstant(input);
+
+                var receiver4 = new NetDistributorReceiver(_kernel, 
                     NetReceiverConfiguration(distrServer1),
                     NetReceiverConfiguration(distrServer12));
-                
+                receiver4.Start();
+
                 _kernel.Rebind<IGlobalQueue>().ToConstant(q1);
 
                 var dnet2 = DistributorNetModule();
                 var ddistributor2 = DistributorDistributorModule(filename2, replicsCount, dnet2, 200000, 30000,
                     distrServer2, distrServer22);
-                dnet2.SetDistributor(ddistributor2);
+                _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor2);
+                dnet2.Start();
 
-                var receiver5 = new NetDistributorReceiver(_kernel, main,
-                    new InputModuleWithParallel(_kernel, QueueConfiguration, main, tranc),
-                    ddistributor2,
+                var receiver5 = new NetDistributorReceiver(_kernel, 
                     NetReceiverConfiguration(distrServer2),
                     NetReceiverConfiguration(distrServer22));
-
-                receiver4.Start();
+                
                 receiver5.Start();
                 distributor.Start();
                 distributor2.Start();
                 distributor3.Start();
 
-                ddistributor.Start();
                 ddistributor2.Start();
 
                 q1.Start();

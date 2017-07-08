@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -8,27 +7,28 @@ using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.DistributorModules.DistributorNet.Interfaces;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces;
 
 namespace Qoollo.Impl.DistributorModules.DistributorNet
 {
-    internal class DistributorNetModule:NetModule, INetModule
+    internal class DistributorNetModule : NetModule, IDistributorNetModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        private DistributorModule _distributor;
+        private IDistributorModule _distributor;
 
-        public DistributorNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration,
-            ConnectionTimeoutConfiguration connectionTimeout) : base(kernel, connectionConfiguration, connectionTimeout)
+        public DistributorNetModule(StandardKernel kernel, 
+            ConnectionConfiguration connectionConfiguration,
+            ConnectionTimeoutConfiguration connectionTimeout) 
+            : base(kernel, connectionConfiguration, connectionTimeout)
         {
         }
 
-        public void SetDistributor(DistributorModule distributor)
+        public override void Start()
         {
-            Contract.Requires(distributor != null);
-            _distributor = distributor;
+            _distributor = Kernel.Get<IDistributorModule>();
         }
 
         #region Connect to distributor

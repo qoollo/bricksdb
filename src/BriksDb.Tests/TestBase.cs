@@ -13,6 +13,7 @@ using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Model;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Proxy;
@@ -113,8 +114,10 @@ namespace Qoollo.Tests
 
         internal DistributorNetModule DistributorNetModule()
         {
-            var connection = new ConnectionConfiguration("testService", 10);
-            return new DistributorNetModule(_kernel, connection, new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            var net = new DistributorNetModule(_kernel, ConnectionConfiguration,
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            _kernel.Rebind<IDistributorNetModule>().ToConstant(net);
+            return net;
         }
 
         internal DistributorModule DistributorDistributorModule(string filename, int countReplics,
@@ -125,7 +128,7 @@ namespace Qoollo.Tests
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(pingTo)),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(asyncCheckTo)),
                 new DistributorHashConfiguration(countReplics),
-                QueueConfiguration, net,
+                QueueConfiguration,
                 new ServerId("localhost", distrPort1),
                 new ServerId("localhost", distrPort2),
                 new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));

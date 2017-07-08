@@ -164,6 +164,11 @@
     <Compile Include="Common\Commands\ServerNotAvailableCommand.cs" />
     <Compile Include="Common\Support\delegate.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
+    <Compile Include="DistributorModules\Interfaces\IDistributorTimeoutCache.cs" />
+    <Compile Include="DistributorModules\Interfaces\IMainLogicModule.cs" />
+    <Compile Include="DistributorModules\Interfaces\IDistributorModule.cs" />
+    <Compile Include="DistributorModules\Interfaces\IDistributorNetModule.cs" />
+    <Compile Include="DistributorModules\Interfaces\ITransactionModule.cs" />
     <Compile Include="Modules\Interfaces\ICacheModule.cs" />
     <Compile Include="Modules\Interfaces\IAsyncTaskModule.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\ConnectionBehaviorBase.cs" />
@@ -301,9 +306,8 @@
     <Compile Include="Writer\DistributorModule.cs" />
     <Compile Include="DistributorModules\Caches\DistributorCache.cs" />
     <Compile Include="NetInterfaces\Distributor\ICommonNetReceiverForProxy.cs" />
-    <Compile Include="DistributorModules\DistributorNet\Interfaces\INetModule.cs" />
     <Compile Include="DistributorModules\Caches\DistributorTimeoutCache.cs" />
-    <Compile Include="DistributorModules\ParallelWork\IInputModule.cs" />
+    <Compile Include="DistributorModules\Interfaces\IInputModule.cs" />
     <Compile Include="DistributorModules\ParallelWork\InputModuleWithParallel.cs" />
     <Compile Include="DistributorModules\ParallelWork\OneThreadProcess.cs" />
     <Compile Include="DistributorModules\PerfCounters\PerfCounters.cs" />

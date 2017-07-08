@@ -8,6 +8,7 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.Caches;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
@@ -227,7 +228,7 @@ namespace Qoollo.Tests
 
                 var dnet = DistributorNetModule();
                 var ddistributor = DistributorDistributorModule(filename, 1, dnet);
-                dnet.SetDistributor(ddistributor);
+                _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
 
                 dnet.Start();
                 ddistributor.Start();

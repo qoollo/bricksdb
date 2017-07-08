@@ -6,6 +6,7 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.ParallelWork;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules;
@@ -84,20 +85,28 @@ namespace Qoollo.Impl.Components
             Kernel.Bind<IGlobalQueue>().ToConstant(q);
 
             var cache = new DistributorTimeoutCache(_cacheConfiguration);
+            Kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
+
             var net = CreateNetModule(Kernel, _connectionConfiguration);
+            Kernel.Bind<IDistributorNetModule>().ToConstant(net);
+
             var distributor = new DistributorModule(Kernel, _pingConfig, _checkConfig, _distributorHashConfiguration,
-                new QueueConfiguration(1, 1000), net, _localfordb, _localforproxy, _hashMapConfiguration);
+                new QueueConfiguration(1, 1000), _localfordb, _localforproxy, _hashMapConfiguration);
+            Kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             Distributor = distributor;
 
-            net.SetDistributor(distributor);
-            var transaction = new TransactionModule(Kernel, net, _transactionConfiguration,
-                _distributorHashConfiguration.CountReplics, cache);
-            var main = new MainLogicModule(Kernel, distributor, transaction, cache);
+            var transaction = new TransactionModule(Kernel, _transactionConfiguration,
+                _distributorHashConfiguration.CountReplics);
+            Kernel.Bind<ITransactionModule>().ToConstant(transaction);
+
+            var main = new MainLogicModule(Kernel);
+            Kernel.Bind<IMainLogicModule>().ToConstant(main);
             
-            var input = new InputModuleWithParallel(Kernel, _queueConfiguration, main, transaction);
-            var receive = new NetDistributorReceiver(Kernel, main, input, distributor, _receiverConfigurationForDb,
-                _receiverConfigurationForProxy);
+            var input = new InputModuleWithParallel(Kernel, _queueConfiguration);
+            Kernel.Bind<IInputModule>().ToConstant(input);
+
+            var receive = new NetDistributorReceiver(Kernel, _receiverConfigurationForDb, _receiverConfigurationForProxy);
 
             AddModule(receive);            
             AddModule(input);

@@ -1,6 +1,6 @@
-﻿using System.Diagnostics.Contracts;
-using Ninject;
+﻿using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules.ParallelWork;
 using Qoollo.Turbo.ObjectPools;
@@ -9,17 +9,22 @@ namespace Qoollo.Impl.DistributorModules.ParallelWork
 {
     internal class OneThreadProcess:SingleParallelWorkBase<InnerData>
     {
-        private readonly MainLogicModule _main;
+        private IMainLogicModule _main;
         private RentedElementMonitor<TransactionExecutor> _transaction;
 
-        public OneThreadProcess(StandardKernel kernel, MainLogicModule main, TransactionModule transactionModule)
+        public OneThreadProcess(StandardKernel kernel)
             :base(kernel)
         {
-            Contract.Requires(main != null);
-            Contract.Requires(transactionModule != null);
 
-            _main = main;
-            _transaction = transactionModule.Rent();
+        }
+
+        public override void Start()
+        {
+            _main = Kernel.Get<IMainLogicModule>();
+            var transaction = Kernel.Get<ITransactionModule>();
+            _transaction = transaction.Rent();
+
+            base.Start();
         }
 
         public override void Process(InnerData data)

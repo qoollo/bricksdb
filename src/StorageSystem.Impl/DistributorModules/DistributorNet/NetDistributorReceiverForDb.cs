@@ -1,9 +1,9 @@
-﻿using System.Diagnostics.Contracts;
-using System.ServiceModel;
+﻿using System.ServiceModel;
 using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Distributor;
 
@@ -11,15 +11,19 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 {
     internal class NetDistributorReceiverForDb : NetReceiveModule<ICommonNetReceiverForDb>, ICommonNetReceiverForDb
     {        
-        private readonly DistributorModule _distributorModule;
+        private IDistributorModule _distributorModule;
 
-        public NetDistributorReceiverForDb(StandardKernel kernel, DistributorModule distributorModule,
-            NetReceiverConfiguration receiverConfiguration)
+        public NetDistributorReceiverForDb(StandardKernel kernel, NetReceiverConfiguration receiverConfiguration)
             : base(kernel, receiverConfiguration)
         {
-            Contract.Requires(distributorModule != null);
-            _distributorModule = distributorModule;
-        }        
+        }
+
+        public override void Start()
+        {
+            _distributorModule = Kernel.Get<IDistributorModule>();
+
+            base.Start();
+        }
 
         public RemoteResult SendSync(NetCommand command)
         {

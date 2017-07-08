@@ -17,10 +17,10 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Model;
 using Qoollo.Impl.DistributorModules.ParallelWork;
 using Qoollo.Impl.DistributorModules.Transaction;
-using Qoollo.Impl.Modules.Queue;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Xunit;
@@ -93,14 +93,23 @@ namespace Qoollo.Tests
                 var distrconfig = new DistributorHashConfiguration(countReplics);
                 var dnet = DistributorNetModule();
                 var ddistributor = DistributorDistributorModule(filename, countReplics, dnet, 3000, 3000);
-                dnet.SetDistributor(ddistributor);
+                _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
+                dnet.Start();
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
-                var tranc = new TransactionModule(_kernel, dnet, new TransactionConfiguration(4), distrconfig.CountReplics, cache);
-                var main = new MainLogicModule(_kernel, ddistributor, tranc, cache);
+                _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000), main, tranc);
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel, main, input, ddistributor,
+                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), distrconfig.CountReplics);
+                _kernel.Bind<ITransactionModule>().ToConstant(tranc);
+
+                var main = new MainLogicModule(_kernel);
+                _kernel.Bind<IMainLogicModule>().ToConstant(main);
+                main.Start();
+
+                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                _kernel.Bind<IInputModule>().ToConstant(input);
+
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
                     NetReceiverConfiguration(distrServer1),
                     NetReceiverConfiguration(distrServer12));
 
@@ -143,9 +152,12 @@ namespace Qoollo.Tests
             var queue = GetBindedQueue();
 
             var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
+            _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
             var net = new NetModuleTest(new Dictionary<ServerId, bool> {{s1, false}, {s2, true}});
-            var trm = new TransactionModule(_kernel, net, new TransactionConfiguration(1), 2, cache);
+            _kernel.Bind<IDistributorNetModule>().ToConstant(net);
+
+            var trm = new TransactionModule(_kernel, new TransactionConfiguration(1), 2);
 
             trm.Start();
 
@@ -189,8 +201,8 @@ namespace Qoollo.Tests
 
                 var distributor = DistributorDistributorModule(filename, countReplics, null, 3000, 3000);
                 var net = DistributorNetModule();
+                _kernel.Rebind<IDistributorModule>().ToConstant(distributor);
 
-                net.SetDistributor(distributor);
                 distributor.Start();
                 net.Start();
 
@@ -207,8 +219,10 @@ namespace Qoollo.Tests
                     DistributorData = new DistributorData {Destination = new List<ServerId> {server1, server2}},
                 };
 
-                var trm = new TransactionModule(_kernel, net, new TransactionConfiguration(1), countReplics,
-                    new DistributorTimeoutCache(DistributorCacheConfiguration()));
+                var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
+                _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
+
+                var trm = new TransactionModule(_kernel, new TransactionConfiguration(1), countReplics);
                 trm.Start();
 
                 using (var trans = trm.Rent())
@@ -247,12 +261,15 @@ namespace Qoollo.Tests
                 var distributor = DistributorDistributorModule(filename, 2, null, 3000, 3000);
                 var net = DistributorNetModule();
 
-                net.SetDistributor(distributor);
+                _kernel.Rebind<IDistributorModule>().ToConstant(distributor);
+
                 distributor.Start();
                 net.Start();
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
-                var trm = new TransactionModule(_kernel, net, new TransactionConfiguration(1), 3, cache);
+                _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
+
+                var trm = new TransactionModule(_kernel, new TransactionConfiguration(1), 3);
                 trm.Start();
 
                 queue.Start();
@@ -317,7 +334,8 @@ namespace Qoollo.Tests
                 var net = DistributorNetModule();
                 var distributor = DistributorDistributorModule(filename, 2, net, 3000, 3000);
 
-                net.SetDistributor(distributor);
+                _kernel.Rebind<IDistributorModule>().ToConstant(distributor);
+
                 distributor.Start();
                 net.Start();
                 queue.Start();
@@ -381,8 +399,10 @@ namespace Qoollo.Tests
             var queue = GetBindedQueue();
 
             var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(200, 500));
+            _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
             var net = DistributorNetModule();
-            var trans = new TransactionModule(_kernel, net, new TransactionConfiguration(1), 1, cache);
+            var trans = new TransactionModule(_kernel, new TransactionConfiguration(1), 1);
+            trans.Start();
 
             var ev = new InnerData(new Transaction("123", "") {OperationName = OperationName.Create})
             {
@@ -482,14 +502,19 @@ namespace Qoollo.Tests
                 var queue = GetBindedQueue();
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(400, 1000));
+                _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
+
                 var net = DistributorNetModule();
                 var distributor = DistributorDistributorModule(filename, 2, net, 3000, 3000);
+                _kernel.Rebind<IDistributorModule>().ToConstant(distributor);
 
-                net.SetDistributor(distributor);
+                var transaction = new TransactionModule(_kernel, new TransactionConfiguration(1),
+                    distrconfig.CountReplics);
 
-                var transaction = new TransactionModule(_kernel, net, new TransactionConfiguration(1),
-                    distrconfig.CountReplics, cache);
-                var main = new MainLogicModule(_kernel, distributor, transaction, cache);
+                _kernel.Bind<ITransactionModule>().ToConstant(transaction);
+
+                var main = new MainLogicModule(_kernel);
+                main.Start();
 
                 var server1 = ServerId(storageServer1);
                 var server2 = ServerId(storageServer2);
@@ -601,15 +626,21 @@ namespace Qoollo.Tests
 
                 var dnet = DistributorNetModule();
                 var ddistributor = DistributorDistributorModule(filename, 1, dnet, 3000, 3000);
-                dnet.SetDistributor(ddistributor);
+                _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(20000, 20000));
-                var tranc = new TransactionModule(_kernel, dnet, new TransactionConfiguration(4), 1, cache);
+                _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var main = new MainLogicModule(_kernel, ddistributor, tranc, cache);
+                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 1);
+                _kernel.Bind<ITransactionModule>().ToConstant(tranc);
 
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000), main, tranc);
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel, main, input, ddistributor,
+                var main = new MainLogicModule(_kernel);
+                _kernel.Bind<IMainLogicModule>().ToConstant(main);
+
+                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                _kernel.Bind<IInputModule>().ToConstant(input);
+
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
                     NetReceiverConfiguration(distrServer1),
                     NetReceiverConfiguration(distrServer12));
 
@@ -694,14 +725,21 @@ namespace Qoollo.Tests
 
                 var dnet = DistributorNetModule();
                 var ddistributor = DistributorDistributorModule(filename, 2, dnet, 3000, 3000);
-                dnet.SetDistributor(ddistributor);
+                _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(2000000, 200000));
-                var tranc = new TransactionModule(_kernel, dnet, new TransactionConfiguration(4), 2, cache);
-                var main = new MainLogicModule(_kernel, ddistributor, tranc, cache);
+                _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000), main, tranc);
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel, main, input, ddistributor,
+                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 2);
+                _kernel.Bind<ITransactionModule>().ToConstant(tranc);
+
+                var main = new MainLogicModule(_kernel);
+                _kernel.Bind<IMainLogicModule>().ToConstant(main);
+
+                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                _kernel.Bind<IInputModule>().ToConstant(input);
+
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
                     NetReceiverConfiguration(distrServer1),
                     NetReceiverConfiguration(distrServer12));
 
@@ -794,14 +832,21 @@ namespace Qoollo.Tests
 
                 var dnet = DistributorNetModule();
                 var ddistributor = DistributorDistributorModule(filename, 1, dnet, 3000, 3000);
-                dnet.SetDistributor(ddistributor);
+                _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
-                var tranc = new TransactionModule(_kernel, dnet, new TransactionConfiguration(4), 1, cache);
-                var main = new MainLogicModule(_kernel, ddistributor, tranc, cache);
+                _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000), main, tranc);
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel, main, input, ddistributor,
+                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 1);
+                _kernel.Bind<ITransactionModule>().ToConstant(tranc);
+
+                var main = new MainLogicModule(_kernel);
+                _kernel.Bind<IMainLogicModule>().ToConstant(main);
+
+                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                _kernel.Bind<IInputModule>().ToConstant(input);
+
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
                     NetReceiverConfiguration(distrServer1),
                     NetReceiverConfiguration(distrServer12));
 
@@ -809,6 +854,7 @@ namespace Qoollo.Tests
 
                 var s = TestHelper.OpenWriterHost(_kernel, storageServer1);
 
+                tranc.Start();
                 main.Start();
                 netDistributorReceiver.Start();
                 input.Start();

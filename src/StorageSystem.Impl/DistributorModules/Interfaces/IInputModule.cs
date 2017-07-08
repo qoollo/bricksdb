@@ -1,6 +1,6 @@
 ﻿using Qoollo.Impl.Common.Data.DataTypes;
 
-namespace Qoollo.Impl.DistributorModules.ParallelWork
+namespace Qoollo.Impl.DistributorModules.Interfaces
 {
     internal interface IInputModule
     {

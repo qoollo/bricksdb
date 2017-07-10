@@ -5,6 +5,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -40,6 +41,7 @@ namespace Qoollo.Impl.Writer.Db
             IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader> userCommandCreator,
             IMetaDataCommandCreator<TCommand, TReader> metaDataCommandCreator,
             DbImplModule<TCommand, TConnection, TReader> implModule)
+            :base(null)
         {
             Contract.Requires(hashCalc != null);
             Contract.Requires(userCommandCreator != null);
@@ -440,7 +442,7 @@ namespace Qoollo.Impl.Writer.Db
 
         #region Restore
 
-        internal override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
+        public override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
         {
             var script = _metaDataCommandCreator.ReadWithDeleteAndLocal(restoreData.IsDeleted, restoreData.Local);
             

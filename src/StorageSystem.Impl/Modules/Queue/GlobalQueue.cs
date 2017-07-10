@@ -6,21 +6,7 @@ using Qoollo.Impl.Configurations;
 
 namespace Qoollo.Impl.Modules.Queue
 {
-    internal static class GlobalQueue
-    {
-        private static GlobalQueueInner _queue = new GlobalQueueInner();
-
-        public static GlobalQueueInner Queue { get { return _queue; } }
-
-        public static void SetQueue(GlobalQueueInner queue)
-        {
-            _queue = queue;
-        }
-
-        public static GlobalQueueInner GetQueue() => _queue;
-    }
-
-    internal class GlobalQueueInner : ControlModule, IGlobalQueue
+    internal class GlobalQueue : ControlModule, IGlobalQueue
     {
         private readonly QueueWithParam<InnerData> _proxyInputWriteAndUpdateQueue;
         public QueueWithParam<InnerData> ProxyInputWriteAndUpdateQueue { get { return _proxyInputWriteAndUpdateQueue; } }
@@ -62,7 +48,7 @@ namespace Qoollo.Impl.Modules.Queue
         public QueueWithParam<InnerData> DbTimeoutQueue { get { return _dbTimeoutQueue; } }
 
         public string Name { get; }
-        public GlobalQueueInner(string name = "")
+        public GlobalQueue(string name = ""):base(null)
         {
             Name = name;
             _proxyInputWriteAndUpdateQueue = new QueueWithParam<InnerData>("proxyInputWriteAndUpdateQueue");

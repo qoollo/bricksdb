@@ -6,6 +6,7 @@ using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Client.DistributorGate
 {
@@ -17,6 +18,8 @@ namespace Qoollo.Client.DistributorGate
         private bool _isBuild;
         private bool _isStarted;
         private bool _isDispose;
+
+        internal InjectionModule Module = null;
 
         public DistributorApi(DistributorNetConfiguration netConfiguration,
             DistributorConfiguration distributorConfiguration, CommonConfiguration commonConfiguration,
@@ -81,7 +84,7 @@ namespace Qoollo.Client.DistributorGate
 
         public void Build()
         {
-            _distributorSystem.Build();
+            _distributorSystem.Build(Module);
             _isBuild = true;
         }
 

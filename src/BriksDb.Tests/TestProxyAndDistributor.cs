@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
@@ -21,7 +23,7 @@ namespace Qoollo.Tests
         public TestProxyAndDistributor():base()
         {
             _proxySystem = TestProxySystem(proxyServer);
-            _proxySystem.Build();
+            _proxySystem.Build(new TestInjectionModule());
         }
 
         [Fact]
@@ -38,11 +40,9 @@ namespace Qoollo.Tests
 
                 try
                 {
-                    distr.Build();
+                    distr.Build(new TestInjectionModule());
                     _proxySystem.Start();
                     distr.Start();
-
-                    GlobalQueue.Queue.Start();
 
                     _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
@@ -58,7 +58,7 @@ namespace Qoollo.Tests
                     Assert.NotNull(transaction);
                     Assert.Equal(TransactionState.DontExist, transaction.State);
 
-                    var s = TestHelper.OpenWriterHost(storageServer1);
+                    var s = TestHelper.OpenWriterHost(_kernel, storageServer1);
 
                     Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
@@ -66,7 +66,10 @@ namespace Qoollo.Tests
                     Assert.NotNull(transaction);
                     Thread.Sleep(200);
                     transaction = _proxySystem.GetTransaction(transaction);
-                    GlobalQueue.Queue.TransactionQueue.Add(new Transaction(transaction));
+
+                    var queue = distr.Kernel.Get<IGlobalQueue>();
+                    queue.TransactionQueue.Add(new Transaction(transaction));
+
                     Thread.Sleep(100);
                     transaction = _proxySystem.GetTransaction(transaction);
                     Assert.NotNull(transaction);
@@ -119,8 +122,8 @@ namespace Qoollo.Tests
 
                 try
                 {
-                    distr.Build();
-                    distr2.Build();
+                    distr.Build(new TestInjectionModule());
+                    distr2.Build(new TestInjectionModule());
 
                     _proxySystem.Start();
                     distr.Start();
@@ -129,9 +132,9 @@ namespace Qoollo.Tests
                     _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
                     _proxySystem.Distributor.SayIAmHere(ServerId(distrServer2));
 
-                    var s1 = TestHelper.OpenWriterHost(storageServer1);
-                    var s2 = TestHelper.OpenWriterHost(storageServer2);
-                    var s3 = TestHelper.OpenWriterHost(storageServer3);
+                    var s1 = TestHelper.OpenWriterHost(_kernel, storageServer1);
+                    var s2 = TestHelper.OpenWriterHost(_kernel, storageServer2);
+                    var s3 = TestHelper.OpenWriterHost(_kernel, storageServer3);
 
                     Thread.Sleep(TimeSpan.FromMilliseconds(300));
 
@@ -170,16 +173,14 @@ namespace Qoollo.Tests
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000), filename, 1, 
                     distrServer1, distrServer12, 30000);
 
-                distr.Build();
+                distr.Build(new TestInjectionModule());
 
                 _proxySystem.Start();
                 distr.Start();
 
-                GlobalQueue.Queue.Start();
-
                 _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
-                var s = TestHelper.OpenWriterHost(storageServer1);
+                var s = TestHelper.OpenWriterHost(_kernel, storageServer1);
 
                 s.retData = TestHelper.CreateEvent(new StoredDataHashCalculator(), 10);
 
@@ -210,16 +211,14 @@ namespace Qoollo.Tests
                     distrServer1, distrServer12, 30000);
 
                 var storage = WriterSystem(filename, 1, storageServer1);
-                storage.Build();
-                distr.Build();
+                storage.Build(new TestInjectionModule());
+                distr.Build(new TestInjectionModule());
 
                 storage.DbModule.AddDbModule(new TestDbInMemory());
 
                 storage.Start();
                 _proxySystem.Start();
                 distr.Start();
-
-                GlobalQueue.Queue.Start();
 
                 _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
@@ -267,9 +266,9 @@ namespace Qoollo.Tests
                 var storage1 = WriterSystem(filename, 1, storageServer1);
                 var storage2 = WriterSystem(filename, 1, storageServer2);
 
-                storage1.Build();
-                storage2.Build();
-                distr.Build();
+                storage1.Build(new TestInjectionModule());
+                storage2.Build(new TestInjectionModule());
+                distr.Build(new TestInjectionModule());
 
                 storage1.DbModule.AddDbModule(new TestDbInMemory());
                 storage2.DbModule.AddDbModule(new TestDbInMemory());
@@ -278,8 +277,6 @@ namespace Qoollo.Tests
                 storage2.Start();
                 _proxySystem.Start();
                 distr.Start();
-
-                GlobalQueue.Queue.Start();
 
                 _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
@@ -323,9 +320,9 @@ namespace Qoollo.Tests
                 var storage1 = WriterSystem(filename, 2, storageServer1);
                 var storage2 = WriterSystem(filename, 2, storageServer2);
 
-                storage1.Build();
-                storage2.Build();
-                distr.Build();
+                storage1.Build(new TestInjectionModule());
+                storage2.Build(new TestInjectionModule());
+                distr.Build(new TestInjectionModule());
 
                 storage1.DbModule.AddDbModule(new TestDbInMemory());
                 storage2.DbModule.AddDbModule(new TestDbInMemory());
@@ -334,8 +331,6 @@ namespace Qoollo.Tests
                 storage2.Start();
                 _proxySystem.Start();
                 distr.Start();
-
-                GlobalQueue.Queue.Start();
 
                 _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
@@ -379,9 +374,9 @@ namespace Qoollo.Tests
                 var storage1 = WriterSystem(filename, 2, storageServer1);
                 var storage2 = WriterSystem(filename, 2, storageServer2);
 
-                storage1.Build();
-                storage2.Build();
-                distr.Build();
+                storage1.Build(new TestInjectionModule());
+                storage2.Build(new TestInjectionModule());
+                distr.Build(new TestInjectionModule());
 
                 storage1.DbModule.AddDbModule(new TestDbInMemory());
                 storage2.DbModule.AddDbModule(new TestDbInMemory());
@@ -390,8 +385,6 @@ namespace Qoollo.Tests
                 storage2.Start();
                 _proxySystem.Start();
                 distr.Start();
-
-                GlobalQueue.Queue.Start();
 
                 _proxySystem.Distributor.SayIAmHere(ServerId(distrServer1));
 
@@ -423,9 +416,9 @@ namespace Qoollo.Tests
                 var storage1 = WriterSystem(filename, 2, storageServer1);
                 var storage2 = WriterSystem(filename, 2, storageServer2);
 
-                storage1.Build();
-                storage2.Build();
-                distr.Build();
+                storage1.Build(new TestInjectionModule());
+                storage2.Build(new TestInjectionModule());
+                distr.Build(new TestInjectionModule());
 
                 storage1.DbModule.AddDbModule(new TestDbInMemory());
                 storage2.DbModule.AddDbModule(new TestDbInMemory());

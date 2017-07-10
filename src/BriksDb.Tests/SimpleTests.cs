@@ -8,8 +8,8 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.Caches;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.Async;
-using Qoollo.Impl.Modules.Queue;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Xunit;
@@ -151,7 +151,7 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncTaskModule_AddAsyncTask_AmountOfOperations()
         {
-            var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
+            var test = new AsyncTaskModule(null, new QueueConfiguration(2, -1));
             int value = 0;
             const string name1 = "test1";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(500), async => Interlocked.Increment(ref value),
@@ -176,7 +176,7 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncTaskModule_AddAsyncTask_AmountOfOperations_2Tasks()
         {
-            var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
+            var test = new AsyncTaskModule(null, new QueueConfiguration(2, -1));
             int value = 0;
             const string name1 = "test1";
             const string name2 = "test2";
@@ -200,7 +200,7 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncTaskModule_Dispose_StopAsyncTaskAfterNumberOfRetry()
         {
-            var test = new AsyncTaskModule(new QueueConfiguration(2, -1));
+            var test = new AsyncTaskModule(null, new QueueConfiguration(2, -1));
             int value = 0;
             const string name1 = "test1";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(100), async => Interlocked.Increment(ref value),
@@ -224,13 +224,15 @@ namespace Qoollo.Tests
 
                 #region hell
 
+                var queue = GetBindedQueue("q1");
+
                 var dnet = DistributorNetModule();
                 var ddistributor = DistributorDistributorModule(filename, 1, dnet);
-                dnet.SetDistributor(ddistributor);
+                _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
 
                 dnet.Start();
                 ddistributor.Start();
-                GlobalQueue.Queue.Start();
+                queue.Start();
 
                 #endregion
 
@@ -243,7 +245,7 @@ namespace Qoollo.Tests
                 dnet.Process(dest.First(), data1);
                 dnet.Process(dest2.First(), data1);
 
-                Thread.Sleep(100);
+                Thread.Sleep(1000);
 
                 dest = ddistributor.GetDestination(data1, false);
                 dest2 = ddistributor.GetDestination(data2, false);
@@ -251,8 +253,8 @@ namespace Qoollo.Tests
                 Assert.Equal(null, dest);
                 Assert.Equal(null, dest2);
 
-                var h1 = TestHelper.OpenWriterHost(storageServer1);
-                var h2 = TestHelper.OpenWriterHost(storageServer2);
+                var h1 = TestHelper.OpenWriterHost(_kernel, storageServer1);
+                var h2 = TestHelper.OpenWriterHost(_kernel, storageServer2);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(800));
 
@@ -265,7 +267,7 @@ namespace Qoollo.Tests
                 Assert.Equal(1, dest.Count);
                 Assert.Equal(1, dest2.Count);
 
-                GlobalQueue.Queue.Dispose();
+                queue.Dispose();
 
                 ddistributor.Dispose();
                 h1.Dispose();

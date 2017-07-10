@@ -18,7 +18,6 @@ using Qoollo.Impl.Collector.Merge;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Collector.Model;
 using Qoollo.Impl.Collector.Distributor;
-using Qoollo.Impl.Collector.Background;
 using Qoollo.Impl.Collector;
 using Qoollo.Impl.Postgre.Internal;
 using Xunit;
@@ -267,7 +266,7 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(),
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(),
                 new ConnectionConfiguration("testService", 10));
             writer.Start();
 
@@ -324,7 +323,7 @@ namespace Qoollo.Tests
             CreateHashFileForTwoWriters(nameof(Postgre_Restore_Single_Test));
             //var writer1 = CreatePostgreWriter(nameof(Postgre_Restore_Single_Test), 0);
             var writer2 = CreatePostgreWriter(nameof(Postgre_Restore_Single_Test), 1);
-            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
             writer2.Start();
 
             for (int i = 1; i < 100; i++)
@@ -375,7 +374,7 @@ namespace Qoollo.Tests
             CreateHashFileForTwoWriters(nameof(Postgre_Restore_Package_Test));
             //var writer1 = CreatePostgreWriter(nameof(Postgre_Restore_Package_Test), 0);
             var writer2 = CreatePostgreWriter(nameof(Postgre_Restore_Package_Test), 1);
-            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
             writer2.Start();
 
             for (int i = 1; i < 100; i++)
@@ -489,7 +488,7 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
             writer.Start();
 
             for (int i = 1; i < 100; i++)
@@ -532,7 +531,7 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
             writer.Start();
 
             for (int i = 1; i < 100; i += 2)
@@ -584,7 +583,7 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestHelper.OpenDistributorHostForDb(CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
             writer.Start();
 
             for (int i = 1; i < 100; i++)
@@ -646,17 +645,17 @@ namespace Qoollo.Tests
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
-            var merge = new OrderMerge(loader, parser, new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
-            var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+            var merge = new OrderMerge(null, parser);
+            //, new CollectorModel(new DistributorHashConfiguration(1),
+            //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
+            var async = new AsyncTaskModule(null, new QueueConfiguration(4, 10));
+            //new CollectorModel(new DistributorHashConfiguration(1),
+            //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
+            //            HashFileType.Writer)), async
+            var distributor = new DistributorModule(null, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+            var back = new BackgroundModule(null);
 
-            var distributor =
-                new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
-            var back = new BackgroundModule(new QueueConfiguration(5, 10));
-
-            var searchModule = new SearchTaskModule("Test", merge, loader, distributor, back, parser);
+            var searchModule = new SearchTaskModule(null, "Test", merge, parser);
 
             #region hell
 
@@ -742,23 +741,26 @@ namespace Qoollo.Tests
             writer.Save();
 
             var loader = new TestDataLoader(pageSize);
+            //_kernel.Bind<IDataLoader>().ToConstant(loader);
+
             var parser = new PostgreScriptParser();
             parser.SetCommandsHandler(
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
-            var merge = new OrderMerge(loader, parser, 
-                new CollectorModel(new DistributorHashConfiguration(1), 
-                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
-            var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+            var merge = new OrderMerge(null, parser); 
+                //new CollectorModel(new DistributorHashConfiguration(1), 
+                //    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
+            var async = new AsyncTaskModule(null,new QueueConfiguration(4, 10));
 
-            var distributor =
-                new DistributorModule(new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
-                        HashFileType.Writer)), async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
-            var back = new BackgroundModule(new QueueConfiguration(5, 10));
+            //new CollectorModel(new DistributorHashConfiguration(1),
+            //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
+            //            HashFileType.Writer)), async,
 
-            var searchModule = new SearchTaskModule("Test", merge, loader, distributor, back, parser);
+            var distributor = new DistributorModule(null, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+            var back = new BackgroundModule(null);
+
+            var searchModule = new SearchTaskModule(null, "Test", merge, parser);
 
             #region hell
 

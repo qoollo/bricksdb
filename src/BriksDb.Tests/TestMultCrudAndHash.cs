@@ -2,6 +2,7 @@
 using System.Threading;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestWriter;
 using Xunit;
@@ -15,6 +16,8 @@ namespace Qoollo.Tests
         public TestMultCrudAndHash():base()
         {
             _proxy = TestGate(proxyServer, 30000);
+
+            _proxy.Module = new TestInjectionModule();
             _proxy.Build();
         }
 
@@ -33,11 +36,14 @@ namespace Qoollo.Tests
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
 
+                storage.Module = new TestInjectionModule();
                 storage.Build();
+
+                distr.Module = new TestInjectionModule();
                 distr.Build();
 
-                var f = new TestInMemoryDbFactory();
-                var f2 = new TestInMemoryDbFactory("Int2");
+                var f = new TestInMemoryDbFactory(_kernel);
+                var f2 = new TestInMemoryDbFactory(_kernel, "Int2");
 
                 storage.AddDbModule(f);
                 storage.AddDbModule(f2);
@@ -101,17 +107,22 @@ namespace Qoollo.Tests
                 var storage1 = WriterApi(StorageConfiguration(filename, 1), storageServer1);
                 var storage2 = WriterApi(StorageConfiguration(filename, 1), storageServer2);
 
+                storage1.Module = new TestInjectionModule();
                 storage1.Build();
+
+                storage2.Module = new TestInjectionModule();
                 storage2.Build();
+
+                distr.Module = new TestInjectionModule();
                 distr.Build();
 
-                var f = new TestInMemoryDbFactory();
-                var f2 = new TestInMemoryDbFactory("Int2");
+                var f = new TestInMemoryDbFactory(_kernel);
+                var f2 = new TestInMemoryDbFactory(_kernel, "Int2");
                 storage1.AddDbModule(f);
                 storage1.AddDbModule(f2);
 
-                var f3 = new TestInMemoryDbFactory();
-                var f4 = new TestInMemoryDbFactory("Int2");
+                var f3 = new TestInMemoryDbFactory(_kernel);
+                var f4 = new TestInMemoryDbFactory(_kernel, "Int2");
                 storage2.AddDbModule(f3);
                 storage2.AddDbModule(f4);
 
@@ -173,10 +184,13 @@ namespace Qoollo.Tests
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
 
+                storage.Module = new TestInjectionModule();
                 storage.Build();
+
+                distr.Module = new TestInjectionModule();
                 distr.Build();
 
-                var f = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
+                var f = new TestInMemoryDbFactory(_kernel, "Int3", new IntHashConvertor());
 
                 storage.AddDbModule(f);
 
@@ -232,12 +246,17 @@ namespace Qoollo.Tests
                 var storage1 = WriterApi(StorageConfiguration(filename, 1), storageServer1);
                 var storage2 = WriterApi(StorageConfiguration(filename, 1), storageServer2);
 
+                storage1.Module = new TestInjectionModule();
                 storage1.Build();
+
+                storage2.Module = new TestInjectionModule();
                 storage2.Build();
+
+                distr.Module = new TestInjectionModule();
                 distr.Build();
 
-                var f1 = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
-                var f2 = new TestInMemoryDbFactory("Int3", new IntHashConvertor());
+                var f1 = new TestInMemoryDbFactory(_kernel, "Int3", new IntHashConvertor());
+                var f2 = new TestInMemoryDbFactory(_kernel, "Int3", new IntHashConvertor());
 
                 storage1.AddDbModule(f1);
                 storage2.AddDbModule(f2);

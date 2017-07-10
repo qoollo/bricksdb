@@ -1,22 +1,20 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using Ninject;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
-using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks.Processes;
-using Qoollo.Impl.Writer.Db;
-using Qoollo.Impl.Writer.WriterNet;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class TransferRestoreModule : CommonAsyncWorkModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
-        private readonly Ninject.StandardKernel _kernel = InitInjection.Kernel;
 
         public ServerId RemoteServer
         {
@@ -45,34 +43,33 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
-        public TransferRestoreModule(
-            WriterModel writerModel, 
-            RestoreModuleConfiguration configuration, 
-            WriterNetModule writerNet,
-            AsyncTaskModule asyncTaskModule, 
-            DbModuleCollection db, 
+        public TransferRestoreModule(StandardKernel kernel, RestoreModuleConfiguration configuration,
             QueueConfiguration queueConfiguration)
-            : base(writerNet, asyncTaskModule)
+            : base(kernel)
         {
-            Contract.Requires(writerModel != null);
             Contract.Requires(configuration != null);
-            Contract.Requires(db != null);
             Contract.Requires(queueConfiguration != null);
 
-            _writerModel = writerModel;
-            _db = db;
             _configuration = configuration;
             _queueConfiguration = queueConfiguration;
             _lastDateTime = string.Empty;
         }
 
         private readonly RestoreModuleConfiguration _configuration;
-        private readonly WriterModel _writerModel;
-        private readonly DbModuleCollection _db;
+        private IWriterModel _writerModel;
+        private IDbModule _db;
         private ServerId _remoteServer;
         private readonly QueueConfiguration _queueConfiguration;
         private SingleServerRestoreProcess _restore;
         private string _lastDateTime;
+
+        public override void Start()
+        {
+            base.Start();
+
+            _db = Kernel.Get<IDbModule>();
+            _writerModel = Kernel.Get<IWriterModel>();
+        }
 
         public void Restore(ServerId remoteServer, bool isSystemUpdated, string tableName)
         {
@@ -94,7 +91,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 Lock.ExitWriteLock();
             }            
 
-            _restore = new SingleServerRestoreProcess(_kernel, _db, _writerModel, WriterNet, 
+            _restore = new SingleServerRestoreProcess(Kernel, _db, _writerModel, WriterNet, 
                 tableName, _remoteServer, isSystemUpdated, _queueConfiguration);
             _restore.Start();
 

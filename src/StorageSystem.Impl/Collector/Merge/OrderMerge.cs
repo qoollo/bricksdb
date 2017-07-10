@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Collector.Comparer;
-using Qoollo.Impl.Collector.Load;
-using Qoollo.Impl.Collector.Model;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Collector.Tasks;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -16,13 +16,19 @@ namespace Qoollo.Impl.Collector.Merge
         private Qoollo.Logger.Logger _logger = Qoollo.Logger.LoggerStatic.GetThisClassLogger();
 
         private readonly ScriptParser _scriptParser;
-        private readonly CollectorModel _serversModel;
+        private ICollectorModel _serversModel;
 
-        public OrderMerge(IDataLoader dataLoader, ScriptParser scriptParser, CollectorModel serversModel)
-            : base(dataLoader)
+        public OrderMerge(StandardKernel kernel, ScriptParser scriptParser)
+            : base(kernel)
         {
             _scriptParser = scriptParser;
-            _serversModel = serversModel;
+        }
+
+        public override void Start()
+        {
+            base.Start();
+
+            _serversModel = Kernel.Get<ICollectorModel>();
         }
 
         protected override List<SearchData> MergeOrder(OrderSelectTask orderSelectTask,

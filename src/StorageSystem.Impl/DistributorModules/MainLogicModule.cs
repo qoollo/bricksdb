@@ -1,33 +1,34 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.DistributorModules.Caches;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules;
 
 namespace Qoollo.Impl.DistributorModules
 {
-    internal class MainLogicModule : ControlModule
+    internal class MainLogicModule : ControlModule, IMainLogicModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        private readonly DistributorModule _distributor;
-        private readonly TransactionModule _transaction;
-        private readonly DistributorTimeoutCache _cache;
+        private IDistributorModule _distributor;
+        private ITransactionModule _transaction;
+        private IDistributorTimeoutCache _cache;
 
-        public MainLogicModule(DistributorModule distributor, TransactionModule transaction, DistributorTimeoutCache cache)
+        public MainLogicModule(StandardKernel kernel):base(kernel)
         {            
-            Contract.Requires(distributor != null);
-            Contract.Requires(transaction != null);
-            Contract.Requires(cache != null);
-            _distributor = distributor;
-            _transaction = transaction;
-            _cache = cache;
-        }        
+        }
+
+        public override void Start()
+        {
+            _cache = Kernel.Get<IDistributorTimeoutCache>();
+            _distributor = Kernel.Get<IDistributorModule>();
+            _transaction = Kernel.Get<ITransactionModule>();
+        }
 
         private bool GetCountServers(InnerData data)
         {

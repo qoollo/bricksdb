@@ -8,7 +8,8 @@ namespace Qoollo.Impl.DistributorModules.Caches
     {
         private readonly TimeSpan _aliveTimeout;
 
-        public DistributorCache(TimeSpan timeout, TimeSpan aliveTimeout) : base(timeout)
+        public DistributorCache(TimeSpan timeout, TimeSpan aliveTimeout) 
+            : base(timeout)
         {
             _aliveTimeout = aliveTimeout;
         }

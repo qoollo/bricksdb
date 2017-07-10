@@ -12,8 +12,7 @@ namespace Qoollo.Tests.TestModules
     class TestCache : CacheModule<InnerData>
     {
         public int CountCallback = 0;
-        public TestCache(TimeSpan timeout)
-            : base(timeout)
+        public TestCache(TimeSpan timeout): base(timeout)
         {
         }
 

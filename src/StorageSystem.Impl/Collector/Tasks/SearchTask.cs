@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Load;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -45,7 +46,7 @@ namespace Qoollo.Impl.Collector.Tasks
         private bool _isCanRead;
 
         protected SearchTask(List<ServerId> servers, FieldDescription keyDescription, string script,
-            List<FieldDescription> userParametrs, string tableName, bool isUserScript = false)
+            List<FieldDescription> userParametrs, string tableName, bool isUserScript = false):base(null)
         {
             SearchTasks = new List<SingleServerSearchTask>();
             servers.ForEach(

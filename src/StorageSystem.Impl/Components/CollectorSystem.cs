@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using Ninject;
+using Ninject.Modules;
 using Qoollo.Impl.Collector;
-using Qoollo.Impl.Collector.Background;
 using Qoollo.Impl.Collector.CollectorNet;
 using Qoollo.Impl.Collector.Distributor;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Load;
 using Qoollo.Impl.Collector.Model;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.Modules.Interfaces;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Impl.Components
 {
@@ -19,7 +23,6 @@ namespace Qoollo.Impl.Components
         private readonly HashMapConfiguration _hashMapConfiguration;
         private readonly ConnectionConfiguration _connectionConfiguration;
         private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
-        private readonly QueueConfiguration _queueConfiguration;
         private readonly int _serverPageSize;
         private readonly bool _useHashFile;
 
@@ -27,21 +30,18 @@ namespace Qoollo.Impl.Components
             HashMapConfiguration hashMapConfiguration,
             ConnectionConfiguration connectionConfiguration,
             ConnectionTimeoutConfiguration connectionTimeoutConfiguration,
-            QueueConfiguration queueConfiguration,
             int serverPageSize, bool useHashFile = true)
         {
             Contract.Requires(distributorHashConfiguration!=null);
             Contract.Requires(hashMapConfiguration != null);
             Contract.Requires(connectionConfiguration != null);
             Contract.Requires(connectionTimeoutConfiguration != null);
-            Contract.Requires(queueConfiguration != null);
             Contract.Requires(serverPageSize>0);
 
             _distributorHashConfiguration = distributorHashConfiguration;
             _hashMapConfiguration = hashMapConfiguration;
             _connectionConfiguration = connectionConfiguration;
             _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
-            _queueConfiguration = queueConfiguration;
             _serverPageSize = serverPageSize;
             _useHashFile = useHashFile;
         }
@@ -50,22 +50,28 @@ namespace Qoollo.Impl.Components
 
         public Func<string, ScriptParser,  SearchTaskModule> CreateApi { get; private set; }
 
-        public override void Build()
+        public override void Build(NinjectModule module = null)
         {
-            var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+            module = module ?? new InjectionModule();
+
+            var kernel = new StandardKernel(module);
+
+            var async = new AsyncTaskModule(kernel, new QueueConfiguration(4, 10));
+            kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
             var serversModel = new CollectorModel(_distributorHashConfiguration, _hashMapConfiguration, _useHashFile);
-            var distributor = new DistributorModule(serversModel, async,
-                new AsyncTasksConfiguration(TimeSpan.FromSeconds(10)));
+            kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
-            var net = new CollectorNetModule(_connectionConfiguration, _connectionTimeoutConfiguration, distributor);
+            var distributor = new DistributorModule(kernel, new AsyncTasksConfiguration(TimeSpan.FromSeconds(10)));
+            kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
-            distributor.SetNetModule(net);
-            
-            var back = new BackgroundModule(_queueConfiguration);
-            var loader = new DataLoader(net, _serverPageSize, back);
+            var net = new CollectorNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
+            kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
-            var searchModule = new SearchTaskCommonModule(loader, distributor, back, serversModel);
+            var back = new BackgroundModule(kernel);
+            var loader = new DataLoader(kernel, net, _serverPageSize, back);
+
+            var searchModule = new SearchTaskCommonModule(kernel);
             CreateApi = searchModule.CreateApi;
             Distributor = distributor;
 

@@ -11,8 +11,8 @@ namespace Qoollo.Benchmark.Send
 
         public CollectorGate(string tableName, DbFactory dbFactory,
             CollectorConfiguration collectorConfiguration, CollectorNetConfiguration netConfiguration,
-            CommonConfiguration commonConfiguration, TimeoutConfiguration timeoutConfiguration)
-            : base(collectorConfiguration, netConfiguration, commonConfiguration, timeoutConfiguration)
+            TimeoutConfiguration timeoutConfiguration)
+            : base(collectorConfiguration, netConfiguration, timeoutConfiguration)
         {
             Contract.Requires(!string.IsNullOrEmpty(tableName));
             Contract.Requires(_dbFactory != null);

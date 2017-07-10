@@ -1,12 +1,17 @@
 ﻿using System.Diagnostics.Contracts;
+using Ninject;
+using Ninject.Modules;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer;
 using Qoollo.Impl.Writer.AsyncDbWorks;
 using Qoollo.Impl.Writer.Db;
+using Qoollo.Impl.Writer.Interfaces;
 using Qoollo.Impl.Writer.WriterNet;
 
 namespace Qoollo.Impl.Components
@@ -66,32 +71,47 @@ namespace Qoollo.Impl.Components
 
         public DbModuleCollection DbModule { get; private set; }
 
-        public override void Build()
+        public override void Build(NinjectModule module = null)
         {
-            var q = new GlobalQueueInner();
-            GlobalQueue.SetQueue(q);
+            module = module ?? new InjectionModule();
+            var kernel = new StandardKernel(module);
 
-            var db = new DbModuleCollection();
+            var q = new GlobalQueue();
+            kernel.Bind<IGlobalQueue>().ToConstant(q);
 
-            var net = new WriterNetModule(_connectionConfiguration, _connectionTimeoutConfiguration);
+            var db = new DbModuleCollection(kernel);
+            kernel.Bind<IDbModule>().ToConstant(db);
 
-            var async = new AsyncTaskModule(_queueConfiguration);
-            var model = new WriterModel(_local, _hashMapConfiguration);
+            var net = new WriterNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
+            kernel.Bind<IWriterNetModule>().ToConstant(net);
 
-            var restore = new AsyncDbWorkModule(model, net, async, db, _initiatorRestoreConfiguration,
+            var async = new AsyncTaskModule(kernel, _queueConfiguration);
+            kernel.Bind<IAsyncTaskModule>().ToConstant(async);
+
+            var model = new WriterModel(kernel, _local, _hashMapConfiguration);
+            kernel.Bind<IWriterModel>().ToConstant(model);
+
+            var restore = new AsyncDbWorkModule(kernel, _initiatorRestoreConfiguration,
                 _transferRestoreConfiguration, _timeoutRestoreConfiguration, 
                 _queueConfigurationRestore, _isNeedRestore);
+            kernel.Bind<IAsyncDbWorkModule>().ToConstant(restore);
 
-            var distributor = new DistributorModule(model, async, restore, net, _queueConfiguration);
+            var distributor = new DistributorModule(kernel, _queueConfiguration);
+            kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             Distributor = distributor;
             DbModule = db;
 
-            var main = new MainLogicModule(distributor, db);
-            var input = new InputModule(main, _queueConfiguration);
-            var receiver = new NetWriterReceiver(input, distributor, _receiverConfigurationForWrite,
+            var main = new MainLogicModule(kernel);
+            kernel.Bind<IMainLogicModule>().ToConstant(main);
+
+            var input = new InputModule(kernel, _queueConfiguration);
+            kernel.Bind<IInputModule>().ToConstant(input);
+
+            var receiver = new NetWriterReceiver(kernel, _receiverConfigurationForWrite,
                 _receiverConfigurationForCollector);
                         
+            AddModule(model);
             AddModule(distributor);
             AddModule(input);
             AddModule(db);

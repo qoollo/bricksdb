@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -9,25 +9,28 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.NetInterfaces.Data;
-using Qoollo.Impl.Writer.Db;
+using Qoollo.Impl.Writer.Interfaces;
 using Qoollo.Impl.Writer.PerfCounters;
 
 namespace Qoollo.Impl.Writer
 {
-    internal class MainLogicModule:ControlModule
+    internal class MainLogicModule : ControlModule, IMainLogicModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        private readonly DbModule _db;
-        private readonly DistributorModule _distributor;        
+        private IDbModule _db;
+        private IDistributorModule _distributor;
+        private IWriterModel _model;
 
-        public MainLogicModule(DistributorModule distributor, DbModule db)
+        public MainLogicModule(StandardKernel kernel) :base(kernel)
         {
-            Contract.Requires(distributor != null);
-            Contract.Requires(db != null);
+        }
 
-            _db = db;
-            _distributor = distributor;
+        public override void Start()
+        {
+            _db = Kernel.Get<IDbModule>();
+            _distributor = Kernel.Get<IDistributorModule>();
+            _model = Kernel.Get<IWriterModel>();
         }
 
         #region Process
@@ -122,7 +125,7 @@ namespace Qoollo.Impl.Writer
 
         private bool GetLocal(InnerData data)
         {
-            return  _distributor.IsMine(data.Transaction.DataHash);
+            return  _model.IsMine(data.Transaction.DataHash);
         }
 
         private RemoteResult CheckResult(InnerData data, RemoteResult result)

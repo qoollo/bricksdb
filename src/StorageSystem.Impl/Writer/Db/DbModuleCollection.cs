@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -15,7 +16,7 @@ namespace Qoollo.Impl.Writer.Db
     {
         private readonly Dictionary<string, DbModule> _dbModules;
 
-        public DbModuleCollection()
+        public DbModuleCollection(StandardKernel kernel):base(kernel)
         {
             _dbModules = new Dictionary<string, DbModule>();
         }
@@ -185,7 +186,7 @@ namespace Qoollo.Impl.Writer.Db
             get { throw new NotImplementedException(); }
         }
 
-        internal override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
+        public override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
         {
             throw new NotImplementedException();
         }

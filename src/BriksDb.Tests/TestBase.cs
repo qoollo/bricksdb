@@ -13,9 +13,12 @@ using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Model;
+using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
+using Qoollo.Impl.Proxy.Interfaces;
 using Qoollo.Impl.Proxy.ProxyNet;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.NetMock;
@@ -27,6 +30,8 @@ namespace Qoollo.Tests
 {
     public class TestBase:IDisposable
     {
+        internal  StandardKernel _kernel = new StandardKernel(new TestInjectionModule());
+
         internal TestWriterGate _writer1;
         internal TestWriterGate _writer2;
         internal TestWriterGate _writer3;
@@ -58,7 +63,6 @@ namespace Qoollo.Tests
         {
             Monitor.Enter(Lock);
 
-            InitInjection.Kernel = new StandardKernel(new TestInjectionModule());
             NetMock.NetMock.Instance = new NetMock.NetMock();
 
             InitInjection.RestoreUsePackage = false;
@@ -75,6 +79,7 @@ namespace Qoollo.Tests
                 TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
 
             _proxy = new TestGate(netconfig, toconfig, CommonConfiguration);
+            _proxy.Module = new TestInjectionModule();
             _proxy.Build();
 
             _distrTest = new TestDistributorGate();
@@ -101,34 +106,46 @@ namespace Qoollo.Tests
 
         internal ProxyNetModule ProxyNetModule()
         {
-            return new ProxyNetModule(ConnectionConfiguration,
+            var net = new ProxyNetModule(_kernel, ConnectionConfiguration,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            _kernel.Rebind<IProxyNetModule>().ToConstant(net);
+            return net;
         }
 
         internal DistributorNetModule DistributorNetModule()
         {
-            var connection = new ConnectionConfiguration("testService", 10);
-            return new DistributorNetModule(connection, new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            var net = new DistributorNetModule(_kernel, ConnectionConfiguration,
+                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            _kernel.Rebind<IDistributorNetModule>().ToConstant(net);
+            return net;
         }
 
         internal DistributorModule DistributorDistributorModule(string filename, int countReplics,
             DistributorNetModule net, int pingTo = 200, int asyncCheckTo = 2000,
             int distrPort1 = distrServer1, int distrPort2 = distrServer12)
         {
-            return new DistributorModule(
+            return new DistributorModule(_kernel, 
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(pingTo)),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(asyncCheckTo)),
                 new DistributorHashConfiguration(countReplics),
-                QueueConfiguration, net,
+                QueueConfiguration,
                 new ServerId("localhost", distrPort1),
                 new ServerId("localhost", distrPort2),
                 new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
         }
 
+        internal AsyncProxyCache AsyncProxyCache()
+        {
+            var cache = new AsyncProxyCache(TimeSpan.FromMinutes(100));
+            _kernel.Rebind<IAsyncProxyCache>().ToConstant(cache);
+            return cache;
+        }
+
         internal ProxyDistributorModule ProxyDistributorModule(ProxyNetModule net, int proxyPort)
         {
-            return new ProxyDistributorModule(new AsyncProxyCache(TimeSpan.FromMinutes(100)),
-                net, QueueConfiguration, ServerId(proxyPort),
+            AsyncProxyCache();
+                        
+            return new ProxyDistributorModule(_kernel, QueueConfiguration, ServerId(proxyPort),
                 new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
                 new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
         }
@@ -235,6 +252,13 @@ namespace Qoollo.Tests
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
+        }
+
+        internal GlobalQueue GetBindedQueue(string name = "")
+        {
+            var queue = new GlobalQueue(name);
+            _kernel.Rebind<IGlobalQueue>().ToConstant(queue);
+            return queue;
         }
 
         protected virtual void Dispose(bool isUserCall)

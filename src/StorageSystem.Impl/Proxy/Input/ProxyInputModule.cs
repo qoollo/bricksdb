@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -9,33 +10,34 @@ using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Modules;
-using Qoollo.Impl.Proxy.Caches;
+using Qoollo.Impl.Proxy.Interfaces;
 
 namespace Qoollo.Impl.Proxy.Input
 {
     internal class ProxyInputModule:ControlModule,IStorageInner
     {
         private readonly string _tableName;
-        private readonly ProxyDistributorModule _distributor;
-        private readonly IHashCalculater _hashCalculater;
-        private readonly AsyncProxyCache _asyncProxyCache;
-        private readonly ProxyInputModuleCommon _processTransaction;
         private readonly bool _hashFromValue;
+        private readonly IHashCalculater _hashCalculater;
+        private IProxyDistributorModule _distributor;
+        private IAsyncProxyCache _asyncProxyCache;
+        private IProxyInputModuleCommon _processTransaction;
 
-        public ProxyInputModule(string tableName, bool hashFromValue, AsyncProxyCache asyncProxyCache,
-            IHashCalculater hashCalculater, ProxyDistributorModule distributor, ProxyInputModuleCommon processTransaction)
+        public ProxyInputModule(StandardKernel kernel, string tableName, bool hashFromValue, IHashCalculater hashCalculater)
+            :base(kernel)
         {
-            Contract.Requires(distributor != null);
             Contract.Requires(hashCalculater != null);
-            Contract.Requires(asyncProxyCache != null);
-            Contract.Requires(processTransaction != null);
 
             _tableName = tableName;
-            _distributor = distributor;
-            _processTransaction = processTransaction;
             _hashFromValue = hashFromValue;
             _hashCalculater = hashCalculater;
-            _asyncProxyCache = asyncProxyCache;
+        }
+
+        public override void Start()
+        {
+            _asyncProxyCache = Kernel.Get<IAsyncProxyCache>();
+            _processTransaction = Kernel.Get<IProxyInputModuleCommon>();
+            _distributor = Kernel.Get<IProxyDistributorModule>();
         }
 
         #region Common Interface

@@ -1,4 +1,5 @@
 ﻿using System;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -16,8 +17,9 @@ namespace Qoollo.Impl.Proxy.ProxyNet
     internal class SingleConnectionToDistributor : SingleConnection<ICommonNetReceiverForProxy>,
         ICommonNetReceiverForProxy, ISingleConnection
     {
-        public SingleConnectionToDistributor(ServerId server, ConnectionConfiguration configuration,
-            ConnectionTimeoutConfiguration timeoutConfiguration) : base(server, configuration, timeoutConfiguration)
+        public SingleConnectionToDistributor(StandardKernel kernel, ServerId server, ConnectionConfiguration configuration,
+            ConnectionTimeoutConfiguration timeoutConfiguration) 
+            : base(kernel, server, configuration, timeoutConfiguration)
         {
         }
 

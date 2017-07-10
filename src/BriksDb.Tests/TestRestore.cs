@@ -13,6 +13,7 @@ using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestWriter;
 using Xunit;
@@ -170,7 +171,7 @@ namespace Qoollo.Tests
 
                 #region hell2
 
-                proxy.Build();
+                proxy.Build(new TestInjectionModule());
                 proxy.Start();
 
                 _distrTest.Start();
@@ -350,10 +351,11 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 2);
 
-                var factory = new TestInMemoryDbFactory();
+                var factory = new TestInMemoryDbFactory(_kernel);
                 var storage1 = WriterApi(StorageConfiguration(filename, 1, 200), storageServer1);
-
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+
+                distr.Module = new TestInjectionModule();
                 distr.Build();
 
                 _proxy.Start();
@@ -361,6 +363,7 @@ namespace Qoollo.Tests
 
                 _proxy.Int.SayIAmHere("localhost", distrServer1);
 
+                storage1.Module = new TestInjectionModule();
                 storage1.Build();
                 storage1.AddDbModule(factory);
                 storage1.Start();
@@ -404,10 +407,11 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 1);
 
-                var factory = new TestInMemoryDbFactory();
+                var factory = new TestInMemoryDbFactory(_kernel);
                 var storage1 = WriterApi(StorageConfiguration(filename, 1, 200, 1, 60, true), storageServer1);
 
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                distr.Module = new TestInjectionModule();
                 distr.Build();
 
                 _proxy.Start();
@@ -415,6 +419,7 @@ namespace Qoollo.Tests
 
                 _proxy.Int.SayIAmHere("localhost", distrServer1);
 
+                storage1.Module = new TestInjectionModule();
                 storage1.Build();
                 storage1.AddDbModule(factory);
                 storage1.Start();
@@ -1145,7 +1150,7 @@ namespace Qoollo.Tests
 
                 #region hell2
 
-                proxy.Build();
+                proxy.Build(new TestInjectionModule());
                 proxy.Start();
 
                 _distrTest.Start();

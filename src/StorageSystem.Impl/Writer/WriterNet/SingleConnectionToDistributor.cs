@@ -1,4 +1,5 @@
 ﻿using System;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
@@ -13,8 +14,9 @@ namespace Qoollo.Impl.Writer.WriterNet
 {
     internal class SingleConnectionToDistributor : SingleConnection<ICommonNetReceiverForDb>, ICommonNetReceiverForDb, ISingleConnection
     {
-        public SingleConnectionToDistributor(ServerId server, ConnectionConfiguration configuration,
-            ConnectionTimeoutConfiguration timeoutConfiguration) : base(server, configuration, timeoutConfiguration)
+        public SingleConnectionToDistributor(StandardKernel kernel, ServerId server, ConnectionConfiguration configuration,
+            ConnectionTimeoutConfiguration timeoutConfiguration) 
+            : base(kernel, server, configuration, timeoutConfiguration)
         {
         }
 

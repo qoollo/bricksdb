@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Qoollo.Impl.Collector.Background;
+using Ninject;
 using Qoollo.Impl.Collector.CollectorNet;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Collector.Tasks;
 using Qoollo.Impl.Modules;
@@ -16,7 +17,8 @@ namespace Qoollo.Impl.Collector.Load
         private readonly BackgroundModule _backgroundModule;
         public int SystemPage { get { return _serverPageSize; } }
 
-        public DataLoader(CollectorNetModule net, int serverPageSize, BackgroundModule backgroundModule)
+        public DataLoader(StandardKernel kernel, CollectorNetModule net, int serverPageSize, BackgroundModule backgroundModule)
+            :base(kernel)
         {
             _net = net;
             _serverPageSize = serverPageSize;

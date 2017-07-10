@@ -9,8 +9,7 @@ using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.Writer.Db;
-using Qoollo.Impl.Writer.WriterNet;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
 {
@@ -18,8 +17,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public SingleServerRestoreProcess(StandardKernel kernel, DbModuleCollection db, WriterModel writerModel,
-            WriterNetModule writerNet, string tableName, ServerId remoteServer, bool isSystemUpdated,
+        public SingleServerRestoreProcess(StandardKernel kernel, IDbModule db, IWriterModel writerModel,
+            IWriterNetModule writerNet, string tableName, ServerId remoteServer, bool isSystemUpdated,
             QueueConfiguration queueConfiguration)
             : base(kernel, db, writerModel, writerNet, tableName, isSystemUpdated, queueConfiguration)
         {

@@ -1,4 +1,5 @@
-﻿using Qoollo.Impl.Common;
+﻿using Ninject;
+using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
@@ -10,8 +11,9 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
     internal class SingleConnectionToDistributor : SingleConnection<ICommonCommunicationNet>, ICommonCommunicationNet,
         ISingleConnection
     {
-        public SingleConnectionToDistributor(ServerId server, ConnectionConfiguration configuration,
-            ConnectionTimeoutConfiguration timeoutConfiguration) : base(server, configuration, timeoutConfiguration)
+        public SingleConnectionToDistributor(StandardKernel kernel, ServerId server, ConnectionConfiguration configuration,
+            ConnectionTimeoutConfiguration timeoutConfiguration) 
+            : base(kernel, server, configuration, timeoutConfiguration)
         {
         }
 

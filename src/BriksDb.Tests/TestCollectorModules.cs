@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Threading;
 using Qoollo.Client.Request;
 using Qoollo.Impl.Collector;
-using Qoollo.Impl.Collector.Background;
 using Qoollo.Impl.Collector.CollectorNet;
 using Qoollo.Impl.Collector.Distributor;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Load;
 using Qoollo.Impl.Collector.Merge;
 using Qoollo.Impl.Collector.Model;
@@ -18,8 +18,9 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
-using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Impl.Sql.Internal;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestCollector;
 using Qoollo.Tests.TestWriter;
@@ -41,7 +42,8 @@ namespace Qoollo.Tests
                 <TestCommand, Type, TestCommand, int, int, TestDbReader>(
                 new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
-            _back = new BackgroundModule(new QueueConfiguration(5, 10));
+            _back = new BackgroundModule(_kernel);
+            _kernel.Bind<IBackgroundModule>().ToConstant(_back);
         }
 
         [Fact]
@@ -124,7 +126,7 @@ namespace Qoollo.Tests
         [Fact]
         public void BackgroundModule_CountLoads_CountLoads()
         {
-            var background = new BackgroundModule(new QueueConfiguration(1, 100));
+            var background = new BackgroundModule(_kernel);
             background.Start();
 
             var search = new TestSelectTask("", new List<ServerId>(), "", new FieldDescription("", typeof (int)));
@@ -157,86 +159,98 @@ namespace Qoollo.Tests
         [Fact]
         public void OrderMerge_GetMergeFunction_CheckData()
         {
-            var loader = new TestDataLoader(pageSize);
-
-            var merge = new OrderMerge(loader, new TestIntParser(), null);
-            var server1 = ServerId(storageServer1);
-            var server2 = ServerId(storageServer2);
-            var server3 = ServerId(storageServer3);
-
-            #region hell
-
-            loader.Data.Add(server1, new List<SearchData>
+            var filename = nameof(OrderMerge_GetMergeFunction_CheckData);
+            using (new FileCleaner(filename))
             {
-                TestHelper.CreateData(1),
-                TestHelper.CreateData(2),
-                TestHelper.CreateData(4),
-                TestHelper.CreateData(5),
-                TestHelper.CreateData(6),
-                TestHelper.CreateData(7),
-                TestHelper.CreateData(8),
-            });
+                CreateHashFile(filename, 1);
 
-            loader.Data.Add(server2, new List<SearchData>
-            {
-                TestHelper.CreateData(4),
-                TestHelper.CreateData(5),
-                TestHelper.CreateData(6),
-                TestHelper.CreateData(7),
-                TestHelper.CreateData(8),
-                TestHelper.CreateData(9),
-                TestHelper.CreateData(10),
-                TestHelper.CreateData(11),
-            });
+                var loader = new TestDataLoader(pageSize);
+                _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-            loader.Data.Add(server3, new List<SearchData>
-            {
-                TestHelper.CreateData(2),
-                TestHelper.CreateData(3),
-                TestHelper.CreateData(5),
-                TestHelper.CreateData(7),
-                TestHelper.CreateData(8),
-                TestHelper.CreateData(9),
-                TestHelper.CreateData(10),
-                TestHelper.CreateData(11),
-                TestHelper.CreateData(12),
-                TestHelper.CreateData(13),
-            });
+                var serversModel = CollectorModel(filename, 1);
+                _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
-            #endregion
+                var merge = new OrderMerge(_kernel, new TestIntParser());
+                merge.Start();
 
-            var task = new OrderSelectTask(new List<ServerId> {server1, server2, server3},
-                new FieldDescription("Id", typeof (int)), new FieldDescription("Id", typeof (int)), "asc", -1, 5,
-                new List<FieldDescription>(), "");
-            var function = merge.GetMergeFunction(ScriptType.OrderAsc);
+                var server1 = ServerId(storageServer1);
+                var server2 = ServerId(storageServer2);
+                var server3 = ServerId(storageServer3);
 
-            var result = function(task, task.SearchTasks);
-            Assert.Equal(1, result[0].Key);
-            Assert.Equal(2, result[1].Key);
-            Assert.Equal(3, result[2].Key);
-            Assert.Equal(4, result[3].Key);
-            Assert.Equal(5, result[4].Key);
-            result = function(task, task.SearchTasks);
-            Assert.Equal(6, result[0].Key);
-            Assert.Equal(7, result[1].Key);
-            Assert.Equal(8, result[2].Key);
-            Assert.Equal(9, result[3].Key);
-            Assert.Equal(10, result[4].Key);
-            Assert.True(task.SearchTasks[0].IsAllDataRead);
-            result = function(task, task.SearchTasks);
-            Assert.Equal(11, result[0].Key);
-            Assert.Equal(12, result[1].Key);
-            Assert.Equal(13, result[2].Key);
-            Assert.True(task.SearchTasks[0].IsAllDataRead);
-            Assert.True(task.SearchTasks[1].IsAllDataRead);
-            Assert.True(task.SearchTasks[2].IsAllDataRead);
-            result = function(task, task.SearchTasks);
-            Assert.True(result.Count == 0);
-            Assert.True(task.SearchTasks[0].IsAllDataRead);
-            Assert.True(task.SearchTasks[1].IsAllDataRead);
-            Assert.True(task.SearchTasks[2].IsAllDataRead);
+                #region hell
 
-            task.Dispose();
+                loader.Data.Add(server1, new List<SearchData>
+                {
+                    TestHelper.CreateData(1),
+                    TestHelper.CreateData(2),
+                    TestHelper.CreateData(4),
+                    TestHelper.CreateData(5),
+                    TestHelper.CreateData(6),
+                    TestHelper.CreateData(7),
+                    TestHelper.CreateData(8),
+                });
+
+                loader.Data.Add(server2, new List<SearchData>
+                {
+                    TestHelper.CreateData(4),
+                    TestHelper.CreateData(5),
+                    TestHelper.CreateData(6),
+                    TestHelper.CreateData(7),
+                    TestHelper.CreateData(8),
+                    TestHelper.CreateData(9),
+                    TestHelper.CreateData(10),
+                    TestHelper.CreateData(11),
+                });
+
+                loader.Data.Add(server3, new List<SearchData>
+                {
+                    TestHelper.CreateData(2),
+                    TestHelper.CreateData(3),
+                    TestHelper.CreateData(5),
+                    TestHelper.CreateData(7),
+                    TestHelper.CreateData(8),
+                    TestHelper.CreateData(9),
+                    TestHelper.CreateData(10),
+                    TestHelper.CreateData(11),
+                    TestHelper.CreateData(12),
+                    TestHelper.CreateData(13),
+                });
+
+                #endregion
+
+                var task = new OrderSelectTask(new List<ServerId> {server1, server2, server3},
+                    new FieldDescription("Id", typeof (int)), new FieldDescription("Id", typeof (int)), "asc", -1, 5,
+                    new List<FieldDescription>(), "");
+                var function = merge.GetMergeFunction(ScriptType.OrderAsc);
+
+                var result = function(task, task.SearchTasks);
+                Assert.Equal(1, result[0].Key);
+                Assert.Equal(2, result[1].Key);
+                Assert.Equal(3, result[2].Key);
+                Assert.Equal(4, result[3].Key);
+                Assert.Equal(5, result[4].Key);
+                result = function(task, task.SearchTasks);
+                Assert.Equal(6, result[0].Key);
+                Assert.Equal(7, result[1].Key);
+                Assert.Equal(8, result[2].Key);
+                Assert.Equal(9, result[3].Key);
+                Assert.Equal(10, result[4].Key);
+                Assert.True(task.SearchTasks[0].IsAllDataRead);
+                result = function(task, task.SearchTasks);
+                Assert.Equal(11, result[0].Key);
+                Assert.Equal(12, result[1].Key);
+                Assert.Equal(13, result[2].Key);
+                Assert.True(task.SearchTasks[0].IsAllDataRead);
+                Assert.True(task.SearchTasks[1].IsAllDataRead);
+                Assert.True(task.SearchTasks[2].IsAllDataRead);
+                result = function(task, task.SearchTasks);
+                Assert.True(result.Count == 0);
+                Assert.True(task.SearchTasks[0].IsAllDataRead);
+                Assert.True(task.SearchTasks[1].IsAllDataRead);
+                Assert.True(task.SearchTasks[2].IsAllDataRead);
+
+                task.Dispose();
+            }
         }
 
         [Fact]
@@ -248,14 +262,23 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 3);
 
                 var loader = new TestDataLoader(pageSize);
+                _kernel.Bind<IDataLoader>().ToConstant(loader);
+
                 var serversModel = CollectorModel(filename, 1);
-                var merge = new OrderMerge(loader, _parser, serversModel);
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+                _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
-                var distributor = new DistributorModule(serversModel, async,
-                    new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                var merge = new OrderMerge(_kernel, _parser);
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-                var searchModule = new SearchTaskModule("Test", merge, loader, distributor, _back, _parser);
+                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                _kernel.Bind<IDistributorModule>().ToConstant(distributor);
+
+                var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
+
+                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
 
@@ -335,14 +358,23 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 3);
 
                 var loader = new TestDataLoader(pageSize);
+                _kernel.Bind<IDataLoader>().ToConstant(loader);
+
                 var serversModel = CollectorModel(filename, 1);
-                var merge = new OrderMerge(loader, _parser, serversModel);
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+                _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
-                var distributor = new DistributorModule(serversModel, async,
-                    new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                var merge = new OrderMerge(_kernel, _parser);
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-                var searchModule = new SearchTaskModule("Test", merge, loader, distributor, _back, _parser);
+                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                _kernel.Bind<IDistributorModule>().ToConstant(distributor);
+
+                var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
+
+                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
 
@@ -441,13 +473,23 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 3);
 
                 var loader = new TestDataLoader(pageSize);
-                var serversModel = CollectorModel(filename, 1);
-                var merge = new OrderMerge(loader, _parser, serversModel);
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
-                var distributor =
-                    new DistributorModule(serversModel, async, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var searchModule = new SearchTaskModule("Test", merge, loader, distributor, _back, _parser);
+                var serversModel = CollectorModel(filename, 1);
+                _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
+
+                var merge = new OrderMerge(_kernel, _parser);
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
+
+                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                _kernel.Bind<IDistributorModule>().ToConstant(distributor);
+
+                var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
+
+                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
 
@@ -527,13 +569,23 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 3);
 
                 var loader = new TestDataLoader(pageSize);
-                var serversModel = CollectorModel(filename, 1);
-                var merge = new OrderMerge(loader, _parser, serversModel);
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
-                var distributor = new DistributorModule(serversModel, async,
-                    new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var searchModule = new SearchTaskModule("Test", merge, loader, distributor, _back, _parser);
+                var serversModel = CollectorModel(filename, 1);
+                _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
+
+                var merge = new OrderMerge(_kernel, _parser);
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
+
+                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                _kernel.Bind<IDistributorModule>().ToConstant(distributor);
+
+                var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
+
+                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
 
@@ -613,13 +665,23 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 3);
 
                 var loader = new TestDataLoader(pageSize);
-                var serversModel = CollectorModel(filename, 1);
-                var merge = new OrderMerge(loader, _parser, serversModel);
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
-                var distributor = new DistributorModule(serversModel, async,
-                    new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var searchModule = new SearchTaskModule("", merge, loader, distributor, _back, _parser);
+                var serversModel = CollectorModel(filename, 1);
+                _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
+
+                var merge = new OrderMerge(_kernel, _parser);
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
+
+                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                _kernel.Bind<IDistributorModule>().ToConstant(distributor);
+
+                var searchModule = new SearchTaskModule(_kernel, "", merge, _parser);
+
+                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
 
@@ -707,37 +769,46 @@ namespace Qoollo.Tests
                 writer.SetServer(0, "localhost", st1, st2);
                 writer.Save();
 
-                var q1 = new GlobalQueueInner();
-                GlobalQueue.SetQueue(q1);
+                var q1 = GetBindedQueue();
 
                 var proxy = TestGate(proxyServer);
 
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 var storage = WriterApi(StorageConfiguration(filename, 1), st1, st2);
 
-                var async = new AsyncTaskModule(new QueueConfiguration(4, 10));
+                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
+
                 var serversModel = new CollectorModel(new DistributorHashConfiguration(1),
                     new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Collector));
+                _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
-                var distributor = new DistributorModule(serversModel, async,
-                    new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
-                var net = new CollectorNetModule(ConnectionConfiguration,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout), distributor);
+                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
+                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
-                distributor.SetNetModule(net);
+                var loader = new DataLoader(_kernel, net, 100, _back);
+                _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var loader = new DataLoader(net, 100, _back);
-                var merge = new OrderMerge(loader, _parser, serversModel);
+                var merge = new OrderMerge(_kernel, _parser);
 
-                var searchModule = new SearchTaskModule("Int", merge, loader, distributor, _back, _parser);
+                var searchModule = new SearchTaskModule(_kernel, "Int", merge, _parser);
 
                 q1.Start();
+
+                storage.Module = new TestInjectionModule();
                 storage.Build();
+
+                proxy.Module = new TestInjectionModule();
                 proxy.Build();
+
+                distr.Module = new TestInjectionModule();
                 distr.Build();
 
-                storage.AddDbModule(new TestInMemoryDbFactory());
+                storage.AddDbModule(new TestInMemoryDbFactory(_kernel));
 
                 storage.Start();
                 proxy.Start();

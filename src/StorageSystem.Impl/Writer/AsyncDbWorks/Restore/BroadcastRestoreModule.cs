@@ -1,25 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Ninject;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
-using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks.Processes;
-using Qoollo.Impl.Writer.Db;
-using Qoollo.Impl.Writer.WriterNet;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class BroadcastRestoreModule: CommonAsyncWorkModule
     {
-        private readonly Ninject.StandardKernel _kernel;
-
-        private readonly WriterModel _writerModel;
+        private IWriterModel _writerModel;
         private readonly RestoreModuleConfiguration _configuration;
-        private readonly DbModuleCollection _db;
+        private IDbModule _db;
         private readonly QueueConfiguration _queueConfiguration;
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
@@ -43,21 +40,23 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         }
 
         public BroadcastRestoreModule(
-            WriterModel writerModel,
+            StandardKernel kernel,
             RestoreModuleConfiguration configuration,
-            WriterNetModule writerNet,
-            AsyncTaskModule asyncTaskModule,
-            DbModuleCollection db,
             QueueConfiguration queueConfiguration)
-            : base(writerNet, asyncTaskModule)
+            : base(kernel)
         {
-            _writerModel = writerModel;
             _configuration = configuration;
-            _db = db;
             _queueConfiguration = queueConfiguration;
             _lastDateTime = string.Empty;
-            _kernel = InitInjection.Kernel;
             
+        }
+
+        public override void Start()
+        {
+            base.Start();
+
+            _db = Kernel.Get<IDbModule>();
+            _writerModel = Kernel.Get<IWriterModel>();
         }
 
         public void Restore(List<RestoreServer> servers, RestoreState state)
@@ -76,7 +75,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 Lock.ExitWriteLock();
             }
 
-            _restoreProcess = new BroadcastRestoreProcess(_kernel, _db, _writerModel, WriterNet, servers,
+            _restoreProcess = new BroadcastRestoreProcess(Kernel, _db, _writerModel, WriterNet, servers,
                 state == RestoreState.FullRestoreNeed, _queueConfiguration);
             _restoreProcess.Start();
 

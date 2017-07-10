@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Modules.Pools;
 using Qoollo.Turbo.ObjectPools;
 

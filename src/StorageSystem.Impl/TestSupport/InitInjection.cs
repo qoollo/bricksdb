@@ -4,17 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Ninject;
-using Ninject.Modules;
 using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.TestSupport
 {
     internal static class InitInjection
     {
-        internal static NinjectModule NinjectModule = new InjectionModule();
-        internal static StandardKernel Kernel = new StandardKernel(NinjectModule);
-
         public static string RestoreHelpFileOut { get; set; }
         internal static string RestoreHelpFile
         {

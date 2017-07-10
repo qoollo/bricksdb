@@ -1,11 +1,12 @@
 ﻿using System.Diagnostics.Contracts;
 using System.ServiceModel;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.DistributorModules.ParallelWork;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Distributor;
 
@@ -13,19 +14,22 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 {
     internal class NetDistributorReceiverForProxy : NetReceiveModule<ICommonNetReceiverForProxy>, ICommonNetReceiverForProxy
     {
-        private readonly MainLogicModule _mainLogic;
-        private readonly IInputModule _input;
-        private readonly DistributorModule _distributorModule;
+        private IMainLogicModule _mainLogic;
+        private IInputModule _input;
+        private IDistributorModule _distributorModule;
 
-        public NetDistributorReceiverForProxy(MainLogicModule main, IInputModule input, DistributorModule distributorModule,
-                                      NetReceiverConfiguration receiverConfiguration):base(receiverConfiguration)
+        public NetDistributorReceiverForProxy(StandardKernel kernel, NetReceiverConfiguration receiverConfiguration)
+            : base(kernel, receiverConfiguration)
         {
-            Contract.Requires(main != null);
-            Contract.Requires(input != null);
-            Contract.Requires(distributorModule!=null);
-            _mainLogic = main;
-            _input = input;
-            _distributorModule = distributorModule;
+        }
+
+        public override void Start()
+        {
+            _distributorModule = Kernel.Get<IDistributorModule>();
+            _input = Kernel.Get<IInputModule>();
+            _mainLogic = Kernel.Get<IMainLogicModule>();
+
+            base.Start();
         }
 
         [OperationBehavior(TransactionScopeRequired = true)]

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Commands;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -13,13 +15,12 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
-using Qoollo.Impl.Proxy.Caches;
+using Qoollo.Impl.Proxy.Interfaces;
 using Qoollo.Impl.Proxy.Model;
-using Qoollo.Impl.Proxy.ProxyNet;
 
 namespace Qoollo.Impl.Proxy
 {
-    internal class ProxyDistributorModule : ControlModule
+    internal class ProxyDistributorModule : ControlModule, IProxyDistributorModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
@@ -27,31 +28,32 @@ namespace Qoollo.Impl.Proxy
         private readonly QueueConfiguration _queueConfiguration;
         private readonly AsyncTasksConfiguration _asynGetData;
         private readonly AsyncTasksConfiguration _asynPing;
-        private readonly ProxyNetModule _net;
         private readonly AsyncTaskModule _async;
         private readonly ServerId _local;
-        private readonly GlobalQueueInner _queue;
-        private readonly AsyncProxyCache _asyncProxyCache;
+        private IProxyNetModule _net;
+        private IGlobalQueue _queue;
+        private IAsyncProxyCache _asyncProxyCache;
 
         public ServerId ProxyServerId { get { return _local; } }
 
-        public ProxyDistributorModule(AsyncProxyCache asyncProxyCache, ProxyNetModule net,
-                                      QueueConfiguration queueConfiguration, ServerId local,
-                                      AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing)
+        public ProxyDistributorModule(StandardKernel kernel, QueueConfiguration queueConfiguration, ServerId local,
+            AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing)
+            : base(kernel)
         {
-            _asyncProxyCache = asyncProxyCache;
             _asynPing = asyncPing;
             _queueConfiguration = queueConfiguration;
-            _distributorSystemModel = new DistributorSystemModel();
             _asynGetData = asyncGetData;
-            _net = net;
-            _local = local;            
-            _async = new AsyncTaskModule(queueConfiguration);
-            _queue = GlobalQueue.Queue;
+            _local = local;
+            _distributorSystemModel = new DistributorSystemModel();
+            _async = new AsyncTaskModule(kernel, queueConfiguration);
         }
 
         public override void Start()
         {
+            _queue = Kernel.Get<IGlobalQueue>();
+            _asyncProxyCache = Kernel.Get<IAsyncProxyCache>();
+            _net = Kernel.Get<IProxyNetModule>();
+
             _async.Start();
             StartAsyncTasks();
             _queue.ProxyDistributorQueue.Registrate(_queueConfiguration, Process);

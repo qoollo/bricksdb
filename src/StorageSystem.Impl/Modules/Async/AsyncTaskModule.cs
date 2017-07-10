@@ -4,12 +4,14 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Turbo.Threading.ThreadPools;
 
 namespace Qoollo.Impl.Modules.Async
 {
-    internal class AsyncTaskModule:ControlModule
+    internal class AsyncTaskModule : ControlModule, IAsyncTaskModule
     {
         private readonly ReaderWriterLockSlim _lock;
         private readonly List<AsyncData> _tasks;
@@ -18,7 +20,8 @@ namespace Qoollo.Impl.Modules.Async
         private readonly AutoResetEvent _event;
         private readonly CancellationTokenSource _token;
 
-        public AsyncTaskModule(QueueConfiguration configuration)
+        public AsyncTaskModule(StandardKernel kernel, QueueConfiguration configuration)
+            :base(kernel)
         {
             Contract.Requires(configuration != null);
             _tasks = new List<AsyncData>();

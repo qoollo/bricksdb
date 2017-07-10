@@ -1,4 +1,5 @@
 ﻿using System;
+using Ninject;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Modules.Db.Exceptions;
 
@@ -12,7 +13,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
 
         public bool IsFail;
 
-        protected DbReader()
+        protected DbReader():base(null)
         {
             IsFail = false;
         }

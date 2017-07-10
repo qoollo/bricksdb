@@ -9,6 +9,7 @@ using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Client.CollectorGate
 {
@@ -20,12 +21,13 @@ namespace Qoollo.Client.CollectorGate
         private bool _isStarted;
         private bool _isDispose;
 
+        internal InjectionModule Module = null;
+
         protected CollectorApi(CollectorConfiguration collectorConfiguration, CollectorNetConfiguration netConfiguration,
-            CommonConfiguration commonConfiguration, TimeoutConfiguration timeoutConfiguration)
+            TimeoutConfiguration timeoutConfiguration)
         {
             Contract.Requires(collectorConfiguration != null);
             Contract.Requires(netConfiguration != null);
-            Contract.Requires(commonConfiguration != null);
             Contract.Requires(timeoutConfiguration != null);
 
             _isStarted = false;
@@ -39,7 +41,6 @@ namespace Qoollo.Client.CollectorGate
                 new ConnectionConfiguration(netConfiguration.WcfServiceName, netConfiguration.CountConnectionsToSingleServer,
                     netConfiguration.TrimPeriod),
                 new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout, timeoutConfiguration.SendTimeout),
-                new QueueConfiguration(commonConfiguration.CountThreads, commonConfiguration.QueueSize),
                 collectorConfiguration.PageSize, collectorConfiguration.UseHashFile);
 
             _apis = new Dictionary<string, CollectorHandlerTuple>();
@@ -89,7 +90,7 @@ namespace Qoollo.Client.CollectorGate
 
         public void Build()
         {
-            _collectorSystem.Build();
+            _collectorSystem.Build(Module);
             InnerBuild();
 
             _isBuild = true;

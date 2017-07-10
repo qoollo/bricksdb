@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
@@ -10,7 +11,7 @@ using Qoollo.Impl.Configurations;
 
 namespace Qoollo.Impl.Collector.Model
 {
-    internal class CollectorModel
+    internal class CollectorModel : ICollectorModel
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 

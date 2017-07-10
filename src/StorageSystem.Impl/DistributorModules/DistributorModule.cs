@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Commands;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -16,6 +17,7 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Model;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
@@ -24,7 +26,7 @@ using Qoollo.Impl.NetInterfaces.Data;
 
 namespace Qoollo.Impl.DistributorModules
 {
-    internal class DistributorModule : ControlModule
+    internal class DistributorModule : ControlModule, IDistributorModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
@@ -34,42 +36,40 @@ namespace Qoollo.Impl.DistributorModules
         }
 
         public DistributorModule(
+            StandardKernel kernel,
             AsyncTasksConfiguration asyncPing,
             AsyncTasksConfiguration asyncCheck,
             DistributorHashConfiguration configuration,
             QueueConfiguration queueConfiguration,
-            DistributorNetModule distributorNet,
             ServerId localfordb,
             ServerId localforproxy,
             HashMapConfiguration hashMapConfiguration, bool autoRestoreEnable = false)
+            :base(kernel)
         {
             Contract.Requires(configuration != null);
             Contract.Requires(queueConfiguration != null);
-            Contract.Requires(distributorNet != null);
             Contract.Requires(localfordb != null);
             Contract.Requires(localforproxy != null);
             Contract.Requires(asyncPing != null);
             _asyncPing = asyncPing;
-            _asyncTaskModule = new AsyncTaskModule(queueConfiguration);
+            _asyncTaskModule = new AsyncTaskModule(kernel, queueConfiguration);
 
             _queueConfiguration = queueConfiguration;
             _modelOfDbWriters = new WriterSystemModel(configuration, hashMapConfiguration);
             _modelOfAnotherDistributors = new DistributorSystemModel();
-            _distributorNet = distributorNet;
             _localfordb = localfordb;
             _localforproxy = localforproxy;
             _autoRestoreEnable = autoRestoreEnable;
             _asyncCheck = asyncCheck;
-            _queue = GlobalQueue.Queue;
         }
 
         private readonly WriterSystemModel _modelOfDbWriters;
         private readonly DistributorSystemModel _modelOfAnotherDistributors;
         private readonly QueueConfiguration _queueConfiguration;
-        private readonly DistributorNetModule _distributorNet;
+        private IDistributorNetModule _distributorNet;
         private readonly ServerId _localfordb;
         private readonly ServerId _localforproxy;
-        private readonly GlobalQueueInner _queue;
+        private IGlobalQueue _queue;
         private readonly AsyncTaskModule _asyncTaskModule;
         private readonly AsyncTasksConfiguration _asyncPing;
         private readonly AsyncTasksConfiguration _asyncCheck;
@@ -77,7 +77,10 @@ namespace Qoollo.Impl.DistributorModules
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
         public override void Start()
-        {            
+        {
+            _distributorNet = Kernel.Get<IDistributorNetModule>();
+            _queue = Kernel.Get<IGlobalQueue>();
+
             RegistrateCommands();
       
             _modelOfDbWriters.Start();
@@ -330,6 +333,11 @@ namespace Qoollo.Impl.DistributorModules
         public void ServerNotAvailable(ServerId server)
         {
             Execute<ServerNotAvailableCommand, RemoteResult>(new ServerNotAvailableCommand(server));
+        }
+
+        public new TResult Execute<TValue, TResult>(TValue value) where TValue : class
+        {
+            return base.Execute<TValue, TResult>(value);
         }
 
         public void ProcessTransaction(Common.Data.TransactionTypes.Transaction transaction)

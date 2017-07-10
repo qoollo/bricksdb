@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Configurations;
 
 namespace Qoollo.Impl.Modules.ParallelWork
@@ -15,7 +16,8 @@ namespace Qoollo.Impl.Modules.ParallelWork
         private List<Thread> _threads;
         private List<SingleParallelWorkBase<T>> _workers;
 
-        protected ParallelWorkModule(QueueConfiguration configuration)
+        protected ParallelWorkModule(StandardKernel kernel, QueueConfiguration configuration)
+            :base(kernel)
         {
             Contract.Requires(configuration!=null);
             _configuration = configuration;

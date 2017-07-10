@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults.Event;
@@ -14,8 +15,9 @@ namespace Qoollo.Impl.Writer.WriterNet
 {
     internal class SingleConnectionToWriter : SingleConnection<ICommonNetReceiverWriterForWrite>, ICommonNetReceiverWriterForWrite, ISingleConnection
     {
-        public SingleConnectionToWriter(ServerId server, ConnectionConfiguration configuration,
-            ConnectionTimeoutConfiguration timeoutConfiguration) : base(server, configuration, timeoutConfiguration)
+        public SingleConnectionToWriter(StandardKernel kernel, ServerId server, ConnectionConfiguration configuration,
+            ConnectionTimeoutConfiguration timeoutConfiguration) 
+            : base(kernel, server, configuration, timeoutConfiguration)
         {
         }
 

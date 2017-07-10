@@ -8,6 +8,7 @@ using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashHelp;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
@@ -25,7 +26,7 @@ namespace Qoollo.Tests
         public TestWriterModules():base()
         {
             _proxyTest = TestProxySystem(proxyServer, 20, 40);
-            _proxyTest.Build();
+            _proxyTest.Build(new TestInjectionModule());
 
             _writer1 = new TestWriterGate();
             _writer2 = new TestWriterGate();
@@ -61,7 +62,7 @@ namespace Qoollo.Tests
 
                 _writer1.Build(storageServer1, filename, 1);
 
-                var d = TestHelper.OpenDistributorHostForDb(ServerId(distrServer1), ConnectionConfiguration);
+                var d = TestHelper.OpenDistributorHostForDb(_kernel, ServerId(distrServer1), ConnectionConfiguration);
                 _writer1.Start();
 
                 for (int i = 0; i < count; i++)
@@ -94,7 +95,7 @@ namespace Qoollo.Tests
                 _writer1.Build(storageServer1, filename, 1);
                 _writer1.Start();
 
-                var s = TestHelper.OpenDistributorHostForDb(ServerId(distrServer1), ConnectionConfiguration);
+                var s = TestHelper.OpenDistributorHostForDb(_kernel, ServerId(distrServer1), ConnectionConfiguration);
 
                 for (int i = 1; i < count + 1; i++)
                 {
@@ -123,8 +124,8 @@ namespace Qoollo.Tests
                 _writer1.Build(storageServer1, filename, 1);
                 _writer1.Start();
 
-                var s = TestHelper.OpenDistributorHostForDb(ServerId(distrServer1), ConnectionConfiguration);
-                var s2 = TestHelper.OpenDistributorHostForDb(ServerId(distrServer2), ConnectionConfiguration);
+                var s = TestHelper.OpenDistributorHostForDb(_kernel, ServerId(distrServer1), ConnectionConfiguration);
+                var s2 = TestHelper.OpenDistributorHostForDb(_kernel, ServerId(distrServer2), ConnectionConfiguration);
 
                 for (int i = 1; i < count + 1; i++)
                 {
@@ -351,7 +352,7 @@ namespace Qoollo.Tests
 
                 _proxyTest.Start();
 
-                distributor.Build();
+                distributor.Build(new TestInjectionModule());
                 distributor.Start();
 
                 _writer1.Start();

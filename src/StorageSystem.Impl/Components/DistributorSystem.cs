@@ -1,13 +1,17 @@
 ﻿using System.Diagnostics.Contracts;
+using Ninject;
+using Ninject.Modules;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.ParallelWork;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Impl.Components
 {
@@ -67,31 +71,42 @@ namespace Qoollo.Impl.Components
 
         public DistributorModule Distributor { get; private set; }
 
-        protected virtual DistributorNetModule CreateNetModule(ConnectionConfiguration connectionConfiguration)
+        protected virtual DistributorNetModule CreateNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration)
         {
-            return new DistributorNetModule(_connectionConfiguration, _connectionTimeoutConfiguration);
+            return new DistributorNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
         }
 
-        public override void Build()
+        public override void Build(NinjectModule module = null)
         {
-            var q = new GlobalQueueInner();
-            GlobalQueue.SetQueue(q);
+            module = module ?? new InjectionModule();
+            Kernel = new StandardKernel(module);
+
+            var q = new GlobalQueue();
+            Kernel.Bind<IGlobalQueue>().ToConstant(q);
 
             var cache = new DistributorTimeoutCache(_cacheConfiguration);
-            var net = CreateNetModule(_connectionConfiguration);
-            var distributor = new DistributorModule(_pingConfig, _checkConfig, _distributorHashConfiguration,
-                new QueueConfiguration(1, 1000), net, _localfordb, _localforproxy, _hashMapConfiguration);
+            Kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
+
+            var net = CreateNetModule(Kernel, _connectionConfiguration);
+            Kernel.Bind<IDistributorNetModule>().ToConstant(net);
+
+            var distributor = new DistributorModule(Kernel, _pingConfig, _checkConfig, _distributorHashConfiguration,
+                new QueueConfiguration(1, 1000), _localfordb, _localforproxy, _hashMapConfiguration);
+            Kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             Distributor = distributor;
 
-            net.SetDistributor(distributor);
-            var transaction = new TransactionModule(net, _transactionConfiguration,
-                _distributorHashConfiguration.CountReplics, cache);
-            var main = new MainLogicModule(distributor, transaction, cache);
+            var transaction = new TransactionModule(Kernel, _transactionConfiguration,
+                _distributorHashConfiguration.CountReplics);
+            Kernel.Bind<ITransactionModule>().ToConstant(transaction);
+
+            var main = new MainLogicModule(Kernel);
+            Kernel.Bind<IMainLogicModule>().ToConstant(main);
             
-            var input = new InputModuleWithParallel(_queueConfiguration, main, transaction);
-            var receive = new NetDistributorReceiver(main, input, distributor, _receiverConfigurationForDb,
-                _receiverConfigurationForProxy);
+            var input = new InputModuleWithParallel(Kernel, _queueConfiguration);
+            Kernel.Bind<IInputModule>().ToConstant(input);
+
+            var receive = new NetDistributorReceiver(Kernel, _receiverConfigurationForDb, _receiverConfigurationForProxy);
 
             AddModule(receive);            
             AddModule(input);
@@ -110,5 +125,7 @@ namespace Qoollo.Impl.Components
             AddModuleDispose(distributor);            
             AddModuleDispose(net);            
         }
+
+        internal StandardKernel Kernel { get; set; }
     }
 }

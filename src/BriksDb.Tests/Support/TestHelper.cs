@@ -36,24 +36,24 @@ namespace Qoollo.Tests.Support
             return ev;
         }
 
-        public static TestNetDistributorForProxy OpenDistributorHostForDb(ServerId server, ConnectionConfiguration config)
+        public static TestNetDistributorForProxy OpenDistributorHostForDb(StandardKernel kernel, ServerId server, ConnectionConfiguration config)
         {
             var ret = new TestNetDistributorForProxy();
 
             var netConfig = new NetReceiverConfiguration(server.Port, server.RemoteHost, config.ServiceName);
 
-            OpenDistributorMockHost<ICommonNetReceiverForDb>(ret, netConfig);
+            OpenDistributorMockHost<ICommonNetReceiverForDb>(kernel, ret, netConfig);
 
             return ret;
         }
-        public static TestNetDistributorForProxy OpenDistributorHost(ServerId server)
+        public static TestNetDistributorForProxy OpenDistributorHost(StandardKernel kernel, ServerId server)
         {
             var ret = new TestNetDistributorForProxy();
 
             var netConfig = new NetReceiverConfiguration(server.Port, server.RemoteHost, "");
 
             //OpenDistributorNetHost(ret, netConfig);
-            OpenDistributorMockHost<ICommonNetReceiverForProxy>(ret, netConfig);
+            OpenDistributorMockHost<ICommonNetReceiverForProxy>(kernel, ret, netConfig);
 
             return ret;
         }
@@ -75,23 +75,23 @@ namespace Qoollo.Tests.Support
 
             host.Open();
         }
-        public static void OpenDistributorMockHost<TReceive>(TestNetDistributorForProxy server, NetReceiverConfiguration config)
+        public static void OpenDistributorMockHost<TReceive>(StandardKernel kernel, TestNetDistributorForProxy server, NetReceiverConfiguration config)
         {
-            var s = InitInjection.Kernel.Get<IReceiveBehavior<TReceive>>(
+            var s = kernel.Get<IReceiveBehavior<TReceive>>(
                 new ConstructorArgument("configuration", config),
                 new ConstructorArgument("server", server));
 
             s.Start();
         }
 
-        public static TestWriterServer OpenWriterHost(int writerPort)
+        public static TestWriterServer OpenWriterHost(StandardKernel kernel, int writerPort)
         {
             var ret = new TestWriterServer();
 
             var netConfig = new NetReceiverConfiguration(writerPort, "localhost", "testService");
 
             //OpenWriterNetHost(ret, netConfig);
-            OpenWriterMockHost(ret, netConfig);
+            OpenWriterMockHost(kernel, ret, netConfig);
 
             return ret;
         }
@@ -113,9 +113,9 @@ namespace Qoollo.Tests.Support
 
             host.Open();
         }
-        public static void OpenWriterMockHost(TestWriterServer server, NetReceiverConfiguration config)
+        public static void OpenWriterMockHost(StandardKernel kernel, TestWriterServer server, NetReceiverConfiguration config)
         {
-            var s = InitInjection.Kernel.Get<IReceiveBehavior<ICommonNetReceiverWriterForWrite>>(
+            var s = kernel.Get<IReceiveBehavior<ICommonNetReceiverWriterForWrite>>(
                 new ConstructorArgument("configuration", config),
                 new ConstructorArgument("server", server));
 

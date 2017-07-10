@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Qoollo.Impl.Collector.Distributor;
+using Ninject;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
@@ -12,17 +13,21 @@ using Qoollo.Impl.NetInterfaces.Data;
 
 namespace Qoollo.Impl.Collector.CollectorNet
 {
-    internal class CollectorNetModule:NetModule
+    internal class CollectorNetModule : NetModule, ICollectorNetModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        private readonly DistributorModule _distributor;
+        private IDistributorModule _distributor;
 
-        public CollectorNetModule(ConnectionConfiguration connectionConfiguration,
-            ConnectionTimeoutConfiguration connectionTimeout, DistributorModule distributor)
-            : base(connectionConfiguration, connectionTimeout)
+        public CollectorNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration,
+            ConnectionTimeoutConfiguration connectionTimeout)
+            : base(kernel, connectionConfiguration, connectionTimeout)
         {
-            _distributor = distributor;
+        }
+
+        public override void Start()
+        {
+            _distributor = Kernel.Get<IDistributorModule>();
         }
 
         #region Connect to Writer
@@ -30,7 +35,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
         public bool ConnectToWriter(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToWriter(id, configuration, time));
+                (id, configuration, time) => new SingleConnectionToWriter(Kernel, id, configuration, time));
         }
 
         public void PingWriter(List<ServerId> servers, Action<ServerId> serverAvailable)
@@ -73,7 +78,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
         public bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToDistributor(id, configuration, time));
+                (id, configuration, time) => new SingleConnectionToDistributor(Kernel, id, configuration, time));
         }
 
         public void PingDistributors(List<ServerId> servers)
@@ -102,6 +107,11 @@ namespace Qoollo.Impl.Collector.CollectorNet
         }
 
         #endregion
+
+        public new List<ServerId> GetServersByType(Type type)
+        {
+            return base.GetServersByType(type);
+        }
     }
 
 }

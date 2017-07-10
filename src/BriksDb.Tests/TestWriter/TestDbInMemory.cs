@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Writer.Db;
 using Qoollo.Tests.Support;
@@ -13,8 +14,7 @@ namespace Qoollo.Tests.TestWriter
         private readonly TestDbImplModule _impl;
 
         public TestDbInMemory(string tableName, IHashCalculater hashCalculater)
-            : base(
-                hashCalculater,
+            : base(hashCalculater,
                 new TestUserCommandCreator(tableName),
                 new TestMetaDataCommandCreator(), TestDbHelper.NewInstance
                 )
@@ -23,8 +23,7 @@ namespace Qoollo.Tests.TestWriter
         }
 
         public TestDbInMemory(string tableName)
-            : base(
-                new IntHashConvertor(),
+            : base(new IntHashConvertor(),
                 new TestUserCommandCreator(tableName),
                 new TestMetaDataCommandCreator(), TestDbHelper.NewInstance
                 )
@@ -33,8 +32,7 @@ namespace Qoollo.Tests.TestWriter
         }
 
         public TestDbInMemory()
-            : base(
-                new IntHashConvertor(),
+            : base(new IntHashConvertor(),
                 new TestUserCommandCreator(),
                 new TestMetaDataCommandCreator(), TestDbHelper.NewInstance
                 )

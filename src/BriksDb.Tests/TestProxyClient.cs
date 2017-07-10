@@ -46,7 +46,7 @@ namespace Qoollo.Tests
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 storage.Build(new TestInjectionModule());
-                storage.DbModule.AddDbModule(new TestDbInMemory(_kernel));
+                storage.DbModule.AddDbModule(new TestDbInMemory());
                 storage.Start();
 
                 for (int i = 0; i < count; i++)
@@ -105,7 +105,7 @@ namespace Qoollo.Tests
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 storage.Build(new TestInjectionModule());
-                storage.DbModule.AddDbModule(new TestDbInMemory(_kernel));
+                storage.DbModule.AddDbModule(new TestDbInMemory());
                 storage.Start();
 
                 for (int i = 0; i < count; i++)

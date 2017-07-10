@@ -214,7 +214,7 @@ namespace Qoollo.Tests
                 storage.Build(new TestInjectionModule());
                 distr.Build(new TestInjectionModule());
 
-                storage.DbModule.AddDbModule(new TestDbInMemory(_kernel));
+                storage.DbModule.AddDbModule(new TestDbInMemory());
 
                 storage.Start();
                 _proxySystem.Start();
@@ -270,8 +270,8 @@ namespace Qoollo.Tests
                 storage2.Build(new TestInjectionModule());
                 distr.Build(new TestInjectionModule());
 
-                storage1.DbModule.AddDbModule(new TestDbInMemory(_kernel));
-                storage2.DbModule.AddDbModule(new TestDbInMemory(_kernel));
+                storage1.DbModule.AddDbModule(new TestDbInMemory());
+                storage2.DbModule.AddDbModule(new TestDbInMemory());
 
                 storage1.Start();
                 storage2.Start();
@@ -324,8 +324,8 @@ namespace Qoollo.Tests
                 storage2.Build(new TestInjectionModule());
                 distr.Build(new TestInjectionModule());
 
-                storage1.DbModule.AddDbModule(new TestDbInMemory(_kernel));
-                storage2.DbModule.AddDbModule(new TestDbInMemory(_kernel));
+                storage1.DbModule.AddDbModule(new TestDbInMemory());
+                storage2.DbModule.AddDbModule(new TestDbInMemory());
 
                 storage1.Start();
                 storage2.Start();
@@ -378,8 +378,8 @@ namespace Qoollo.Tests
                 storage2.Build(new TestInjectionModule());
                 distr.Build(new TestInjectionModule());
 
-                storage1.DbModule.AddDbModule(new TestDbInMemory(_kernel));
-                storage2.DbModule.AddDbModule(new TestDbInMemory(_kernel));
+                storage1.DbModule.AddDbModule(new TestDbInMemory());
+                storage2.DbModule.AddDbModule(new TestDbInMemory());
 
                 storage1.Start();
                 storage2.Start();
@@ -420,8 +420,8 @@ namespace Qoollo.Tests
                 storage2.Build(new TestInjectionModule());
                 distr.Build(new TestInjectionModule());
 
-                storage1.DbModule.AddDbModule(new TestDbInMemory(_kernel));
-                storage2.DbModule.AddDbModule(new TestDbInMemory(_kernel));
+                storage1.DbModule.AddDbModule(new TestDbInMemory());
+                storage2.DbModule.AddDbModule(new TestDbInMemory());
 
                 _proxySystem.Start();
                 distr.Start();

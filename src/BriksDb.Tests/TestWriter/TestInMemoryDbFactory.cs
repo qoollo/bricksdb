@@ -22,8 +22,8 @@ namespace Qoollo.Tests.TestWriter
         {
             //todo new init
             Db = _hashCalculater != null
-                ? new TestDbInMemory(_kernel, _tableName, _hashCalculater)
-                : new TestDbInMemory(_kernel, _tableName);
+                ? new TestDbInMemory(_tableName, _hashCalculater)
+                : new TestDbInMemory(_tableName);
             return Db;
         }
 

@@ -13,9 +13,8 @@ namespace Qoollo.Tests.TestWriter
     {
         private readonly TestDbImplModule _impl;
 
-        public TestDbInMemory(StandardKernel kernel, string tableName, IHashCalculater hashCalculater)
-            : base(kernel, 
-                hashCalculater,
+        public TestDbInMemory(string tableName, IHashCalculater hashCalculater)
+            : base(hashCalculater,
                 new TestUserCommandCreator(tableName),
                 new TestMetaDataCommandCreator(), TestDbHelper.NewInstance
                 )
@@ -23,9 +22,8 @@ namespace Qoollo.Tests.TestWriter
             _impl = TestDbHelper.Instance;
         }
 
-        public TestDbInMemory(StandardKernel kernel, string tableName)
-            : base(kernel, 
-                new IntHashConvertor(),
+        public TestDbInMemory(string tableName)
+            : base(new IntHashConvertor(),
                 new TestUserCommandCreator(tableName),
                 new TestMetaDataCommandCreator(), TestDbHelper.NewInstance
                 )
@@ -33,9 +31,8 @@ namespace Qoollo.Tests.TestWriter
             _impl = TestDbHelper.Instance;
         }
 
-        public TestDbInMemory(StandardKernel kernel)
-            : base(kernel,
-                new IntHashConvertor(),
+        public TestDbInMemory()
+            : base(new IntHashConvertor(),
                 new TestUserCommandCreator(),
                 new TestMetaDataCommandCreator(), TestDbHelper.NewInstance
                 )

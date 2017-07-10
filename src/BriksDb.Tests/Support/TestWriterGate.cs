@@ -51,7 +51,7 @@ namespace Qoollo.Tests.Support
             Db = new DbModuleCollection(_kernel);
             _kernel.Bind<IDbModule>().ToConstant(Db);
 
-            Db.AddDbModule(new TestDbInMemory(_kernel));
+            Db.AddDbModule(new TestDbInMemory());
 
             _async = new AsyncTaskModule(_kernel, new QueueConfiguration(1, 10));
             _kernel.Bind<IAsyncTaskModule>().ToConstant(_async);

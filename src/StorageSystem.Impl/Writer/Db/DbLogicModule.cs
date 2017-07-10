@@ -37,11 +37,11 @@ namespace Qoollo.Impl.Writer.Db
 
         private readonly DbLogicCreateAndUpdateHelper<TCommand, TKey, TValue, TConnection, TReader> _createAndUpdate;
 
-        public DbLogicModule(StandardKernel kernel, IHashCalculater hashCalc,
+        public DbLogicModule(IHashCalculater hashCalc,
             IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader> userCommandCreator,
             IMetaDataCommandCreator<TCommand, TReader> metaDataCommandCreator,
             DbImplModule<TCommand, TConnection, TReader> implModule)
-            :base(kernel)
+            :base(null)
         {
             Contract.Requires(hashCalc != null);
             Contract.Requires(userCommandCreator != null);

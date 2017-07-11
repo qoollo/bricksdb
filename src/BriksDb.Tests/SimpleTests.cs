@@ -6,7 +6,6 @@ using System.Threading;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.Async;
@@ -151,12 +150,12 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncTaskModule_AddAsyncTask_AmountOfOperations()
         {
-            var test = new AsyncTaskModule(null, new QueueConfiguration(2, -1));
+            var test = new AsyncTaskModule(_kernel);
+            test.Start();
             int value = 0;
             const string name1 = "test1";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(500), async => Interlocked.Increment(ref value),
-                                             name1, -1);
-            test.Start();
+                                             name1, -1);            
 
             test.AddAsyncTask(async1, false);
             Thread.Sleep(TimeSpan.FromMilliseconds(600));
@@ -176,7 +175,7 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncTaskModule_AddAsyncTask_AmountOfOperations_2Tasks()
         {
-            var test = new AsyncTaskModule(null, new QueueConfiguration(2, -1));
+            var test = new AsyncTaskModule(_kernel);
             int value = 0;
             const string name1 = "test1";
             const string name2 = "test2";
@@ -200,7 +199,7 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncTaskModule_Dispose_StopAsyncTaskAfterNumberOfRetry()
         {
-            var test = new AsyncTaskModule(null, new QueueConfiguration(2, -1));
+            var test = new AsyncTaskModule(_kernel);
             int value = 0;
             const string name1 = "test1";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(100), async => Interlocked.Increment(ref value),

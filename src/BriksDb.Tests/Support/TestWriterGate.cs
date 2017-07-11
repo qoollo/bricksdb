@@ -57,7 +57,7 @@ namespace Qoollo.Tests.Support
 
             Db.AddDbModule(new TestDbInMemory());
 
-            _async = new AsyncTaskModule(_kernel, new QueueConfiguration(1, 10));
+            _async = new AsyncTaskModule(_kernel);
             _kernel.Bind<IAsyncTaskModule>().ToConstant(_async);
 
             WriterModel = new WriterModel(_kernel, local, hashMapConfiguration);

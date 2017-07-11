@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Threading;
 using Ninject;
 using Qoollo.Impl.Configurations;
 
+//using Qoollo.Impl.Configurations.Queue;
+
 namespace Qoollo.Impl.Modules.ParallelWork
 {
     internal abstract class ParallelWorkModule<T>:ControlModule where T:class
-    {        
-        private QueueConfiguration _configuration;
+    {
+        private readonly QueueConfiguration _configuration;
         private CancellationTokenSource _token;
         private BlockingCollection<T> _queue;
         private List<Thread> _threads;
@@ -19,7 +20,6 @@ namespace Qoollo.Impl.Modules.ParallelWork
         protected ParallelWorkModule(StandardKernel kernel, QueueConfiguration configuration)
             :base(kernel)
         {
-            Contract.Requires(configuration!=null);
             _configuration = configuration;
             _token = new CancellationTokenSource();
             _queue = new BlockingCollection<T>();
@@ -29,6 +29,8 @@ namespace Qoollo.Impl.Modules.ParallelWork
 
         public override void Start()
         {
+            //var config = Kernel.Get<IDistributorConfig>();
+
             for (int i = 0; i < _configuration.ProcessotCount; i++)
             {
                 var thread = new Thread(Process);

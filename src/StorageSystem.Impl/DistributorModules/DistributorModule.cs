@@ -50,7 +50,7 @@ namespace Qoollo.Impl.DistributorModules
             Contract.Requires(localforproxy != null);
             Contract.Requires(asyncPing != null);
             _asyncPing = asyncPing;
-            _asyncTaskModule = new AsyncTaskModule(kernel, new QueueConfiguration(1, 1000));
+            _asyncTaskModule = new AsyncTaskModule(kernel);
 
             _modelOfDbWriters = new WriterSystemModel(configuration, hashMapConfiguration);
             _modelOfAnotherDistributors = new DistributorSystemModel();

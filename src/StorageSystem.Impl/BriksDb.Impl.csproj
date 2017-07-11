@@ -169,8 +169,9 @@
     <Compile Include="Common\Commands\ServerNotAvailableCommand.cs" />
     <Compile Include="Common\Support\delegate.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
+    <Compile Include="Configurations\Queue\IAsyncTaskConfiguration.cs" />
+    <Compile Include="Configurations\Queue\IDistributorConfiguration.cs" />
     <Compile Include="Configurations\Queue\IQueueConfiguration.cs" />
-    <Compile Include="Configurations\Queue\QueueConfiguration.cs" />
     <Compile Include="DistributorModules\Interfaces\IDistributorTimeoutCache.cs" />
     <Compile Include="DistributorModules\Interfaces\IMainLogicModule.cs" />
     <Compile Include="DistributorModules\Interfaces\IDistributorModule.cs" />

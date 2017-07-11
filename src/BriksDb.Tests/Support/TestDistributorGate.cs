@@ -86,6 +86,7 @@ namespace Qoollo.Tests.Support
 
             var netReceive1 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
             var netReceive2 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
+            //, new QueueConfiguration(2, 100000)
             Input = new InputModuleWithParallel(kernel, new QueueConfiguration(2, 100000));
             kernel.Bind<IInputModule>().ToConstant(Input);
 

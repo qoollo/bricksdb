@@ -648,7 +648,7 @@ namespace Qoollo.Tests
             var merge = new OrderMerge(null, parser);
             //, new CollectorModel(new DistributorHashConfiguration(1),
             //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
-            var async = new AsyncTaskModule(null, new QueueConfiguration(4, 10));
+            var async = new AsyncTaskModule(null);
             //new CollectorModel(new DistributorHashConfiguration(1),
             //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
             //            HashFileType.Writer)), async
@@ -751,7 +751,7 @@ namespace Qoollo.Tests
             var merge = new OrderMerge(null, parser); 
                 //new CollectorModel(new DistributorHashConfiguration(1), 
                 //    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
-            var async = new AsyncTaskModule(null,new QueueConfiguration(4, 10));
+            var async = new AsyncTaskModule(null);
 
             //new CollectorModel(new DistributorHashConfiguration(1),
             //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,

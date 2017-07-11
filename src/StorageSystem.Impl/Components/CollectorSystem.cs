@@ -56,7 +56,7 @@ namespace Qoollo.Impl.Components
 
             var kernel = new StandardKernel(module);
 
-            var async = new AsyncTaskModule(kernel, new QueueConfiguration(4, 10));
+            var async = new AsyncTaskModule(kernel);
             kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
             var serversModel = new CollectorModel(_distributorHashConfiguration, _hashMapConfiguration, _useHashFile);

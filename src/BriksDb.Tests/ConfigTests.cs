@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Qoollo.Tests
 {
-    public class ConfigTests:TestBase
+    internal class ConfigTests:TestBase
     {
 
         private void CreateFile(string filename)

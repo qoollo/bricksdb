@@ -24,6 +24,11 @@ namespace Qoollo.Tests
     [Collection("test collection 1")]
     public class TestRestore : TestBase
     {
+        public TestRestore()
+        {
+            CreateConfigFile(distrthreads: 2);
+        }
+
         private void CreateRestoreFile(string filename, string tableName, RestoreState state,
             List<RestoreServerSave> servers = null)
         {

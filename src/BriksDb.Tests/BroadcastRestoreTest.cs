@@ -36,6 +36,11 @@ namespace Qoollo.Tests
             return ev;
         }
 
+        public BroadcastRestoreTest()
+        {
+            CreateConfigFile(distrthreads: 2);
+        }
+
         [Theory]
         [InlineData(50, false)]
         [InlineData(50, true)]

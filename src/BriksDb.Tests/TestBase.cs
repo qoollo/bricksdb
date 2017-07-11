@@ -97,12 +97,22 @@ namespace Qoollo.Tests
 
         #region Config file
 
-        protected void CreateConfigFile(string filename = Qoollo.Impl.Common.Support.Consts.ConfigFilename)
+        protected void CreateConfigFile(string filename = Qoollo.Impl.Common.Support.Consts.ConfigFilename, int distrthreads = 4)
         {
-            using (var writer = new StreamWriter(filename))
+            using (var writer = new StreamWriter(filename, false))
             {
-                writer.WriteLine($@"{{ {GetQueue()} }}");
+                writer.WriteLine($@"{{ {GetQueue()}, {GetAsync()}, {GetDistrtibutor(distrthreads)} }}");
             }
+        }
+
+        private string GetAsync()
+        {
+            return $@"""asynctask"": {{ {GetParam("countthreads", 4)} }} ";
+        }
+
+        private string GetDistrtibutor(int distrthreads)
+        {
+            return $@"""distributor"": {{ {GetParam("countthreads", distrthreads)} }} ";
         }
 
         private string GetQueue()

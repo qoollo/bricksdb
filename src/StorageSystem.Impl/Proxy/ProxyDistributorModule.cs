@@ -43,7 +43,7 @@ namespace Qoollo.Impl.Proxy
             _asynGetData = asyncGetData;
             _local = local;
             _distributorSystemModel = new DistributorSystemModel();
-            _async = new AsyncTaskModule(kernel, new QueueConfiguration(1, 1000));
+            _async = new AsyncTaskModule(kernel);
         }
 
         public override void Start()

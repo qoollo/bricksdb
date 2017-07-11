@@ -19,6 +19,8 @@ namespace Qoollo.Impl.Modules.Config
             reader.Start();
 
             Kernel.Bind<IQueueConfiguration>().ToConstant(reader.LoadSection<QueueConfiguration>());
+            Kernel.Bind<IAsyncTaskConfiguration>().ToConstant(reader.LoadSection<AsyncTaskConfiguration>());
+            Kernel.Bind<IDistributorConfiguration>().ToConstant(reader.LoadSection<DistributorConfiguration>());
         }
     }
 }

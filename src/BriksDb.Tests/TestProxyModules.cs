@@ -144,10 +144,13 @@ namespace Qoollo.Tests
 
             var net = ProxyNetModule();
             AsyncProxyCache();
-
-            var distr = new TestProxyDistributorModule(_kernel);
+            var distr = new TestProxyDistributorModule(_kernel, null, null,
+                new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)),
+                new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+                );
             _kernel.Bind<IProxyDistributorModule>().ToConstant(distr);
 
+            distr.Start();
             net.Start();
 
             net.ConnectToDistributor(server1);
@@ -316,7 +319,7 @@ namespace Qoollo.Tests
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
                 main.Start();
 
-                var input = new InputModuleWithParallel(_kernel, QueueConfiguration);
+                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
                 var receiver4 = new NetDistributorReceiver(_kernel, 

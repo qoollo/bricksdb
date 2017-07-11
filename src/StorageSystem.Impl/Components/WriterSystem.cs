@@ -90,7 +90,7 @@ namespace Qoollo.Impl.Components
             var net = new WriterNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
             kernel.Bind<IWriterNetModule>().ToConstant(net);
 
-            var async = new AsyncTaskModule(kernel, _queueConfiguration);
+            var async = new AsyncTaskModule(kernel);
             kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
             var model = new WriterModel(kernel, _local, _hashMapConfiguration);

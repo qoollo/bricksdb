@@ -15,11 +15,6 @@ namespace Qoollo.Tests.TestProxy
         {
         }
 
-        public TestProxyDistributorModule(StandardKernel kernel) :
-            this(kernel, new QueueConfiguration(1, 1), null, null, null)
-        {
-        }
-
         public override void ServerNotAvailable(ServerId server)
         {
         }

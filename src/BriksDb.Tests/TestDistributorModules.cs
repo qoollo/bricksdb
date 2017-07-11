@@ -106,6 +106,7 @@ namespace Qoollo.Tests
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
                 main.Start();
 
+                //new QueueConfiguration(2, 100000)
                 var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
@@ -637,6 +638,7 @@ namespace Qoollo.Tests
                 var main = new MainLogicModule(_kernel);
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
 
+                //, new QueueConfiguration(2, 100000)
                 var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
@@ -736,6 +738,7 @@ namespace Qoollo.Tests
                 var main = new MainLogicModule(_kernel);
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
 
+                //, new QueueConfiguration(2, 100000)
                 var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
@@ -843,6 +846,7 @@ namespace Qoollo.Tests
                 var main = new MainLogicModule(_kernel);
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
 
+                //, new QueueConfiguration(2, 100000)
                 var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
                 _kernel.Bind<IInputModule>().ToConstant(input);
 

@@ -8,14 +8,13 @@ namespace BricksDb.RedisInterface.BriksCommunication
         private IStorage<string, string> _data;
 
     public RedisGate(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-        CommonConfiguration commonConfiguration, TimeoutConfiguration timeoutConfiguration)
-        : base(netConfiguration, proxyConfiguration, commonConfiguration, timeoutConfiguration)
+        TimeoutConfiguration timeoutConfiguration)
+        : base(netConfiguration, proxyConfiguration, timeoutConfiguration)
     {
     }
 
-    public RedisGate(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-        CommonConfiguration commonConfiguration)
-        : base(netConfiguration, proxyConfiguration, commonConfiguration)
+    public RedisGate(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration)
+        : base(netConfiguration, proxyConfiguration)
     {
     }
 

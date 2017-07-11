@@ -51,7 +51,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
 
         public override void Start()
         {
-            _queue.RegistrateWithStart(_queueConfiguration, data =>
+            _queue.RegistrateWithStart(data =>
             {
                 _process(data);
                 _reader.GetAnotherData();

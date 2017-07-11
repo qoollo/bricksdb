@@ -25,11 +25,10 @@ namespace Qoollo.Client.ProxyGate
         internal InjectionModule Module = null;
 
         protected ProxyApi(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-            CommonConfiguration commonConfiguration, TimeoutConfiguration timeoutConfiguration)
+            TimeoutConfiguration timeoutConfiguration)
         {
             Contract.Requires(netConfiguration != null);
             Contract.Requires(proxyConfiguration != null);
-            Contract.Requires(commonConfiguration != null);
             Contract.Requires(timeoutConfiguration != null);
 
             _isStarted = false;
@@ -37,7 +36,6 @@ namespace Qoollo.Client.ProxyGate
             _isDispose = false;
 
             var server = new ServerId(netConfiguration.Host, netConfiguration.Port);
-            var queue = new QueueConfiguration(commonConfiguration.CountThreads, commonConfiguration.QueueSize);
 
             var connection = new ConnectionConfiguration(netConfiguration.WcfServiceName,
                 netConfiguration.CountConnectionsToSingleServer, netConfiguration.TrimPeriod);
@@ -50,15 +48,14 @@ namespace Qoollo.Client.ProxyGate
             var timeout = new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout,
                 timeoutConfiguration.SendTimeout);
 
-            _proxySystem = new ProxySystem(server, queue, connection,
+            _proxySystem = new ProxySystem(server, connection,
                 proxyCacheConfiguration, proxyCacheConfiguration2, netReceiveConfiguration, async, ping, timeout);
 
             _apis = new Dictionary<string, ProxyHandlerBase>();
         }
 
-        protected ProxyApi(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-            CommonConfiguration commonConfiguration)
-            : this(netConfiguration, proxyConfiguration, commonConfiguration,
+        protected ProxyApi(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration)
+            : this(netConfiguration, proxyConfiguration,
                 new TimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout))
         {
         }

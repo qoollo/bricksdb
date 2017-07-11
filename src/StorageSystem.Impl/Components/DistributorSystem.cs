@@ -2,6 +2,7 @@
 using Ninject;
 using Ninject.Modules;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
@@ -10,6 +11,7 @@ using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.ParallelWork;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules;
+using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.TestSupport;
 
@@ -81,7 +83,10 @@ namespace Qoollo.Impl.Components
             module = module ?? new InjectionModule();
             Kernel = new StandardKernel(module);
 
-            var q = new GlobalQueue();
+            var config = new SettingsModule(Kernel, Consts.ConfigFilename);
+            config.Start();
+
+            var q = new GlobalQueue(Kernel);
             Kernel.Bind<IGlobalQueue>().ToConstant(q);
 
             var cache = new DistributorTimeoutCache(_cacheConfiguration);
@@ -91,7 +96,7 @@ namespace Qoollo.Impl.Components
             Kernel.Bind<IDistributorNetModule>().ToConstant(net);
 
             var distributor = new DistributorModule(Kernel, _pingConfig, _checkConfig, _distributorHashConfiguration,
-                new QueueConfiguration(1, 1000), _localfordb, _localforproxy, _hashMapConfiguration);
+                 _localfordb, _localforproxy, _hashMapConfiguration);
             Kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             Distributor = distributor;

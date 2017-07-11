@@ -36,8 +36,8 @@ namespace Qoollo.Impl.Writer
             _mainLogicModule = Kernel.Get<IMainLogicModule>();
             _queue = Kernel.Get<IGlobalQueue>();
 
-            _queue.DbInputRollbackQueue.Registrate(_queueConfiguration, RollbackProcess);
-            _queue.DbInputProcessQueue.Registrate(_queueConfiguration, ProcessQueue);
+            _queue.DbInputRollbackQueue.Registrate(RollbackProcess);
+            _queue.DbInputProcessQueue.Registrate(ProcessQueue);
         }
 
         #region Rollback

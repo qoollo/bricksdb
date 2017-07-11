@@ -90,6 +90,7 @@ namespace Qoollo.Impl.Common.Support
         
         public static string AllTables = "AllTablesyNameThatMustntBeUsedAsTableName";
         public static string RestoreHelpFile = "RestoreHelp.txt";
+        public const string ConfigFilename = "briks_config.txt";
     }
 
     [DataContract]

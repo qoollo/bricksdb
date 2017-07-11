@@ -2,9 +2,11 @@
 using Ninject;
 using Ninject.Modules;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.TestSupport;
@@ -76,7 +78,10 @@ namespace Qoollo.Impl.Components
             module = module ?? new InjectionModule();
             var kernel = new StandardKernel(module);
 
-            var q = new GlobalQueue();
+            var config = new SettingsModule(kernel, Consts.ConfigFilename);
+            config.Start();
+
+            var q = new GlobalQueue(kernel);
             kernel.Bind<IGlobalQueue>().ToConstant(q);
 
             var db = new DbModuleCollection(kernel);

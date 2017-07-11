@@ -69,6 +69,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Ninject, Version=3.2.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
       <HintPath>..\packages\Ninject.3.2.2.0\lib\net45-full\Ninject.dll</HintPath>
       <Private>True</Private>
@@ -164,11 +169,15 @@
     <Compile Include="Common\Commands\ServerNotAvailableCommand.cs" />
     <Compile Include="Common\Support\delegate.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
+    <Compile Include="Configurations\Queue\IQueueConfiguration.cs" />
+    <Compile Include="Configurations\Queue\QueueConfiguration.cs" />
     <Compile Include="DistributorModules\Interfaces\IDistributorTimeoutCache.cs" />
     <Compile Include="DistributorModules\Interfaces\IMainLogicModule.cs" />
     <Compile Include="DistributorModules\Interfaces\IDistributorModule.cs" />
     <Compile Include="DistributorModules\Interfaces\IDistributorNetModule.cs" />
     <Compile Include="DistributorModules\Interfaces\ITransactionModule.cs" />
+    <Compile Include="Modules\Config\SettingsModule.cs" />
+    <Compile Include="Modules\Config\SettingsReader.cs" />
     <Compile Include="Modules\Interfaces\ICacheModule.cs" />
     <Compile Include="Modules\Interfaces\IAsyncTaskModule.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\ConnectionBehaviorBase.cs" />

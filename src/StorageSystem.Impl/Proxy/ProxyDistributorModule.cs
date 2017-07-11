@@ -25,7 +25,6 @@ namespace Qoollo.Impl.Proxy
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
         private readonly DistributorSystemModel _distributorSystemModel;
-        private readonly QueueConfiguration _queueConfiguration;
         private readonly AsyncTasksConfiguration _asynGetData;
         private readonly AsyncTasksConfiguration _asynPing;
         private readonly AsyncTaskModule _async;
@@ -36,16 +35,15 @@ namespace Qoollo.Impl.Proxy
 
         public ServerId ProxyServerId { get { return _local; } }
 
-        public ProxyDistributorModule(StandardKernel kernel, QueueConfiguration queueConfiguration, ServerId local,
+        public ProxyDistributorModule(StandardKernel kernel, ServerId local,
             AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing)
             : base(kernel)
         {
             _asynPing = asyncPing;
-            _queueConfiguration = queueConfiguration;
             _asynGetData = asyncGetData;
             _local = local;
             _distributorSystemModel = new DistributorSystemModel();
-            _async = new AsyncTaskModule(kernel, queueConfiguration);
+            _async = new AsyncTaskModule(kernel, new QueueConfiguration(1, 1000));
         }
 
         public override void Start()
@@ -56,7 +54,7 @@ namespace Qoollo.Impl.Proxy
 
             _async.Start();
             StartAsyncTasks();
-            _queue.ProxyDistributorQueue.Registrate(_queueConfiguration, Process);
+            _queue.ProxyDistributorQueue.Registrate(Process);
         }
 
         public RemoteResult ProcessNetCommand(NetCommand command)

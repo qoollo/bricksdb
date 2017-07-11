@@ -10,13 +10,13 @@ namespace Qoollo.Tests.TestProxy
 {
     class TestProxySystem : ProxySystem
     {
-        public TestProxySystem(ServerId local, QueueConfiguration queueConfiguration,
+        public TestProxySystem(ServerId local,
             ConnectionConfiguration connectionConfiguration, ProxyCacheConfiguration cacheConfiguration,
             ProxyCacheConfiguration asyncCacheConfiguration, NetReceiverConfiguration receiverConfiguration,
             AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing,
             ConnectionTimeoutConfiguration connectionTimeoutConfiguration)
             : base(
-                local, queueConfiguration, connectionConfiguration, cacheConfiguration, asyncCacheConfiguration,
+                local, connectionConfiguration, cacheConfiguration, asyncCacheConfiguration,
                 receiverConfiguration, asyncGetData, asyncPing, connectionTimeoutConfiguration)
         {
         }

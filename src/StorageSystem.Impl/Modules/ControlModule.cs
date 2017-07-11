@@ -134,12 +134,7 @@ namespace Qoollo.Impl.Modules
 
         public override void Start(bool isForceStart = false, QueueConfiguration configuration = null)
         {
-            if (isForceStart)
-                _queue.RegistrateWithStart(configuration, Process);
-            else if (configuration != null)
-                _queue.Registrate(configuration, Process);
-            else
-                _queue.Registrate(Process);
+            _queue.Registrate(Process);
         }
 
         protected override void RegistrateInner(Type type, FunctionHandlerBase handler)

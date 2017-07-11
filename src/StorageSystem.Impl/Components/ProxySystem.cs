@@ -5,8 +5,10 @@ using Ninject.Modules;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
+using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
@@ -19,7 +21,6 @@ namespace Qoollo.Impl.Components
 {
     internal class ProxySystem : ModuleSystemBase
     {
-        private readonly QueueConfiguration _queueConfiguration;
         private readonly ConnectionConfiguration _connectionConfiguration;
         private readonly ProxyCacheConfiguration _cacheConfiguration;
         private readonly ProxyCacheConfiguration _asyncCacheConfiguration;
@@ -29,7 +30,7 @@ namespace Qoollo.Impl.Components
         private readonly ServerId _local;
         private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
 
-        public ProxySystem(ServerId local, QueueConfiguration queueConfiguration,
+        public ProxySystem(ServerId local,
             ConnectionConfiguration connectionConfiguration,
             ProxyCacheConfiguration cacheConfiguration,
             ProxyCacheConfiguration asyncCacheConfiguration,
@@ -37,7 +38,6 @@ namespace Qoollo.Impl.Components
             AsyncTasksConfiguration asyncGetData,
             AsyncTasksConfiguration asyncPing, ConnectionTimeoutConfiguration connectionTimeoutConfiguration)
         {
-            Contract.Requires(queueConfiguration != null);
             Contract.Requires(connectionConfiguration != null);
             Contract.Requires(cacheConfiguration != null);
             Contract.Requires(asyncCacheConfiguration != null);
@@ -47,7 +47,6 @@ namespace Qoollo.Impl.Components
             Contract.Requires(asyncPing != null);
 
             _local = local;
-            _queueConfiguration = queueConfiguration;
             _connectionConfiguration = connectionConfiguration;
             _cacheConfiguration = cacheConfiguration;
             _asyncCacheConfiguration = asyncCacheConfiguration;
@@ -64,7 +63,10 @@ namespace Qoollo.Impl.Components
             module = module ?? new InjectionModule();
             var kernel = new StandardKernel(module);
 
-            var q = new GlobalQueue();
+            var config = new SettingsModule(kernel, Consts.ConfigFilename);
+            config.Start();
+
+            var q = new GlobalQueue(kernel);
             kernel.Bind<IGlobalQueue>().ToConstant(q);
 
             var asyncCache = new AsyncProxyCache(_asyncCacheConfiguration.TimeAliveSec);
@@ -73,8 +75,7 @@ namespace Qoollo.Impl.Components
             var net = new ProxyNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
             kernel.Bind<IProxyNetModule>().ToConstant(net);
 
-            var distributor = new ProxyDistributorModule(kernel, new QueueConfiguration(1, 1000), _local,
-                _asyncGetData, _asyncPing);
+            var distributor = new ProxyDistributorModule(kernel, _local, _asyncGetData, _asyncPing);
             kernel.Bind<IProxyDistributorModule>().ToConstant(distributor);
 
             var cache = new ProxyCache(_cacheConfiguration.TimeAliveSec);
@@ -83,7 +84,7 @@ namespace Qoollo.Impl.Components
             var main = new ProxyMainLogicModule(kernel);
             kernel.Bind<IProxyMainLogicModule>().ToConstant(main);
 
-            var input = new ProxyInputModuleCommon(kernel, _queueConfiguration);
+            var input = new ProxyInputModuleCommon(kernel);
             kernel.Bind<IProxyInputModuleCommon>().ToConstant(input);
 
             CreateApi = input.CreateApi;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using Ninject;
 using Qoollo.Client.Configuration;
@@ -15,6 +16,7 @@ using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Model;
+using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
@@ -65,6 +67,11 @@ namespace Qoollo.Tests
 
             NetMock.NetMock.Instance = new NetMock.NetMock();
 
+            CreateConfigFile();
+
+            new SettingsModule(_kernel, Qoollo.Impl.Common.Support.Consts.ConfigFilename)
+                .Start();
+
             InitInjection.RestoreUsePackage = false;
             InitInjection.RestoreHelpFileOut = Impl.Common.Support.Consts.RestoreHelpFile;
 
@@ -78,7 +85,7 @@ namespace Qoollo.Tests
             var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(10),
                 TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
 
-            _proxy = new TestGate(netconfig, toconfig, CommonConfiguration);
+            _proxy = new TestGate(netconfig, toconfig);
             _proxy.Module = new TestInjectionModule();
             _proxy.Build();
 
@@ -87,6 +94,52 @@ namespace Qoollo.Tests
             _writer2 = new TestWriterGate();
             _writer3 = new TestWriterGate();
         }
+
+        #region Config file
+
+        protected void CreateConfigFile(string filename = Qoollo.Impl.Common.Support.Consts.ConfigFilename)
+        {
+            using (var writer = new StreamWriter(filename))
+            {
+                writer.WriteLine($@"{{ {GetQueue()} }}");
+            }
+        }
+
+        private string GetQueue()
+        {
+            return $@"""queue"": {{ 
+    {GetSingle("writerdistributor")},
+    {GetSingle("WriterInput")},
+    {GetSingle("WriterInputRollback")},
+    {GetSingle("WriterRestore")},
+    {GetSingle("WriterRestorePackage")},
+    {GetSingle("WriterTimeout")},
+    {GetSingle("WriterTransactionAnswer")},
+
+    {GetSingle("DistributorDistributor")},
+    {GetSingle("DistributorTransaction")},
+    {GetSingle("DistributorTransactionCallback")},
+
+    {GetSingle("ProxyDistributor")},
+    {GetSingle("ProxyInput")},
+    {GetSingle("ProxyInputOther")},
+        }} ";
+        }
+
+        private string GetSingle(string name)
+        {
+            return $@"""{name.ToLower()}"": {{ {GetParam("countthreads", 1)}, {GetParam("maxsize", 1000)} }}";
+        }
+
+        private string GetParam(string name, object value)
+        {
+            var strValue = value.ToString();
+            if (value is string)
+                strValue = $@"""{strValue}""";
+            return $@"""{name}"":{strValue}";
+        }
+
+        #endregion
 
         protected void CreateHashFile(string filename, int countServers)
         {
@@ -128,7 +181,6 @@ namespace Qoollo.Tests
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(pingTo)),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(asyncCheckTo)),
                 new DistributorHashConfiguration(countReplics),
-                QueueConfiguration,
                 new ServerId("localhost", distrPort1),
                 new ServerId("localhost", distrPort2),
                 new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
@@ -145,7 +197,7 @@ namespace Qoollo.Tests
         {
             AsyncProxyCache();
                         
-            return new ProxyDistributorModule(_kernel, QueueConfiguration, ServerId(proxyPort),
+            return new ProxyDistributorModule(_kernel, ServerId(proxyPort),
                 new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
                 new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
         }
@@ -163,7 +215,7 @@ namespace Qoollo.Tests
             var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(syncTo),
                 TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
 
-            return new TestGate(netconfig, toconfig, CommonConfiguration);
+            return new TestGate(netconfig, toconfig);
         }
 
         internal DistributorConfiguration DistributorConfiguration(string filename, int countReplics)
@@ -216,7 +268,7 @@ namespace Qoollo.Tests
             var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(cacheToSec));
             var pcc2 = new ProxyCacheConfiguration(TimeSpan.FromSeconds(asyncCacheToSec));
             return new TestProxySystem(ServerId(proxyPort),
-               QueueConfiguration, ConnectionConfiguration, 
+               ConnectionConfiguration, 
                pcc, pcc2,
                NetReceiverConfiguration(proxyPort),
                new AsyncTasksConfiguration(new TimeSpan()),
@@ -256,13 +308,14 @@ namespace Qoollo.Tests
 
         internal GlobalQueue GetBindedQueue(string name = "")
         {
-            var queue = new GlobalQueue(name);
+            var queue = new GlobalQueue(_kernel, name);
             _kernel.Rebind<IGlobalQueue>().ToConstant(queue);
             return queue;
         }
 
         protected virtual void Dispose(bool isUserCall)
         {
+            File.Delete(Qoollo.Impl.Common.Support.Consts.ConfigFilename);
         }
 
         public void Dispose()

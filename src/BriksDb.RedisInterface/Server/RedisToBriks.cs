@@ -14,8 +14,7 @@ namespace BricksDb.RedisInterface.Server
         {
             _redisGate = new RedisGate(
                     new NetConfiguration(ConfigurationHelper.Instance.Localhost, 8000, Consts.WcfServiceName),
-                    new ProxyConfiguration(Consts.ChangeDistributorTimeoutSec),
-                    new CommonConfiguration(ConfigurationHelper.Instance.CountThreads));
+                    new ProxyConfiguration(Consts.ChangeDistributorTimeoutSec));
         }
 
         protected override void InnerBuild(RedisMessageProcessor processor)

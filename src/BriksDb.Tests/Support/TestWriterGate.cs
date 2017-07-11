@@ -5,6 +5,7 @@ using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
+using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Writer;
@@ -36,7 +37,10 @@ namespace Qoollo.Tests.Support
         {
             _kernel = new StandardKernel(new TestInjectionModule());
 
-            Q = new GlobalQueue(name);
+            var config = new SettingsModule(_kernel, Impl.Common.Support.Consts.ConfigFilename);
+            config.Start();
+
+            Q = new GlobalQueue(_kernel, name);
             _kernel.Bind<IGlobalQueue>().ToConstant(Q);
 
             var queueConfiguration = new QueueConfiguration(1, 1000);
@@ -87,9 +91,10 @@ namespace Qoollo.Tests.Support
             _mainС.Start();
             Distributor.Start();
             _netRc.Start();
-            _async.Start();
-            Q.Start();
+            _async.Start();            
             Restore.Start();
+
+            Q.Start();
         }
 
         public void Dispose()

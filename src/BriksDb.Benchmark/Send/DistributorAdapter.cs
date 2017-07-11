@@ -15,7 +15,7 @@ namespace Qoollo.Benchmark.Send
             _command = command;
             
             _proxy = new ProxyGate(command.TableName, new NetConfiguration(_command.Localhost, command.Localport),
-                new ProxyConfiguration(), new CommonConfiguration(command.ThreadsCount));
+                new ProxyConfiguration());
             _proxy.Build();
         }
 

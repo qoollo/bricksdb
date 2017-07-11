@@ -11,7 +11,7 @@ namespace Qoollo.Tests.TestProxy
         public TestProxyDistributorModule(StandardKernel kernel, 
             QueueConfiguration queueConfiguration, ServerId local, AsyncTasksConfiguration asyncGetData,
             AsyncTasksConfiguration asyncPing)
-            : base(kernel, queueConfiguration, local, asyncGetData, asyncPing)
+            : base(kernel, local, asyncGetData, asyncPing)
         {
         }
 

@@ -16,6 +16,7 @@ using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Model;
 using Qoollo.Impl.DistributorModules.ParallelWork;
 using Qoollo.Impl.DistributorModules.Transaction;
+using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Tests.NetMock;
 
@@ -47,7 +48,10 @@ namespace Qoollo.Tests.Support
         {            
             var kernel = new StandardKernel(new TestInjectionModule());
 
-            _q = new GlobalQueue();
+            var config = new SettingsModule(kernel, Impl.Common.Support.Consts.ConfigFilename);
+            config.Start();
+
+            _q = new GlobalQueue(kernel);
             kernel.Bind<IGlobalQueue>().ToConstant(_q);
 
             asyncCheck = asyncCheck == default(TimeSpan) ? TimeSpan.FromMinutes(5) : asyncCheck;
@@ -55,13 +59,12 @@ namespace Qoollo.Tests.Support
             var connection = new ConnectionConfiguration("testService", 10);
 
             var distrconfig = new DistributorHashConfiguration(countReplics);
-            var queueconfig = new QueueConfiguration(1, 100);
             _dnet = new DistributorNetModule(kernel, connection,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
             kernel.Bind<IDistributorNetModule>().ToConstant(_dnet);
 
             Distributor = new DistributorModule(kernel, new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
-                new AsyncTasksConfiguration(asyncCheck), distrconfig, queueconfig,
+                new AsyncTasksConfiguration(asyncCheck), distrconfig, 
                 new ServerId("localhost", distrServer1),
                 new ServerId("localhost", distrServer12),
                 new HashMapConfiguration(hashFile,

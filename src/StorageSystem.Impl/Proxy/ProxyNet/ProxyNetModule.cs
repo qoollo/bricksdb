@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;

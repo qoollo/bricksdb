@@ -231,6 +231,7 @@ namespace Qoollo.Tests
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
 
                 dnet.Start();
+
                 ddistributor.Start();
                 queue.Start();
 

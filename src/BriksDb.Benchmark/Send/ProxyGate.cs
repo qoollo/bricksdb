@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.Contracts;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.ProxyGate;
 
@@ -14,15 +9,15 @@ namespace Qoollo.Benchmark.Send
         public IStorage<long, string> Api { get { return _api; } }
         
         public ProxyGate(string tableName, NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-            CommonConfiguration commonConfiguration, TimeoutConfiguration timeoutConfiguration)
-            : base(netConfiguration, proxyConfiguration, commonConfiguration, timeoutConfiguration)
+            TimeoutConfiguration timeoutConfiguration)
+            : base(netConfiguration, proxyConfiguration, timeoutConfiguration)
         {
             Contract.Requires(!string.IsNullOrEmpty(tableName));
             _tableName = tableName;
         }
 
-        public ProxyGate(string tableName, NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-            CommonConfiguration commonConfiguration) : base(netConfiguration, proxyConfiguration, commonConfiguration)
+        public ProxyGate(string tableName, NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration)
+            : base(netConfiguration, proxyConfiguration)
         {
             Contract.Requires(!string.IsNullOrEmpty(tableName));
             _tableName = tableName;

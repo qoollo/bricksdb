@@ -3,6 +3,7 @@ using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Writer.Interfaces;
@@ -13,17 +14,15 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
     {
         private readonly RestoreModuleConfiguration _configuration;
         private TimeoutReaderFull _reader;
-        private readonly QueueConfiguration _queueConfiguration;
         private IDbModule _db;
         private QueueWithParam<InnerData> _queue;
         private readonly TimeSpan _deleteTimeout;
+        private IWriterConfiguration _config;
 
-        public TimeoutModule(StandardKernel kernel, QueueConfiguration queueConfiguration,
-            RestoreModuleConfiguration configuration)
+        public TimeoutModule(StandardKernel kernel, RestoreModuleConfiguration configuration)
             : base(kernel)
         {
             _configuration = configuration;
-            _queueConfiguration = queueConfiguration;
             _deleteTimeout = configuration.DeleteTimeout;
         }
 
@@ -31,6 +30,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
         {
             base.Start();
 
+            _config = Kernel.Get<IWriterConfiguration>();
             _queue = Kernel.Get<IGlobalQueue>().DbTimeoutQueue;
             _db = Kernel.Get<IDbModule>();
 
@@ -72,13 +72,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
         {
             if (_reader == null)
             {
-                _reader = new TimeoutReaderFull(Kernel, IsMine, Process, _queueConfiguration, _db, _queue);
+                _reader = new TimeoutReaderFull(Kernel, IsMine, Process, _config.PackageSizeTimeout, _db, _queue);
                 _reader.Start();
             }
             else if (_reader.IsComplete)
             {
                 _reader.Dispose();
-                _reader = new TimeoutReaderFull(Kernel, IsMine, Process, _queueConfiguration, _db, _queue);
+                _reader = new TimeoutReaderFull(Kernel, IsMine, Process, _config.PackageSizeTimeout, _db, _queue);
                 _reader.Start();
             }
         }

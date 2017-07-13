@@ -43,7 +43,6 @@ namespace Qoollo.Tests.Support
             Q = new GlobalQueue(_kernel, name);
             _kernel.Bind<IGlobalQueue>().ToConstant(Q);
 
-            var queueConfiguration = new QueueConfiguration(1, 1000);
             var hashMapConfiguration = new HashMapConfiguration(hashFile,
                 HashMapCreationMode.ReadFromFile, 1, countReplics, HashFileType.Writer);
             var local = new ServerId("localhost", storageServer);
@@ -63,20 +62,20 @@ namespace Qoollo.Tests.Support
             WriterModel = new WriterModel(_kernel, local, hashMapConfiguration);
             _kernel.Bind<IWriterModel>().ToConstant(WriterModel);
 
+            //new QueueConfiguration(1, 100)
             Restore = new AsyncDbWorkModule(_kernel, 
                 new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(300)),
                 new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)),
-                new QueueConfiguration(1, 100));
+                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
             _kernel.Bind<IAsyncDbWorkModule>().ToConstant(Restore);
 
-            Distributor = new DistributorModule(_kernel, new QueueConfiguration(2, 10));
+            Distributor = new DistributorModule(_kernel);
             _kernel.Bind<IDistributorModule>().ToConstant(Distributor);
 
             _mainС = new MainLogicModule(_kernel);
             _kernel.Bind<IMainLogicModule>().ToConstant(_mainС);
 
-            Input = new InputModule(_kernel, queueConfiguration);
+            Input = new InputModule(_kernel);
             _kernel.Bind<IInputModule>().ToConstant(Input);
 
             _netRc = new NetWriterReceiver(_kernel, 

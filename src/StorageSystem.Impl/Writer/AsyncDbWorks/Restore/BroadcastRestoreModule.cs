@@ -17,7 +17,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private IWriterModel _writerModel;
         private readonly RestoreModuleConfiguration _configuration;
         private IDbModule _db;
-        private readonly QueueConfiguration _queueConfiguration;
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
         private BroadcastRestoreProcess _restoreProcess;
@@ -39,16 +38,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
-        public BroadcastRestoreModule(
-            StandardKernel kernel,
-            RestoreModuleConfiguration configuration,
-            QueueConfiguration queueConfiguration)
+        public BroadcastRestoreModule(StandardKernel kernel,RestoreModuleConfiguration configuration)
             : base(kernel)
         {
             _configuration = configuration;
-            _queueConfiguration = queueConfiguration;
             _lastDateTime = string.Empty;
-            
         }
 
         public override void Start()
@@ -76,7 +70,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
 
             _restoreProcess = new BroadcastRestoreProcess(Kernel, _db, _writerModel, WriterNet, servers,
-                state == RestoreState.FullRestoreNeed, _queueConfiguration);
+                state == RestoreState.FullRestoreNeed);
             _restoreProcess.Start();
 
             AsyncTaskModule.AddAsyncTask(

@@ -20,8 +20,6 @@ namespace Qoollo.Impl.Components
 {
     internal class WriterSystem: ModuleSystemBase
     {
-        private readonly QueueConfiguration _queueConfiguration;
-        private readonly QueueConfiguration _queueConfigurationRestore;
         private readonly NetReceiverConfiguration _receiverConfigurationForWrite;
         private readonly NetReceiverConfiguration _receiverConfigurationForCollector;
         private readonly HashMapConfiguration _hashMapConfiguration;
@@ -33,7 +31,7 @@ namespace Qoollo.Impl.Components
         private readonly bool _isNeedRestore;        
         private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
 
-        public WriterSystem(ServerId local, QueueConfiguration queueConfiguration,
+        public WriterSystem(ServerId local,
             NetReceiverConfiguration receiverConfigurationForWrite,
             NetReceiverConfiguration receiverConfigurationForCollector,
             HashMapConfiguration hashMapConfiguration,
@@ -42,11 +40,9 @@ namespace Qoollo.Impl.Components
             RestoreModuleConfiguration initiatorRestoreConfiguration,
             ConnectionTimeoutConfiguration connectionTimeoutConfiguration, 
             RestoreModuleConfiguration timeoutRestoreConfiguration,            
-            bool isNeedRestore = false,
-            QueueConfiguration queueConfigurationRestore = null)
+            bool isNeedRestore = false)
         {
             Contract.Requires(local != null);
-            Contract.Requires(queueConfiguration != null);
             Contract.Requires(receiverConfigurationForWrite != null);
             Contract.Requires(receiverConfigurationForCollector != null);
             Contract.Requires(hashMapConfiguration != null);
@@ -54,9 +50,8 @@ namespace Qoollo.Impl.Components
             Contract.Requires(transferRestoreConfiguration != null);
             Contract.Requires(initiatorRestoreConfiguration != null);
 
-            _queueConfigurationRestore = queueConfigurationRestore ?? new QueueConfiguration(1, 1000);
+            //_queueConfigurationRestore = queueConfigurationRestore ?? new QueueConfiguration(1, 1000);
 
-            _queueConfiguration = queueConfiguration;
             _receiverConfigurationForWrite = receiverConfigurationForWrite;
             _receiverConfigurationForCollector = receiverConfigurationForCollector;
             _hashMapConfiguration = hashMapConfiguration;
@@ -97,11 +92,10 @@ namespace Qoollo.Impl.Components
             kernel.Bind<IWriterModel>().ToConstant(model);
 
             var restore = new AsyncDbWorkModule(kernel, _initiatorRestoreConfiguration,
-                _transferRestoreConfiguration, _timeoutRestoreConfiguration, 
-                _queueConfigurationRestore, _isNeedRestore);
+                _transferRestoreConfiguration, _timeoutRestoreConfiguration, _isNeedRestore);
             kernel.Bind<IAsyncDbWorkModule>().ToConstant(restore);
 
-            var distributor = new DistributorModule(kernel, _queueConfiguration);
+            var distributor = new DistributorModule(kernel);
             kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             Distributor = distributor;
@@ -110,7 +104,7 @@ namespace Qoollo.Impl.Components
             var main = new MainLogicModule(kernel);
             kernel.Bind<IMainLogicModule>().ToConstant(main);
 
-            var input = new InputModule(kernel, _queueConfiguration);
+            var input = new InputModule(kernel);
             kernel.Bind<IInputModule>().ToConstant(input);
 
             var receiver = new NetWriterReceiver(kernel, _receiverConfigurationForWrite,

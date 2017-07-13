@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
 using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.NetInterfaces.Data;
@@ -20,15 +18,11 @@ namespace Qoollo.Impl.Writer
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        private readonly QueueConfiguration _queueConfiguration;
         private IMainLogicModule _mainLogicModule;
         private IGlobalQueue _queue;
 
-        public InputModule(StandardKernel kernel, QueueConfiguration queueConfiguration)
-            :base(kernel)
+        public InputModule(StandardKernel kernel):base(kernel)
         {
-            Contract.Requires(queueConfiguration!=null);
-            _queueConfiguration = queueConfiguration;
         }
 
         public override void Start()

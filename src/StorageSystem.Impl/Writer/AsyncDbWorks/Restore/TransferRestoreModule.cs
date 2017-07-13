@@ -43,15 +43,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
-        public TransferRestoreModule(StandardKernel kernel, RestoreModuleConfiguration configuration,
-            QueueConfiguration queueConfiguration)
+        public TransferRestoreModule(StandardKernel kernel, RestoreModuleConfiguration configuration)
             : base(kernel)
         {
             Contract.Requires(configuration != null);
-            Contract.Requires(queueConfiguration != null);
 
             _configuration = configuration;
-            _queueConfiguration = queueConfiguration;
             _lastDateTime = string.Empty;
         }
 
@@ -59,7 +56,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private IWriterModel _writerModel;
         private IDbModule _db;
         private ServerId _remoteServer;
-        private readonly QueueConfiguration _queueConfiguration;
         private SingleServerRestoreProcess _restore;
         private string _lastDateTime;
 
@@ -92,7 +88,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }            
 
             _restore = new SingleServerRestoreProcess(Kernel, _db, _writerModel, WriterNet, 
-                tableName, _remoteServer, isSystemUpdated, _queueConfiguration);
+                tableName, _remoteServer, isSystemUpdated);
             _restore.Start();
 
             AsyncTaskModule.AddAsyncTask(

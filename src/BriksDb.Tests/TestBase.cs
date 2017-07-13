@@ -58,7 +58,6 @@ namespace Qoollo.Tests
 
         private static readonly object Lock = new object();
         internal ConnectionConfiguration ConnectionConfiguration;
-        internal QueueConfiguration QueueConfiguration;
         internal CommonConfiguration CommonConfiguration;
 
         public TestBase()
@@ -78,9 +77,8 @@ namespace Qoollo.Tests
             _writerPorts = new List<int> {storageServer1, storageServer2, storageServer3, storageServer4};
 
             ConnectionConfiguration = new ConnectionConfiguration("testService", 10);
-            QueueConfiguration = new QueueConfiguration(1, 100);
 
-            CommonConfiguration = new CommonConfiguration(1, 100);
+            CommonConfiguration = new CommonConfiguration(4, 100);
             var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
             var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(10),
                 TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
@@ -101,7 +99,7 @@ namespace Qoollo.Tests
         {
             using (var writer = new StreamWriter(filename, false))
             {
-                writer.WriteLine($@"{{ {GetQueue()}, {GetAsync()}, {GetDistrtibutor(distrthreads)} }}");
+                writer.WriteLine($@"{{ {GetQueue()}, {GetAsync()}, {GetDistrtibutor(distrthreads)}, {GetWriter()} }}");
             }
         }
 
@@ -113,6 +111,11 @@ namespace Qoollo.Tests
         private string GetDistrtibutor(int distrthreads)
         {
             return $@"""distributor"": {{ {GetParam("countthreads", distrthreads)} }} ";
+        }
+
+        private string GetWriter()
+        {
+            return $@"""writer"": {{ {GetParam("packagesizerestore", 1000)}, {GetParam("packagesizetimeout", 1000)} }} ";
         }
 
         private string GetQueue()
@@ -253,7 +256,7 @@ namespace Qoollo.Tests
         internal WriterApi WriterApi(StorageConfiguration storageConfiguration, int portForDistr, int portForCollector = 157)
         {
             var storageNet = new StorageNetConfiguration("localhost", portForDistr, portForCollector, "testService", 10);
-            return new WriterApi(storageNet, storageConfiguration, CommonConfiguration);
+            return new WriterApi(storageNet, storageConfiguration);
         }
 
         internal NetReceiverConfiguration NetReceiverConfiguration(int serverPort)
@@ -290,12 +293,13 @@ namespace Qoollo.Tests
             string filename, int countReplics, int portForProxy, int portForWriter,
             int toMls1 = 200, int toMls2 = 30000)
         {
+            //todo q
             return new DistributorSystem(ServerId(portForWriter), ServerId(portForProxy),
                 new DistributorHashConfiguration(countReplics),
-                QueueConfiguration, ConnectionConfiguration, cacheConfiguration,
+                ConnectionConfiguration, cacheConfiguration,
                 NetReceiverConfiguration(portForWriter),
                 NetReceiverConfiguration(portForProxy),
-                new TransactionConfiguration(1),
+                new TransactionConfiguration(4),
                 new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics,
                     HashFileType.Distributor),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls1)),
@@ -305,7 +309,7 @@ namespace Qoollo.Tests
 
         internal WriterSystem WriterSystem(string filename, int countReplics, int portForDistr, int portForCollector = 157)
         {
-            return new WriterSystem(ServerId(portForDistr), QueueConfiguration,
+            return new WriterSystem(ServerId(portForDistr),
                 NetReceiverConfiguration(portForDistr),
                 NetReceiverConfiguration(portForCollector),
                 new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics, HashFileType.Writer),

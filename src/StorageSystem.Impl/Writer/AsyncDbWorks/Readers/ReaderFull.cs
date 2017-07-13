@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using Ninject;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
@@ -10,19 +9,18 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        protected ReaderFull(StandardKernel kernel, Action<TType> process, QueueConfiguration queueConfiguration,
+        protected ReaderFull(StandardKernel kernel, Action<TType> process, int packageSize,
             QueueWithParam<TType> queue):base(kernel)
         {
             Contract.Requires(process != null);
-            Contract.Requires(queueConfiguration != null);
             _process = process;
-            _queueConfiguration = queueConfiguration;
+            _packageSize = packageSize;
             _queue = queue;
         }
 
         private SingleReaderBase _reader;
         private readonly Action<TType> _process;
-        private readonly QueueConfiguration _queueConfiguration;
+        private readonly int _packageSize;
         private readonly QueueWithParam<TType> _queue;
 
         protected abstract SingleReaderBase CreateReader(int countElements);
@@ -57,7 +55,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
                 _reader.GetAnotherData();
             });
 
-            _reader = CreateReader(_queueConfiguration.MaxSizeQueue);
+            _reader = CreateReader(_packageSize);
             _reader.Start();
         }
 

@@ -107,7 +107,8 @@ namespace Qoollo.Tests
                 main.Start();
 
                 //new QueueConfiguration(2, 100000)
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                //todo q
+                var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
                 var netDistributorReceiver = new NetDistributorReceiver(_kernel,
@@ -639,7 +640,8 @@ namespace Qoollo.Tests
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
 
                 //, new QueueConfiguration(2, 100000)
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                //todo q
+                var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
                 var netDistributorReceiver = new NetDistributorReceiver(_kernel,
@@ -739,7 +741,8 @@ namespace Qoollo.Tests
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
 
                 //, new QueueConfiguration(2, 100000)
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                //todo q
+                var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
                 var netDistributorReceiver = new NetDistributorReceiver(_kernel,
@@ -847,7 +850,8 @@ namespace Qoollo.Tests
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
 
                 //, new QueueConfiguration(2, 100000)
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                //todo q
+                var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
                 var netDistributorReceiver = new NetDistributorReceiver(_kernel,

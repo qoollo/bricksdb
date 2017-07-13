@@ -29,20 +29,14 @@ namespace Qoollo.Impl.Writer
 
         private IWriterModel _model;
         private IWriterNetModule _writerNet;
-        private readonly QueueConfiguration _queueConfiguration;
         private IAsyncDbWorkModule _asyncDbWork;
         private IGlobalQueue _queue;
         private readonly TimeSpan _pingPeriod;
 
         public DistributorModule(StandardKernel kernel,
-            QueueConfiguration configuration,
             AsyncTasksConfiguration pingConfiguration = null)
             :base(kernel)
         {
-            Contract.Requires(configuration != null);
-
-            _queueConfiguration = configuration;
-
             _pingPeriod = InitInjection.PingPeriod;
 
             if (pingConfiguration != null)
@@ -94,7 +88,7 @@ namespace Qoollo.Impl.Writer
 
             RegistrateSync<HashFileUpdateCommand, RemoteResult>(HashFileUpdate);
 
-            StartAsync(_queueConfiguration);
+            StartAsync();
         }
 
         private void Ping(AsyncData data)

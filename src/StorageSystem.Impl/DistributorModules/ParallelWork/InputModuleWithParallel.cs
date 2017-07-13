@@ -1,6 +1,5 @@
 ﻿using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.ParallelWork;
 
@@ -8,8 +7,7 @@ namespace Qoollo.Impl.DistributorModules.ParallelWork
 {
     internal class InputModuleWithParallel : ParallelWorkModule <InnerData>,IInputModule
     {
-        public InputModuleWithParallel(StandardKernel kernel, QueueConfiguration configuration)
-            : base(kernel, configuration)
+        public InputModuleWithParallel(StandardKernel kernel): base(kernel)
         {
         }
 

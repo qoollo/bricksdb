@@ -63,19 +63,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             RestoreModuleConfiguration initiatorConfiguration,
             RestoreModuleConfiguration transferConfiguration,
             RestoreModuleConfiguration timeoutConfiguration,
-            QueueConfiguration queueConfiguration,
             bool needRestore = false)
             : base(kernel)
         {
             Contract.Requires(initiatorConfiguration != null);
             Contract.Requires(transferConfiguration != null);
             Contract.Requires(timeoutConfiguration != null);
-            Contract.Requires(queueConfiguration != null);
 
             _initiatorConfiguration = initiatorConfiguration;
             _transferConfiguration = transferConfiguration;
             _timeoutConfiguration = timeoutConfiguration;
-            _queueConfiguration = queueConfiguration;            
 
             _stateHolder = new RestoreStateHolder(needRestore);
             _saver = LoadRestoreStateFromFile();
@@ -94,16 +91,15 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         private readonly RestoreModuleConfiguration _initiatorConfiguration;
         private readonly RestoreModuleConfiguration _transferConfiguration;
         private readonly RestoreModuleConfiguration _timeoutConfiguration;
-        private readonly QueueConfiguration _queueConfiguration;
 
         public override void Start()
         {
             _writerModel = Kernel.Get<IWriterModel>();
 
             _initiatorRestore = new InitiatorRestoreModule(Kernel, _initiatorConfiguration, _stateHolder, _saver);
-            _transferRestore = new TransferRestoreModule(Kernel, _transferConfiguration, _queueConfiguration);
-            _timeout = new TimeoutModule(Kernel, _queueConfiguration, _timeoutConfiguration);
-            _broadcastRestore = new BroadcastRestoreModule(Kernel, _transferConfiguration, _queueConfiguration);
+            _transferRestore = new TransferRestoreModule(Kernel, _transferConfiguration);
+            _timeout = new TimeoutModule(Kernel, _timeoutConfiguration);
+            _broadcastRestore = new BroadcastRestoreModule(Kernel, _transferConfiguration);
 
             _initiatorRestore.Start();
             _transferRestore.Start();

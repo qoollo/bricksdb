@@ -20,7 +20,6 @@ namespace Qoollo.Impl.Components
     internal class DistributorSystem : ModuleSystemBase
     {
         private readonly DistributorHashConfiguration _distributorHashConfiguration;
-        private readonly QueueConfiguration _queueConfiguration;
         private readonly ConnectionConfiguration _connectionConfiguration;
         private readonly DistributorCacheConfiguration _cacheConfiguration;
         private readonly NetReceiverConfiguration _receiverConfigurationForDb;
@@ -35,7 +34,6 @@ namespace Qoollo.Impl.Components
 
         public DistributorSystem(ServerId localfordb, ServerId localforproxy,
             DistributorHashConfiguration distributorHashConfiguration,
-            QueueConfiguration queueConfiguration,
             ConnectionConfiguration connectionConfiguration,
             DistributorCacheConfiguration cacheConfiguration,
             NetReceiverConfiguration receiverConfigurationForDb,
@@ -45,7 +43,6 @@ namespace Qoollo.Impl.Components
             AsyncTasksConfiguration checkConfig, ConnectionTimeoutConfiguration connectionTimeoutConfiguration)
         {
             Contract.Requires(distributorHashConfiguration != null);
-            Contract.Requires(_queueConfiguration != null);
             Contract.Requires(connectionConfiguration != null);
             Contract.Requires(cacheConfiguration != null);
             Contract.Requires(receiverConfigurationForDb != null);
@@ -61,7 +58,6 @@ namespace Qoollo.Impl.Components
             _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
             _distributorHashConfiguration = distributorHashConfiguration;
             _hashMapConfiguration = hashMapConfiguration;
-            _queueConfiguration = queueConfiguration;
             _connectionConfiguration = connectionConfiguration;
             _cacheConfiguration = cacheConfiguration;
             _receiverConfigurationForDb = receiverConfigurationForDb;
@@ -108,7 +104,7 @@ namespace Qoollo.Impl.Components
             var main = new MainLogicModule(Kernel);
             Kernel.Bind<IMainLogicModule>().ToConstant(main);
             
-            var input = new InputModuleWithParallel(Kernel, _queueConfiguration);
+            var input = new InputModuleWithParallel(Kernel);
             Kernel.Bind<IInputModule>().ToConstant(input);
 
             var receive = new NetDistributorReceiver(Kernel, _receiverConfigurationForDb, _receiverConfigurationForProxy);

@@ -23,13 +23,11 @@ namespace Qoollo.Client.WriterGate
         internal InjectionModule Module = null;
 
         public WriterApi(StorageNetConfiguration netConfiguration,
-            StorageConfiguration storageConfiguration, CommonConfiguration commonConfiguration,
-            TimeoutConfiguration timeoutConfiguration, bool isNeedRestore = false,
-            CommonConfiguration restoreConfiguration = null)
+            StorageConfiguration storageConfiguration,
+            TimeoutConfiguration timeoutConfiguration, bool isNeedRestore = false)
         {
             Contract.Requires(netConfiguration != null);
             Contract.Requires(storageConfiguration != null);
-            Contract.Requires(commonConfiguration != null);
             Contract.Requires(timeoutConfiguration != null);
 
             _isStarted = false;
@@ -37,10 +35,6 @@ namespace Qoollo.Client.WriterGate
             _isDispose = false;
 
             var server = new ServerId(netConfiguration.Host, netConfiguration.PortForDitributor);
-            var queue = new QueueConfiguration(commonConfiguration.CountThreads, commonConfiguration.QueueSize);
-            var queueRestore = restoreConfiguration == null
-                ? new QueueConfiguration(1, 1000)
-                : new QueueConfiguration(restoreConfiguration.CountThreads, restoreConfiguration.QueueSize);
             var netReceiveConfiguration = new NetReceiverConfiguration(netConfiguration.PortForDitributor,
                 netConfiguration.Host,
                 netConfiguration.WcfServiceName);
@@ -61,17 +55,18 @@ namespace Qoollo.Client.WriterGate
             var timeout = new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout,
                 timeoutConfiguration.SendTimeout);
 
-            _writerSystem = new WriterSystem(server, queue, netReceiveConfiguration,
+            _writerSystem = new WriterSystem(server, netReceiveConfiguration,
                 netReceiveConfiguration2, hashMap,
-                connection, restoreTransfer, restoreInitiator, timeout, restoreTimeout, isNeedRestore, queueRestore);
+                connection, restoreTransfer, restoreInitiator, timeout, restoreTimeout, isNeedRestore);
 
             _handler = new WriterHandler(_writerSystem);
         }
 
         public WriterApi(StorageNetConfiguration netConfiguration, StorageConfiguration storageConfiguration,
-            CommonConfiguration commonConfiguration, bool isNeedRestore = false)
-            : this(netConfiguration, storageConfiguration, commonConfiguration,
-                new TimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout), isNeedRestore)
+            bool isNeedRestore = false)
+            : this(
+                netConfiguration, storageConfiguration, new TimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
+                isNeedRestore)
         {
         }
 

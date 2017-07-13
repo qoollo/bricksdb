@@ -172,6 +172,7 @@
     <Compile Include="Configurations\Queue\IAsyncTaskConfiguration.cs" />
     <Compile Include="Configurations\Queue\IDistributorConfiguration.cs" />
     <Compile Include="Configurations\Queue\IQueueConfiguration.cs" />
+    <Compile Include="Configurations\Queue\IWriterConfiguration.cs" />
     <Compile Include="DistributorModules\Interfaces\IDistributorTimeoutCache.cs" />
     <Compile Include="DistributorModules\Interfaces\IMainLogicModule.cs" />
     <Compile Include="DistributorModules\Interfaces\IDistributorModule.cs" />
@@ -243,7 +244,6 @@
     <Compile Include="Writer\Db\Commands\IMetaDataCommandCreator.cs" />
     <Compile Include="Modules\Db\Impl\DbReader.cs" />
     <Compile Include="Configurations\ConnectionConfiguration.cs" />
-    <Compile Include="Configurations\QueueConfiguration.cs" />
     <Compile Include="Modules\ControlModule.cs" />
     <Compile Include="Modules\ParallelWork\ParallelWorkModule.cs" />
     <Compile Include="Modules\ParallelWork\SingleParallelWorkBase.cs" />

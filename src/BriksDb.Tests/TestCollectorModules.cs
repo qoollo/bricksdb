@@ -44,6 +44,8 @@ namespace Qoollo.Tests
 
             _back = new BackgroundModule(_kernel);
             _kernel.Bind<IBackgroundModule>().ToConstant(_back);
+
+            CreateConfigFile(distrthreads: 2);
         }
 
         [Fact]
@@ -760,7 +762,7 @@ namespace Qoollo.Tests
                 const int st1 = 22335;
                 const int st2 = 22336;
 
-                #region hell
+                #region hell                
 
                 var writer =
                     new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 1, 1,

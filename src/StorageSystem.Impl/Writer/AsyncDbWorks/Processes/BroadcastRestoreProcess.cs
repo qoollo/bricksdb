@@ -8,7 +8,6 @@ using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
@@ -20,8 +19,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         private readonly List<RestoreServer> _serversToRestore;
         public readonly HashSet<ServerId> FailedServers = new HashSet<ServerId>();
 
-        public BroadcastRestoreProcess(StandardKernel kernel, IDbModule db, IWriterModel writerModel, IWriterNetModule writerNet, List<RestoreServer> serversToRestore, bool isSystemUpdated, QueueConfiguration queueConfiguration)
-            : base(kernel, db, writerModel, writerNet, Consts.AllTables, isSystemUpdated, queueConfiguration)
+        public BroadcastRestoreProcess(StandardKernel kernel, IDbModule db, IWriterModel writerModel, IWriterNetModule writerNet, List<RestoreServer> serversToRestore, bool isSystemUpdated)
+            : base(kernel, db, writerModel, writerNet, Consts.AllTables, isSystemUpdated)
         {
             _serversToRestore = serversToRestore;
         }

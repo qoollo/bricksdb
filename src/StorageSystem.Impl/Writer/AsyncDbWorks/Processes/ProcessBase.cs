@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.TestSupport;
@@ -24,7 +24,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         private readonly ReaderFullBase _reader;
 
         protected ProcessBase(StandardKernel kernel, IDbModule db, IWriterModel writerModel,
-            IWriterNetModule writerNet, string tableName, bool isSystemUpdated, QueueConfiguration queueConfiguration)
+            IWriterNetModule writerNet, string tableName, bool isSystemUpdated)
             : base(kernel)
         {
             Db = db;
@@ -32,13 +32,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
             WriterNet = writerNet;
 
             var queue = kernel.Get<IGlobalQueue>();
+            var config = kernel.Get<IWriterConfiguration>();
 
             if (InitInjection.RestoreUsePackage)
                 _reader = new RestoreReaderFull<List<InnerData>>(kernel, IsNeedSendData, ProcessDataPackage,
-                    queueConfiguration, db, isSystemUpdated, tableName, queue.DbRestorePackageQueue, true);
+                    config.PackageSizeRestore, db, isSystemUpdated, tableName, queue.DbRestorePackageQueue, true);
             else
                 _reader = new RestoreReaderFull<InnerData>(kernel, IsNeedSendData, ProcessData,
-                    queueConfiguration, db, isSystemUpdated, tableName, queue.DbRestoreQueue, false);
+                    config.PackageSizeRestore, db, isSystemUpdated, tableName, queue.DbRestoreQueue, false);
         }
 
         public override void Start()

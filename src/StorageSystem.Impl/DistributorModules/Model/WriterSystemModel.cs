@@ -16,19 +16,20 @@ namespace Qoollo.Impl.DistributorModules.Model
 
         public List<WriterDescription> Servers { get { return new List<WriterDescription>(_servers); } } 
 
-        public WriterSystemModel(DistributorHashConfiguration configuration, HashMapConfiguration mapConfiguration)
+        public WriterSystemModel(HashMapConfiguration mapConfiguration, int countReplics)
         {
-            Contract.Requires(configuration != null);
             Contract.Requires(mapConfiguration != null);
-            _configuration = configuration;
+
+            _countReplics = countReplics;
+
             _lock = new ReaderWriterLockSlim();
             _servers = new List<WriterDescription>();
             _map = new HashMap(mapConfiguration);
         }
 
         private List<WriterDescription> _servers;
+        private readonly int _countReplics;
         private readonly ReaderWriterLockSlim _lock;
-        private readonly DistributorHashConfiguration _configuration;
         private readonly HashMap _map;
 
         public void ServerNotAvailable(ServerId serverId)
@@ -115,7 +116,7 @@ namespace Qoollo.Impl.DistributorModules.Model
             _lock.EnterReadLock();
             try
             {
-                return HashLogic.GetDestination(_configuration.CountReplics, ev.Transaction.DataHash,
+                return HashLogic.GetDestination(_countReplics, ev.Transaction.DataHash,
                     _map.AvailableMap);
             }
             finally

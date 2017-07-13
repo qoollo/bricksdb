@@ -90,10 +90,12 @@ namespace Qoollo.Tests
             {
                 const int countReplics = 2;
                 CreateHashFile(filename, 4);
-
-                var model = new CollectorModel(new DistributorHashConfiguration(countReplics),
+                
+                var model = new CollectorModel(_kernel,
                     new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics,
                         HashFileType.Writer));
+
+                model.StartConfig();
                 model.Start();
 
                 var state = model.GetSystemState();
@@ -358,12 +360,15 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 1);
+                UpdateConfigReader();
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
                 var serversModel = CollectorModel(filename, 1);
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
+                serversModel.StartConfig();
 
                 var merge = new OrderMerge(_kernel, _parser);
                 var async = new AsyncTaskModule(_kernel);
@@ -771,6 +776,9 @@ namespace Qoollo.Tests
                 writer.SetServer(0, "localhost", st1, st2);
                 writer.Save();
 
+                CreateConfigFile(countReplics: 1);
+                UpdateConfigReader();
+
                 var q1 = GetBindedQueue();
 
                 var proxy = TestGate(proxyServer);
@@ -781,7 +789,7 @@ namespace Qoollo.Tests
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-                var serversModel = new CollectorModel(new DistributorHashConfiguration(1),
+                var serversModel = new CollectorModel(_kernel,
                     new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Collector));
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 

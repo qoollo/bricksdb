@@ -18,10 +18,11 @@ namespace Qoollo.Impl.Modules.Config
             var reader = new SettingsReader(_connfigurationFilePath);
             reader.Start();
 
-            Kernel.Bind<IQueueConfiguration>().ToConstant(reader.LoadSection<QueueConfiguration>());
-            Kernel.Bind<IAsyncTaskConfiguration>().ToConstant(reader.LoadSection<AsyncTaskConfiguration>());
-            Kernel.Bind<IDistributorConfiguration>().ToConstant(reader.LoadSection<DistributorConfiguration>());
-            Kernel.Bind<IWriterConfiguration>().ToConstant(reader.LoadSection<WriterConfiguration>());
+            Kernel.Rebind<IQueueConfiguration>().ToConstant(reader.LoadSection<QueueConfiguration>());
+            Kernel.Rebind<IAsyncTaskConfiguration>().ToConstant(reader.LoadSection<AsyncTaskConfiguration>());
+            Kernel.Rebind<IDistributorConfiguration>().ToConstant(reader.LoadSection<DistributorConfiguration>());
+            Kernel.Rebind<IWriterConfiguration>().ToConstant(reader.LoadSection<WriterConfiguration>());
+            Kernel.Rebind<ICommonConfiguration>().ToConstant(reader.LoadSection<CommonConfiguration>());
         }
     }
 }

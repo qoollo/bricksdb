@@ -34,6 +34,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1);
 
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
                     filename, 1, distrServer1, distrServer12);
@@ -169,6 +170,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1);
 
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000), filename, 1, 
                     distrServer1, distrServer12, 30000);
@@ -206,6 +208,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1);
 
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000), filename, 1, 
                     distrServer1, distrServer12, 30000);
@@ -259,6 +262,8 @@ namespace Qoollo.Tests
                 writer.SetServer(0, "localhost", storageServer1, 157);
                 writer.SetServer(1, "localhost", storageServer2, 157);
                 writer.Save();
+
+                CreateConfigFile(countReplics: 1);
 
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000), filename, 1,
                     distrServer1, distrServer12, 30000);

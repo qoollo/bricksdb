@@ -38,7 +38,7 @@ namespace Qoollo.Tests
 
         public BroadcastRestoreTest()
         {
-            CreateConfigFile(distrthreads: 2);
+            CreateConfigFile(distrthreads: 2, countReplics: 1);
         }
 
         [Theory]
@@ -220,6 +220,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: replics);
 
                 InitInjection.RestoreUsePackage = packageRestore;
 
@@ -375,6 +376,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: replics);
 
                 InitInjection.RestoreUsePackage = packageRestore;
 

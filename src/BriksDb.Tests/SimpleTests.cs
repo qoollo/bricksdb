@@ -221,12 +221,15 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 2);
 
+                CreateConfigFile(countReplics: 1);
+                UpdateConfigReader();
+
                 #region hell
 
                 var queue = GetBindedQueue("q1");
 
                 var dnet = DistributorNetModule();
-                var ddistributor = DistributorDistributorModule(filename, 1, dnet);
+                var ddistributor = DistributorDistributorModule(filename, dnet);
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
 
                 dnet.Start();

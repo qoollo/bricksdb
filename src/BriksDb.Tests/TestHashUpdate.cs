@@ -114,6 +114,9 @@ namespace Qoollo.Tests
                 CreateHashFile(hashFileNameWriter1, 2);
                 CreateHashFile(hashFileNameWriter2, 2);
 
+                CreateConfigFile(countReplics: 1);
+                UpdateConfigReader();
+
                 _distrTest.Build(1, distrServer1, distrServer12, hashFileName);
 
                 _writer1.Build(storageServer1, hashFileNameWriter1, 1);
@@ -179,6 +182,9 @@ namespace Qoollo.Tests
                 CreateHashFile(hashFileName, 2);
                 CreateHashFile(hashFileNameWriter1, 2);
                 CreateHashFile(hashFileNameWriter2, 2);
+
+                CreateConfigFile(countReplics: 1);
+                UpdateConfigReader();
 
                 _distrTest.Build(1, distrServer1, distrServer12, hashFileName);
 
@@ -272,6 +278,8 @@ namespace Qoollo.Tests
                 writer.SetServer(0, "localhost", storageServer1, 157);
                 writer.SetServer(1, "localhost", storageServer2, 157);
                 writer.Save();
+
+                CreateConfigFile(countReplics: 1);
 
                 var distrTest2 = new TestDistributorGate();
 

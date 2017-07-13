@@ -26,7 +26,7 @@ namespace Qoollo.Tests
     {
         public TestRestore()
         {
-            CreateConfigFile(distrthreads: 2);
+            CreateConfigFile(distrthreads: 1, countReplics: 1);
         }
 
         private void CreateRestoreFile(string filename, string tableName, RestoreState state,
@@ -469,6 +469,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 2);
 
                 _proxy.Start();
                 InitInjection.RestoreHelpFileOut = file1;
@@ -545,6 +546,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 2);
 
                 _proxy.Start();
                 InitInjection.RestoreHelpFileOut = file1;

@@ -170,6 +170,7 @@
     <Compile Include="Common\Support\delegate.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
     <Compile Include="Configurations\Queue\IAsyncTaskConfiguration.cs" />
+    <Compile Include="Configurations\Queue\ICommonConfiguration.cs" />
     <Compile Include="Configurations\Queue\IDistributorConfiguration.cs" />
     <Compile Include="Configurations\Queue\IQueueConfiguration.cs" />
     <Compile Include="Configurations\Queue\IWriterConfiguration.cs" />
@@ -277,7 +278,6 @@
     <Compile Include="Modules\ModuleSystemBase.cs" />
     <Compile Include="Configurations\AsyncTasksConfiguration.cs" />
     <Compile Include="Configurations\DistributorCacheConfiguration.cs" />
-    <Compile Include="Configurations\DistributorHashConfiguration.cs" />
     <Compile Include="Configurations\HashMapConfiguration.cs" />
     <Compile Include="Configurations\NetReceiverConfiguration.cs" />
     <Compile Include="Configurations\ProxyCacheConfiguration.cs" />

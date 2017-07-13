@@ -8,7 +8,6 @@ using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules;
@@ -21,14 +20,11 @@ namespace Qoollo.Impl.DistributorModules.Transaction
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public TransactionModule(StandardKernel kernel, int countReplics)
-            :base(kernel)
+        public TransactionModule(StandardKernel kernel) :base(kernel)
         {
-            Contract.Requires(countReplics>0);            
-            _countReplics = countReplics;
         }
 
-        private readonly int _countReplics;
+        private int _countReplics;
         private IDistributorTimeoutCache _cache;
         private TransactionPool _transactionPool;
         private IDistributorNetModule _net;
@@ -38,8 +34,10 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         public override void Start()
         {
-            var config = Kernel.Get<IDistributorConfiguration>();
-            _transactionPool = new TransactionPool(Kernel, config.CountThreads, _countReplics);
+            var config = Kernel.Get<ICommonConfiguration>();
+            var configDistr = Kernel.Get<IDistributorConfiguration>();
+            _countReplics = config.CountReplics;
+            _transactionPool = new TransactionPool(Kernel, configDistr.CountThreads, config.CountReplics);
 
             _queue = Kernel.Get<IGlobalQueue>();
             _net = Kernel.Get<IDistributorNetModule>();

@@ -16,6 +16,7 @@ using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Model;
@@ -39,33 +40,32 @@ namespace Qoollo.Impl.DistributorModules
             StandardKernel kernel,
             AsyncTasksConfiguration asyncPing,
             AsyncTasksConfiguration asyncCheck,
-            DistributorHashConfiguration configuration,
             ServerId localfordb,
             ServerId localforproxy,
             HashMapConfiguration hashMapConfiguration, bool autoRestoreEnable = false)
             :base(kernel)
         {
-            Contract.Requires(configuration != null);
             Contract.Requires(localfordb != null);
             Contract.Requires(localforproxy != null);
             Contract.Requires(asyncPing != null);
             _asyncPing = asyncPing;
             _asyncTaskModule = new AsyncTaskModule(kernel);
 
-            _modelOfDbWriters = new WriterSystemModel(configuration, hashMapConfiguration);
             _modelOfAnotherDistributors = new DistributorSystemModel();
             _localfordb = localfordb;
             _localforproxy = localforproxy;
+            _hashMapConfiguration = hashMapConfiguration;
             _autoRestoreEnable = autoRestoreEnable;
             _asyncCheck = asyncCheck;
         }
 
-        private readonly WriterSystemModel _modelOfDbWriters;
-        private readonly DistributorSystemModel _modelOfAnotherDistributors;
+        private WriterSystemModel _modelOfDbWriters;
+        private IGlobalQueue _queue;
         private IDistributorNetModule _distributorNet;
+        private readonly DistributorSystemModel _modelOfAnotherDistributors;
         private readonly ServerId _localfordb;
         private readonly ServerId _localforproxy;
-        private IGlobalQueue _queue;
+        private readonly HashMapConfiguration _hashMapConfiguration;
         private readonly AsyncTaskModule _asyncTaskModule;
         private readonly AsyncTasksConfiguration _asyncPing;
         private readonly AsyncTasksConfiguration _asyncCheck;
@@ -76,6 +76,9 @@ namespace Qoollo.Impl.DistributorModules
         {
             _distributorNet = Kernel.Get<IDistributorNetModule>();
             _queue = Kernel.Get<IGlobalQueue>();
+
+            var config = Kernel.Get<ICommonConfiguration>();
+            _modelOfDbWriters = new WriterSystemModel(_hashMapConfiguration, config.CountReplics);
 
             RegistrateCommands();
       

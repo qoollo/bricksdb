@@ -19,6 +19,8 @@ namespace Qoollo.Tests
 
             _proxy.Module = new TestInjectionModule();
             _proxy.Build();
+
+            CreateConfigFile(countReplics: 1);
         }
 
         [Theory]

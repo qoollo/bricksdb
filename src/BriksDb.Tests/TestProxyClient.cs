@@ -14,9 +14,11 @@ namespace Qoollo.Tests
         {
             _proxy = TestGate(proxyServer);
 
+            CreateConfigFile(countReplics: 1);
+
             _proxy.Module = new TestInjectionModule();
             _proxy.Build();
-            _proxy.Start();
+            _proxy.Start();            
         }
 
         protected override void Dispose(bool isUserCall)

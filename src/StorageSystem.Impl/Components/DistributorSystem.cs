@@ -19,7 +19,6 @@ namespace Qoollo.Impl.Components
 {
     internal class DistributorSystem : ModuleSystemBase
     {
-        private readonly DistributorHashConfiguration _distributorHashConfiguration;
         private readonly ConnectionConfiguration _connectionConfiguration;
         private readonly DistributorCacheConfiguration _cacheConfiguration;
         private readonly NetReceiverConfiguration _receiverConfigurationForDb;
@@ -32,7 +31,6 @@ namespace Qoollo.Impl.Components
         private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
 
         public DistributorSystem(ServerId localfordb, ServerId localforproxy,
-            DistributorHashConfiguration distributorHashConfiguration,
             ConnectionConfiguration connectionConfiguration,
             DistributorCacheConfiguration cacheConfiguration,
             NetReceiverConfiguration receiverConfigurationForDb,
@@ -40,7 +38,6 @@ namespace Qoollo.Impl.Components
             HashMapConfiguration hashMapConfiguration, AsyncTasksConfiguration pingConfig,
             AsyncTasksConfiguration checkConfig, ConnectionTimeoutConfiguration connectionTimeoutConfiguration)
         {
-            Contract.Requires(distributorHashConfiguration != null);
             Contract.Requires(connectionConfiguration != null);
             Contract.Requires(cacheConfiguration != null);
             Contract.Requires(receiverConfigurationForDb != null);
@@ -53,7 +50,6 @@ namespace Qoollo.Impl.Components
             _pingConfig = pingConfig;
             _checkConfig = checkConfig;
             _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
-            _distributorHashConfiguration = distributorHashConfiguration;
             _hashMapConfiguration = hashMapConfiguration;
             _connectionConfiguration = connectionConfiguration;
             _cacheConfiguration = cacheConfiguration;
@@ -87,14 +83,13 @@ namespace Qoollo.Impl.Components
             var net = CreateNetModule(Kernel, _connectionConfiguration);
             Kernel.Bind<IDistributorNetModule>().ToConstant(net);
 
-            var distributor = new DistributorModule(Kernel, _pingConfig, _checkConfig, _distributorHashConfiguration,
+            var distributor = new DistributorModule(Kernel, _pingConfig, _checkConfig,
                  _localfordb, _localforproxy, _hashMapConfiguration);
             Kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             Distributor = distributor;
 
-            var transaction = new TransactionModule(Kernel, 
-                _distributorHashConfiguration.CountReplics);
+            var transaction = new TransactionModule(Kernel);
             Kernel.Bind<ITransactionModule>().ToConstant(transaction);
 
             var main = new MainLogicModule(Kernel);

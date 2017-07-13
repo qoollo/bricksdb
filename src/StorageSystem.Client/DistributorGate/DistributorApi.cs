@@ -32,7 +32,6 @@ namespace Qoollo.Client.DistributorGate
             var dbServer = new ServerId( netConfiguration.Host, netConfiguration.PortForStorage);
             var proxyServer = new ServerId( netConfiguration.Host,netConfiguration.PortForProxy);
 
-            var distrHash = new DistributorHashConfiguration(distributorConfiguration.CountReplics);
             var connection = new ConnectionConfiguration(netConfiguration.WcfServiceName,
                 netConfiguration.CountConnectionsToSingleServer, netConfiguration.TrimPeriod);
             var distrCache = new DistributorCacheConfiguration(distributorConfiguration.DataAliveTime,
@@ -49,7 +48,7 @@ namespace Qoollo.Client.DistributorGate
             var timeou = new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout,
                 timeoutConfiguration.SendTimeout);
 
-            _distributorSystem = new DistributorSystem(dbServer, proxyServer, distrHash, connection, distrCache,
+            _distributorSystem = new DistributorSystem(dbServer, proxyServer, connection, distrCache,
                 dbNetReceive, proxyNetReceive, hashMap, asyncPing, asyncCheck, timeou);
 
             _handler = new DistributorHandler(_distributorSystem);

@@ -58,13 +58,12 @@ namespace Qoollo.Tests.Support
 
             var connection = new ConnectionConfiguration("testService", 10);
 
-            var distrconfig = new DistributorHashConfiguration(countReplics);
             _dnet = new DistributorNetModule(kernel, connection,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
             kernel.Bind<IDistributorNetModule>().ToConstant(_dnet);
 
             Distributor = new DistributorModule(kernel, new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
-                new AsyncTasksConfiguration(asyncCheck), distrconfig, 
+                new AsyncTasksConfiguration(asyncCheck),
                 new ServerId("localhost", distrServer1),
                 new ServerId("localhost", distrServer12),
                 new HashMapConfiguration(hashFile,
@@ -72,14 +71,12 @@ namespace Qoollo.Tests.Support
                     1, countReplics, HashFileType.Distributor), autoRestoreEnable);
             kernel.Bind<IDistributorModule>().ToConstant(Distributor);
 
-            WriterSystemModel = GetPrivtaeField<WriterSystemModel>(Distributor);
-
             var cache = new DistributorTimeoutCache(
                 new DistributorCacheConfiguration(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)));
             kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
             //new TransactionConfiguration(4),
-            _tranc = new TransactionModule(kernel,  distrconfig.CountReplics);
+            _tranc = new TransactionModule(kernel);
             kernel.Bind<ITransactionModule>().ToConstant(_tranc);
 
             Main = new MainLogicModule(kernel);
@@ -110,6 +107,8 @@ namespace Qoollo.Tests.Support
             Distributor.Start();
 
             _q.Start();
+
+            WriterSystemModel = GetPrivtaeField<WriterSystemModel>(Distributor);
         }
 
         public void Dispose()

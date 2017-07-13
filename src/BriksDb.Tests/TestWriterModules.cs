@@ -160,6 +160,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1);
 
                 _distributor1.Build(1, distrServer1, distrServer12, filename);
                 _writer1.Build(storageServer1, filename, 1);
@@ -338,6 +339,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 1);
 
                 #region hell
 

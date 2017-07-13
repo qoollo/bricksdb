@@ -312,7 +312,8 @@ namespace Qoollo.Tests
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(200000, 200000));
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 1);
+                //new TransactionConfiguration(4),
+                var tranc = new TransactionModule(_kernel, 1);
                 _kernel.Bind<ITransactionModule>().ToConstant(tranc);
 
                 var main = new MainLogicModule(_kernel);

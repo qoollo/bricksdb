@@ -24,7 +24,6 @@ namespace Qoollo.Impl.Components
         private readonly DistributorCacheConfiguration _cacheConfiguration;
         private readonly NetReceiverConfiguration _receiverConfigurationForDb;
         private readonly NetReceiverConfiguration _receiverConfigurationForProxy;
-        private readonly TransactionConfiguration _transactionConfiguration;
         private readonly HashMapConfiguration _hashMapConfiguration;
         private readonly AsyncTasksConfiguration _pingConfig;
         private readonly AsyncTasksConfiguration _checkConfig;
@@ -38,7 +37,6 @@ namespace Qoollo.Impl.Components
             DistributorCacheConfiguration cacheConfiguration,
             NetReceiverConfiguration receiverConfigurationForDb,
             NetReceiverConfiguration receiverConfigurationForProxy,
-            TransactionConfiguration transactionConfiguration,
             HashMapConfiguration hashMapConfiguration, AsyncTasksConfiguration pingConfig,
             AsyncTasksConfiguration checkConfig, ConnectionTimeoutConfiguration connectionTimeoutConfiguration)
         {
@@ -47,7 +45,6 @@ namespace Qoollo.Impl.Components
             Contract.Requires(cacheConfiguration != null);
             Contract.Requires(receiverConfigurationForDb != null);
             Contract.Requires(receiverConfigurationForProxy != null);
-            Contract.Requires(transactionConfiguration != null);
             Contract.Requires(localfordb != null);
             Contract.Requires(localforproxy != null);
             Contract.Requires(hashMapConfiguration != null);
@@ -62,7 +59,6 @@ namespace Qoollo.Impl.Components
             _cacheConfiguration = cacheConfiguration;
             _receiverConfigurationForDb = receiverConfigurationForDb;
             _receiverConfigurationForProxy = receiverConfigurationForProxy;
-            _transactionConfiguration = transactionConfiguration;
             _localfordb = localfordb;
             _localforproxy = localforproxy;
         }
@@ -97,7 +93,7 @@ namespace Qoollo.Impl.Components
 
             Distributor = distributor;
 
-            var transaction = new TransactionModule(Kernel, _transactionConfiguration,
+            var transaction = new TransactionModule(Kernel, 
                 _distributorHashConfiguration.CountReplics);
             Kernel.Bind<ITransactionModule>().ToConstant(transaction);
 
@@ -110,8 +106,8 @@ namespace Qoollo.Impl.Components
             var receive = new NetDistributorReceiver(Kernel, _receiverConfigurationForDb, _receiverConfigurationForProxy);
 
             AddModule(receive);            
-            AddModule(input);
             AddModule(transaction);
+            AddModule(input);
             AddModule(main);
             AddModule(net);
             AddModule(distributor);

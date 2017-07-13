@@ -58,7 +58,6 @@ namespace Qoollo.Tests
 
         private static readonly object Lock = new object();
         internal ConnectionConfiguration ConnectionConfiguration;
-        internal CommonConfiguration CommonConfiguration;
 
         public TestBase()
         {
@@ -78,7 +77,6 @@ namespace Qoollo.Tests
 
             ConnectionConfiguration = new ConnectionConfiguration("testService", 10);
 
-            CommonConfiguration = new CommonConfiguration(4, 100);
             var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
             var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(10),
                 TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
@@ -240,7 +238,7 @@ namespace Qoollo.Tests
         internal DistributorApi DistributorApi(DistributorConfiguration distrConf, int portForProxy, int portForStorage)
         {
             var distrNet = new DistributorNetConfiguration("localhost", portForProxy, portForStorage, "testService", 10);
-            return new DistributorApi(distrNet, distrConf, CommonConfiguration);
+            return new DistributorApi(distrNet, distrConf);
         }
 
         internal StorageConfiguration StorageConfiguration(string filename, int countReplics, 
@@ -293,13 +291,11 @@ namespace Qoollo.Tests
             string filename, int countReplics, int portForProxy, int portForWriter,
             int toMls1 = 200, int toMls2 = 30000)
         {
-            //todo q
             return new DistributorSystem(ServerId(portForWriter), ServerId(portForProxy),
                 new DistributorHashConfiguration(countReplics),
                 ConnectionConfiguration, cacheConfiguration,
                 NetReceiverConfiguration(portForWriter),
                 NetReceiverConfiguration(portForProxy),
-                new TransactionConfiguration(4),
                 new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics,
                     HashFileType.Distributor),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls1)),

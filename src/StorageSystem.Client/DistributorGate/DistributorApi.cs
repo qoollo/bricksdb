@@ -22,12 +22,11 @@ namespace Qoollo.Client.DistributorGate
         internal InjectionModule Module = null;
 
         public DistributorApi(DistributorNetConfiguration netConfiguration,
-            DistributorConfiguration distributorConfiguration, CommonConfiguration commonConfiguration,
+            DistributorConfiguration distributorConfiguration, 
             TimeoutConfiguration timeoutConfiguration)
         {
             Contract.Requires(netConfiguration != null);
             Contract.Requires(distributorConfiguration != null);
-            Contract.Requires(commonConfiguration != null);
             Contract.Requires(timeoutConfiguration != null);
 
             var dbServer = new ServerId( netConfiguration.Host, netConfiguration.PortForStorage);
@@ -42,7 +41,6 @@ namespace Qoollo.Client.DistributorGate
                 netConfiguration.Host, netConfiguration.WcfServiceName);
             var proxyNetReceive = new NetReceiverConfiguration(netConfiguration.PortForProxy,
                 netConfiguration.Host, netConfiguration.WcfServiceName);
-            var transaction = new TransactionConfiguration(commonConfiguration.CountThreads);
             var hashMap = new HashMapConfiguration(distributorConfiguration.FileWithHashName,
                 HashMapCreationMode.ReadFromFile, 1,
                 distributorConfiguration.CountReplics, HashFileType.Distributor);
@@ -52,15 +50,14 @@ namespace Qoollo.Client.DistributorGate
                 timeoutConfiguration.SendTimeout);
 
             _distributorSystem = new DistributorSystem(dbServer, proxyServer, distrHash, connection, distrCache,
-                dbNetReceive, proxyNetReceive, transaction, hashMap, asyncPing, asyncCheck, timeou);
+                dbNetReceive, proxyNetReceive, hashMap, asyncPing, asyncCheck, timeou);
 
             _handler = new DistributorHandler(_distributorSystem);
         }
 
         public DistributorApi(DistributorNetConfiguration netConfiguration,
-            DistributorConfiguration distributorConfiguration, CommonConfiguration commonConfiguration)
-            : this(
-                netConfiguration, distributorConfiguration, commonConfiguration,
+            DistributorConfiguration distributorConfiguration)
+            : this(netConfiguration, distributorConfiguration, 
                 new TimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout))
         {
         }

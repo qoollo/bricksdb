@@ -78,7 +78,8 @@ namespace Qoollo.Tests.Support
                 new DistributorCacheConfiguration(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)));
             kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-            _tranc = new TransactionModule(kernel, new TransactionConfiguration(4), distrconfig.CountReplics);
+            //new TransactionConfiguration(4),
+            _tranc = new TransactionModule(kernel,  distrconfig.CountReplics);
             kernel.Bind<ITransactionModule>().ToConstant(_tranc);
 
             Main = new MainLogicModule(kernel);

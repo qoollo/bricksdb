@@ -282,7 +282,6 @@
     <Compile Include="Configurations\NetReceiverConfiguration.cs" />
     <Compile Include="Configurations\ProxyCacheConfiguration.cs" />
     <Compile Include="Configurations\RestoreModuleConfiguration.cs" />
-    <Compile Include="Configurations\TransactionConfiguration.cs" />
     <Compile Include="Common\NetResults\System\Writer\RestoreCommand.cs" />
     <Compile Include="Common\NetResults\System\Writer\RestoreCommandWithData.cs" />
     <Compile Include="Common\NetResults\System\Writer\RestoreCompleteCommand.cs" />

@@ -99,15 +99,14 @@ namespace Qoollo.Tests
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), distrconfig.CountReplics);
+                var tranc = new TransactionModule(_kernel, distrconfig.CountReplics);
                 _kernel.Bind<ITransactionModule>().ToConstant(tranc);
 
                 var main = new MainLogicModule(_kernel);
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
                 main.Start();
 
-                //new QueueConfiguration(2, 100000)
-                //todo q
+                tranc.Start();
                 var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
@@ -159,7 +158,8 @@ namespace Qoollo.Tests
             var net = new NetModuleTest(new Dictionary<ServerId, bool> {{s1, false}, {s2, true}});
             _kernel.Bind<IDistributorNetModule>().ToConstant(net);
 
-            var trm = new TransactionModule(_kernel, new TransactionConfiguration(1), 2);
+            //new TransactionConfiguration(1),
+            var trm = new TransactionModule(_kernel, 2);
 
             trm.Start();
 
@@ -224,7 +224,8 @@ namespace Qoollo.Tests
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var trm = new TransactionModule(_kernel, new TransactionConfiguration(1), countReplics);
+                //new TransactionConfiguration(1),
+                var trm = new TransactionModule(_kernel,  countReplics);
                 trm.Start();
 
                 using (var trans = trm.Rent())
@@ -271,7 +272,8 @@ namespace Qoollo.Tests
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var trm = new TransactionModule(_kernel, new TransactionConfiguration(1), 3);
+                //new TransactionConfiguration(1),
+                var trm = new TransactionModule(_kernel,  3);
                 trm.Start();
 
                 queue.Start();
@@ -403,7 +405,8 @@ namespace Qoollo.Tests
             var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(200, 500));
             _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
             var net = DistributorNetModule();
-            var trans = new TransactionModule(_kernel, new TransactionConfiguration(1), 1);
+            //new TransactionConfiguration(1),
+            var trans = new TransactionModule(_kernel, 1);
             trans.Start();
 
             var ev = new InnerData(new Transaction("123", "") {OperationName = OperationName.Create})
@@ -510,8 +513,8 @@ namespace Qoollo.Tests
                 var distributor = DistributorDistributorModule(filename, 2, net, 3000, 3000);
                 _kernel.Rebind<IDistributorModule>().ToConstant(distributor);
 
-                var transaction = new TransactionModule(_kernel, new TransactionConfiguration(1),
-                    distrconfig.CountReplics);
+                //new TransactionConfiguration(1),
+                var transaction = new TransactionModule(_kernel, distrconfig.CountReplics);
 
                 _kernel.Bind<ITransactionModule>().ToConstant(transaction);
 
@@ -633,7 +636,8 @@ namespace Qoollo.Tests
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(20000, 20000));
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 1);
+                //new TransactionConfiguration(4),
+                var tranc = new TransactionModule(_kernel, 1);
                 _kernel.Bind<ITransactionModule>().ToConstant(tranc);
 
                 var main = new MainLogicModule(_kernel);
@@ -734,7 +738,8 @@ namespace Qoollo.Tests
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(2000000, 200000));
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 2);
+                //new TransactionConfiguration(4),
+                var tranc = new TransactionModule(_kernel, 2);
                 _kernel.Bind<ITransactionModule>().ToConstant(tranc);
 
                 var main = new MainLogicModule(_kernel);
@@ -843,7 +848,8 @@ namespace Qoollo.Tests
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 1);
+                //new TransactionConfiguration(4),
+                var tranc = new TransactionModule(_kernel, 1);
                 _kernel.Bind<ITransactionModule>().ToConstant(tranc);
 
                 var main = new MainLogicModule(_kernel);

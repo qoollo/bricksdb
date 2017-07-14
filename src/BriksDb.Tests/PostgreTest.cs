@@ -89,14 +89,14 @@ namespace Qoollo.Tests
 
         private static void CreateHashFileForSingleWriter(string testName)
         {
-            var writer = new HashWriter(new HashMapConfiguration(testName, HashMapCreationMode.CreateNew, 1, 1, HashFileType.Writer));
+            var writer = new HashWriter(null, testName, 1);
             writer.CreateMap();
             writer.SetServer(0, "localhost", 157, 157);
             writer.Save();
         }
         private static HashWriter CreateHashFileForTwoWriters(string testName)
         {
-            var writer = new HashWriter(new HashMapConfiguration(testName, HashMapCreationMode.CreateNew, 2, 1, HashFileType.Writer));
+            var writer = new HashWriter(null, testName, 1);
             writer.CreateMap();
             writer.SetServer(0, "localhost", 157, 157);
             writer.SetServer(1, "localhost", 158, 158);
@@ -107,7 +107,7 @@ namespace Qoollo.Tests
         private static TestWriterGate CreatePostgreWriter(string testName, int id = 0)
         {
             var writer = new TestWriterGate();
-            writer.Build(157 + id, testName, 1);
+            writer.Build(157 + id);
 
             writer.Db.AddDbModule(new PostgreDbFactory<int, StoredData>(_storedDataProvider,
                 new PostgreStoredDataCommandCreator(), new PostgreConnectionParams(ConnectionString, 1, 1), false)
@@ -632,7 +632,7 @@ namespace Qoollo.Tests
             var server2 = new ServerId("", 2);
             var server3 = new ServerId("", 3);
             const int pageSize = 5;
-            var writer = new HashWriter(new HashMapConfiguration("TestCollector", HashMapCreationMode.CreateNew, 3, 3, HashFileType.Writer));
+            var writer = new HashWriter(null, "", 3);
             writer.CreateMap();
             writer.SetServer(0, server1.RemoteHost, server1.Port, 157);
             writer.SetServer(1, server2.RemoteHost, server2.Port, 157);
@@ -733,7 +733,7 @@ namespace Qoollo.Tests
             var server2 = new ServerId("", 2);
             var server3 = new ServerId("", 3);
             const int pageSize = 5;
-            var writer = new HashWriter(new HashMapConfiguration("TestCollector", HashMapCreationMode.CreateNew, 3, 3, HashFileType.Writer));
+            var writer = new HashWriter(null, "", 3);
             writer.CreateMap();
             writer.SetServer(0, server1.RemoteHost, server1.Port, 157);
             writer.SetServer(1, server2.RemoteHost, server2.Port, 157);

@@ -43,12 +43,13 @@ namespace Qoollo.Tests.Support
             return list.First(x => x.FieldType.FullName == typeof(TRet).ToString()).GetValue(obj) as TRet;
         }
 
-        public void Build(int countReplics, int distrServer1, int distrServer12, string hashFile,
-            TimeSpan asyncCheck = default(TimeSpan), bool autoRestoreEnable = false)
+        public void Build(int distrServer1, int distrServer12,
+            TimeSpan asyncCheck = default(TimeSpan), bool autoRestoreEnable = false, 
+            string configFile = Impl.Common.Support.Consts.ConfigFilename)
         {            
             var kernel = new StandardKernel(new TestInjectionModule());
 
-            var config = new SettingsModule(kernel, Impl.Common.Support.Consts.ConfigFilename);
+            var config = new SettingsModule(kernel, configFile);
             config.Start();
 
             _q = new GlobalQueue(kernel);
@@ -66,9 +67,7 @@ namespace Qoollo.Tests.Support
                 new AsyncTasksConfiguration(asyncCheck),
                 new ServerId("localhost", distrServer1),
                 new ServerId("localhost", distrServer12),
-                new HashMapConfiguration(hashFile,
-                    HashMapCreationMode.ReadFromFile,
-                    1, countReplics, HashFileType.Distributor), autoRestoreEnable);
+                autoRestoreEnable);
             kernel.Bind<IDistributorModule>().ToConstant(Distributor);
 
             var cache = new DistributorTimeoutCache(
@@ -84,17 +83,11 @@ namespace Qoollo.Tests.Support
 
             var netReceive1 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
             var netReceive2 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
-            //, new QueueConfiguration(2, 100000)
-            //todo q
+
             Input = new InputModuleWithParallel(kernel);
             kernel.Bind<IInputModule>().ToConstant(Input);
 
             _receiver = new NetDistributorReceiver(kernel, netReceive1, netReceive2);
-        }
-
-        public void Build(int countReplics, string hashFile)
-        {
-            Build(countReplics, 22201, 22202, hashFile);
         }
 
         public void Start()

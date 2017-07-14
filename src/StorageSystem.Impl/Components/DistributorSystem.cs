@@ -23,7 +23,6 @@ namespace Qoollo.Impl.Components
         private readonly DistributorCacheConfiguration _cacheConfiguration;
         private readonly NetReceiverConfiguration _receiverConfigurationForDb;
         private readonly NetReceiverConfiguration _receiverConfigurationForProxy;
-        private readonly HashMapConfiguration _hashMapConfiguration;
         private readonly AsyncTasksConfiguration _pingConfig;
         private readonly AsyncTasksConfiguration _checkConfig;
         private readonly ServerId _localfordb;
@@ -35,7 +34,7 @@ namespace Qoollo.Impl.Components
             DistributorCacheConfiguration cacheConfiguration,
             NetReceiverConfiguration receiverConfigurationForDb,
             NetReceiverConfiguration receiverConfigurationForProxy,
-            HashMapConfiguration hashMapConfiguration, AsyncTasksConfiguration pingConfig,
+            AsyncTasksConfiguration pingConfig,
             AsyncTasksConfiguration checkConfig, ConnectionTimeoutConfiguration connectionTimeoutConfiguration)
         {
             Contract.Requires(connectionConfiguration != null);
@@ -44,13 +43,11 @@ namespace Qoollo.Impl.Components
             Contract.Requires(receiverConfigurationForProxy != null);
             Contract.Requires(localfordb != null);
             Contract.Requires(localforproxy != null);
-            Contract.Requires(hashMapConfiguration != null);
             Contract.Requires(pingConfig != null);
             Contract.Requires(checkConfig != null);
             _pingConfig = pingConfig;
             _checkConfig = checkConfig;
             _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
-            _hashMapConfiguration = hashMapConfiguration;
             _connectionConfiguration = connectionConfiguration;
             _cacheConfiguration = cacheConfiguration;
             _receiverConfigurationForDb = receiverConfigurationForDb;
@@ -66,12 +63,12 @@ namespace Qoollo.Impl.Components
             return new DistributorNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
         }
 
-        public override void Build(NinjectModule module = null)
+        public override void Build(NinjectModule module = null, string configFile = Consts.ConfigFilename)
         {
             module = module ?? new InjectionModule();
             Kernel = new StandardKernel(module);
 
-            var config = new SettingsModule(Kernel, Consts.ConfigFilename);
+            var config = new SettingsModule(Kernel, configFile);
             config.Start();
 
             var q = new GlobalQueue(Kernel);
@@ -84,7 +81,7 @@ namespace Qoollo.Impl.Components
             Kernel.Bind<IDistributorNetModule>().ToConstant(net);
 
             var distributor = new DistributorModule(Kernel, _pingConfig, _checkConfig,
-                 _localfordb, _localforproxy, _hashMapConfiguration);
+                 _localfordb, _localforproxy);
             Kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             Distributor = distributor;

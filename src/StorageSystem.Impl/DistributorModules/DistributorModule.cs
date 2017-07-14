@@ -42,7 +42,7 @@ namespace Qoollo.Impl.DistributorModules
             AsyncTasksConfiguration asyncCheck,
             ServerId localfordb,
             ServerId localforproxy,
-            HashMapConfiguration hashMapConfiguration, bool autoRestoreEnable = false)
+            bool autoRestoreEnable = false)
             :base(kernel)
         {
             Contract.Requires(localfordb != null);
@@ -54,7 +54,6 @@ namespace Qoollo.Impl.DistributorModules
             _modelOfAnotherDistributors = new DistributorSystemModel();
             _localfordb = localfordb;
             _localforproxy = localforproxy;
-            _hashMapConfiguration = hashMapConfiguration;
             _autoRestoreEnable = autoRestoreEnable;
             _asyncCheck = asyncCheck;
         }
@@ -65,7 +64,6 @@ namespace Qoollo.Impl.DistributorModules
         private readonly DistributorSystemModel _modelOfAnotherDistributors;
         private readonly ServerId _localfordb;
         private readonly ServerId _localforproxy;
-        private readonly HashMapConfiguration _hashMapConfiguration;
         private readonly AsyncTaskModule _asyncTaskModule;
         private readonly AsyncTasksConfiguration _asyncPing;
         private readonly AsyncTasksConfiguration _asyncCheck;
@@ -78,7 +76,7 @@ namespace Qoollo.Impl.DistributorModules
             _queue = Kernel.Get<IGlobalQueue>();
 
             var config = Kernel.Get<ICommonConfiguration>();
-            _modelOfDbWriters = new WriterSystemModel(_hashMapConfiguration, config.CountReplics);
+            _modelOfDbWriters = new WriterSystemModel(Kernel, config.CountReplics);
 
             RegistrateCommands();
       

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Qoollo.Impl.Common.HashFile;
-using Qoollo.Impl.Configurations;
 
 namespace Qoollo.HashFileGenerator
 {
@@ -9,9 +8,7 @@ namespace Qoollo.HashFileGenerator
     {
         public static void Generate(string fileName, List<Tuple<string, int, int>> servers)
         {
-            var writer =
-                new HashWriter(new HashMapConfiguration(fileName, HashMapCreationMode.CreateNew, servers.Count,
-                    servers.Count, HashFileType.Distributor));
+            var writer = new HashWriter(null, fileName, servers.Count);
             writer.CreateMap();
 
             int index = 0;

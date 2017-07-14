@@ -35,8 +35,6 @@ namespace Qoollo.Client.CollectorGate
             _isDispose = false;
 
             _collectorSystem = new CollectorSystem(
-                new HashMapConfiguration(collectorConfiguration.FileWithHashName, HashMapCreationMode.ReadFromFile, 1,
-                    collectorConfiguration.CountReplics, HashFileType.Collector),
                 new ConnectionConfiguration(netConfiguration.WcfServiceName, netConfiguration.CountConnectionsToSingleServer,
                     netConfiguration.TrimPeriod),
                 new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout, timeoutConfiguration.SendTimeout),

@@ -59,8 +59,9 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                _writer1.Build(storageServer1, filename, 1);
+                _writer1.Build(storageServer1);
 
                 var d = TestHelper.OpenDistributorHostForDb(_kernel, ServerId(distrServer1), ConnectionConfiguration);
                 _writer1.Start();
@@ -91,8 +92,9 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                _writer1.Build(storageServer1, filename, 1);
+                _writer1.Build(storageServer1);
                 _writer1.Start();
 
                 var s = TestHelper.OpenDistributorHostForDb(_kernel, ServerId(distrServer1), ConnectionConfiguration);
@@ -120,8 +122,9 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                _writer1.Build(storageServer1, filename, 1);
+                _writer1.Build(storageServer1);
                 _writer1.Start();
 
                 var s = TestHelper.OpenDistributorHostForDb(_kernel, ServerId(distrServer1), ConnectionConfiguration);
@@ -160,10 +163,10 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 1);
-                CreateConfigFile(countReplics: 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                _distributor1.Build(1, distrServer1, distrServer12, filename);
-                _writer1.Build(storageServer1, filename, 1);
+                _distributor1.Build(distrServer1, distrServer12);
+                _writer1.Build(storageServer1);
 
                 _distributor1.Start();
                 _writer1.Start();
@@ -214,11 +217,12 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                _distributor1.Build(1, distrServer1, distrServer12, filename);
+                _distributor1.Build(distrServer1, distrServer12);
 
-                _writer1.Build(storageServer1, filename, 1);
-                _writer2.Build(storageServer2, filename, 1);
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2);
 
                 _distributor1.Start();
 
@@ -276,11 +280,13 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 2, hash: filename);
 
-                _distributor1.Build(2, distrServer1, distrServer12, filename);
+                _distributor1.Build(distrServer1, distrServer12);
 
-                _writer1.Build(storageServer1, filename, 1);
-                _writer2.Build(storageServer2, filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2);
 
                 _distributor1.Start();
 
@@ -339,15 +345,15 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(countReplics: 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 #region hell
 
-                var distributor = DistributorSystem(DistributorCacheConfiguration(20000, 20000), filename, 1,
+                var distributor = DistributorSystem(DistributorCacheConfiguration(20000, 20000),
                     distrServer12, distrServer1, 30000);
 
-                _writer1.Build(storageServer1, filename, 2);
-                _writer2.Build(storageServer2, filename, 2);
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2);
 
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;

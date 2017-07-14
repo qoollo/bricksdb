@@ -88,12 +88,11 @@ namespace Qoollo.Tests
             var filename = nameof(CollectorModel_GetSystemState_CheckWritersState);
             using (new FileCleaner(filename))
             {
-                const int countReplics = 2;
                 CreateHashFile(filename, 4);
-                
-                var model = new CollectorModel(_kernel,
-                    new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics,
-                        HashFileType.Writer));
+                CreateConfigFile(hash: filename, countReplics: 2);
+                UpdateConfigReader();
+
+                var model = new CollectorModel(_kernel);
 
                 model.StartConfig();
                 model.Start();
@@ -167,11 +166,13 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                UpdateConfigReader();
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
                 var merge = new OrderMerge(_kernel, new TestIntParser());
@@ -264,11 +265,13 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                UpdateConfigReader();
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
                 var merge = new OrderMerge(_kernel, _parser);
@@ -360,13 +363,13 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 3);
-                CreateConfigFile(countReplics: 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
                 UpdateConfigReader();
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
                 serversModel.StartConfig();
 
@@ -478,11 +481,12 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
                 var merge = new OrderMerge(_kernel, _parser);
@@ -574,11 +578,12 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
                 var merge = new OrderMerge(_kernel, _parser);
@@ -670,11 +675,12 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
                 var merge = new OrderMerge(_kernel, _parser);
@@ -769,15 +775,11 @@ namespace Qoollo.Tests
 
                 #region hell                
 
-                var writer =
-                    new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 1, 1,
-                        HashFileType.Distributor));
-                writer.CreateMap();
+                var writer = new HashWriter(_kernel, filename, 1);
                 writer.SetServer(0, "localhost", st1, st2);
                 writer.Save();
 
-                CreateConfigFile(countReplics: 1);
-                UpdateConfigReader();
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var q1 = GetBindedQueue();
 
@@ -789,8 +791,8 @@ namespace Qoollo.Tests
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-                var serversModel = new CollectorModel(_kernel,
-                    new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Collector));
+                var serversModel = new CollectorModel(_kernel);
+                serversModel.StartConfig();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
                 var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));

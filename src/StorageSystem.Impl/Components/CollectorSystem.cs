@@ -21,23 +21,19 @@ namespace Qoollo.Impl.Components
 {
     internal class CollectorSystem : ModuleSystemBase
     {
-        private readonly HashMapConfiguration _hashMapConfiguration;
         private readonly ConnectionConfiguration _connectionConfiguration;
         private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
         private readonly int _serverPageSize;
         private readonly bool _useHashFile;
 
-        public CollectorSystem(HashMapConfiguration hashMapConfiguration,
-            ConnectionConfiguration connectionConfiguration,
+        public CollectorSystem(ConnectionConfiguration connectionConfiguration,
             ConnectionTimeoutConfiguration connectionTimeoutConfiguration,
             int serverPageSize, bool useHashFile = true)
         {
-            Contract.Requires(hashMapConfiguration != null);
             Contract.Requires(connectionConfiguration != null);
             Contract.Requires(connectionTimeoutConfiguration != null);
             Contract.Requires(serverPageSize>0);
 
-            _hashMapConfiguration = hashMapConfiguration;
             _connectionConfiguration = connectionConfiguration;
             _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
             _serverPageSize = serverPageSize;
@@ -48,19 +44,19 @@ namespace Qoollo.Impl.Components
 
         public Func<string, ScriptParser,  SearchTaskModule> CreateApi { get; private set; }
 
-        public override void Build(NinjectModule module = null)
+        public override void Build(NinjectModule module = null, string configFile = Consts.ConfigFilename)
         {
             module = module ?? new InjectionModule();
 
             var kernel = new StandardKernel(module);
 
-            var config = new SettingsModule(kernel, Consts.ConfigFilename);
+            var config = new SettingsModule(kernel, configFile);
             config.Start();
 
             var async = new AsyncTaskModule(kernel);
             kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-            var serversModel = new CollectorModel(kernel, _hashMapConfiguration, _useHashFile);            
+            var serversModel = new CollectorModel(kernel, _useHashFile);
             kernel.Bind<ICollectorModel>().ToConstant(serversModel);
             serversModel.StartConfig();
 

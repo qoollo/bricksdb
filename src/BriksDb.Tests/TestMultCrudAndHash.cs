@@ -19,8 +19,6 @@ namespace Qoollo.Tests
 
             _proxy.Module = new TestInjectionModule();
             _proxy.Build();
-
-            CreateConfigFile(countReplics: 1);
         }
 
         [Theory]
@@ -31,9 +29,9 @@ namespace Qoollo.Tests
             var filename = nameof(Proxy_CRUD_TwoTables);
             using (new FileCleaner(filename))
             using (new FileCleaner(Consts.RestoreHelpFile))
-
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
@@ -104,6 +102,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 var storage1 = WriterApi(StorageConfiguration(filename, 1), storageServer1);
@@ -182,6 +181,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
@@ -243,6 +243,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
                 var storage1 = WriterApi(StorageConfiguration(filename, 1), storageServer1);

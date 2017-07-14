@@ -36,16 +36,18 @@ namespace Qoollo.Tests
             using (new FileCleaner(Impl.Common.Support.Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                var distr = DistributorSystem(DistributorCacheConfiguration(10000, 10000000), filename, 1,
-                    distrServer12, distrServer1, 10000, 10000);
-
-                var storage = WriterSystem(filename, 2, storageServer1);
+                var distr = DistributorSystem(DistributorCacheConfiguration(10000, 10000000),
+                    distrServer12, distrServer1, 10000, 10000);                
 
                 distr.Build(new TestInjectionModule());
                 distr.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
+
+                var storage = WriterSystem(storageServer1);
+                CreateConfigFile(countReplics: 2, hash: filename);
 
                 storage.Build(new TestInjectionModule());
                 storage.DbModule.AddDbModule(new TestDbInMemory());
@@ -95,16 +97,18 @@ namespace Qoollo.Tests
             using (new FileCleaner(Impl.Common.Support.Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                var distr = DistributorSystem(DistributorCacheConfiguration(10000, 10000000), filename, 1,
+                var distr = DistributorSystem(DistributorCacheConfiguration(10000, 10000000),
                     distrServer12, distrServer1, 10000, 10000);
-
-                var storage = WriterSystem(filename, 2, storageServer1);
 
                 distr.Build(new TestInjectionModule());
                 distr.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
+
+                var storage = WriterSystem(storageServer1);
+                CreateConfigFile(countReplics: 2, hash: filename);
 
                 storage.Build(new TestInjectionModule());
                 storage.DbModule.AddDbModule(new TestDbInMemory());

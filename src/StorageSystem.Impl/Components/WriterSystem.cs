@@ -22,7 +22,6 @@ namespace Qoollo.Impl.Components
     {
         private readonly NetReceiverConfiguration _receiverConfigurationForWrite;
         private readonly NetReceiverConfiguration _receiverConfigurationForCollector;
-        private readonly HashMapConfiguration _hashMapConfiguration;
         private readonly ConnectionConfiguration _connectionConfiguration;
         private readonly ServerId _local;
         private readonly RestoreModuleConfiguration _transferRestoreConfiguration;
@@ -34,7 +33,6 @@ namespace Qoollo.Impl.Components
         public WriterSystem(ServerId local,
             NetReceiverConfiguration receiverConfigurationForWrite,
             NetReceiverConfiguration receiverConfigurationForCollector,
-            HashMapConfiguration hashMapConfiguration,
             ConnectionConfiguration connectionConfiguration,
             RestoreModuleConfiguration transferRestoreConfiguration,
             RestoreModuleConfiguration initiatorRestoreConfiguration,
@@ -45,16 +43,13 @@ namespace Qoollo.Impl.Components
             Contract.Requires(local != null);
             Contract.Requires(receiverConfigurationForWrite != null);
             Contract.Requires(receiverConfigurationForCollector != null);
-            Contract.Requires(hashMapConfiguration != null);
             Contract.Requires(connectionConfiguration != null);
             Contract.Requires(transferRestoreConfiguration != null);
             Contract.Requires(initiatorRestoreConfiguration != null);
 
-            //_queueConfigurationRestore = queueConfigurationRestore ?? new QueueConfiguration(1, 1000);
 
             _receiverConfigurationForWrite = receiverConfigurationForWrite;
             _receiverConfigurationForCollector = receiverConfigurationForCollector;
-            _hashMapConfiguration = hashMapConfiguration;
             _connectionConfiguration = connectionConfiguration;
             _initiatorRestoreConfiguration = initiatorRestoreConfiguration;
             _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
@@ -68,12 +63,12 @@ namespace Qoollo.Impl.Components
 
         public DbModuleCollection DbModule { get; private set; }
 
-        public override void Build(NinjectModule module = null)
+        public override void Build(NinjectModule module = null, string configFile =Consts.ConfigFilename)
         {
             module = module ?? new InjectionModule();
             var kernel = new StandardKernel(module);
 
-            var config = new SettingsModule(kernel, Consts.ConfigFilename);
+            var config = new SettingsModule(kernel, configFile);
             config.Start();
 
             var q = new GlobalQueue(kernel);
@@ -88,7 +83,7 @@ namespace Qoollo.Impl.Components
             var async = new AsyncTaskModule(kernel);
             kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-            var model = new WriterModel(kernel, _local, _hashMapConfiguration);
+            var model = new WriterModel(kernel, _local);
             kernel.Bind<IWriterModel>().ToConstant(model);
 
             var restore = new AsyncDbWorkModule(kernel, _initiatorRestoreConfiguration,

@@ -58,12 +58,12 @@ namespace Qoollo.Impl.Components
 
         public Func<string, bool, IHashCalculater, IStorageInner> CreateApi { get; private set; }
 
-        public override void Build(NinjectModule module = null)
+        public override void Build(NinjectModule module = null, string configFile = Consts.ConfigFilename)
         {
             module = module ?? new InjectionModule();
             var kernel = new StandardKernel(module);
 
-            var config = new SettingsModule(kernel, Consts.ConfigFilename);
+            var config = new SettingsModule(kernel, configFile);
             config.Start();
 
             var q = new GlobalQueue(kernel);

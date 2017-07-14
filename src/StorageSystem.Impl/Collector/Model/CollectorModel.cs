@@ -8,7 +8,6 @@ using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules;
 
@@ -18,20 +17,18 @@ namespace Qoollo.Impl.Collector.Model
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public bool UseStart { get; private set; }
+        public bool UseStart { get; }
         private List<WriterDescription> _servers; 
         private readonly ReaderWriterLockSlim _lock;
         private int _countReplics;
         private readonly HashMap _map;
 
-        public CollectorModel(StandardKernel kernel, HashMapConfiguration mapConfiguration,
-            bool useStart = true) :base(kernel)
+        public CollectorModel(StandardKernel kernel, bool useStart = true) :base(kernel)
         {
             UseStart = useStart;
-            Contract.Requires(mapConfiguration != null);
             _lock = new ReaderWriterLockSlim();
             _servers = new List<WriterDescription>();
-            _map = new HashMap(mapConfiguration);
+            _map = new HashMap(kernel, HashFileType.Collector);
         }
 
         public void ServerNotAvailable(ServerId serverId)
@@ -76,6 +73,8 @@ namespace Qoollo.Impl.Collector.Model
         {
             var config = Kernel.Get<ICommonConfiguration>();
             _countReplics = config.CountReplics;
+
+            _map.Start();
         }
 
         public override void Start()

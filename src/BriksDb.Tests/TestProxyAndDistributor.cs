@@ -5,7 +5,6 @@ using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
@@ -34,10 +33,10 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
-                CreateConfigFile(countReplics: 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
-                    filename, 1, distrServer1, distrServer12);
+                    distrServer1, distrServer12);
 
                 try
                 {
@@ -103,28 +102,29 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename2))
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
-                var writer = new HashWriter(new HashMapConfiguration(filename1, HashMapCreationMode.CreateNew, 2, 3, HashFileType.Writer));
-                writer.CreateMap();
+                var writer = new HashWriter(null, filename1, 2);
                 writer.SetServer(0, "localhost", storageServer1, 157);
                 writer.SetServer(1, "localhost", storageServer2, 157);
                 writer.Save();
 
-                writer = new HashWriter(new HashMapConfiguration(filename2, HashMapCreationMode.CreateNew, 2, 3, HashFileType.Writer));
-                writer.CreateMap();
+                writer = new HashWriter(null, filename2, 2);
                 writer.SetServer(0, "localhost", storageServer3, 157);
                 writer.SetServer(1, "localhost", storageServer2, 157);
                 writer.Save();
 
-                var distr = DistributorSystem(DistributorCacheConfiguration(400, 1000), filename1, 2, 
+                CreateConfigFile(hash: filename1, filename: config_file1);
+                CreateConfigFile(hash: filename2, filename: config_file2);
+
+                var distr = DistributorSystem(DistributorCacheConfiguration(400, 1000),
                     distrServer1, distrServer12, 30000, 30000);
 
-                var distr2 = DistributorSystem(DistributorCacheConfiguration(400, 1000), filename2, 2,
+                var distr2 = DistributorSystem(DistributorCacheConfiguration(400, 1000),
                     distrServer2, distrServer22, 30000, 30000);
 
                 try
                 {
-                    distr.Build(new TestInjectionModule());
-                    distr2.Build(new TestInjectionModule());
+                    distr.Build(new TestInjectionModule(), config_file1);
+                    distr2.Build(new TestInjectionModule(), config_file2);
 
                     _proxySystem.Start();
                     distr.Start();
@@ -170,9 +170,9 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
-                CreateConfigFile(countReplics: 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000), filename, 1, 
+                var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
                     distrServer1, distrServer12, 30000);
 
                 distr.Build(new TestInjectionModule());
@@ -208,12 +208,12 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
-                CreateConfigFile(countReplics: 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000), filename, 1, 
+                var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
                     distrServer1, distrServer12, 30000);
 
-                var storage = WriterSystem(filename, 1, storageServer1);
+                var storage = WriterSystem(storageServer1);
                 storage.Build(new TestInjectionModule());
                 distr.Build(new TestInjectionModule());
 
@@ -257,19 +257,18 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
-                var writer = new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 2, 3, HashFileType.Distributor));
-                writer.CreateMap();
+                var writer = new HashWriter(null, filename, 2);
                 writer.SetServer(0, "localhost", storageServer1, 157);
                 writer.SetServer(1, "localhost", storageServer2, 157);
                 writer.Save();
 
-                CreateConfigFile(countReplics: 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000), filename, 1,
+                var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
                     distrServer1, distrServer12, 30000);
 
-                var storage1 = WriterSystem(filename, 1, storageServer1);
-                var storage2 = WriterSystem(filename, 1, storageServer2);
+                var storage1 = WriterSystem(storageServer1);
+                var storage2 = WriterSystem(storageServer2);
 
                 storage1.Build(new TestInjectionModule());
                 storage2.Build(new TestInjectionModule());
@@ -318,12 +317,13 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(hash: filename);
 
-                var distr = DistributorSystem(DistributorCacheConfiguration(600000, 10000000), filename, 2,
+                var distr = DistributorSystem(DistributorCacheConfiguration(600000, 10000000),
                     distrServer1, distrServer12, 30000);
 
-                var storage1 = WriterSystem(filename, 2, storageServer1);
-                var storage2 = WriterSystem(filename, 2, storageServer2);
+                var storage1 = WriterSystem(storageServer1);
+                var storage2 = WriterSystem(storageServer2);
 
                 storage1.Build(new TestInjectionModule());
                 storage2.Build(new TestInjectionModule());
@@ -372,12 +372,13 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(hash: filename);
 
-                var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000), filename, 2,
+                var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
                     distrServer1, distrServer12, 30000);
 
-                var storage1 = WriterSystem(filename, 2, storageServer1);
-                var storage2 = WriterSystem(filename, 2, storageServer2);
+                var storage1 = WriterSystem(storageServer1);
+                var storage2 = WriterSystem(storageServer2);
 
                 storage1.Build(new TestInjectionModule());
                 storage2.Build(new TestInjectionModule());
@@ -414,12 +415,13 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(hash: filename);
 
-                var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000), filename, 2,
+                var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
                     distrServer1, distrServer12, 120, 120);
 
-                var storage1 = WriterSystem(filename, 2, storageServer1);
-                var storage2 = WriterSystem(filename, 2, storageServer2);
+                var storage1 = WriterSystem(storageServer1);
+                var storage2 = WriterSystem(storageServer2);
 
                 storage1.Build(new TestInjectionModule());
                 storage2.Build(new TestInjectionModule());

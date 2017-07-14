@@ -7,7 +7,7 @@ using Ninject;
 using Qoollo.Impl.Common.Exceptions;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.HashModule;
 using Qoollo.Impl.Writer.Interfaces;
@@ -19,10 +19,10 @@ namespace Qoollo.Impl.Writer
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
-        private readonly HashMap _map;
+        private HashMap _map;
         private List<HashMapRecord> _localMap;
         private readonly ServerId _local;
-        private readonly HashMapConfiguration _hashMapConfiguration;
+        private int _countReplics;
 
         public List<HashMapRecord> LocalMap
         {
@@ -77,21 +77,22 @@ namespace Qoollo.Impl.Writer
             }
         }
 
-        public int CountReplics => _hashMapConfiguration.CountReplics;
-
-        public WriterModel(StandardKernel kernel, ServerId local, HashMapConfiguration hashMapConfiguration)
-            :base(kernel)
+        public WriterModel(StandardKernel kernel, ServerId local) :base(kernel)
         {
             Contract.Requires(local != null);
 
             _local = local;
-            _hashMapConfiguration = hashMapConfiguration;
-            _map = new HashMap(hashMapConfiguration);
         }
 
         public override void Start()
         {
+            _countReplics = Kernel.Get<ICommonConfiguration>().CountReplics;
+
+            _map = new HashMap(Kernel, HashFileType.Writer);
+
+            _map.Start();
             _map.CreateMap();
+
             _localMap = _map.GetHashMap(_local);
             if (_localMap.Count == 0)
                 throw new Exception("There is no server in hash file with our address");
@@ -150,7 +151,7 @@ namespace Qoollo.Impl.Writer
             
             try
             {
-                HashFileUpdater.UpdateFile(_map.FileName);
+                HashFileUpdater.UpdateFile(_map.Filename);
 
                 _map.CreateNewMapWithFile(map);
 
@@ -193,7 +194,7 @@ namespace Qoollo.Impl.Writer
             _lock.EnterReadLock();
             try
             {
-                return HashLogic.GetDestination(_hashMapConfiguration.CountReplics, hash, _map.AvailableMap);
+                return HashLogic.GetDestination(_countReplics, hash, _map.AvailableMap);
             }
             finally
             {

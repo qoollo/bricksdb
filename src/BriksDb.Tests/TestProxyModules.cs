@@ -278,7 +278,8 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename2))
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
-                CreateConfigFile(countReplics: replicsCount);
+                CreateConfigFile(countReplics: replicsCount, hash: filename1);
+                CreateConfigFile(countReplics: replicsCount, hash: filename2);
 
                 var q1 = GetBindedQueue();
                 var net = ProxyNetModule();
@@ -305,7 +306,7 @@ namespace Qoollo.Tests
                 receive3.Start();
 
                 var dnet = DistributorNetModule();
-                var ddistributor = DistributorDistributorModule(filename1, dnet, 30000, 30000);
+                var ddistributor = DistributorDistributorModule(dnet, 30000, 30000);
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
                 dnet.Start();
 
@@ -333,7 +334,7 @@ namespace Qoollo.Tests
                 _kernel.Rebind<IGlobalQueue>().ToConstant(q1);
 
                 var dnet2 = DistributorNetModule();
-                var ddistributor2 = DistributorDistributorModule(filename2, dnet2, 200000, 30000,
+                var ddistributor2 = DistributorDistributorModule(dnet2, 200000, 30000,
                     distrServer2, distrServer22);
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor2);
                 dnet2.Start();

@@ -33,18 +33,16 @@ namespace Qoollo.Tests.Support
         private StandardKernel _kernel;
         public GlobalQueue Q { get; set; }
 
-        public void Build(int storageServer, string hashFile, int countReplics, string name = "")
+        public void Build(int storageServer, string name = "", string configFile = Impl.Common.Support.Consts.ConfigFilename)
         {
             _kernel = new StandardKernel(new TestInjectionModule());
 
-            var config = new SettingsModule(_kernel, Impl.Common.Support.Consts.ConfigFilename);
+            var config = new SettingsModule(_kernel, configFile);
             config.Start();
 
             Q = new GlobalQueue(_kernel, name);
             _kernel.Bind<IGlobalQueue>().ToConstant(Q);
 
-            var hashMapConfiguration = new HashMapConfiguration(hashFile,
-                HashMapCreationMode.ReadFromFile, 1, countReplics, HashFileType.Writer);
             var local = new ServerId("localhost", storageServer);
 
             _net = new WriterNetModule(_kernel, new ConnectionConfiguration("testService", 10),
@@ -59,7 +57,7 @@ namespace Qoollo.Tests.Support
             _async = new AsyncTaskModule(_kernel);
             _kernel.Bind<IAsyncTaskModule>().ToConstant(_async);
 
-            WriterModel = new WriterModel(_kernel, local, hashMapConfiguration);
+            WriterModel = new WriterModel(_kernel, local);
             _kernel.Bind<IWriterModel>().ToConstant(WriterModel);
 
             //new QueueConfiguration(1, 100)

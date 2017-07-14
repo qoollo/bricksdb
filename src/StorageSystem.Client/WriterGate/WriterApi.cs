@@ -3,7 +3,6 @@ using System.Diagnostics.Contracts;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
@@ -43,9 +42,6 @@ namespace Qoollo.Client.WriterGate
                 netConfiguration.WcfServiceName);
             var connection = new ConnectionConfiguration(netConfiguration.WcfServiceName,
                 netConfiguration.CountConnectionsToSingleServer, netConfiguration.TrimPeriod);
-            var hashMap = new HashMapConfiguration(storageConfiguration.FileWithHashName,
-                HashMapCreationMode.ReadFromFile, 1,
-                storageConfiguration.CountReplics, HashFileType.Writer);
             var restoreTransfer = new RestoreModuleConfiguration(1, storageConfiguration.TimeoutSendAnswerInRestore);
             var restoreInitiator = new RestoreModuleConfiguration(storageConfiguration.CountRetryWaitAnswerInRestore,
                 storageConfiguration.TimeoutWaitAnswerInRestore);
@@ -56,7 +52,7 @@ namespace Qoollo.Client.WriterGate
                 timeoutConfiguration.SendTimeout);
 
             _writerSystem = new WriterSystem(server, netReceiveConfiguration,
-                netReceiveConfiguration2, hashMap,
+                netReceiveConfiguration2, 
                 connection, restoreTransfer, restoreInitiator, timeout, restoreTimeout, isNeedRestore);
 
             _handler = new WriterHandler(_writerSystem);

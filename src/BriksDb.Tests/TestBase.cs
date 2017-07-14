@@ -54,6 +54,12 @@ namespace Qoollo.Tests
         internal string file3 = "restoreHelp3.txt";
         internal string file4 = "restoreFile4.txt";
 
+        internal string config_file = "config.txt";
+        internal string config_file1 = "config1.txt";
+        internal string config_file2 = "config2.txt";
+        internal string config_file3 = "config3.txt";
+        internal string config_file4 = "config4.txt";
+
         private readonly List<int> _writerPorts;
 
         private static readonly object Lock = new object();
@@ -100,12 +106,14 @@ namespace Qoollo.Tests
         }
 
         protected void CreateConfigFile(string filename = Qoollo.Impl.Common.Support.Consts.ConfigFilename, 
-            int distrthreads = 4, int countReplics = 2)
+            int distrthreads = 4, int countReplics = 2, string hash = "")
         {
             using (var writer = new StreamWriter(filename, false))
             {
-                writer.WriteLine($@"{{ {GetQueue()}, {GetAsync()}, {GetDistrtibutor(distrthreads)}, {GetWriter()}, {GetCommon(countReplics)} }}");
+                writer.WriteLine($@"{{ {GetQueue()}, {GetAsync()}, {GetDistrtibutor(distrthreads)}, {GetWriter()}, {GetCommon(countReplics, hash)} }}");
             }
+
+            UpdateConfigReader();
         }
 
         private string GetAsync()
@@ -118,14 +126,17 @@ namespace Qoollo.Tests
             return "\n" + $@"""distributor"": {{ {GetParam("countthreads", distrthreads)} }} ";
         }
 
-        private string GetCommon(int countReplice)
+        private string GetCommon(int countReplice, string hash)
         {
-            return "\n" + $@"""common"": {{ {GetParam("countreplics", countReplice)} }} ";
+            return "\n" +
+                   $@"""common"": {{ {GetParam("countreplics", countReplice)}, {GetParam("hashfilename", hash)} }} ";
         }
 
         private string GetWriter()
         {
-            return $@"""writer"": {{ {GetParam("packagesizerestore", 1000)}, {GetParam("packagesizetimeout", 1000)} }} ";
+            return
+                $@"""writer"": {{ {GetParam("packagesizerestore", 1000)}, {GetParam("packagesizebroadcast", 1000)
+                    }, {GetParam("packagesizetimeout", 1000)} }} ";
         }
 
         private string GetQueue()
@@ -166,11 +177,10 @@ namespace Qoollo.Tests
 
         protected void CreateHashFile(string filename, int countServers)
         {
-            var writer = new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, countServers, 3, HashFileType.Distributor));
-            writer.CreateMap();
+            var writer = new HashWriter(null, filename, countServers);
             for (int i = 0; i < countServers; i++)
             {
-                writer.SetServer(i, "localhost", _writerPorts[i], 157);
+                writer.SetServer(i, "localhost", _writerPorts[i], _writerPorts[i]);
             }
             writer.Save();
         }
@@ -196,7 +206,7 @@ namespace Qoollo.Tests
             return net;
         }
 
-        internal DistributorModule DistributorDistributorModule(string filename, 
+        internal DistributorModule DistributorDistributorModule(
             DistributorNetModule net, int pingTo = 200, int asyncCheckTo = 2000,
             int distrPort1 = distrServer1, int distrPort2 = distrServer12)
         {
@@ -204,8 +214,7 @@ namespace Qoollo.Tests
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(pingTo)),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(asyncCheckTo)),
                 new ServerId("localhost", distrPort1),
-                new ServerId("localhost", distrPort2),
-                new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
+                new ServerId("localhost", distrPort2));
         }
 
         internal AsyncProxyCache AsyncProxyCache()
@@ -224,11 +233,11 @@ namespace Qoollo.Tests
                 new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
         }
 
-        internal CollectorModel CollectorModel(string filename, int countReplics)
+        internal CollectorModel CollectorModel()
         {
-            return new CollectorModel(_kernel,
-                    new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, countReplics, 1,
-                        HashFileType.Writer));
+            var ret =  new CollectorModel(_kernel);
+            ret.StartConfig();
+            return ret;
         }
 
         internal TestGate TestGate(int proxyPort, int syncTo = 60)
@@ -278,10 +287,9 @@ namespace Qoollo.Tests
             return new DistributorCacheConfiguration(TimeSpan.FromMilliseconds(deleteMls), TimeSpan.FromMilliseconds(updateMls));
         }
 
-        internal WriterSystemModel WriterSystemModel(string filename, int countReplics)
+        internal WriterSystemModel WriterSystemModel(int countReplics)
         {
-            return new WriterSystemModel(new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics,
-                    HashFileType.Distributor), countReplics);
+            return new WriterSystemModel(_kernel, countReplics);
         }
 
         internal TestProxySystem TestProxySystem(int proxyPort, int cacheToSec = 2, int asyncCacheToSec = 2)
@@ -298,26 +306,23 @@ namespace Qoollo.Tests
         }
 
         internal DistributorSystem DistributorSystem(DistributorCacheConfiguration cacheConfiguration,
-            string filename, int countReplics, int portForProxy, int portForWriter,
+            int portForProxy, int portForWriter,
             int toMls1 = 200, int toMls2 = 30000)
         {
             return new DistributorSystem(ServerId(portForWriter), ServerId(portForProxy),
                 ConnectionConfiguration, cacheConfiguration,
                 NetReceiverConfiguration(portForWriter),
                 NetReceiverConfiguration(portForProxy),
-                new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics,
-                    HashFileType.Distributor),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls1)),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls2)),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
         }
 
-        internal WriterSystem WriterSystem(string filename, int countReplics, int portForDistr, int portForCollector = 157)
+        internal WriterSystem WriterSystem(int portForDistr, int portForCollector = 157)
         {
             return new WriterSystem(ServerId(portForDistr),
                 NetReceiverConfiguration(portForDistr),
                 NetReceiverConfiguration(portForCollector),
-                new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics, HashFileType.Writer),
                 ConnectionConfiguration,
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),

@@ -36,11 +36,6 @@ namespace Qoollo.Tests
             return ev;
         }
 
-        public BroadcastRestoreTest()
-        {
-            CreateConfigFile(distrthreads: 2, countReplics: 1);
-        }
-
         [Theory]
         [InlineData(50, false)]
         [InlineData(50, true)]
@@ -52,16 +47,17 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename);
 
                 InitInjection.RestoreUsePackage = packageRestore;
 
-                _distrTest.Build(1, distrServer1, distrServer12, filename);
+                _distrTest.Build(distrServer1, distrServer12);
 
                 InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename, 1);
+                _writer1.Build(storageServer1);
 
                 InitInjection.RestoreHelpFileOut = file2;
-                _writer2.Build(storageServer2, filename, 1);
+                _writer2.Build(storageServer2);
 
                 _distrTest.Start();
                 _writer1.Start();
@@ -131,19 +127,20 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename);
 
                 InitInjection.RestoreUsePackage = packageRestore;
 
-                _distrTest.Build(1, distrServer1, distrServer12, filename);
+                _distrTest.Build(distrServer1, distrServer12);
 
                 InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename, 1);
+                _writer1.Build(storageServer1, filename);
 
                 InitInjection.RestoreHelpFileOut = file2;
-                _writer2.Build(storageServer2, filename, 1);
+                _writer2.Build(storageServer2, filename);
 
                 InitInjection.RestoreHelpFileOut = file3;
-                _writer3.Build(storageServer3, filename, 1);
+                _writer3.Build(storageServer3, filename);
 
                 _distrTest.Start();
                 _writer1.Start();
@@ -220,20 +217,20 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 3);
-                CreateConfigFile(countReplics: replics);
+                CreateConfigFile(countReplics: replics, hash: filename);
 
                 InitInjection.RestoreUsePackage = packageRestore;
 
-                _distrTest.Build(replics, distrServer1, distrServer12, filename);
+                _distrTest.Build(distrServer1, distrServer12);
 
                 InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename, replics, "w1");
+                _writer1.Build(storageServer1, "w1");
 
                 InitInjection.RestoreHelpFileOut = file2;
-                _writer2.Build(storageServer2, filename, replics, "w2");
+                _writer2.Build(storageServer2, "w2");
 
                 InitInjection.RestoreHelpFileOut = file3;
-                _writer3.Build(storageServer3, filename, replics, "w3");
+                _writer3.Build(storageServer3, "w3");
 
                 _distrTest.Start();
                 _writer1.Start();
@@ -300,13 +297,14 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename);
 
                 InitInjection.RestoreUsePackage = packageRestore;
 
-                _distrTest.Build(1, distrServer1, distrServer12, filename);
+                _distrTest.Build(distrServer1, distrServer12);
 
                 InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename, 1);
+                _writer1.Build(storageServer1);
 
                 _distrTest.Start();
                 _writer1.Start();
@@ -343,7 +341,7 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 2);
 
                 InitInjection.RestoreHelpFileOut = file2;
-                _writer2.Build(storageServer2, filename, 1);
+                _writer2.Build(storageServer2);
                 _writer2.Start();
 
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
@@ -376,17 +374,17 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(countReplics: replics);
+                CreateConfigFile(countReplics: replics, hash: filename);
 
                 InitInjection.RestoreUsePackage = packageRestore;
 
-                _distrTest.Build(replics, distrServer1, distrServer12, filename);
+                _distrTest.Build(distrServer1, distrServer12);
 
                 InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename, replics, "w1");
+                _writer1.Build(storageServer1, "w1");
 
                 InitInjection.RestoreHelpFileOut = file2;
-                _writer2.Build(storageServer2, filename, replics, "w2");
+                _writer2.Build(storageServer2, "w2");
 
                 _distrTest.Start();
                 _writer1.Start();
@@ -426,7 +424,7 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 3);
 
                 InitInjection.RestoreHelpFileOut = file3;
-                _writer3.Build(storageServer3, filename, replics, "w3");
+                _writer3.Build(storageServer3, "w3");
                 _writer3.Start();
 
                 _writer1.Distributor.UpdateModel();

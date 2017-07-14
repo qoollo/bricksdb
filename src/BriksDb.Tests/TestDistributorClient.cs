@@ -22,7 +22,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
-                CreateConfigFile(countReplics: 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var proxy = TestGate(proxyServer, 600);
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
@@ -88,7 +88,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
-                CreateConfigFile(countReplics: 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var proxy = TestGate(proxyServer, 600);
                 var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);

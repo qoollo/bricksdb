@@ -2,7 +2,6 @@
 using System.Diagnostics.Contracts;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.Support;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
@@ -40,16 +39,13 @@ namespace Qoollo.Client.DistributorGate
                 netConfiguration.Host, netConfiguration.WcfServiceName);
             var proxyNetReceive = new NetReceiverConfiguration(netConfiguration.PortForProxy,
                 netConfiguration.Host, netConfiguration.WcfServiceName);
-            var hashMap = new HashMapConfiguration(distributorConfiguration.FileWithHashName,
-                HashMapCreationMode.ReadFromFile, 1,
-                distributorConfiguration.CountReplics, HashFileType.Distributor);
             var asyncPing = new AsyncTasksConfiguration(distributorConfiguration.PingPeriod);
             var asyncCheck = new AsyncTasksConfiguration(distributorConfiguration.CheckPeriod);
             var timeou = new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout,
                 timeoutConfiguration.SendTimeout);
 
             _distributorSystem = new DistributorSystem(dbServer, proxyServer, connection, distrCache,
-                dbNetReceive, proxyNetReceive, hashMap, asyncPing, asyncCheck, timeou);
+                dbNetReceive, proxyNetReceive, asyncPing, asyncCheck, timeou);
 
             _handler = new DistributorHandler(_distributorSystem);
         }

@@ -4,7 +4,7 @@ using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Data;
 using Qoollo.Impl.NetInterfaces.Writer;
@@ -17,7 +17,7 @@ namespace Qoollo.Impl.Writer.WriterNet
         private IInputModule _inputModule;
         private IDistributorModule _distributor;
 
-        public NetWriterReceiverForCollector(StandardKernel kernel, NetReceiverConfiguration configuration)
+        public NetWriterReceiverForCollector(StandardKernel kernel, NetConfiguration configuration)
             : base(kernel, configuration)
         {
         }

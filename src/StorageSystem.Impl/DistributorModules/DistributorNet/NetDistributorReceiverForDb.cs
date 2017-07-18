@@ -2,7 +2,7 @@
 using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Distributor;
@@ -13,7 +13,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
     {        
         private IDistributorModule _distributorModule;
 
-        public NetDistributorReceiverForDb(StandardKernel kernel, NetReceiverConfiguration receiverConfiguration)
+        public NetDistributorReceiverForDb(StandardKernel kernel, NetConfiguration receiverConfiguration)
             : base(kernel, receiverConfiguration)
         {
         }

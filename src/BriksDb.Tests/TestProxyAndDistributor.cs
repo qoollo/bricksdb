@@ -115,11 +115,13 @@ namespace Qoollo.Tests
                 CreateConfigFile(hash: filename1, filename: config_file1);
                 CreateConfigFile(hash: filename2, filename: config_file2);
 
+                //distrServer1, distrServer12, 
                 var distr = DistributorSystem(DistributorCacheConfiguration(400, 1000),
-                    distrServer1, distrServer12, 30000, 30000);
+                    30000, 30000);
 
+                //distrServer2, distrServer22, 
                 var distr2 = DistributorSystem(DistributorCacheConfiguration(400, 1000),
-                    distrServer2, distrServer22, 30000, 30000);
+                    30000, 30000);
 
                 try
                 {
@@ -172,8 +174,9 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
+                //distrServer1, distrServer12, 
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
-                    distrServer1, distrServer12, 30000);
+                    30000);
 
                 distr.Build(new TestInjectionModule());
 
@@ -210,8 +213,9 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
+                //distrServer1, distrServer12, 
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
-                    distrServer1, distrServer12, 30000);
+                    30000);
 
                 var storage = WriterSystem(storageServer1);
                 storage.Build(new TestInjectionModule());
@@ -264,8 +268,9 @@ namespace Qoollo.Tests
 
                 CreateConfigFile(countReplics: 1, hash: filename);
 
+                //distrServer1, distrServer12, 
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
-                    distrServer1, distrServer12, 30000);
+                    30000);
 
                 var storage1 = WriterSystem(storageServer1);
                 var storage2 = WriterSystem(storageServer2);
@@ -319,8 +324,9 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 2);
                 CreateConfigFile(hash: filename);
 
+                //distrServer1, distrServer12, 
                 var distr = DistributorSystem(DistributorCacheConfiguration(600000, 10000000),
-                    distrServer1, distrServer12, 30000);
+                    30000);
 
                 var storage1 = WriterSystem(storageServer1);
                 var storage2 = WriterSystem(storageServer2);
@@ -374,8 +380,9 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 2);
                 CreateConfigFile(hash: filename);
 
+                //distrServer1, distrServer12, 
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
-                    distrServer1, distrServer12, 30000);
+                    30000);
 
                 var storage1 = WriterSystem(storageServer1);
                 var storage2 = WriterSystem(storageServer2);
@@ -417,8 +424,9 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 2);
                 CreateConfigFile(hash: filename);
 
+                //distrServer1, distrServer12, 
                 var distr = DistributorSystem(DistributorCacheConfiguration(600, 1000),
-                    distrServer1, distrServer12, 120, 120);
+                    120, 120);
 
                 var storage1 = WriterSystem(storageServer1);
                 var storage2 = WriterSystem(storageServer2);

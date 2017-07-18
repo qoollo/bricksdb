@@ -38,8 +38,9 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
+                //distrServer12, distrServer1, 
                 var distr = DistributorSystem(DistributorCacheConfiguration(10000, 10000000),
-                    distrServer12, distrServer1, 10000, 10000);                
+                    10000, 10000);                
 
                 distr.Build(new TestInjectionModule());
                 distr.Start();
@@ -99,8 +100,9 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
+                //distrServer12, distrServer1, 
                 var distr = DistributorSystem(DistributorCacheConfiguration(10000, 10000000),
-                    distrServer12, distrServer1, 10000, 10000);
+                    10000, 10000);
 
                 distr.Build(new TestInjectionModule());
                 distr.Start();

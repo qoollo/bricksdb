@@ -779,7 +779,8 @@ namespace Qoollo.Tests
 
                 var proxy = TestGate(proxyServer);
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                //, distrServer1, distrServer12
+                var distr = DistributorApi(DistributorConfiguration(filename, 1));
                 var storage = WriterApi(StorageConfiguration(filename, 1), st1, st2);
 
                 var async = new AsyncTaskModule(_kernel);

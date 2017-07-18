@@ -33,7 +33,8 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                //, distrServer1, distrServer12
+                var distr = DistributorApi(DistributorConfiguration(filename, 1));
                 var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
 
                 storage.Module = new TestInjectionModule();
@@ -104,7 +105,8 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 2);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                //, distrServer1, distrServer12
+                var distr = DistributorApi(DistributorConfiguration(filename, 1));
                 var storage1 = WriterApi(StorageConfiguration(filename, 1), storageServer1);
                 var storage2 = WriterApi(StorageConfiguration(filename, 1), storageServer2);
 
@@ -183,7 +185,8 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                //, distrServer1, distrServer12
+                var distr = DistributorApi(DistributorConfiguration(filename, 1));
                 var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
 
                 storage.Module = new TestInjectionModule();
@@ -245,7 +248,8 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 2);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                //, distrServer1, distrServer12
+                var distr = DistributorApi(DistributorConfiguration(filename, 1));
                 var storage1 = WriterApi(StorageConfiguration(filename, 1), storageServer1);
                 var storage2 = WriterApi(StorageConfiguration(filename, 1), storageServer2);
 

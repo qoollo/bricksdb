@@ -1,4 +1,5 @@
 ﻿using Ninject;
+using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations.Queue;
 
 namespace Qoollo.Impl.Modules.Config
@@ -11,7 +12,8 @@ namespace Qoollo.Impl.Modules.Config
         {
             _connfigurationFilePath = connfigurationFilePath;
         }
-
+        
+        public ProxyConfiguration ProxyConfiguration { get; protected set; }
 
         public override void Start()
         {
@@ -20,9 +22,41 @@ namespace Qoollo.Impl.Modules.Config
 
             Kernel.Rebind<IQueueConfiguration>().ToConstant(reader.LoadSection<QueueConfiguration>());
             Kernel.Rebind<IAsyncTaskConfiguration>().ToConstant(reader.LoadSection<AsyncTaskConfiguration>());
-            Kernel.Rebind<IDistributorConfiguration>().ToConstant(reader.LoadSection<DistributorConfiguration>());
-            Kernel.Rebind<IWriterConfiguration>().ToConstant(reader.LoadSection<WriterConfiguration>());
-            Kernel.Rebind<ICommonConfiguration>().ToConstant(reader.LoadSection<CommonConfiguration>());
+
+            var common = reader.LoadSection<CommonConfiguration>();
+
+            var distributor = reader.LoadSection<DistributorConfiguration>();
+            Fill(distributor, common);
+
+            var writer = reader.LoadSection<WriterConfiguration>();
+            Fill(writer, common);
+
+            ProxyConfiguration = reader.LoadSection<ProxyConfiguration>();
+            Fill(ProxyConfiguration.NetDistributor, common);
+
+            Kernel.Rebind<IProxyConfiguration>().ToConstant(ProxyConfiguration);
+            Kernel.Rebind<IDistributorConfiguration>().ToConstant(distributor);
+            Kernel.Rebind<IWriterConfiguration>().ToConstant(writer);
+            Kernel.Rebind<ICommonConfiguration>().ToConstant(common);
+
+        }
+
+        private void Fill(WriterConfiguration writer, CommonConfiguration common)
+        {
+            Fill(writer.NetCollector, common);
+            Fill(writer.NetDistributor, common);
+        }
+
+        private void Fill(DistributorConfiguration writer, CommonConfiguration common)
+        {
+            Fill(writer.NetProxy, common);
+            Fill(writer.NetWriter, common);
+        }
+
+        private void Fill(NetConfiguration config, CommonConfiguration common)
+        {
+            config.ServiceName = common.Connection.ServiceName;
+            config.ServerId = new ServerId(config.Host, config.Port);
         }
     }
 }

@@ -105,9 +105,9 @@ namespace Qoollo.Tests
                 var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
-                    NetReceiverConfiguration(distrServer1),
-                    NetReceiverConfiguration(distrServer12));
+                    //NetReceiverConfiguration(distrServer1),
+                    //NetReceiverConfiguration(distrServer12)
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel);
 
                 ddistributor.Start();
                 netDistributorReceiver.Start();
@@ -646,9 +646,9 @@ namespace Qoollo.Tests
                 var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
-                    NetReceiverConfiguration(distrServer1),
-                    NetReceiverConfiguration(distrServer12));
+                //NetReceiverConfiguration(distrServer1),
+                //    NetReceiverConfiguration(distrServer12)
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel);
 
                 #endregion
 
@@ -746,9 +746,9 @@ namespace Qoollo.Tests
                 var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
-                    NetReceiverConfiguration(distrServer1),
-                    NetReceiverConfiguration(distrServer12));
+                //NetReceiverConfiguration(distrServer1),
+                //    NetReceiverConfiguration(distrServer12)
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel);
 
                 #endregion
 
@@ -854,9 +854,9 @@ namespace Qoollo.Tests
                 var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
-                    NetReceiverConfiguration(distrServer1),
-                    NetReceiverConfiguration(distrServer12));
+                //NetReceiverConfiguration(distrServer1),
+                //    NetReceiverConfiguration(distrServer12)
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel);
 
                 #endregion
 

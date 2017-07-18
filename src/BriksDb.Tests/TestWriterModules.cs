@@ -165,7 +165,8 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
-                _distributor1.Build(distrServer1, distrServer12);
+                //distrServer1, distrServer12
+                _distributor1.Build();
                 _writer1.Build(storageServer1);
 
                 _distributor1.Start();
@@ -219,7 +220,8 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 2);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
-                _distributor1.Build(distrServer1, distrServer12);
+                //distrServer1, distrServer12
+                _distributor1.Build();
 
                 _writer1.Build(storageServer1);
                 _writer2.Build(storageServer2);
@@ -282,7 +284,8 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 2);
                 CreateConfigFile(countReplics: 2, hash: filename);
 
-                _distributor1.Build(distrServer1, distrServer12);
+                //distrServer1, distrServer12
+                _distributor1.Build();
 
                 CreateConfigFile(countReplics: 1, hash: filename);
                 _writer1.Build(storageServer1);
@@ -349,8 +352,9 @@ namespace Qoollo.Tests
 
                 #region hell
 
+                //distrServer12, distrServer1, 
                 var distributor = DistributorSystem(DistributorCacheConfiguration(20000, 20000),
-                    distrServer12, distrServer1, 30000);
+                    30000);
 
                 _writer1.Build(storageServer1);
                 _writer2.Build(storageServer2);

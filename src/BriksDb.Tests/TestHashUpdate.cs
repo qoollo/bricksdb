@@ -118,7 +118,8 @@ namespace Qoollo.Tests
                 CreateConfigFile(countReplics: 1, hash: hashFileNameWriter1, filename: config_file1);
                 CreateConfigFile(countReplics: 1, hash: hashFileNameWriter2, filename: config_file2);
 
-                _distrTest.Build(distrServer1, distrServer12, configFile: config_file);
+                //distrServer1, distrServer12, 
+                _distrTest.Build(configFile: config_file);
 
                 _writer1.Build(storageServer1, configFile: config_file1);
                 _writer2.Build(storageServer2, configFile: config_file2);
@@ -186,7 +187,8 @@ namespace Qoollo.Tests
                 CreateConfigFile(countReplics: 1, hash: hashFileNameWriter2, filename: config_file2);
                 CreateConfigFile(countReplics: 1, hash: hashFileNameWriter3, filename: config_file3);
 
-                _distrTest.Build(distrServer1, distrServer12, configFile: config_file);
+                //distrServer1, distrServer12, 
+                _distrTest.Build(configFile: config_file);
 
                 _writer1.Build(storageServer1, configFile: config_file1);
                 _writer2.Build(storageServer2, configFile: config_file2);
@@ -274,8 +276,11 @@ namespace Qoollo.Tests
 
                 var distrTest2 = new TestDistributorGate();
 
-                _distrTest.Build(distrServer1, distrServer12, configFile: config_file);
-                distrTest2.Build(distrServer2, distrServer22, configFile: config_file4);
+                //distrServer1, distrServer12, 
+                _distrTest.Build(configFile: config_file);
+
+                //distrServer2, distrServer22, 
+                distrTest2.Build(configFile: config_file4);
 
                 _writer1.Build(storageServer1, configFile: config_file2);
                 _writer2.Build(storageServer2, configFile: config_file3);

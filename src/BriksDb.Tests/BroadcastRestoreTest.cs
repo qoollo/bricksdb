@@ -50,8 +50,8 @@ namespace Qoollo.Tests
                 CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename);
 
                 InitInjection.RestoreUsePackage = packageRestore;
-
-                _distrTest.Build(distrServer1, distrServer12);
+                //distrServer1, distrServer12
+                _distrTest.Build();
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1);
@@ -130,8 +130,9 @@ namespace Qoollo.Tests
                 CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename);
 
                 InitInjection.RestoreUsePackage = packageRestore;
-
-                _distrTest.Build(distrServer1, distrServer12);
+                
+                //distrServer1, distrServer12
+                _distrTest.Build();
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1, filename);
@@ -221,7 +222,8 @@ namespace Qoollo.Tests
 
                 InitInjection.RestoreUsePackage = packageRestore;
 
-                _distrTest.Build(distrServer1, distrServer12);
+                //distrServer1, distrServer12
+                _distrTest.Build();
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1, "w1");
@@ -301,7 +303,8 @@ namespace Qoollo.Tests
 
                 InitInjection.RestoreUsePackage = packageRestore;
 
-                _distrTest.Build(distrServer1, distrServer12);
+                //distrServer1, distrServer12
+                _distrTest.Build();
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1);
@@ -378,7 +381,8 @@ namespace Qoollo.Tests
 
                 InitInjection.RestoreUsePackage = packageRestore;
 
-                _distrTest.Build(distrServer1, distrServer12);
+                //distrServer1, distrServer12
+                _distrTest.Build();
 
                 InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1, "w1");

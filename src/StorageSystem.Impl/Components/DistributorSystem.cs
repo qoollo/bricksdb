@@ -20,34 +20,20 @@ namespace Qoollo.Impl.Components
     internal class DistributorSystem : ModuleSystemBase
     {
         private readonly DistributorCacheConfiguration _cacheConfiguration;
-        private readonly NetReceiverConfiguration _receiverConfigurationForDb;
-        private readonly NetReceiverConfiguration _receiverConfigurationForProxy;
         private readonly AsyncTasksConfiguration _pingConfig;
         private readonly AsyncTasksConfiguration _checkConfig;
-        private readonly ServerId _localfordb;
-        private readonly ServerId _localforproxy;
 
-        public DistributorSystem(ServerId localfordb, ServerId localforproxy,
+        public DistributorSystem(
             DistributorCacheConfiguration cacheConfiguration,
-            NetReceiverConfiguration receiverConfigurationForDb,
-            NetReceiverConfiguration receiverConfigurationForProxy,
             AsyncTasksConfiguration pingConfig,
             AsyncTasksConfiguration checkConfig)
         {
             Contract.Requires(cacheConfiguration != null);
-            Contract.Requires(receiverConfigurationForDb != null);
-            Contract.Requires(receiverConfigurationForProxy != null);
-            Contract.Requires(localfordb != null);
-            Contract.Requires(localforproxy != null);
             Contract.Requires(pingConfig != null);
             Contract.Requires(checkConfig != null);
             _pingConfig = pingConfig;
             _checkConfig = checkConfig;
             _cacheConfiguration = cacheConfiguration;
-            _receiverConfigurationForDb = receiverConfigurationForDb;
-            _receiverConfigurationForProxy = receiverConfigurationForProxy;
-            _localfordb = localfordb;
-            _localforproxy = localforproxy;
         }
 
         public DistributorModule Distributor { get; private set; }
@@ -74,8 +60,7 @@ namespace Qoollo.Impl.Components
             var net = CreateNetModule(Kernel);
             Kernel.Bind<IDistributorNetModule>().ToConstant(net);
 
-            var distributor = new DistributorModule(Kernel, _pingConfig, _checkConfig,
-                 _localfordb, _localforproxy);
+            var distributor = new DistributorModule(Kernel, _pingConfig, _checkConfig);
             Kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             Distributor = distributor;
@@ -89,7 +74,7 @@ namespace Qoollo.Impl.Components
             var input = new InputModuleWithParallel(Kernel);
             Kernel.Bind<IInputModule>().ToConstant(input);
 
-            var receive = new NetDistributorReceiver(Kernel, _receiverConfigurationForDb, _receiverConfigurationForProxy);
+            var receive = new NetDistributorReceiver(Kernel);
 
             AddModule(receive);            
             AddModule(transaction);

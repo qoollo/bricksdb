@@ -20,8 +20,6 @@ namespace Qoollo.Impl.Components
 {
     internal class WriterSystem: ModuleSystemBase
     {
-        private readonly NetReceiverConfiguration _receiverConfigurationForWrite;
-        private readonly NetReceiverConfiguration _receiverConfigurationForCollector;
         private readonly ServerId _local;
         private readonly RestoreModuleConfiguration _transferRestoreConfiguration;
         private readonly RestoreModuleConfiguration _initiatorRestoreConfiguration;
@@ -29,22 +27,15 @@ namespace Qoollo.Impl.Components
         private readonly bool _isNeedRestore;        
 
         public WriterSystem(ServerId local,
-            NetReceiverConfiguration receiverConfigurationForWrite,
-            NetReceiverConfiguration receiverConfigurationForCollector,
             RestoreModuleConfiguration transferRestoreConfiguration,
             RestoreModuleConfiguration initiatorRestoreConfiguration, 
             RestoreModuleConfiguration timeoutRestoreConfiguration,            
             bool isNeedRestore = false)
         {
             Contract.Requires(local != null);
-            Contract.Requires(receiverConfigurationForWrite != null);
-            Contract.Requires(receiverConfigurationForCollector != null);
             Contract.Requires(transferRestoreConfiguration != null);
             Contract.Requires(initiatorRestoreConfiguration != null);
 
-
-            _receiverConfigurationForWrite = receiverConfigurationForWrite;
-            _receiverConfigurationForCollector = receiverConfigurationForCollector;
             _initiatorRestoreConfiguration = initiatorRestoreConfiguration;
             _timeoutRestoreConfiguration = timeoutRestoreConfiguration;
             _isNeedRestore = isNeedRestore;
@@ -95,8 +86,7 @@ namespace Qoollo.Impl.Components
             var input = new InputModule(kernel);
             kernel.Bind<IInputModule>().ToConstant(input);
 
-            var receiver = new NetWriterReceiver(kernel, _receiverConfigurationForWrite,
-                _receiverConfigurationForCollector);
+            var receiver = new NetWriterReceiver(kernel);
                         
             AddModule(model);
             AddModule(net);

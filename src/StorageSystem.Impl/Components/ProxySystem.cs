@@ -83,7 +83,7 @@ namespace Qoollo.Impl.Components
 
             CreateApi = input.CreateApi;
 
-            var receive = new ProxyNetReceiver(kernel, _netReceiverConfiguration);
+            var receive = new ProxyNetReceiver(kernel, config.ProxyConfiguration.NetDistributor);
 
             AddModule(input);
             AddModule(main);

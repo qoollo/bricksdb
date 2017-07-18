@@ -2,8 +2,7 @@
 using System.ServiceModel;
 using System.ServiceModel.Description;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
-using ConnectionTimeoutConfiguration = Qoollo.Impl.Configurations.Queue.ConnectionTimeoutConfiguration;
+using Qoollo.Impl.Configurations.Queue;
 
 namespace Qoollo.Impl.NetInterfaces.Data
 {
@@ -45,11 +44,11 @@ namespace Qoollo.Impl.NetInterfaces.Data
 
         }
 
-        public static ServiceHost CreateServer<T>(object server, NetReceiverConfiguration configuration)
+        public static ServiceHost CreateServer<T>(object server, NetConfiguration configuration)
         {
             var host = new ServiceHost(server,
                 new Uri(string.Format("net.tcp://{0}:{1}/{2}", configuration.Host, configuration.Port,
-                    configuration.Service)));
+                    configuration.ServiceName)));
 
             var binding = new NetTcpBinding
             {

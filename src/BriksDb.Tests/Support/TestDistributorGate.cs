@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Ninject;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
@@ -42,8 +38,7 @@ namespace Qoollo.Tests.Support
             return list.First(x => x.FieldType.FullName == typeof(TRet).ToString()).GetValue(obj) as TRet;
         }
 
-        public void Build(int distrServer1, int distrServer12,
-            TimeSpan asyncCheck = default(TimeSpan), bool autoRestoreEnable = false, 
+        public void Build(TimeSpan asyncCheck = default(TimeSpan), bool autoRestoreEnable = false, 
             string configFile = Impl.Common.Support.Consts.ConfigFilename)
         {            
             var kernel = new StandardKernel(new TestInjectionModule());
@@ -59,31 +54,27 @@ namespace Qoollo.Tests.Support
             _dnet = new DistributorNetModule(kernel);
             kernel.Bind<IDistributorNetModule>().ToConstant(_dnet);
 
-            Distributor = new DistributorModule(kernel, new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
-                new AsyncTasksConfiguration(asyncCheck),
-                new ServerId("localhost", distrServer1),
-                new ServerId("localhost", distrServer12),
-                autoRestoreEnable);
+            //new ServerId("localhost", distrServer1),
+            //    new ServerId("localhost", distrServer12),
+            Distributor = new DistributorModule(kernel, 
+                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
+                new AsyncTasksConfiguration(asyncCheck), autoRestoreEnable);
             kernel.Bind<IDistributorModule>().ToConstant(Distributor);
 
             var cache = new DistributorTimeoutCache(
                 new DistributorCacheConfiguration(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)));
             kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-            //new TransactionConfiguration(4),
             _tranc = new TransactionModule(kernel);
             kernel.Bind<ITransactionModule>().ToConstant(_tranc);
 
             Main = new MainLogicModule(kernel);
             kernel.Bind<IMainLogicModule>().ToConstant(Main);
 
-            var netReceive1 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
-            var netReceive2 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
-
             Input = new InputModuleWithParallel(kernel);
             kernel.Bind<IInputModule>().ToConstant(Input);
 
-            _receiver = new NetDistributorReceiver(kernel, netReceive1, netReceive2);
+            _receiver = new NetDistributorReceiver(kernel);
         }
 
         public void Start()

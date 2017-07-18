@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.Contracts;
 using Ninject;
 using Ninject.Parameters;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Net.ReceiveBehavior;
 
 namespace Qoollo.Impl.Modules.Net
@@ -10,7 +10,7 @@ namespace Qoollo.Impl.Modules.Net
     {
         private readonly IReceiveBehavior<T> _receive; 
 
-        protected NetReceiveModule(StandardKernel kernel, NetReceiverConfiguration configuration)
+        protected NetReceiveModule(StandardKernel kernel, NetConfiguration configuration)
             :base(kernel)
         {
             Contract.Requires(configuration != null);

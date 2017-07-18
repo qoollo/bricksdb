@@ -57,7 +57,6 @@ namespace Qoollo.Tests.Support
             WriterModel = new WriterModel(_kernel, local);
             _kernel.Bind<IWriterModel>().ToConstant(WriterModel);
 
-            //new QueueConfiguration(1, 100)
             Restore = new AsyncDbWorkModule(_kernel, 
                 new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(300)),
                 new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(100)),
@@ -73,9 +72,7 @@ namespace Qoollo.Tests.Support
             Input = new InputModule(_kernel);
             _kernel.Bind<IInputModule>().ToConstant(Input);
 
-            _netRc = new NetWriterReceiver(_kernel, 
-                new NetReceiverConfiguration(storageServer, "localhost", "testService"),
-                new NetReceiverConfiguration(1, "fake", "fake"));
+            _netRc = new NetWriterReceiver(_kernel);
         }
 
         public void Start()

@@ -11,6 +11,7 @@ using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
@@ -287,7 +288,8 @@ namespace Qoollo.Tests
                 _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor);
                 net.Start();
 
-                var receive = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer1));
+                //NetReceiverConfiguration(storageServer1)
+                var receive = new ProxyNetReceiver(_kernel, new NetConfiguration());
                 receive.Start();
 
                 var q2 = GetBindedQueue();
@@ -296,7 +298,8 @@ namespace Qoollo.Tests
                 _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor2);
                 net2.Start();
 
-                var receive2 = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer2));
+                //NetReceiverConfiguration(storageServer2)
+                var receive2 = new ProxyNetReceiver(_kernel, new NetConfiguration());
                 receive2.Start();
 
                 var q3 = GetBindedQueue();
@@ -305,7 +308,8 @@ namespace Qoollo.Tests
                 _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor3);
                 net3.Start();
 
-                var receive3 = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer3));
+                //NetReceiverConfiguration(storageServer3)
+                var receive3 = new ProxyNetReceiver(_kernel, new NetConfiguration());
                 receive3.Start();
 
                 var dnet = DistributorNetModule();
@@ -329,22 +333,22 @@ namespace Qoollo.Tests
                 var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
-                var receiver4 = new NetDistributorReceiver(_kernel, 
-                    NetReceiverConfiguration(distrServer1),
-                    NetReceiverConfiguration(distrServer12));
+                //NetReceiverConfiguration(distrServer1),
+                //    NetReceiverConfiguration(distrServer12)
+                var receiver4 = new NetDistributorReceiver(_kernel);
                 receiver4.Start();
 
                 _kernel.Rebind<IGlobalQueue>().ToConstant(q1);
 
+                //distrServer2, distrServer22
                 var dnet2 = DistributorNetModule();
-                var ddistributor2 = DistributorDistributorModule(dnet2, 200000, 30000,
-                    distrServer2, distrServer22);
+                var ddistributor2 = DistributorDistributorModule(dnet2, 200000, 30000);
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor2);
                 dnet2.Start();
 
-                var receiver5 = new NetDistributorReceiver(_kernel, 
-                    NetReceiverConfiguration(distrServer2),
-                    NetReceiverConfiguration(distrServer22));
+                //NetReceiverConfiguration(distrServer2),
+                //    NetReceiverConfiguration(distrServer22)
+                var receiver5 = new NetDistributorReceiver(_kernel);
                 
                 receiver5.Start();
                 distributor.Start();

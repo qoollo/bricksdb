@@ -40,20 +40,14 @@ namespace Qoollo.Impl.DistributorModules
             StandardKernel kernel,
             AsyncTasksConfiguration asyncPing,
             AsyncTasksConfiguration asyncCheck,
-            ServerId localfordb,
-            ServerId localforproxy,
             bool autoRestoreEnable = false)
             :base(kernel)
         {
-            Contract.Requires(localfordb != null);
-            Contract.Requires(localforproxy != null);
             Contract.Requires(asyncPing != null);
             _asyncPing = asyncPing;
             _asyncTaskModule = new AsyncTaskModule(kernel);
 
             _modelOfAnotherDistributors = new DistributorSystemModel();
-            _localfordb = localfordb;
-            _localforproxy = localforproxy;
             _autoRestoreEnable = autoRestoreEnable;
             _asyncCheck = asyncCheck;
         }
@@ -62,8 +56,8 @@ namespace Qoollo.Impl.DistributorModules
         private IGlobalQueue _queue;
         private IDistributorNetModule _distributorNet;
         private readonly DistributorSystemModel _modelOfAnotherDistributors;
-        private readonly ServerId _localfordb;
-        private readonly ServerId _localforproxy;
+        private ServerId _localfordb;
+        private ServerId _localforproxy;
         private readonly AsyncTaskModule _asyncTaskModule;
         private readonly AsyncTasksConfiguration _asyncPing;
         private readonly AsyncTasksConfiguration _asyncCheck;
@@ -77,6 +71,10 @@ namespace Qoollo.Impl.DistributorModules
 
             var config = Kernel.Get<ICommonConfiguration>();
             _modelOfDbWriters = new WriterSystemModel(Kernel, config.CountReplics);
+
+            var distrConfig = Kernel.Get<IDistributorConfiguration>();
+            _localfordb = distrConfig.NetWriter.ServerId;
+            _localforproxy = distrConfig.NetProxy.ServerId;
 
             RegistrateCommands();
       

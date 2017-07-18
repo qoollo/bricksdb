@@ -40,8 +40,6 @@ namespace Qoollo.Client.WriterGate
             var netReceiveConfiguration2 = new NetReceiverConfiguration(netConfiguration.PortForCollector,
                 netConfiguration.Host,
                 netConfiguration.WcfServiceName);
-            var connection = new ConnectionConfiguration(netConfiguration.WcfServiceName,
-                netConfiguration.CountConnectionsToSingleServer, netConfiguration.TrimPeriod);
             var restoreTransfer = new RestoreModuleConfiguration(1, storageConfiguration.TimeoutSendAnswerInRestore);
             var restoreInitiator = new RestoreModuleConfiguration(storageConfiguration.CountRetryWaitAnswerInRestore,
                 storageConfiguration.TimeoutWaitAnswerInRestore);
@@ -53,7 +51,7 @@ namespace Qoollo.Client.WriterGate
 
             _writerSystem = new WriterSystem(server, netReceiveConfiguration,
                 netReceiveConfiguration2, 
-                connection, restoreTransfer, restoreInitiator, timeout, restoreTimeout, isNeedRestore);
+                restoreTransfer, restoreInitiator, timeout, restoreTimeout, isNeedRestore);
 
             _handler = new WriterHandler(_writerSystem);
         }

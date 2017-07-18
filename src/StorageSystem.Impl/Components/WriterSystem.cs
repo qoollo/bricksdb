@@ -22,7 +22,6 @@ namespace Qoollo.Impl.Components
     {
         private readonly NetReceiverConfiguration _receiverConfigurationForWrite;
         private readonly NetReceiverConfiguration _receiverConfigurationForCollector;
-        private readonly ConnectionConfiguration _connectionConfiguration;
         private readonly ServerId _local;
         private readonly RestoreModuleConfiguration _transferRestoreConfiguration;
         private readonly RestoreModuleConfiguration _initiatorRestoreConfiguration;
@@ -33,7 +32,6 @@ namespace Qoollo.Impl.Components
         public WriterSystem(ServerId local,
             NetReceiverConfiguration receiverConfigurationForWrite,
             NetReceiverConfiguration receiverConfigurationForCollector,
-            ConnectionConfiguration connectionConfiguration,
             RestoreModuleConfiguration transferRestoreConfiguration,
             RestoreModuleConfiguration initiatorRestoreConfiguration,
             ConnectionTimeoutConfiguration connectionTimeoutConfiguration, 
@@ -43,14 +41,12 @@ namespace Qoollo.Impl.Components
             Contract.Requires(local != null);
             Contract.Requires(receiverConfigurationForWrite != null);
             Contract.Requires(receiverConfigurationForCollector != null);
-            Contract.Requires(connectionConfiguration != null);
             Contract.Requires(transferRestoreConfiguration != null);
             Contract.Requires(initiatorRestoreConfiguration != null);
 
 
             _receiverConfigurationForWrite = receiverConfigurationForWrite;
             _receiverConfigurationForCollector = receiverConfigurationForCollector;
-            _connectionConfiguration = connectionConfiguration;
             _initiatorRestoreConfiguration = initiatorRestoreConfiguration;
             _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
             _timeoutRestoreConfiguration = timeoutRestoreConfiguration;
@@ -77,7 +73,7 @@ namespace Qoollo.Impl.Components
             var db = new DbModuleCollection(kernel);
             kernel.Bind<IDbModule>().ToConstant(db);
 
-            var net = new WriterNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
+            var net = new WriterNetModule(kernel, _connectionTimeoutConfiguration);
             kernel.Bind<IWriterNetModule>().ToConstant(net);
 
             var async = new AsyncTaskModule(kernel);

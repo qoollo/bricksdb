@@ -21,7 +21,6 @@ namespace Qoollo.Impl.Components
 {
     internal class ProxySystem : ModuleSystemBase
     {
-        private readonly ConnectionConfiguration _connectionConfiguration;
         private readonly ProxyCacheConfiguration _cacheConfiguration;
         private readonly ProxyCacheConfiguration _asyncCacheConfiguration;
         private readonly NetReceiverConfiguration _netReceiverConfiguration;
@@ -31,14 +30,12 @@ namespace Qoollo.Impl.Components
         private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
 
         public ProxySystem(ServerId local,
-            ConnectionConfiguration connectionConfiguration,
             ProxyCacheConfiguration cacheConfiguration,
             ProxyCacheConfiguration asyncCacheConfiguration,
             NetReceiverConfiguration receiverConfiguration,
             AsyncTasksConfiguration asyncGetData,
             AsyncTasksConfiguration asyncPing, ConnectionTimeoutConfiguration connectionTimeoutConfiguration)
         {
-            Contract.Requires(connectionConfiguration != null);
             Contract.Requires(cacheConfiguration != null);
             Contract.Requires(asyncCacheConfiguration != null);
             Contract.Requires(receiverConfiguration != null);
@@ -47,7 +44,6 @@ namespace Qoollo.Impl.Components
             Contract.Requires(asyncPing != null);
 
             _local = local;
-            _connectionConfiguration = connectionConfiguration;
             _cacheConfiguration = cacheConfiguration;
             _asyncCacheConfiguration = asyncCacheConfiguration;
             _netReceiverConfiguration = receiverConfiguration;
@@ -72,7 +68,7 @@ namespace Qoollo.Impl.Components
             var asyncCache = new AsyncProxyCache(_asyncCacheConfiguration.TimeAliveSec);
             kernel.Bind<IAsyncProxyCache>().ToConstant(asyncCache);
 
-            var net = new ProxyNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
+            var net = new ProxyNetModule(kernel, _connectionTimeoutConfiguration);
             kernel.Bind<IProxyNetModule>().ToConstant(net);
 
             var distributor = new ProxyDistributorModule(kernel, _local, _asyncGetData, _asyncPing);

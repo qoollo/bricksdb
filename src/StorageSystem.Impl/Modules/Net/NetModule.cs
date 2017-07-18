@@ -15,15 +15,12 @@ namespace Qoollo.Impl.Modules.Net
     {
         private readonly Dictionary<ServerId, ISingleConnection> _servers;
         private readonly ReaderWriterLockSlim _lock;
-        private readonly ConnectionConfiguration _configuration;
         private readonly ConnectionTimeoutConfiguration _connectionTimeout;
 
-        protected NetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration, ConnectionTimeoutConfiguration connectionTimeout)
+        protected NetModule(StandardKernel kernel, ConnectionTimeoutConfiguration connectionTimeout)
             :base(kernel)
         {
-            Contract.Requires(connectionConfiguration != null);
             Contract.Requires(connectionTimeout != null);
-            _configuration = connectionConfiguration;
             _connectionTimeout = connectionTimeout;
             _lock = new ReaderWriterLockSlim();
             _servers = new Dictionary<ServerId, ISingleConnection>();
@@ -117,13 +114,13 @@ namespace Qoollo.Impl.Modules.Net
         #endregion
 
         protected bool ConnectToServer(ServerId server,
-            Func<ServerId, ConnectionConfiguration, ConnectionTimeoutConfiguration, ISingleConnection> connectFunc)
+            Func<ServerId, ConnectionTimeoutConfiguration, ISingleConnection> connectFunc)
         {
             bool ret = true;
 
             if (FindServer(server) == null)
             {
-                var connection = connectFunc(server, _configuration, _connectionTimeout);
+                var connection = connectFunc(server, _connectionTimeout);
 
                 bool result = connection.Connect();
 

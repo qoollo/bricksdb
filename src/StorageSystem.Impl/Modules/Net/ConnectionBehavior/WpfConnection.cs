@@ -6,6 +6,7 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Pools.BalancedPool;
 using Qoollo.Impl.NetInterfaces.Data;
 using Qoollo.Turbo;
+using ConnectionConfiguration = Qoollo.Impl.Configurations.Queue.ConnectionConfiguration;
 
 namespace Qoollo.Impl.Modules.Net.ConnectionBehavior
 {
@@ -21,10 +22,10 @@ namespace Qoollo.Impl.Modules.Net.ConnectionBehavior
                 new StableElementsDynamicConnectionPool<TConnection>(
                     factory: NetConnector.Connect<TConnection>(server, configuration.ServiceName, timeoutConfiguration),
                     maxAsyncQueryCount: 1,
-                    maxElementCount: configuration.MaxElementCount,
+                    maxElementCount: configuration.CountConnections,
                     trimPeriod: configuration.TrimPeriod, 
-                    name: "Connection pool to " + server,
-                    minCount: configuration.MaxElementCount);
+                    name: "Connection pool: " + server,
+                    minCount: configuration.CountConnections);
         }
 
         public override bool Connect()

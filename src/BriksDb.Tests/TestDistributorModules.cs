@@ -119,7 +119,7 @@ namespace Qoollo.Tests
                 queue.TransactionQueue.Registrate(data => Interlocked.Increment(ref t));
                 queue.Start();
 
-                var connection = new SingleConnectionToDistributor(_kernel, ServerId(distrServer1), ConnectionConfiguration,
+                var connection = new SingleConnectionToDistributor(_kernel, ServerId(distrServer1),
                     new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
                 connection.Connect();
 

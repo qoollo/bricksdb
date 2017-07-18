@@ -19,8 +19,8 @@ namespace Qoollo.Impl.Proxy.ProxyNet
 
         private IProxyDistributorModule _distributor;
 
-        public ProxyNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration,
-            ConnectionTimeoutConfiguration connectionTimeout) : base(kernel, connectionConfiguration, connectionTimeout)
+        public ProxyNetModule(StandardKernel kernel,
+            ConnectionTimeoutConfiguration connectionTimeout) : base(kernel, connectionTimeout)
         {
         }
 
@@ -38,7 +38,7 @@ namespace Qoollo.Impl.Proxy.ProxyNet
         public bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToDistributor(Kernel, id, configuration, time));
+                (id, time) => new SingleConnectionToDistributor(Kernel, id, time));
         }
 
         #region Interface

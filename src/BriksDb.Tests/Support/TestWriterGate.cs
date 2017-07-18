@@ -45,7 +45,7 @@ namespace Qoollo.Tests.Support
 
             var local = new ServerId("localhost", storageServer);
 
-            _net = new WriterNetModule(_kernel, new ConnectionConfiguration("testService", 10),
+            _net = new WriterNetModule(_kernel,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
             _kernel.Bind<IWriterNetModule>().ToConstant(_net);
 

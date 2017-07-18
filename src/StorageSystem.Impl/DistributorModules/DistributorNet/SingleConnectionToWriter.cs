@@ -16,9 +16,9 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 {
     internal class SingleConnectionToWriter : SingleConnection<ICommonNetReceiverWriterForWrite>, ICommonNetReceiverWriterForWrite, ISingleConnection
     {
-        public SingleConnectionToWriter(StandardKernel kernel, ServerId server, ConnectionConfiguration configuration,
+        public SingleConnectionToWriter(StandardKernel kernel, ServerId server,
             ConnectionTimeoutConfiguration timeoutConfiguration) 
-            : base(kernel, server, configuration, timeoutConfiguration)
+            : base(kernel, server, timeoutConfiguration)
         {
         }
 

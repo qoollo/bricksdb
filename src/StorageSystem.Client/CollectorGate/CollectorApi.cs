@@ -23,11 +23,10 @@ namespace Qoollo.Client.CollectorGate
 
         internal InjectionModule Module = null;
 
-        protected CollectorApi(CollectorConfiguration collectorConfiguration, CollectorNetConfiguration netConfiguration,
+        protected CollectorApi(CollectorConfiguration collectorConfiguration,
             TimeoutConfiguration timeoutConfiguration)
         {
             Contract.Requires(collectorConfiguration != null);
-            Contract.Requires(netConfiguration != null);
             Contract.Requires(timeoutConfiguration != null);
 
             _isStarted = false;
@@ -35,8 +34,6 @@ namespace Qoollo.Client.CollectorGate
             _isDispose = false;
 
             _collectorSystem = new CollectorSystem(
-                new ConnectionConfiguration(netConfiguration.WcfServiceName, netConfiguration.CountConnectionsToSingleServer,
-                    netConfiguration.TrimPeriod),
                 new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout, timeoutConfiguration.SendTimeout),
                 collectorConfiguration.PageSize, collectorConfiguration.UseHashFile);
 

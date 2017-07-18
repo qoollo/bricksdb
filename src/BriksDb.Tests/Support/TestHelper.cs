@@ -12,7 +12,6 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net.ReceiveBehavior;
 using Qoollo.Impl.NetInterfaces.Distributor;
 using Qoollo.Impl.NetInterfaces.Writer;
-using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestProxy;
 
@@ -36,11 +35,11 @@ namespace Qoollo.Tests.Support
             return ev;
         }
 
-        public static TestNetDistributorForProxy OpenDistributorHostForDb(StandardKernel kernel, ServerId server, ConnectionConfiguration config)
+        public static TestNetDistributorForProxy OpenDistributorHostForDb(StandardKernel kernel, ServerId server)
         {
             var ret = new TestNetDistributorForProxy();
 
-            var netConfig = new NetReceiverConfiguration(server.Port, server.RemoteHost, config.ServiceName);
+            var netConfig = new NetReceiverConfiguration(server.Port, server.RemoteHost, "");
 
             OpenDistributorMockHost<ICommonNetReceiverForDb>(kernel, ret, netConfig);
 

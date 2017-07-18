@@ -15,9 +15,9 @@ namespace Qoollo.Impl.Collector.CollectorNet
     internal class SingleConnectionToWriter : SingleConnection<ICommonNetReceiverWriterForCollector>,
         ICommonNetReceiverWriterForCollector, ISingleConnection
     {
-        public SingleConnectionToWriter(StandardKernel kernel, ServerId server, ConnectionConfiguration configuration,
+        public SingleConnectionToWriter(StandardKernel kernel, ServerId server,
             ConnectionTimeoutConfiguration timeoutConfiguration) 
-            : base(kernel, server, configuration, timeoutConfiguration)
+            : base(kernel, server, timeoutConfiguration)
         {
         }
 

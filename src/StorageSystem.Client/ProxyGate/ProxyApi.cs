@@ -37,8 +37,6 @@ namespace Qoollo.Client.ProxyGate
 
             var server = new ServerId(netConfiguration.Host, netConfiguration.Port);
 
-            var connection = new ConnectionConfiguration(netConfiguration.WcfServiceName,
-                netConfiguration.CountConnectionsToSingleServer, netConfiguration.TrimPeriod);
             var proxyCacheConfiguration = new ProxyCacheConfiguration(proxyConfiguration.ChangeDistributorTimeoutSec);
             var proxyCacheConfiguration2 = new ProxyCacheConfiguration(proxyConfiguration.SyncOperationsTimeoutSec);
             var netReceiveConfiguration = new NetReceiverConfiguration(netConfiguration.Port, netConfiguration.Host,
@@ -48,7 +46,7 @@ namespace Qoollo.Client.ProxyGate
             var timeout = new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout,
                 timeoutConfiguration.SendTimeout);
 
-            _proxySystem = new ProxySystem(server, connection,
+            _proxySystem = new ProxySystem(server,
                 proxyCacheConfiguration, proxyCacheConfiguration2, netReceiveConfiguration, async, ping, timeout);
 
             _apis = new Dictionary<string, ProxyHandlerBase>();

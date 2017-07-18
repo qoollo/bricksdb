@@ -244,7 +244,6 @@
     <Compile Include="Modules\Db\Impl\DbImplModuleWithPool.cs" />
     <Compile Include="Writer\Db\Commands\IMetaDataCommandCreator.cs" />
     <Compile Include="Modules\Db\Impl\DbReader.cs" />
-    <Compile Include="Configurations\ConnectionConfiguration.cs" />
     <Compile Include="Modules\ControlModule.cs" />
     <Compile Include="Modules\ParallelWork\ParallelWorkModule.cs" />
     <Compile Include="Modules\ParallelWork\SingleParallelWorkBase.cs" />

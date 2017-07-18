@@ -19,9 +19,9 @@ namespace Qoollo.Impl.Collector.CollectorNet
 
         private IDistributorModule _distributor;
 
-        public CollectorNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration,
+        public CollectorNetModule(StandardKernel kernel,
             ConnectionTimeoutConfiguration connectionTimeout)
-            : base(kernel, connectionConfiguration, connectionTimeout)
+            : base(kernel, connectionTimeout)
         {
         }
 
@@ -35,7 +35,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
         public bool ConnectToWriter(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToWriter(Kernel, id, configuration, time));
+                (id, time) => new SingleConnectionToWriter(Kernel, id, time));
         }
 
         public void PingWriter(List<ServerId> servers, Action<ServerId> serverAvailable)
@@ -78,7 +78,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
         public bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToDistributor(Kernel, id, configuration, time));
+                (id, time) => new SingleConnectionToDistributor(Kernel, id, time));
         }
 
         public void PingDistributors(List<ServerId> servers)

@@ -10,9 +10,9 @@ namespace Qoollo.Benchmark.Send
         public ICollectorApi Api { get { return _api; } }
 
         public CollectorGate(string tableName, DbFactory dbFactory,
-            CollectorConfiguration collectorConfiguration, CollectorNetConfiguration netConfiguration,
+            CollectorConfiguration collectorConfiguration,
             TimeoutConfiguration timeoutConfiguration)
-            : base(collectorConfiguration, netConfiguration, timeoutConfiguration)
+            : base(collectorConfiguration, timeoutConfiguration)
         {
             Contract.Requires(!string.IsNullOrEmpty(tableName));
             Contract.Requires(_dbFactory != null);

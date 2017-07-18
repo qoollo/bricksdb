@@ -57,9 +57,7 @@ namespace Qoollo.Tests.Support
 
             asyncCheck = asyncCheck == default(TimeSpan) ? TimeSpan.FromMinutes(5) : asyncCheck;
 
-            var connection = new ConnectionConfiguration("testService", 10);
-
-            _dnet = new DistributorNetModule(kernel, connection,
+            _dnet = new DistributorNetModule(kernel,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
             kernel.Bind<IDistributorNetModule>().ToConstant(_dnet);
 

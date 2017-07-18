@@ -19,7 +19,6 @@ namespace Qoollo.Impl.Components
 {
     internal class DistributorSystem : ModuleSystemBase
     {
-        private readonly ConnectionConfiguration _connectionConfiguration;
         private readonly DistributorCacheConfiguration _cacheConfiguration;
         private readonly NetReceiverConfiguration _receiverConfigurationForDb;
         private readonly NetReceiverConfiguration _receiverConfigurationForProxy;
@@ -30,14 +29,12 @@ namespace Qoollo.Impl.Components
         private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
 
         public DistributorSystem(ServerId localfordb, ServerId localforproxy,
-            ConnectionConfiguration connectionConfiguration,
             DistributorCacheConfiguration cacheConfiguration,
             NetReceiverConfiguration receiverConfigurationForDb,
             NetReceiverConfiguration receiverConfigurationForProxy,
             AsyncTasksConfiguration pingConfig,
             AsyncTasksConfiguration checkConfig, ConnectionTimeoutConfiguration connectionTimeoutConfiguration)
         {
-            Contract.Requires(connectionConfiguration != null);
             Contract.Requires(cacheConfiguration != null);
             Contract.Requires(receiverConfigurationForDb != null);
             Contract.Requires(receiverConfigurationForProxy != null);
@@ -48,7 +45,6 @@ namespace Qoollo.Impl.Components
             _pingConfig = pingConfig;
             _checkConfig = checkConfig;
             _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
-            _connectionConfiguration = connectionConfiguration;
             _cacheConfiguration = cacheConfiguration;
             _receiverConfigurationForDb = receiverConfigurationForDb;
             _receiverConfigurationForProxy = receiverConfigurationForProxy;
@@ -58,9 +54,9 @@ namespace Qoollo.Impl.Components
 
         public DistributorModule Distributor { get; private set; }
 
-        protected virtual DistributorNetModule CreateNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration)
+        protected virtual DistributorNetModule CreateNetModule(StandardKernel kernel)
         {
-            return new DistributorNetModule(kernel, _connectionConfiguration, _connectionTimeoutConfiguration);
+            return new DistributorNetModule(kernel, _connectionTimeoutConfiguration);
         }
 
         public override void Build(NinjectModule module = null, string configFile = Consts.ConfigFilename)
@@ -77,7 +73,7 @@ namespace Qoollo.Impl.Components
             var cache = new DistributorTimeoutCache(_cacheConfiguration);
             Kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-            var net = CreateNetModule(Kernel, _connectionConfiguration);
+            var net = CreateNetModule(Kernel);
             Kernel.Bind<IDistributorNetModule>().ToConstant(net);
 
             var distributor = new DistributorModule(Kernel, _pingConfig, _checkConfig,

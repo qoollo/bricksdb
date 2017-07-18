@@ -20,9 +20,9 @@ namespace Qoollo.Impl.Writer.WriterNet
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public WriterNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration,
+        public WriterNetModule(StandardKernel kernel,
             ConnectionTimeoutConfiguration connectionTimeout)
-            : base(kernel, connectionConfiguration, connectionTimeout)
+            : base(kernel, connectionTimeout)
         {
         }
 
@@ -31,7 +31,7 @@ namespace Qoollo.Impl.Writer.WriterNet
         public bool ConnectToWriter(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToWriter(Kernel, id, configuration, time));
+                (id, time) => new SingleConnectionToWriter(Kernel, id, time));
         }
 
         public void PingWriter(List<ServerId> servers)
@@ -162,7 +162,7 @@ namespace Qoollo.Impl.Writer.WriterNet
         public bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToDistributor(Kernel, id, configuration, time));
+                (id, time) => new SingleConnectionToDistributor(Kernel, id, time));
         }
 
         public void PingDistributors(List<ServerId> servers)

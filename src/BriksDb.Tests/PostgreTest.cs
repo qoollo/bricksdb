@@ -266,8 +266,7 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(),
-                new ConnectionConfiguration("testService", 10));
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId());
             writer.Start();
 
             for (int i = 1; i < 100; i++)
@@ -323,7 +322,7 @@ namespace Qoollo.Tests
             CreateHashFileForTwoWriters(nameof(Postgre_Restore_Single_Test));
             //var writer1 = CreatePostgreWriter(nameof(Postgre_Restore_Single_Test), 0);
             var writer2 = CreatePostgreWriter(nameof(Postgre_Restore_Single_Test), 1);
-            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId());
             writer2.Start();
 
             for (int i = 1; i < 100; i++)
@@ -374,7 +373,7 @@ namespace Qoollo.Tests
             CreateHashFileForTwoWriters(nameof(Postgre_Restore_Package_Test));
             //var writer1 = CreatePostgreWriter(nameof(Postgre_Restore_Package_Test), 0);
             var writer2 = CreatePostgreWriter(nameof(Postgre_Restore_Package_Test), 1);
-            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId());
             writer2.Start();
 
             for (int i = 1; i < 100; i++)
@@ -488,7 +487,7 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId());
             writer.Start();
 
             for (int i = 1; i < 100; i++)
@@ -531,7 +530,7 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId());
             writer.Start();
 
             for (int i = 1; i < 100; i += 2)
@@ -583,7 +582,7 @@ namespace Qoollo.Tests
         {
             CreateHashFileForSingleWriter(nameof(Postgre_CRUD_Multiple_Test));
             var writer = CreatePostgreWriter(nameof(Postgre_CRUD_Multiple_Test));
-            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId(), new ConnectionConfiguration("testService", 10));
+            TestHelper.OpenDistributorHostForDb(null, CreateUniqueServerId());
             writer.Start();
 
             for (int i = 1; i < 100; i++)

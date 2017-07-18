@@ -63,7 +63,6 @@ namespace Qoollo.Tests
         private readonly List<int> _writerPorts;
 
         private static readonly object Lock = new object();
-        internal ConnectionConfiguration ConnectionConfiguration;
 
         public TestBase()
         {
@@ -80,8 +79,6 @@ namespace Qoollo.Tests
             InitInjection.RestoreHelpFileOut = Impl.Common.Support.Consts.RestoreHelpFile;
 
             _writerPorts = new List<int> {storageServer1, storageServer2, storageServer3, storageServer4};
-
-            ConnectionConfiguration = new ConnectionConfiguration("testService", 10);
 
             var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
             var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(10),
@@ -129,7 +126,15 @@ namespace Qoollo.Tests
         private string GetCommon(int countReplice, string hash)
         {
             return "\n" +
-                   $@"""common"": {{ {GetParam("countreplics", countReplice)}, {GetParam("hashfilename", hash)} }} ";
+                   $@"""common"": {{ {GetParam("countreplics", countReplice)}, {GetParam("hashfilename", hash)}, {
+                       GetConnection()} }} ";
+        }
+
+        private string GetConnection()
+        {
+            return "\n" +
+                   $@"""connection"": {{ {GetParam("servicename", "some name")}, {GetParam("countconnections", 10)}, {
+                       GetParam("trimperiod", 100)} }} ";
         }
 
         private string GetWriter()
@@ -192,7 +197,7 @@ namespace Qoollo.Tests
 
         internal ProxyNetModule ProxyNetModule()
         {
-            var net = new ProxyNetModule(_kernel, ConnectionConfiguration,
+            var net = new ProxyNetModule(_kernel,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
             _kernel.Rebind<IProxyNetModule>().ToConstant(net);
             return net;
@@ -200,7 +205,7 @@ namespace Qoollo.Tests
 
         internal DistributorNetModule DistributorNetModule()
         {
-            var net = new DistributorNetModule(_kernel, ConnectionConfiguration,
+            var net = new DistributorNetModule(_kernel,
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
             _kernel.Rebind<IDistributorNetModule>().ToConstant(net);
             return net;
@@ -297,7 +302,6 @@ namespace Qoollo.Tests
             var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(cacheToSec));
             var pcc2 = new ProxyCacheConfiguration(TimeSpan.FromSeconds(asyncCacheToSec));
             return new TestProxySystem(ServerId(proxyPort),
-               ConnectionConfiguration, 
                pcc, pcc2,
                NetReceiverConfiguration(proxyPort),
                new AsyncTasksConfiguration(new TimeSpan()),
@@ -310,7 +314,7 @@ namespace Qoollo.Tests
             int toMls1 = 200, int toMls2 = 30000)
         {
             return new DistributorSystem(ServerId(portForWriter), ServerId(portForProxy),
-                ConnectionConfiguration, cacheConfiguration,
+                 cacheConfiguration,
                 NetReceiverConfiguration(portForWriter),
                 NetReceiverConfiguration(portForProxy),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls1)),
@@ -323,7 +327,6 @@ namespace Qoollo.Tests
             return new WriterSystem(ServerId(portForDistr),
                 NetReceiverConfiguration(portForDistr),
                 NetReceiverConfiguration(portForCollector),
-                ConnectionConfiguration,
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),

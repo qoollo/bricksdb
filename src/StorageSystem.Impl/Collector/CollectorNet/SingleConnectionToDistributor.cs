@@ -14,9 +14,9 @@ namespace Qoollo.Impl.Collector.CollectorNet
     internal class SingleConnectionToDistributor : SingleConnection<ICommonNetReceiverForDb>, ICommonNetReceiverForDb,
         ISingleConnection
     {
-        public SingleConnectionToDistributor(StandardKernel kernel, ServerId server, ConnectionConfiguration configuration,
+        public SingleConnectionToDistributor(StandardKernel kernel, ServerId server,
             ConnectionTimeoutConfiguration timeoutConfiguration) 
-            : base(kernel, server, configuration, timeoutConfiguration)
+            : base(kernel, server, timeoutConfiguration)
         {
         }        
 

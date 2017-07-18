@@ -12,7 +12,7 @@ using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
@@ -23,7 +23,6 @@ using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Xunit;
-using Consts = Qoollo.Impl.Common.Support.Consts;
 using SingleConnectionToDistributor = Qoollo.Impl.Writer.WriterNet.SingleConnectionToDistributor;
 
 namespace Qoollo.Tests
@@ -120,7 +119,7 @@ namespace Qoollo.Tests
                 queue.Start();
 
                 var connection = new SingleConnectionToDistributor(_kernel, ServerId(distrServer1),
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                    new CommonConfiguration());
                 connection.Connect();
 
                 connection.TransactionAnswerResult(new Transaction("123", "123"));

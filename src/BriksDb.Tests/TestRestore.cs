@@ -224,7 +224,7 @@ namespace Qoollo.Tests
 
                 _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
-                Thread.Sleep(TimeSpan.FromMilliseconds(4000));
+                Thread.Sleep(TimeSpan.FromMilliseconds(8000));
 
                 _writer3.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 

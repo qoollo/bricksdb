@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Ninject;
 using Ninject.Parameters;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Net.ConnectionBehavior;
 
@@ -11,25 +10,25 @@ namespace Qoollo.Impl.Modules.Net
 {
     internal abstract class SingleConnection<T> : ControlModule
     {
+        private readonly ICommonConfiguration _config;
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
         private IConnectionBehavior<T> _connection;
         public ServerId Server { get; }
 
-        protected SingleConnection(StandardKernel kernel, ServerId server,
-            ConnectionTimeoutConfiguration timeoutConfiguration)
+        protected SingleConnection(StandardKernel kernel, ServerId server, ICommonConfiguration config)
             :base(kernel)
         {
+            _config = config;
             Server = server;
         }
 
         public bool Connect()
-        {
-            var config = Kernel.Get<ICommonConfiguration>();
+        {            
             _connection = Kernel.Get<IConnectionBehavior<T>>(
                 new ConstructorArgument("server", Server),
-                new ConstructorArgument("configuration", config.Connection),
-                new ConstructorArgument("timeoutConfiguration", 1));
+                new ConstructorArgument("configuration", _config.Connection),
+                new ConstructorArgument("timeoutConfiguration", _config.ConnectionTimeout));
 
             return _connection.Connect();
         }

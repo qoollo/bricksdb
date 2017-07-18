@@ -6,7 +6,7 @@ using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces;
 using Qoollo.Impl.NetInterfaces.Writer;
@@ -16,8 +16,8 @@ namespace Qoollo.Impl.Writer.WriterNet
     internal class SingleConnectionToWriter : SingleConnection<ICommonNetReceiverWriterForWrite>, ICommonNetReceiverWriterForWrite, ISingleConnection
     {
         public SingleConnectionToWriter(StandardKernel kernel, ServerId server,
-            ConnectionTimeoutConfiguration timeoutConfiguration) 
-            : base(kernel, server, timeoutConfiguration)
+            ICommonConfiguration config)
+            : base(kernel, server, config)
         {
         }
 

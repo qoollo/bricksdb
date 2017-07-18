@@ -6,7 +6,7 @@ using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces;
@@ -19,15 +19,16 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 
         private IDistributorModule _distributor;
 
-        public DistributorNetModule(StandardKernel kernel, 
-            ConnectionTimeoutConfiguration connectionTimeout) 
-            : base(kernel, connectionTimeout)
+        public DistributorNetModule(StandardKernel kernel) 
+            : base(kernel)
         {
         }
 
         public override void Start()
         {
             _distributor = Kernel.Get<IDistributorModule>();
+
+            base.Start();
         }
 
         #region Connect to distributor
@@ -41,7 +42,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         public virtual bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (serverId, time) => new SingleConnectionToDistributor(Kernel, serverId, time));
+                (id, config) => new SingleConnectionToDistributor(Kernel, id, config));
         }
 
         public RemoteResult SendToDistributor(ServerId server, NetCommand command)
@@ -84,10 +85,9 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
             return ConnectToServer(server, CreateConnectionToProxy);
         }
 
-        protected virtual ISingleConnection CreateConnectionToProxy(ServerId server,
-             ConnectionTimeoutConfiguration time)
+        protected virtual ISingleConnection CreateConnectionToProxy(ServerId server, ICommonConfiguration commonConfiguration)
         {
-            return new SingleConnectionToProxy(Kernel, server, time);
+            return new SingleConnectionToProxy(Kernel, server, commonConfiguration);
         }
 
         public RemoteResult SendToProxy(ServerId server, NetCommand command)
@@ -158,10 +158,9 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
             return ConnectToServer(server, CreateConnectionToWriter);
         }
 
-        protected virtual ISingleConnection CreateConnectionToWriter(ServerId server,
-             ConnectionTimeoutConfiguration time)
+        protected virtual ISingleConnection CreateConnectionToWriter(ServerId server,ICommonConfiguration commonConfiguration )
         {
-            return new SingleConnectionToWriter(Kernel, server, time);
+            return new SingleConnectionToWriter(Kernel, server, commonConfiguration);
         }
 
 

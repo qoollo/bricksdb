@@ -26,14 +26,13 @@ namespace Qoollo.Impl.Components
         private readonly AsyncTasksConfiguration _checkConfig;
         private readonly ServerId _localfordb;
         private readonly ServerId _localforproxy;
-        private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
 
         public DistributorSystem(ServerId localfordb, ServerId localforproxy,
             DistributorCacheConfiguration cacheConfiguration,
             NetReceiverConfiguration receiverConfigurationForDb,
             NetReceiverConfiguration receiverConfigurationForProxy,
             AsyncTasksConfiguration pingConfig,
-            AsyncTasksConfiguration checkConfig, ConnectionTimeoutConfiguration connectionTimeoutConfiguration)
+            AsyncTasksConfiguration checkConfig)
         {
             Contract.Requires(cacheConfiguration != null);
             Contract.Requires(receiverConfigurationForDb != null);
@@ -44,7 +43,6 @@ namespace Qoollo.Impl.Components
             Contract.Requires(checkConfig != null);
             _pingConfig = pingConfig;
             _checkConfig = checkConfig;
-            _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
             _cacheConfiguration = cacheConfiguration;
             _receiverConfigurationForDb = receiverConfigurationForDb;
             _receiverConfigurationForProxy = receiverConfigurationForProxy;
@@ -56,7 +54,7 @@ namespace Qoollo.Impl.Components
 
         protected virtual DistributorNetModule CreateNetModule(StandardKernel kernel)
         {
-            return new DistributorNetModule(kernel, _connectionTimeoutConfiguration);
+            return new DistributorNetModule(kernel);
         }
 
         public override void Build(NinjectModule module = null, string configFile = Consts.ConfigFilename)

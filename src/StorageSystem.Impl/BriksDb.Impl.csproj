@@ -169,6 +169,7 @@
     <Compile Include="Common\Commands\ServerNotAvailableCommand.cs" />
     <Compile Include="Common\Support\delegate.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
+    <Compile Include="Configurations\Queue\ConnectionTimeoutConfiguration.cs" />
     <Compile Include="Configurations\Queue\IAsyncTaskConfiguration.cs" />
     <Compile Include="Configurations\Queue\ICommonConfiguration.cs" />
     <Compile Include="Configurations\Queue\IDistributorConfiguration.cs" />
@@ -233,7 +234,6 @@
     <Compile Include="Components\WriterSystem.cs" />
     <Compile Include="Components\DistributorSystem.cs" />
     <Compile Include="Components\ProxySystem.cs" />
-    <Compile Include="Configurations\ConnectionTimeoutConfiguration.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\RestoreReader.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\RestoreReaderFull.cs" />
     <Compile Include="Writer\AsyncDbWorks\Timeout\TimeoutReader.cs" />

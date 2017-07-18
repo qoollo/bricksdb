@@ -285,6 +285,7 @@ namespace Qoollo.Tests
                 var net = ProxyNetModule();
                 var distributor = ProxyDistributorModule(net, storageServer1);
                 _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor);
+                net.Start();
 
                 var receive = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer1));
                 receive.Start();
@@ -293,6 +294,7 @@ namespace Qoollo.Tests
                 var net2 = ProxyNetModule();
                 var distributor2 = ProxyDistributorModule(net2, storageServer2);
                 _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor2);
+                net2.Start();
 
                 var receive2 = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer2));
                 receive2.Start();
@@ -301,6 +303,7 @@ namespace Qoollo.Tests
                 var net3 = ProxyNetModule();
                 var distributor3 = ProxyDistributorModule(net3, storageServer3);
                 _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor3);
+                net3.Start();
 
                 var receive3 = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer3));
                 receive3.Start();

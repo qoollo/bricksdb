@@ -5,6 +5,7 @@
         int CountReplics { get; }
         string HashFilename { get; }
         ConnectionConfiguration Connection { get; }
+        ConnectionTimeoutConfiguration ConnectionTimeout { get; }
     }
 
     public class CommonConfiguration : ICommonConfiguration
@@ -12,6 +13,7 @@
         public int CountReplics { get; protected set; }
         public string HashFilename { get; protected set; }
         public ConnectionConfiguration Connection { get; protected set; }
+        public ConnectionTimeoutConfiguration ConnectionTimeout { get; protected set; }
     }
 
     public class ConnectionConfiguration

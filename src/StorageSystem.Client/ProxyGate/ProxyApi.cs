@@ -24,12 +24,10 @@ namespace Qoollo.Client.ProxyGate
 
         internal InjectionModule Module = null;
 
-        protected ProxyApi(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-            TimeoutConfiguration timeoutConfiguration)
+        protected ProxyApi(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration)
         {
             Contract.Requires(netConfiguration != null);
             Contract.Requires(proxyConfiguration != null);
-            Contract.Requires(timeoutConfiguration != null);
 
             _isStarted = false;
             _isBuild = false;
@@ -43,19 +41,11 @@ namespace Qoollo.Client.ProxyGate
                 netConfiguration.WcfServiceName);
             var async = new AsyncTasksConfiguration(proxyConfiguration.AsyncUpdateTimeout);
             var ping = new AsyncTasksConfiguration(proxyConfiguration.AsyncPingTimeout);
-            var timeout = new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout,
-                timeoutConfiguration.SendTimeout);
 
             _proxySystem = new ProxySystem(server,
-                proxyCacheConfiguration, proxyCacheConfiguration2, netReceiveConfiguration, async, ping, timeout);
+                proxyCacheConfiguration, proxyCacheConfiguration2, netReceiveConfiguration, async, ping);
 
             _apis = new Dictionary<string, ProxyHandlerBase>();
-        }
-
-        protected ProxyApi(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration)
-            : this(netConfiguration, proxyConfiguration,
-                new TimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout))
-        {
         }
 
         protected IStorage<TKey, TValue> CallApi<TKey, TValue>(string tableName)

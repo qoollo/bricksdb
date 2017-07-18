@@ -7,7 +7,6 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.Proxy.Interfaces;
 
@@ -19,14 +18,15 @@ namespace Qoollo.Impl.Proxy.ProxyNet
 
         private IProxyDistributorModule _distributor;
 
-        public ProxyNetModule(StandardKernel kernel,
-            ConnectionTimeoutConfiguration connectionTimeout) : base(kernel, connectionTimeout)
+        public ProxyNetModule(StandardKernel kernel) : base(kernel)
         {
         }
 
         public override void Start()
         {
             _distributor = Kernel.Get<IProxyDistributorModule>();
+
+            base.Start();
         }
 
         public void PingDistributors(List<ServerId> servers, Action<ServerId> serverAvailable)
@@ -38,7 +38,7 @@ namespace Qoollo.Impl.Proxy.ProxyNet
         public bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (id, time) => new SingleConnectionToDistributor(Kernel, id, time));
+                (id, config) => new SingleConnectionToDistributor(Kernel, id, config));
         }
 
         #region Interface

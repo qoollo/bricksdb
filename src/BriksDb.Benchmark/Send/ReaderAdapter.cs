@@ -21,8 +21,7 @@ namespace Qoollo.Benchmark.Send
             _command = command;
             bool useDistributor = !IsUseDistributor();
             _collector = new CollectorGate(command.TableName, dbFactory,
-                new CollectorConfiguration(command.HashFileName, command.CountReplics, command.PageSize, useDistributor),
-                new TimeoutConfiguration());
+                new CollectorConfiguration(command.HashFileName, command.CountReplics, command.PageSize, useDistributor));
             _collector.Build();            
         }
 

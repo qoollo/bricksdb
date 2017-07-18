@@ -23,11 +23,10 @@ namespace Qoollo.Client.WriterGate
 
         public WriterApi(StorageNetConfiguration netConfiguration,
             StorageConfiguration storageConfiguration,
-            TimeoutConfiguration timeoutConfiguration, bool isNeedRestore = false)
+            bool isNeedRestore = false)
         {
             Contract.Requires(netConfiguration != null);
             Contract.Requires(storageConfiguration != null);
-            Contract.Requires(timeoutConfiguration != null);
 
             _isStarted = false;
             _isBuild = false;
@@ -46,22 +45,11 @@ namespace Qoollo.Client.WriterGate
             var restoreTimeout = new RestoreModuleConfiguration(-1, storageConfiguration.PeriodStartDelete,
                 storageConfiguration.IsForceDelete, storageConfiguration.PeriodDeleteAfterRestore);
 
-            var timeout = new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout,
-                timeoutConfiguration.SendTimeout);
-
             _writerSystem = new WriterSystem(server, netReceiveConfiguration,
                 netReceiveConfiguration2, 
-                restoreTransfer, restoreInitiator, timeout, restoreTimeout, isNeedRestore);
+                restoreTransfer, restoreInitiator, restoreTimeout, isNeedRestore);
 
             _handler = new WriterHandler(_writerSystem);
-        }
-
-        public WriterApi(StorageNetConfiguration netConfiguration, StorageConfiguration storageConfiguration,
-            bool isNeedRestore = false)
-            : this(
-                netConfiguration, storageConfiguration, new TimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
-                isNeedRestore)
-        {
         }
 
         public IWriterApi Api

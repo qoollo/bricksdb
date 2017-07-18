@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Ninject;
-using Qoollo.Client.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
@@ -57,8 +56,7 @@ namespace Qoollo.Tests.Support
 
             asyncCheck = asyncCheck == default(TimeSpan) ? TimeSpan.FromMinutes(5) : asyncCheck;
 
-            _dnet = new DistributorNetModule(kernel,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            _dnet = new DistributorNetModule(kernel);
             kernel.Bind<IDistributorNetModule>().ToConstant(_dnet);
 
             Distributor = new DistributorModule(kernel, new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),

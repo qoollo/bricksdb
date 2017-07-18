@@ -2,11 +2,10 @@ using System;
 using System.ServiceModel;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Pools.BalancedPool;
 using Qoollo.Impl.NetInterfaces.Data;
 using Qoollo.Turbo;
-using ConnectionConfiguration = Qoollo.Impl.Configurations.Queue.ConnectionConfiguration;
 
 namespace Qoollo.Impl.Modules.Net.ConnectionBehavior
 {

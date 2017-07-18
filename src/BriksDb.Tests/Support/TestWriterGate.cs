@@ -1,7 +1,5 @@
 ﻿using System;
 using Ninject;
-using Qoollo.Client.Support;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
@@ -45,8 +43,7 @@ namespace Qoollo.Tests.Support
 
             var local = new ServerId("localhost", storageServer);
 
-            _net = new WriterNetModule(_kernel,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            _net = new WriterNetModule(_kernel);
             _kernel.Bind<IWriterNetModule>().ToConstant(_net);
 
             Db = new DbModuleCollection(_kernel);
@@ -84,6 +81,7 @@ namespace Qoollo.Tests.Support
         public void Start()
         {
             WriterModel.Start();
+            _net.Start();
             Input.Start();
             _mainС.Start();
             Distributor.Start();

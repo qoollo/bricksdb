@@ -27,14 +27,12 @@ namespace Qoollo.Impl.Components
         private readonly RestoreModuleConfiguration _initiatorRestoreConfiguration;
         private readonly RestoreModuleConfiguration _timeoutRestoreConfiguration;
         private readonly bool _isNeedRestore;        
-        private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
 
         public WriterSystem(ServerId local,
             NetReceiverConfiguration receiverConfigurationForWrite,
             NetReceiverConfiguration receiverConfigurationForCollector,
             RestoreModuleConfiguration transferRestoreConfiguration,
-            RestoreModuleConfiguration initiatorRestoreConfiguration,
-            ConnectionTimeoutConfiguration connectionTimeoutConfiguration, 
+            RestoreModuleConfiguration initiatorRestoreConfiguration, 
             RestoreModuleConfiguration timeoutRestoreConfiguration,            
             bool isNeedRestore = false)
         {
@@ -48,7 +46,6 @@ namespace Qoollo.Impl.Components
             _receiverConfigurationForWrite = receiverConfigurationForWrite;
             _receiverConfigurationForCollector = receiverConfigurationForCollector;
             _initiatorRestoreConfiguration = initiatorRestoreConfiguration;
-            _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
             _timeoutRestoreConfiguration = timeoutRestoreConfiguration;
             _isNeedRestore = isNeedRestore;
             _transferRestoreConfiguration = transferRestoreConfiguration;
@@ -73,7 +70,7 @@ namespace Qoollo.Impl.Components
             var db = new DbModuleCollection(kernel);
             kernel.Bind<IDbModule>().ToConstant(db);
 
-            var net = new WriterNetModule(kernel, _connectionTimeoutConfiguration);
+            var net = new WriterNetModule(kernel);
             kernel.Bind<IWriterNetModule>().ToConstant(net);
 
             var async = new AsyncTaskModule(kernel);
@@ -102,6 +99,7 @@ namespace Qoollo.Impl.Components
                 _receiverConfigurationForCollector);
                         
             AddModule(model);
+            AddModule(net);
             AddModule(distributor);
             AddModule(input);
             AddModule(db);

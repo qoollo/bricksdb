@@ -21,18 +21,13 @@ namespace Qoollo.Impl.Components
 {
     internal class CollectorSystem : ModuleSystemBase
     {
-        private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
         private readonly int _serverPageSize;
         private readonly bool _useHashFile;
 
-        public CollectorSystem(
-            ConnectionTimeoutConfiguration connectionTimeoutConfiguration,
-            int serverPageSize, bool useHashFile = true)
+        public CollectorSystem(int serverPageSize, bool useHashFile = true)
         {
-            Contract.Requires(connectionTimeoutConfiguration != null);
             Contract.Requires(serverPageSize>0);
 
-            _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
             _serverPageSize = serverPageSize;
             _useHashFile = useHashFile;
         }
@@ -60,7 +55,7 @@ namespace Qoollo.Impl.Components
             var distributor = new DistributorModule(kernel, new AsyncTasksConfiguration(TimeSpan.FromSeconds(10)));
             kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
-            var net = new CollectorNetModule(kernel, _connectionTimeoutConfiguration);
+            var net = new CollectorNetModule(kernel);
             kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
             var back = new BackgroundModule(kernel);

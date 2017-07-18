@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using Ninject;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.NetInterfaces;
 
 namespace Qoollo.Impl.Modules.Net
@@ -15,15 +14,18 @@ namespace Qoollo.Impl.Modules.Net
     {
         private readonly Dictionary<ServerId, ISingleConnection> _servers;
         private readonly ReaderWriterLockSlim _lock;
-        private readonly ConnectionTimeoutConfiguration _connectionTimeout;
+        private ICommonConfiguration _config;
 
-        protected NetModule(StandardKernel kernel, ConnectionTimeoutConfiguration connectionTimeout)
+        protected NetModule(StandardKernel kernel)
             :base(kernel)
         {
-            Contract.Requires(connectionTimeout != null);
-            _connectionTimeout = connectionTimeout;
             _lock = new ReaderWriterLockSlim();
             _servers = new Dictionary<ServerId, ISingleConnection>();
+        }
+
+        public override void Start()
+        {
+            _config = Kernel.Get<ICommonConfiguration>();
         }
 
         #region Find servers
@@ -114,13 +116,13 @@ namespace Qoollo.Impl.Modules.Net
         #endregion
 
         protected bool ConnectToServer(ServerId server,
-            Func<ServerId, ConnectionTimeoutConfiguration, ISingleConnection> connectFunc)
+            Func<ServerId, ICommonConfiguration, ISingleConnection> connectFunc)
         {
             bool ret = true;
 
             if (FindServer(server) == null)
             {
-                var connection = connectFunc(server, _connectionTimeout);
+                var connection = connectFunc(server, _config);
 
                 bool result = connection.Connect();
 

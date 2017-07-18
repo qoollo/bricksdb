@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using Qoollo.Client.Configuration;
-using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
@@ -21,12 +20,10 @@ namespace Qoollo.Client.DistributorGate
         internal InjectionModule Module = null;
 
         public DistributorApi(DistributorNetConfiguration netConfiguration,
-            DistributorConfiguration distributorConfiguration, 
-            TimeoutConfiguration timeoutConfiguration)
+            DistributorConfiguration distributorConfiguration)
         {
             Contract.Requires(netConfiguration != null);
             Contract.Requires(distributorConfiguration != null);
-            Contract.Requires(timeoutConfiguration != null);
 
             var dbServer = new ServerId( netConfiguration.Host, netConfiguration.PortForStorage);
             var proxyServer = new ServerId( netConfiguration.Host,netConfiguration.PortForProxy);
@@ -39,20 +36,11 @@ namespace Qoollo.Client.DistributorGate
                 netConfiguration.Host, netConfiguration.WcfServiceName);
             var asyncPing = new AsyncTasksConfiguration(distributorConfiguration.PingPeriod);
             var asyncCheck = new AsyncTasksConfiguration(distributorConfiguration.CheckPeriod);
-            var timeou = new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout,
-                timeoutConfiguration.SendTimeout);
 
             _distributorSystem = new DistributorSystem(dbServer, proxyServer, distrCache,
-                dbNetReceive, proxyNetReceive, asyncPing, asyncCheck, timeou);
+                dbNetReceive, proxyNetReceive, asyncPing, asyncCheck);
 
             _handler = new DistributorHandler(_distributorSystem);
-        }
-
-        public DistributorApi(DistributorNetConfiguration netConfiguration,
-            DistributorConfiguration distributorConfiguration)
-            : this(netConfiguration, distributorConfiguration, 
-                new TimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout))
-        {
         }
 
         public IDistributorApi Api

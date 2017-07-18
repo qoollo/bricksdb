@@ -15,7 +15,6 @@ using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Interfaces;
@@ -283,8 +282,7 @@ namespace Qoollo.Tests
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
 
-                var net = new CollectorNetModule(_kernel,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
@@ -382,8 +380,7 @@ namespace Qoollo.Tests
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
 
-                var net = new CollectorNetModule(_kernel,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
@@ -498,8 +495,7 @@ namespace Qoollo.Tests
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
 
-                var net = new CollectorNetModule(_kernel,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
@@ -595,8 +591,7 @@ namespace Qoollo.Tests
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
 
-                var net = new CollectorNetModule(_kernel,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
@@ -692,8 +687,7 @@ namespace Qoollo.Tests
 
                 var searchModule = new SearchTaskModule(_kernel, "", merge, _parser);
 
-                var net = new CollectorNetModule(_kernel,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
@@ -798,8 +792,7 @@ namespace Qoollo.Tests
                 var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
-                var net = new CollectorNetModule(_kernel,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 var loader = new DataLoader(_kernel, net, 100, _back);

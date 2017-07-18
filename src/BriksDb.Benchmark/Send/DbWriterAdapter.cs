@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using Qoollo.Benchmark.Send.Interfaces;
-using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.NetInterfaces.Data;
 using Qoollo.Impl.NetInterfaces.Writer;
-using Consts = Qoollo.Impl.Common.Support.Consts;
 
 namespace Qoollo.Benchmark.Send
 {
@@ -43,7 +41,7 @@ namespace Qoollo.Benchmark.Send
         {
             var factory = NetConnector.Connect<ICommonNetReceiverWriterForWrite>(
                 new ServerId(host, port), Client.Support.Consts.WcfServiceName,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                new ConnectionTimeoutConfiguration());
             return factory.CreateChannel();
         }
 

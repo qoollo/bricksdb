@@ -7,7 +7,7 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces;
 using Qoollo.Impl.NetInterfaces.Distributor;
@@ -18,8 +18,8 @@ namespace Qoollo.Impl.Proxy.ProxyNet
         ICommonNetReceiverForProxy, ISingleConnection
     {
         public SingleConnectionToDistributor(StandardKernel kernel, ServerId server,
-            ConnectionTimeoutConfiguration timeoutConfiguration) 
-            : base(kernel, server, timeoutConfiguration)
+            ICommonConfiguration config)
+            : base(kernel, server, config)
         {
         }
 

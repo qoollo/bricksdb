@@ -8,12 +8,6 @@ namespace Qoollo.Tests.TestModules
     {
         //private IStorage<int, DataWithBuffer> _data;
 
-        public TestGate(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-            TimeoutConfiguration timeoutConfiguration)
-            : base(netConfiguration, proxyConfiguration, timeoutConfiguration)
-        {
-        }
-
         public TestGate(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration)
             : base(netConfiguration, proxyConfiguration)
         {

@@ -5,10 +5,8 @@ using Qoollo.Client.CollectorGate.Handlers;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.Exceptions;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Client.CollectorGate
@@ -23,19 +21,15 @@ namespace Qoollo.Client.CollectorGate
 
         internal InjectionModule Module = null;
 
-        protected CollectorApi(CollectorConfiguration collectorConfiguration,
-            TimeoutConfiguration timeoutConfiguration)
+        protected CollectorApi(CollectorConfiguration collectorConfiguration)
         {
             Contract.Requires(collectorConfiguration != null);
-            Contract.Requires(timeoutConfiguration != null);
 
             _isStarted = false;
             _isBuild = false;
             _isDispose = false;
 
-            _collectorSystem = new CollectorSystem(
-                new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout, timeoutConfiguration.SendTimeout),
-                collectorConfiguration.PageSize, collectorConfiguration.UseHashFile);
+            _collectorSystem = new CollectorSystem(collectorConfiguration.PageSize, collectorConfiguration.UseHashFile);
 
             _apis = new Dictionary<string, CollectorHandlerTuple>();
         }

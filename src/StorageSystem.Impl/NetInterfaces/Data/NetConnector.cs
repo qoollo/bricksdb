@@ -3,6 +3,7 @@ using System.ServiceModel;
 using System.ServiceModel.Description;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
+using ConnectionTimeoutConfiguration = Qoollo.Impl.Configurations.Queue.ConnectionTimeoutConfiguration;
 
 namespace Qoollo.Impl.NetInterfaces.Data
 {
@@ -20,8 +21,8 @@ namespace Qoollo.Impl.NetInterfaces.Data
                 Security = {Mode = SecurityMode.None},
                 MaxReceivedMessageSize = 2147483647,
                 MaxBufferSize = 2147483647,
-                OpenTimeout = timeoutConfiguration.OpenTimeout,
-                SendTimeout = timeoutConfiguration.SendTimeout,
+                OpenTimeout = TimeSpan.FromMilliseconds(timeoutConfiguration.OpenTimeoutMls),
+                SendTimeout = TimeSpan.FromMilliseconds(timeoutConfiguration.SendTimeoutMls),
             };
             try
             {

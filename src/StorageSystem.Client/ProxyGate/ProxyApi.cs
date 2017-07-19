@@ -24,26 +24,20 @@ namespace Qoollo.Client.ProxyGate
 
         internal InjectionModule Module = null;
 
-        protected ProxyApi(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration)
+        protected ProxyApi(ProxyConfiguration proxyConfiguration)
         {
-            Contract.Requires(netConfiguration != null);
             Contract.Requires(proxyConfiguration != null);
 
             _isStarted = false;
             _isBuild = false;
             _isDispose = false;
 
-            var server = new ServerId(netConfiguration.Host, netConfiguration.Port);
-
             var proxyCacheConfiguration = new ProxyCacheConfiguration(proxyConfiguration.ChangeDistributorTimeoutSec);
             var proxyCacheConfiguration2 = new ProxyCacheConfiguration(proxyConfiguration.SyncOperationsTimeoutSec);
-            var netReceiveConfiguration = new NetReceiverConfiguration(netConfiguration.Port, netConfiguration.Host,
-                netConfiguration.WcfServiceName);
             var async = new AsyncTasksConfiguration(proxyConfiguration.AsyncUpdateTimeout);
             var ping = new AsyncTasksConfiguration(proxyConfiguration.AsyncPingTimeout);
 
-            _proxySystem = new ProxySystem(server,
-                proxyCacheConfiguration, proxyCacheConfiguration2, netReceiveConfiguration, async, ping);
+            _proxySystem = new ProxySystem( proxyCacheConfiguration, proxyCacheConfiguration2, async, ping);
 
             _apis = new Dictionary<string, ProxyHandlerBase>();
         }

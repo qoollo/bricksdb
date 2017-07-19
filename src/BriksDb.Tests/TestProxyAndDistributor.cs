@@ -21,7 +21,8 @@ namespace Qoollo.Tests
 
         public TestProxyAndDistributor():base()
         {
-            _proxySystem = TestProxySystem(proxyServer, 20, 40);
+            //proxyServer
+            _proxySystem = TestProxySystem(20, 40);
             _proxySystem.Build(new TestInjectionModule());
         }
 

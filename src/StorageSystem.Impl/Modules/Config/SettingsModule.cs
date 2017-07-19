@@ -38,7 +38,6 @@ namespace Qoollo.Impl.Modules.Config
             Kernel.Rebind<IDistributorConfiguration>().ToConstant(distributor);
             Kernel.Rebind<IWriterConfiguration>().ToConstant(writer);
             Kernel.Rebind<ICommonConfiguration>().ToConstant(common);
-
         }
 
         private void Fill(WriterConfiguration writer, CommonConfiguration common)

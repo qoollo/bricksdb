@@ -9,9 +9,8 @@ namespace Qoollo.Tests.TestProxy
     class TestProxyDistributorModule : ProxyDistributorModule
     {
         public TestProxyDistributorModule(StandardKernel kernel, 
-            ServerId local, AsyncTasksConfiguration asyncGetData,
-            AsyncTasksConfiguration asyncPing)
-            : base(kernel, local, asyncGetData, asyncPing)
+            AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing)
+            : base(kernel, asyncGetData, asyncPing)
         {
         }
 

@@ -12,8 +12,8 @@ namespace BricksDb.RedisInterface.Server
 
         public RedisToBriks()
         {
+            //new NetConfiguration(ConfigurationHelper.Instance.Localhost, 8000, Consts.WcfServiceName),
             _redisGate = new RedisGate(
-                    new NetConfiguration(ConfigurationHelper.Instance.Localhost, 8000, Consts.WcfServiceName),
                     new ProxyConfiguration(Consts.ChangeDistributorTimeoutSec));
         }
 

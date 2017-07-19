@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using Qoollo.Impl.Common.Data.TransactionTypes;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Queue;
@@ -10,13 +9,11 @@ namespace Qoollo.Tests.TestProxy
 {
     class TestProxySystem : ProxySystem
     {
-        public TestProxySystem(ServerId local,
+        public TestProxySystem(
             ProxyCacheConfiguration cacheConfiguration,
-            ProxyCacheConfiguration asyncCacheConfiguration, NetReceiverConfiguration receiverConfiguration,
+            ProxyCacheConfiguration asyncCacheConfiguration,
             AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing)
-            : base(
-                local, cacheConfiguration, asyncCacheConfiguration,
-                receiverConfiguration, asyncGetData, asyncPing)
+            : base( cacheConfiguration, asyncCacheConfiguration, asyncGetData, asyncPing)
         {
         }
 

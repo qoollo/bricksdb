@@ -8,8 +8,8 @@ namespace Qoollo.Tests.TestModules
     {
         //private IStorage<int, DataWithBuffer> _data;
 
-        public TestGate(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration)
-            : base(netConfiguration, proxyConfiguration)
+        public TestGate(ProxyConfiguration proxyConfiguration)
+            : base(proxyConfiguration)
         {
         }
 

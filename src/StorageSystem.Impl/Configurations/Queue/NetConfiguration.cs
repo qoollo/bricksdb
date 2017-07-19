@@ -10,5 +10,15 @@ namespace Qoollo.Impl.Configurations.Queue
 
         internal string ServiceName { get; set; }
         internal ServerId ServerId { get; set; }
+
+        public NetConfiguration()
+        {
+        }
+
+        internal NetConfiguration(int port, string host = "localhost")
+        {
+            Port = port;
+            Host = host;
+        }
     }
 }

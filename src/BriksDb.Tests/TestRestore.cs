@@ -161,7 +161,8 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 3);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename);
 
-                var proxy = TestProxySystem(proxyServer, 3, 4);
+                //proxyServer
+                var proxy = TestProxySystem(3, 4);
 
                 //distrServer1, distrServer12
                 InitInjection.RestoreHelpFileOut = file1;
@@ -1182,7 +1183,8 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 3);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename);
 
-                var proxy = TestProxySystem(proxyServer, 3, 3);
+                //proxyServer
+                var proxy = TestProxySystem(3, 3);
 
                 //distrServer1, distrServer12
                 InitInjection.RestoreHelpFileOut = file1;

@@ -7,8 +7,8 @@ namespace BricksDb.RedisInterface.BriksCommunication
     {
         private IStorage<string, string> _data;
 
-    public RedisGate(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration)
-        : base(netConfiguration, proxyConfiguration)
+    public RedisGate(ProxyConfiguration proxyConfiguration)
+        : base( proxyConfiguration)
     {
     }
 

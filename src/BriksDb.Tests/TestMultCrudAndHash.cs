@@ -14,8 +14,8 @@ namespace Qoollo.Tests
     public class TestMultCrudAndHash:TestBase
     {
         public TestMultCrudAndHash():base()
-        {
-            _proxy = TestGate(proxyServer, 30000);
+        {//proxyServer
+            _proxy = TestGate(30000);
 
             _proxy.Module = new TestInjectionModule();
             _proxy.Build();

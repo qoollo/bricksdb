@@ -83,7 +83,8 @@ namespace Qoollo.Tests
             var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(10),
                 TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
 
-            _proxy = new TestGate(netconfig, toconfig);
+            //netconfig, 
+            _proxy = new TestGate(toconfig);
             _proxy.Module = new TestInjectionModule();
             _proxy.Build();
 
@@ -102,13 +103,16 @@ namespace Qoollo.Tests
         }
 
         protected void CreateConfigFile(string filename = Qoollo.Impl.Common.Support.Consts.ConfigFilename,
-            int distrthreads = 4, int countReplics = 2, string hash = "", int distrport = 123, int collectorport = 124)
+            int distrthreads = 4, int countReplics = 2, string hash = "", int distrport = 123, 
+            int collectorport = 124, int writerport = distrServer1, int proxyport = distrServer12, 
+            int pdistrport = proxyServer)
         {
             using (var writer = new StreamWriter(filename, false))
             {
                 writer.WriteLine(
-                    $@"{{ {GetQueue()}, {GetAsync()}, {GetDistrtibutor(distrthreads)}, {
-                        GetWriter(distrport, collectorport)}, {GetCommon(countReplics, hash)} }}");
+                    $@"{{ {GetQueue()}, {GetAsync()}, {GetDistrtibutor(distrthreads, writerport, proxyport)}, {
+                        GetWriter(distrport, collectorport)}, {GetCommon(countReplics, hash)}, {GetProxy(pdistrport)
+                        } }}");
             }
 
             UpdateConfigReader();
@@ -119,9 +123,17 @@ namespace Qoollo.Tests
             return $@"""asynctask"": {{ {GetParam("countthreads", 4)} }} ";
         }
 
-        private string GetDistrtibutor(int distrthreads)
+        private string GetProxy(int distrport)
         {
-            return "\n" + $@"""distributor"": {{ {GetParam("countthreads", distrthreads)} }} ";
+            return "\n" +
+                   $@"""proxy"": {{ {GetNet("netdistributor", distrport)} }} ";
+        }
+
+        private string GetDistrtibutor(int distrthreads, int portwriter, int portproxy)
+        {
+            return "\n" +
+                   $@"""distributor"": {{ {GetParam("countthreads", distrthreads)}, {
+                       GetNet("netwriter", portwriter)}, {GetNet("netproxy", portproxy)} }} ";
         }
 
         private string GetCommon(int countReplice, string hash)
@@ -154,7 +166,7 @@ namespace Qoollo.Tests
 
         private string GetNet(string name, int port)
         {
-            return "\n" + $@"""{name}"": {{ {GetParam("host", "localhost")}, {GetParam("port", 123)} }} ";
+            return "\n" + $@"""{name}"": {{ {GetParam("host", "localhost")}, {GetParam("port", port)} }} ";
         }
 
         private string GetQueue()
@@ -238,11 +250,11 @@ namespace Qoollo.Tests
             return cache;
         }
 
-        internal ProxyDistributorModule ProxyDistributorModule(ProxyNetModule net, int proxyPort)
+        internal ProxyDistributorModule ProxyDistributorModule(ProxyNetModule net)
         {
             AsyncProxyCache();
                         
-            return new ProxyDistributorModule(_kernel, ServerId(proxyPort),
+            return new ProxyDistributorModule(_kernel,
                 new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
                 new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
         }
@@ -254,13 +266,13 @@ namespace Qoollo.Tests
             return ret;
         }
 
-        internal TestGate TestGate(int proxyPort, int syncTo = 60)
+        internal TestGate TestGate(int syncTo = 60)
         {
-            var netconfig = new NetConfiguration("localhost", proxyPort, "testService", 10);
+            //var netconfig = new NetConfiguration("localhost", proxyPort, "testService", 10);
             var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(syncTo),
                 TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
-
-            return new TestGate(netconfig, toconfig);
+            //netconfig, 
+            return new TestGate(toconfig);
         }
 
         internal DistributorConfiguration DistributorConfiguration(string filename, int countReplics)
@@ -305,13 +317,11 @@ namespace Qoollo.Tests
             return new WriterSystemModel(_kernel, countReplics);
         }
 
-        internal TestProxySystem TestProxySystem(int proxyPort, int cacheToSec = 2, int asyncCacheToSec = 2)
+        internal TestProxySystem TestProxySystem(int cacheToSec = 2, int asyncCacheToSec = 2)
         {
             var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(cacheToSec));
             var pcc2 = new ProxyCacheConfiguration(TimeSpan.FromSeconds(asyncCacheToSec));
-            return new TestProxySystem(ServerId(proxyPort),
-               pcc, pcc2,
-               NetReceiverConfiguration(proxyPort),
+            return new TestProxySystem(pcc, pcc2,
                new AsyncTasksConfiguration(new TimeSpan()),
                new AsyncTasksConfiguration(new TimeSpan()));
         }

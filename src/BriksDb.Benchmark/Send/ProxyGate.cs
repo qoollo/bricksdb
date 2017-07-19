@@ -8,8 +8,8 @@ namespace Qoollo.Benchmark.Send
     {
         public IStorage<long, string> Api { get { return _api; } }
         
-        public ProxyGate(string tableName, NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration)
-            : base(netConfiguration, proxyConfiguration)
+        public ProxyGate(string tableName, ProxyConfiguration proxyConfiguration)
+            : base(proxyConfiguration)
         {
             Contract.Requires(!string.IsNullOrEmpty(tableName));
             _tableName = tableName;

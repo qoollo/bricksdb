@@ -25,8 +25,8 @@ namespace Qoollo.Tests
                 CreateConfigFile(countReplics: 1, hash: filename);
 
                 //, distrServer1, distrServer12
-
-                var proxy = TestGate(proxyServer, 600);
+                //proxyServer
+                var proxy = TestGate(600);
                 var distr = DistributorApi(DistributorConfiguration(filename, 1));
                 var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
 
@@ -93,7 +93,8 @@ namespace Qoollo.Tests
                 CreateConfigFile(countReplics: 1, hash: filename);
 
                 //, distrServer1, distrServer12
-                var proxy = TestGate(proxyServer, 600);
+                //proxyServer
+                var proxy = TestGate(600);
                 var distr = DistributorApi(DistributorConfiguration(filename, 1));
                 var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
 

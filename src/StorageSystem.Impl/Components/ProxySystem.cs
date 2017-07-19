@@ -4,7 +4,6 @@ using Ninject;
 using Ninject.Modules;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.HashHelp;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
@@ -23,29 +22,22 @@ namespace Qoollo.Impl.Components
     {
         private readonly ProxyCacheConfiguration _cacheConfiguration;
         private readonly ProxyCacheConfiguration _asyncCacheConfiguration;
-        private readonly NetReceiverConfiguration _netReceiverConfiguration;
         private readonly AsyncTasksConfiguration _asyncGetData;
         private readonly AsyncTasksConfiguration _asyncPing;
-        private readonly ServerId _local;
 
-        public ProxySystem(ServerId local,
+        public ProxySystem(
             ProxyCacheConfiguration cacheConfiguration,
             ProxyCacheConfiguration asyncCacheConfiguration,
-            NetReceiverConfiguration receiverConfiguration,
             AsyncTasksConfiguration asyncGetData,
             AsyncTasksConfiguration asyncPing)
         {
             Contract.Requires(cacheConfiguration != null);
             Contract.Requires(asyncCacheConfiguration != null);
-            Contract.Requires(receiverConfiguration != null);
             Contract.Requires(asyncGetData != null);
-            Contract.Requires(local != null);
             Contract.Requires(asyncPing != null);
 
-            _local = local;
             _cacheConfiguration = cacheConfiguration;
             _asyncCacheConfiguration = asyncCacheConfiguration;
-            _netReceiverConfiguration = receiverConfiguration;
             _asyncGetData = asyncGetData;
             _asyncPing = asyncPing;
         }
@@ -69,7 +61,7 @@ namespace Qoollo.Impl.Components
             var net = new ProxyNetModule(kernel);
             kernel.Bind<IProxyNetModule>().ToConstant(net);
 
-            var distributor = new ProxyDistributorModule(kernel, _local, _asyncGetData, _asyncPing);
+            var distributor = new ProxyDistributorModule(kernel, _asyncGetData, _asyncPing);
             kernel.Bind<IProxyDistributorModule>().ToConstant(distributor);
 
             var cache = new ProxyCache(_cacheConfiguration.TimeAliveSec);

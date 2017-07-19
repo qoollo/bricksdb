@@ -12,6 +12,7 @@ using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
@@ -28,26 +29,28 @@ namespace Qoollo.Impl.Proxy
         private readonly AsyncTasksConfiguration _asynGetData;
         private readonly AsyncTasksConfiguration _asynPing;
         private readonly AsyncTaskModule _async;
-        private readonly ServerId _local;
+        private ServerId _local;
         private IProxyNetModule _net;
         private IGlobalQueue _queue;
         private IAsyncProxyCache _asyncProxyCache;
 
-        public ServerId ProxyServerId { get { return _local; } }
+        public ServerId ProxyServerId => _local;
 
-        public ProxyDistributorModule(StandardKernel kernel, ServerId local,
+        public ProxyDistributorModule(StandardKernel kernel,
             AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing)
             : base(kernel)
         {
             _asynPing = asyncPing;
             _asynGetData = asyncGetData;
-            _local = local;
             _distributorSystemModel = new DistributorSystemModel();
             _async = new AsyncTaskModule(kernel);
         }
 
         public override void Start()
         {
+            var config = Kernel.Get<IProxyConfiguration>();
+            _local = config.NetDistributor.ServerId;
+
             _queue = Kernel.Get<IGlobalQueue>();
             _asyncProxyCache = Kernel.Get<IAsyncProxyCache>();
             _net = Kernel.Get<IProxyNetModule>();

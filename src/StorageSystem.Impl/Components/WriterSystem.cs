@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using Ninject;
 using Ninject.Modules;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
@@ -20,19 +19,17 @@ namespace Qoollo.Impl.Components
 {
     internal class WriterSystem: ModuleSystemBase
     {
-        private readonly ServerId _local;
         private readonly RestoreModuleConfiguration _transferRestoreConfiguration;
         private readonly RestoreModuleConfiguration _initiatorRestoreConfiguration;
         private readonly RestoreModuleConfiguration _timeoutRestoreConfiguration;
         private readonly bool _isNeedRestore;        
 
-        public WriterSystem(ServerId local,
+        public WriterSystem(
             RestoreModuleConfiguration transferRestoreConfiguration,
             RestoreModuleConfiguration initiatorRestoreConfiguration, 
             RestoreModuleConfiguration timeoutRestoreConfiguration,            
             bool isNeedRestore = false)
         {
-            Contract.Requires(local != null);
             Contract.Requires(transferRestoreConfiguration != null);
             Contract.Requires(initiatorRestoreConfiguration != null);
 
@@ -40,14 +37,13 @@ namespace Qoollo.Impl.Components
             _timeoutRestoreConfiguration = timeoutRestoreConfiguration;
             _isNeedRestore = isNeedRestore;
             _transferRestoreConfiguration = transferRestoreConfiguration;
-            _local = local;
         }
 
         public DistributorModule Distributor { get; private set; }
 
         public DbModuleCollection DbModule { get; private set; }
 
-        public override void Build(NinjectModule module = null, string configFile =Consts.ConfigFilename)
+        public override void Build(NinjectModule module = null, string configFile = Consts.ConfigFilename)
         {
             module = module ?? new InjectionModule();
             var kernel = new StandardKernel(module);
@@ -67,7 +63,7 @@ namespace Qoollo.Impl.Components
             var async = new AsyncTaskModule(kernel);
             kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-            var model = new WriterModel(kernel, _local);
+            var model = new WriterModel(kernel, config.WriterConfiguration.NetDistributor.ServerId);
             kernel.Bind<IWriterModel>().ToConstant(model);
 
             var restore = new AsyncDbWorkModule(kernel, _initiatorRestoreConfiguration,
@@ -87,7 +83,7 @@ namespace Qoollo.Impl.Components
             kernel.Bind<IInputModule>().ToConstant(input);
 
             var receiver = new NetWriterReceiver(kernel);
-                        
+
             AddModule(model);
             AddModule(net);
             AddModule(distributor);

@@ -25,7 +25,6 @@ namespace Qoollo.Tests
 
         public TestWriterModules():base()
         {
-            //proxyServer
             _proxyTest = TestProxySystem(20, 40);
             _proxyTest.Build(new TestInjectionModule());
 
@@ -166,7 +165,6 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
-                //distrServer1, distrServer12
                 _distributor1.Build();
                 _writer1.Build(storageServer1);
 
@@ -213,19 +211,20 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(100)]
-        public void Writer_ProcessDataFromDistributor_SendResultBack_TwoWriters(int count)
+        public void ProcessDataFromDistributor_SendResultBack_TwoWriters(int count)
         {
-            var filename = nameof(Writer_ProcessDataFromDistributor_SendResultBack_TwoWriters);
+            var filename = nameof(ProcessDataFromDistributor_SendResultBack_TwoWriters);
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
                 CreateConfigFile(countReplics: 1, hash: filename);
+                CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
+                    distrport: storageServer2);
 
-                //distrServer1, distrServer12
                 _distributor1.Build();
 
                 _writer1.Build(storageServer1);
-                _writer2.Build(storageServer2);
+                _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distributor1.Start();
 
@@ -277,22 +276,23 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(100)]
-        public void Writer_ProcessDataFromDistributor_SendResultBack_TwoWritersAndTwoReplics(int count)
+        public void ProcessDataFromDistributor_SendResultBack_TwoWritersAndTwoReplics(int count)
         {
-            var filename = nameof(Writer_ProcessDataFromDistributor_SendResultBack_TwoWritersAndTwoReplics);
+            var filename = nameof(ProcessDataFromDistributor_SendResultBack_TwoWritersAndTwoReplics);
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
                 CreateConfigFile(countReplics: 2, hash: filename);
-
-                //distrServer1, distrServer12
+                
                 _distributor1.Build();
+                _distributor1.Start();
 
                 CreateConfigFile(countReplics: 1, hash: filename);
-                _writer1.Build(storageServer1);
-                _writer2.Build(storageServer2);
+                CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
+                    distrport: storageServer2);
 
-                _distributor1.Start();
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
 
                 _writer1.Start();
                 _writer2.Start();
@@ -321,7 +321,7 @@ namespace Qoollo.Tests
                 }
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
+                
                 foreach (var data in list)
                 {
                     var transaction = _distributor1.Main.GetTransactionState(data.Transaction.UserTransaction);
@@ -343,22 +343,23 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(100)]
-        public void Writer_ProcessDataFromDistributor_CRUD_TwoWriters(int count)
+        public void ProcessDataFromDistributor_CRUD_TwoWriters(int count)
         {
-            var filename = nameof(Writer_ProcessDataFromDistributor_CRUD_TwoWriters);
+            var filename = nameof(ProcessDataFromDistributor_CRUD_TwoWriters);
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
                 CreateConfigFile(countReplics: 1, hash: filename);
+                CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
+                    distrport: storageServer2);
 
                 #region hell
 
-                //distrServer12, distrServer1, 
                 var distributor = DistributorSystem(DistributorCacheConfiguration(20000, 20000),
                     30000);
 
                 _writer1.Build(storageServer1);
-                _writer2.Build(storageServer2);
+                _writer2.Build(storageServer2, configFile: config_file2);
 
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;

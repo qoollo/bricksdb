@@ -47,7 +47,7 @@ namespace Qoollo.Tests
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
 
-                var storage = WriterSystem(storageServer1);
+                var storage = WriterSystem();
                 CreateConfigFile(countReplics: 2, hash: filename);
 
                 storage.Build(new TestInjectionModule());
@@ -109,7 +109,7 @@ namespace Qoollo.Tests
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
 
-                var storage = WriterSystem(storageServer1);
+                var storage = WriterSystem();
                 CreateConfigFile(countReplics: 2, hash: filename);
 
                 storage.Build(new TestInjectionModule());

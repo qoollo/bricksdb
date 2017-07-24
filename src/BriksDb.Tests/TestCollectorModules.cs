@@ -764,24 +764,18 @@ namespace Qoollo.Tests
             var filename = nameof(CollectorNet_ReadFromWriter);
             using (new FileCleaner(filename))
             {
-                const int st1 = 22335;
-                const int st2 = 22336;
-
                 #region hell                
 
-                var writer = new HashWriter(_kernel, filename, 1);
-                writer.SetServer(0, "localhost", st1, st2);
-                writer.Save();
-
+                CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
                 var q1 = GetBindedQueue();
 
-                var proxy = TestGate(proxyServer);
+                var proxy = TestGate();
 
                 //, distrServer1, distrServer12
                 var distr = DistributorApi(DistributorConfiguration(filename, 1));
-                var storage = WriterApi(StorageConfiguration(filename, 1), st1, st2);
+                var storage = WriterApi(StorageConfiguration(filename, 1));
 
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
@@ -829,7 +823,7 @@ namespace Qoollo.Tests
 
                 #endregion
 
-                proxy.Int.SayIAmHere("localhost", distrServer1);
+                proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 const int count = 20;
 

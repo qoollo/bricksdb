@@ -2,8 +2,6 @@
 using System.Diagnostics.Contracts;
 using Qoollo.Client.Configuration;
 using Qoollo.Client.Request;
-using Qoollo.Client.Support;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.TestSupport;
@@ -21,25 +19,22 @@ namespace Qoollo.Client.WriterGate
 
         internal InjectionModule Module = null;
 
-        public WriterApi(StorageNetConfiguration netConfiguration,
-            StorageConfiguration storageConfiguration,
+        public WriterApi(StorageConfiguration storageConfiguration,
             bool isNeedRestore = false)
         {
-            Contract.Requires(netConfiguration != null);
             Contract.Requires(storageConfiguration != null);
 
             _isStarted = false;
             _isBuild = false;
             _isDispose = false;
 
-            var server = new ServerId(netConfiguration.Host, netConfiguration.PortForDitributor);
             var restoreTransfer = new RestoreModuleConfiguration(1, storageConfiguration.TimeoutSendAnswerInRestore);
             var restoreInitiator = new RestoreModuleConfiguration(storageConfiguration.CountRetryWaitAnswerInRestore,
                 storageConfiguration.TimeoutWaitAnswerInRestore);
             var restoreTimeout = new RestoreModuleConfiguration(-1, storageConfiguration.PeriodStartDelete,
                 storageConfiguration.IsForceDelete, storageConfiguration.PeriodDeleteAfterRestore);
 
-            _writerSystem = new WriterSystem(server,
+            _writerSystem = new WriterSystem(
                 restoreTransfer, restoreInitiator, restoreTimeout, isNeedRestore);
 
             _handler = new WriterHandler(_writerSystem);
@@ -73,6 +68,12 @@ namespace Qoollo.Client.WriterGate
         public void Build()
         {
             _writerSystem.Build(Module);
+            _isBuild = true;
+        }
+
+        internal void Build(string configFile)
+        {
+            _writerSystem.Build(Module, configFile);
             _isBuild = true;
         }
 

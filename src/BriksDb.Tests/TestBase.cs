@@ -38,15 +38,15 @@ namespace Qoollo.Tests
         internal TestWriterGate _writer3;
         internal TestGate _proxy;
         internal TestDistributorGate _distrTest;
-        internal const int distrServer1 = 22323;
-        internal const int distrServer2 = 22423;
-        internal const int proxyServer = 22331;
-        internal const int distrServer12 = 22324;
-        internal const int distrServer22 = 22424;
-        internal const int storageServer1 = 22155;
-        internal const int storageServer2 = 22156;
-        internal const int storageServer3 = 22157;
-        internal const int storageServer4 = 22158;
+        internal const int distrServer1 = 1;
+        internal const int distrServer2 = 2;
+        internal const int distrServer12 = 3;
+        internal const int distrServer22 = 4;
+        internal const int proxyServer = 11;
+        internal const int storageServer1 = 101;
+        internal const int storageServer2 = 102;
+        internal const int storageServer3 = 103;
+        internal const int storageServer4 = 104;
 
         internal string file1 = "restoreHelp1.txt";
         internal string file2 = "restoreHelp2.txt";
@@ -103,8 +103,8 @@ namespace Qoollo.Tests
         }
 
         protected void CreateConfigFile(string filename = Qoollo.Impl.Common.Support.Consts.ConfigFilename,
-            int distrthreads = 4, int countReplics = 2, string hash = "", int distrport = 123, 
-            int collectorport = 124, int writerport = distrServer1, int proxyport = distrServer12, 
+            int distrthreads = 4, int countReplics = 2, string hash = "", int distrport = storageServer1, 
+            int collectorport = storageServer1, int writerport = distrServer1, int proxyport = distrServer12, 
             int pdistrport = proxyServer)
         {
             using (var writer = new StreamWriter(filename, false))
@@ -296,15 +296,9 @@ namespace Qoollo.Tests
                 TimeSpan.FromMilliseconds(periodStartDelete), isForceDelete);
         }
 
-        internal WriterApi WriterApi(StorageConfiguration storageConfiguration, int portForDistr, int portForCollector = 157)
+        internal WriterApi WriterApi(StorageConfiguration storageConfiguration)
         {
-            var storageNet = new StorageNetConfiguration("localhost", portForDistr, portForCollector, "testService", 10);
-            return new WriterApi(storageNet, storageConfiguration);
-        }
-
-        internal NetReceiverConfiguration NetReceiverConfiguration(int serverPort)
-        {
-            return new NetReceiverConfiguration(serverPort, "localhost", "testService");
+            return new WriterApi(storageConfiguration);
         }
 
         internal DistributorCacheConfiguration DistributorCacheConfiguration(int deleteMls = 2000, int updateMls = 200000)
@@ -334,9 +328,9 @@ namespace Qoollo.Tests
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls2)));
         }
 
-        internal WriterSystem WriterSystem(int portForDistr, int portForCollector = 157)
+        internal WriterSystem WriterSystem()
         {
-            return new WriterSystem(ServerId(portForDistr),
+            return new WriterSystem(
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));

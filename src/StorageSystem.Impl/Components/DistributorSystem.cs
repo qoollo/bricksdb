@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using Ninject;
 using Ninject.Modules;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;

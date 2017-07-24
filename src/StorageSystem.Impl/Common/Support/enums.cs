@@ -46,7 +46,7 @@ namespace Qoollo.Impl.Common.Support
     internal static class Errors
     {
         public static string NotAvailableServersForWrite = "Need more available servers to store data";
-        public static string NotAvailableServersInSystem = "There is no Distributor in systme";
+        public static string NotAvailableServersInSystem = "There is no Distributor in system";
         public static string ServerWithResultNotAvailable = "Servers with operation result is unavailable";
         public static string NoErrorAddWriterServer = "No error";
         public static string ServerIsNotAvailable = "Servers is unavailable";

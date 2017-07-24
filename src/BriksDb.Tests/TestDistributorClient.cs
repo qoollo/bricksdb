@@ -24,11 +24,9 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
-                //, distrServer1, distrServer12
-                //proxyServer
                 var proxy = TestGate(600);
                 var distr = DistributorApi(DistributorConfiguration(filename, 1));
-                var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
+                var storage = WriterApi(StorageConfiguration(filename, 1));
 
                 proxy.Module = new TestInjectionModule();
                 proxy.Build();
@@ -38,7 +36,7 @@ namespace Qoollo.Tests
                 distr.Build();
                 distr.Start();
 
-                proxy.Int.SayIAmHere("localhost", distrServer1);
+                proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 storage.Module = new TestInjectionModule();
                 storage.Build();
@@ -92,11 +90,9 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
 
-                //, distrServer1, distrServer12
-                //proxyServer
                 var proxy = TestGate(600);
                 var distr = DistributorApi(DistributorConfiguration(filename, 1));
-                var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
+                var storage = WriterApi(StorageConfiguration(filename, 1));
 
                 proxy.Module = new TestInjectionModule();
                 proxy.Build();
@@ -106,7 +102,7 @@ namespace Qoollo.Tests
                 distr.Build();
                 distr.Start();
 
-                proxy.Int.SayIAmHere("localhost", distrServer1);
+                proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 storage.Module = new TestInjectionModule();
                 storage.Build();

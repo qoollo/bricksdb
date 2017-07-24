@@ -279,7 +279,6 @@
     <Compile Include="Modules\ModuleSystemBase.cs" />
     <Compile Include="Configurations\AsyncTasksConfiguration.cs" />
     <Compile Include="Configurations\DistributorCacheConfiguration.cs" />
-    <Compile Include="Configurations\NetReceiverConfiguration.cs" />
     <Compile Include="Configurations\ProxyCacheConfiguration.cs" />
     <Compile Include="Configurations\RestoreModuleConfiguration.cs" />
     <Compile Include="Common\NetResults\System\Writer\RestoreCommand.cs" />

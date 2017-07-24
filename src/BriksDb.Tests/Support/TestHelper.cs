@@ -57,24 +57,24 @@ namespace Qoollo.Tests.Support
 
             return ret;
         }
-        public static void OpenDistributorNetHost(TestNetDistributorForProxy server, NetReceiverConfiguration config)
-        {
-            var host = new ServiceHost(server,
-                new Uri($"net.tcp://{config.Host}:{config.Port}/{config.Service}"));
+        //public static void OpenDistributorNetHost(TestNetDistributorForProxy server, NetReceiverConfiguration config)
+        //{
+        //    var host = new ServiceHost(server,
+        //        new Uri($"net.tcp://{config.Host}:{config.Port}/{config.Service}"));
 
-            server.Host = host;
-            var binding = new NetTcpBinding
-            {
-                Security = { Mode = SecurityMode.None },
-                TransactionFlow = true
-            };
-            var contractType = typeof(ICommonNetReceiverWriterForWrite);
-            host.AddServiceEndpoint(contractType, binding, "");
-            var behavior = host.Description.Behaviors.Find<ServiceBehaviorAttribute>();
-            behavior.InstanceContextMode = InstanceContextMode.Single;
+        //    server.Host = host;
+        //    var binding = new NetTcpBinding
+        //    {
+        //        Security = { Mode = SecurityMode.None },
+        //        TransactionFlow = true
+        //    };
+        //    var contractType = typeof(ICommonNetReceiverWriterForWrite);
+        //    host.AddServiceEndpoint(contractType, binding, "");
+        //    var behavior = host.Description.Behaviors.Find<ServiceBehaviorAttribute>();
+        //    behavior.InstanceContextMode = InstanceContextMode.Single;
 
-            host.Open();
-        }
+        //    host.Open();
+        //}
         public static void OpenDistributorMockHost<TReceive>(StandardKernel kernel, 
             TestNetDistributorForProxy server, NetConfiguration config)
         {
@@ -96,24 +96,24 @@ namespace Qoollo.Tests.Support
 
             return ret;
         }
-        public static void OpenWriterNetHost(TestWriterServer server, NetReceiverConfiguration config)
-        {
-            var host = new ServiceHost(server,
-                new Uri($"net.tcp://{config.Host}:{config.Port}/{config.Service}"));
+        //public static void OpenWriterNetHost(TestWriterServer server, NetReceiverConfiguration config)
+        //{
+        //    var host = new ServiceHost(server,
+        //        new Uri($"net.tcp://{config.Host}:{config.Port}/{config.Service}"));
 
-            server.Host = host;
-            var binding = new NetTcpBinding
-            {
-                Security = { Mode = SecurityMode.None },
-                TransactionFlow = true
-            };
-            var contractType = typeof(ICommonNetReceiverWriterForWrite);
-            host.AddServiceEndpoint(contractType, binding, "");
-            var behavior = host.Description.Behaviors.Find<ServiceBehaviorAttribute>();
-            behavior.InstanceContextMode = InstanceContextMode.Single;
+        //    server.Host = host;
+        //    var binding = new NetTcpBinding
+        //    {
+        //        Security = { Mode = SecurityMode.None },
+        //        TransactionFlow = true
+        //    };
+        //    var contractType = typeof(ICommonNetReceiverWriterForWrite);
+        //    host.AddServiceEndpoint(contractType, binding, "");
+        //    var behavior = host.Description.Behaviors.Find<ServiceBehaviorAttribute>();
+        //    behavior.InstanceContextMode = InstanceContextMode.Single;
 
-            host.Open();
-        }
+        //    host.Open();
+        //}
         public static void OpenWriterMockHost(StandardKernel kernel, TestWriterServer server, NetConfiguration config)
         {
             var s = kernel.Get<IReceiveBehavior<ICommonNetReceiverWriterForWrite>>(

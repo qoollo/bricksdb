@@ -51,8 +51,7 @@ namespace Qoollo.Impl.Components
             var serversModel = new CollectorModel(kernel, _useHashFile);
             kernel.Bind<ICollectorModel>().ToConstant(serversModel);
             serversModel.StartConfig();
-
-            var distributor = new DistributorModule(kernel, new AsyncTasksConfiguration(TimeSpan.FromSeconds(10)));
+            var distributor = new DistributorModule(kernel);
             kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             var net = new CollectorNetModule(kernel);

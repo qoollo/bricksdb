@@ -12,6 +12,7 @@ using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Interfaces;
@@ -31,16 +32,9 @@ namespace Qoollo.Impl.Writer
         private IWriterNetModule _writerNet;
         private IAsyncDbWorkModule _asyncDbWork;
         private IGlobalQueue _queue;
-        private readonly TimeSpan _pingPeriod;
 
-        public DistributorModule(StandardKernel kernel,
-            AsyncTasksConfiguration pingConfiguration = null)
-            :base(kernel)
+        public DistributorModule(StandardKernel kernel) :base(kernel)
         {
-            _pingPeriod = InitInjection.PingPeriod;
-
-            if (pingConfiguration != null)
-                _pingPeriod = pingConfiguration.TimeoutPeriod;
         }
 
         public override void Start()
@@ -50,9 +44,12 @@ namespace Qoollo.Impl.Writer
             _writerNet = Kernel.Get<IWriterNetModule>();
             _asyncDbWork = Kernel.Get<IAsyncDbWorkModule>();
 
+            var config = Kernel.Get<IWriterConfiguration>();
+
             var asyncTasks = Kernel.Get<IAsyncTaskModule>();
             asyncTasks.AddAsyncTask(
-                new AsyncDataPeriod(_pingPeriod, Ping, AsyncTasksNames.AsyncPing, -1), false);
+                new AsyncDataPeriod(config.Timeouts.ServersPingMls.PeriodTimeSpan,
+                    Ping, AsyncTasksNames.AsyncPing, -1), false);
 
             RegistrateCommands();
         }

@@ -645,13 +645,9 @@ namespace Qoollo.Tests
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
             var merge = new OrderMerge(null, parser);
-            //, new CollectorModel(new DistributorHashConfiguration(1),
-            //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
             var async = new AsyncTaskModule(null);
-            //new CollectorModel(new DistributorHashConfiguration(1),
-            //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
-            //            HashFileType.Writer)), async
-            var distributor = new DistributorModule(null, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+            //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+            var distributor = new DistributorModule(null);
             var back = new BackgroundModule(null);
 
             var searchModule = new SearchTaskModule(null, "Test", merge, parser);
@@ -740,23 +736,15 @@ namespace Qoollo.Tests
             writer.Save();
 
             var loader = new TestDataLoader(pageSize);
-            //_kernel.Bind<IDataLoader>().ToConstant(loader);
-
             var parser = new PostgreScriptParser();
             parser.SetCommandsHandler(
                 new UserCommandsHandler<TestCommand, Type, TestCommand, int, int, TestDbReader>(
                     new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
             var merge = new OrderMerge(null, parser); 
-                //new CollectorModel(new DistributorHashConfiguration(1), 
-                //    new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer)));
             var async = new AsyncTaskModule(null);
-
-            //new CollectorModel(new DistributorHashConfiguration(1),
-            //        new HashMapConfiguration("TestCollector", HashMapCreationMode.ReadFromFile, 1, 1,
-            //            HashFileType.Writer)), async,
-
-            var distributor = new DistributorModule(null, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+            //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+            var distributor = new DistributorModule(null);
             var back = new BackgroundModule(null);
 
             var searchModule = new SearchTaskModule(null, "Test", merge, parser);

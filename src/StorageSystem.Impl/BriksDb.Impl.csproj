@@ -171,12 +171,14 @@
     <Compile Include="Components\CollectorSystem.cs" />
     <Compile Include="Configurations\Queue\ConnectionTimeoutConfiguration.cs" />
     <Compile Include="Configurations\Queue\IAsyncTaskConfiguration.cs" />
+    <Compile Include="Configurations\Queue\ICollectorConfiguration.cs" />
     <Compile Include="Configurations\Queue\ICommonConfiguration.cs" />
     <Compile Include="Configurations\Queue\IDistributorConfiguration.cs" />
     <Compile Include="Configurations\Queue\IProxyConfiguration.cs" />
     <Compile Include="Configurations\Queue\IQueueConfiguration.cs" />
     <Compile Include="Configurations\Queue\IWriterConfiguration.cs" />
     <Compile Include="Configurations\Queue\NetConfiguration.cs" />
+    <Compile Include="Configurations\Queue\TimeoutConfiguration.cs" />
     <Compile Include="DistributorModules\Interfaces\IDistributorTimeoutCache.cs" />
     <Compile Include="DistributorModules\Interfaces\IMainLogicModule.cs" />
     <Compile Include="DistributorModules\Interfaces\IDistributorModule.cs" />

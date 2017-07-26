@@ -11,7 +11,6 @@ using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
-//using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.DistributorModules.Interfaces;
@@ -118,7 +117,8 @@ namespace Qoollo.Tests
                 writer.WriteLine(
                     $@"{{ {GetQueue()}, {GetAsync()}, {GetDistrtibutor(distrthreads, writerport, proxyport,
                         timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls)}, {GetWriter(distrport,
-                            collectorport)}, {GetCommon(countReplics, hash)}, {GetProxy(pdistrport)} }}");
+                            collectorport)}, {GetCommon(countReplics, hash)}, {GetProxy(pdistrport)},{
+                        GetCollector()} }}");
             }
 
             UpdateConfigReader();
@@ -175,7 +175,29 @@ namespace Qoollo.Tests
             return
                 $@"""writer"": {{ {GetParam("packagesizerestore", 1000)}, {GetParam("packagesizebroadcast", 1000)
                     }, {GetParam("packagesizetimeout", 1000)}, {GetNet("netdistributor", distrport)}, {
-                    GetNet("netcollector", collectorport)}}} ";
+                    GetNet("netcollector", collectorport)}, {WriterTimeouts()}}} ";
+        }
+
+        private string GetCollector()
+        {
+            return $@"""collector"": {{ {CollectorTimeouts()} }} ";
+        }
+        
+        private string CollectorTimeouts()
+        {
+            return
+                $@"""timeouts"": {{ {GetTimeout("ServersPingMls", 100)}, {
+                    GetTimeout("DistributorUpdateHashMls", 60000)} }}";
+        }
+
+        private string WriterTimeouts()
+        {
+            return $@"""timeouts"": {{ {GetTimeout("ServersPingMls", 100)} }}";
+        }
+
+        private string GetTimeout(string name, int value)
+        {
+            return $@"""{name}"": {{ {GetParam("PeriodMls", value)} }}";
         }
 
         private string GetNet(string name, int port)
@@ -248,7 +270,6 @@ namespace Qoollo.Tests
             return net;
         }
 
-        //int distrPort1 = distrServer1, int distrPort2 = distrServer12
         internal DistributorModule DistributorDistributorModule(
             DistributorNetModule net, int pingTo = 200, int asyncCheckTo = 2000)
         {

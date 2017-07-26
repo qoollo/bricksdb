@@ -276,8 +276,8 @@ namespace Qoollo.Tests
                 var merge = new OrderMerge(_kernel, _parser);
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
-
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                //new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
@@ -374,8 +374,8 @@ namespace Qoollo.Tests
                 var merge = new OrderMerge(_kernel, _parser);
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
-
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
@@ -489,8 +489,8 @@ namespace Qoollo.Tests
                 var merge = new OrderMerge(_kernel, _parser);
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
-
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
@@ -585,8 +585,8 @@ namespace Qoollo.Tests
                 var merge = new OrderMerge(_kernel, _parser);
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
-
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
@@ -681,8 +681,8 @@ namespace Qoollo.Tests
                 var merge = new OrderMerge(_kernel, _parser);
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
-
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
                 var searchModule = new SearchTaskModule(_kernel, "", merge, _parser);
@@ -783,8 +783,8 @@ namespace Qoollo.Tests
                 var serversModel = new CollectorModel(_kernel);
                 serversModel.StartConfig();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
-
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
                 var net = new CollectorNetModule(_kernel);

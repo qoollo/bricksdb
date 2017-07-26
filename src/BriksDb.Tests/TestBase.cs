@@ -11,6 +11,7 @@ using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
+//using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.DistributorModules.Interfaces;
@@ -26,6 +27,10 @@ using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestProxy;
+using DistributorCacheConfiguration = Qoollo.Impl.Configurations.Queue.DistributorCacheConfiguration;
+using DistributorConfiguration = Qoollo.Client.Configuration.DistributorConfiguration;
+using NetConfiguration = Qoollo.Client.Configuration.NetConfiguration;
+using ProxyConfiguration = Qoollo.Client.Configuration.ProxyConfiguration;
 
 namespace Qoollo.Tests
 {
@@ -105,14 +110,15 @@ namespace Qoollo.Tests
         protected void CreateConfigFile(string filename = Qoollo.Impl.Common.Support.Consts.ConfigFilename,
             int distrthreads = 4, int countReplics = 2, string hash = "", int distrport = storageServer1, 
             int collectorport = storageServer1, int writerport = distrServer1, int proxyport = distrServer12, 
-            int pdistrport = proxyServer)
+            int pdistrport = proxyServer, int timeAliveBeforeDeleteMls = 10000, 
+            int timeAliveAfterUpdateMls = 10000)
         {
             using (var writer = new StreamWriter(filename, false))
             {
                 writer.WriteLine(
-                    $@"{{ {GetQueue()}, {GetAsync()}, {GetDistrtibutor(distrthreads, writerport, proxyport)}, {
-                        GetWriter(distrport, collectorport)}, {GetCommon(countReplics, hash)}, {GetProxy(pdistrport)
-                        } }}");
+                    $@"{{ {GetQueue()}, {GetAsync()}, {GetDistrtibutor(distrthreads, writerport, proxyport,
+                        timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls)}, {GetWriter(distrport,
+                            collectorport)}, {GetCommon(countReplics, hash)}, {GetProxy(pdistrport)} }}");
             }
 
             UpdateConfigReader();
@@ -129,11 +135,19 @@ namespace Qoollo.Tests
                    $@"""proxy"": {{ {GetNet("netdistributor", distrport)} }} ";
         }
 
-        private string GetDistrtibutor(int distrthreads, int portwriter, int portproxy)
+        private string GetDistrtibutor(int distrthreads, int portwriter, int portproxy,
+            int timeAliveBeforeDeleteMls, int timeAliveAfterUpdateMls)
         {
             return "\n" +
                    $@"""distributor"": {{ {GetParam("countthreads", distrthreads)}, {
-                       GetNet("netwriter", portwriter)}, {GetNet("netproxy", portproxy)} }} ";
+                       GetNet("netwriter", portwriter)}, {GetNet("netproxy", portproxy)}, {
+                       GetDCache(timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls)} }} ";
+        }
+
+        private string GetDCache(int timeAliveBeforeDeleteMls, int timeAliveAfterUpdateMls)
+        {
+            return $@"""cache"": {{ {GetParam("TimeAliveBeforeDeleteMls", timeAliveBeforeDeleteMls)}, {
+                GetParam("TimeAliveAfterUpdateMls", timeAliveAfterUpdateMls)} }} ";
         }
 
         private string GetCommon(int countReplice, string hash)
@@ -303,7 +317,7 @@ namespace Qoollo.Tests
 
         internal DistributorCacheConfiguration DistributorCacheConfiguration(int deleteMls = 2000, int updateMls = 200000)
         {
-            return new DistributorCacheConfiguration(TimeSpan.FromMilliseconds(deleteMls), TimeSpan.FromMilliseconds(updateMls));
+            return new DistributorCacheConfiguration(deleteMls, updateMls);
         }
 
         internal WriterSystemModel WriterSystemModel(int countReplics)
@@ -320,10 +334,9 @@ namespace Qoollo.Tests
                new AsyncTasksConfiguration(new TimeSpan()));
         }
 
-        internal DistributorSystem DistributorSystem(DistributorCacheConfiguration cacheConfiguration,
-            int toMls1 = 200, int toMls2 = 30000)
+        internal DistributorSystem DistributorSystem(int toMls1 = 200, int toMls2 = 30000)
         {
-            return new DistributorSystem(cacheConfiguration,
+            return new DistributorSystem(
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls1)),
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls2)));
         }

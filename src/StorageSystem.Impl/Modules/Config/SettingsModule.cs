@@ -15,6 +15,7 @@ namespace Qoollo.Impl.Modules.Config
         
         public ProxyConfiguration ProxyConfiguration { get; protected set; }
         public WriterConfiguration WriterConfiguration { get; protected set; }
+        public DistributorConfiguration DistributorConfiguration { get; protected set; }
 
         public override void Start()
         {
@@ -26,8 +27,8 @@ namespace Qoollo.Impl.Modules.Config
 
             var common = reader.LoadSection<CommonConfiguration>();
 
-            var distributor = reader.LoadSection<DistributorConfiguration>();
-            Fill(distributor, common);
+            DistributorConfiguration = reader.LoadSection<DistributorConfiguration>();
+            Fill(DistributorConfiguration, common);
 
             WriterConfiguration = reader.LoadSection<WriterConfiguration>();
             Fill(WriterConfiguration, common);
@@ -36,7 +37,7 @@ namespace Qoollo.Impl.Modules.Config
             Fill(ProxyConfiguration.NetDistributor, common);
 
             Kernel.Rebind<IProxyConfiguration>().ToConstant(ProxyConfiguration);
-            Kernel.Rebind<IDistributorConfiguration>().ToConstant(distributor);
+            Kernel.Rebind<IDistributorConfiguration>().ToConstant(DistributorConfiguration);
             Kernel.Rebind<IWriterConfiguration>().ToConstant(WriterConfiguration);
             Kernel.Rebind<ICommonConfiguration>().ToConstant(common);
         }

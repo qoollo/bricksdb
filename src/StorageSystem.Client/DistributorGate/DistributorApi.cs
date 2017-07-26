@@ -22,12 +22,10 @@ namespace Qoollo.Client.DistributorGate
         {
             Contract.Requires(distributorConfiguration != null);
 
-            var distrCache = new DistributorCacheConfiguration(distributorConfiguration.DataAliveTime,
-                distributorConfiguration.DataAliveAfterUpdate);
             var asyncPing = new AsyncTasksConfiguration(distributorConfiguration.PingPeriod);
             var asyncCheck = new AsyncTasksConfiguration(distributorConfiguration.CheckPeriod);
 
-            _distributorSystem = new DistributorSystem(distrCache, asyncPing, asyncCheck);
+            _distributorSystem = new DistributorSystem(asyncPing, asyncCheck);
 
             _handler = new DistributorHandler(_distributorSystem);
         }

@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Reflection;
 using Ninject;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
@@ -14,6 +13,7 @@ using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Tests.NetMock;
+using DistributorCacheConfiguration = Qoollo.Impl.Configurations.Queue.DistributorCacheConfiguration;
 
 namespace Qoollo.Tests.Support
 {
@@ -54,15 +54,13 @@ namespace Qoollo.Tests.Support
             _dnet = new DistributorNetModule(kernel);
             kernel.Bind<IDistributorNetModule>().ToConstant(_dnet);
 
-            //new ServerId("localhost", distrServer1),
-            //    new ServerId("localhost", distrServer12),
             Distributor = new DistributorModule(kernel, 
                 new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
                 new AsyncTasksConfiguration(asyncCheck), autoRestoreEnable);
             kernel.Bind<IDistributorModule>().ToConstant(Distributor);
 
-            var cache = new DistributorTimeoutCache(
-                new DistributorCacheConfiguration(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)));
+            //TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)
+            var cache = new DistributorTimeoutCache(new DistributorCacheConfiguration(200000, 200000));
             kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
             _tranc = new TransactionModule(kernel);

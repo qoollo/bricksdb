@@ -18,21 +18,17 @@ namespace Qoollo.Impl.Components
 {
     internal class DistributorSystem : ModuleSystemBase
     {
-        private readonly DistributorCacheConfiguration _cacheConfiguration;
         private readonly AsyncTasksConfiguration _pingConfig;
         private readonly AsyncTasksConfiguration _checkConfig;
 
         public DistributorSystem(
-            DistributorCacheConfiguration cacheConfiguration,
             AsyncTasksConfiguration pingConfig,
             AsyncTasksConfiguration checkConfig)
         {
-            Contract.Requires(cacheConfiguration != null);
             Contract.Requires(pingConfig != null);
             Contract.Requires(checkConfig != null);
             _pingConfig = pingConfig;
             _checkConfig = checkConfig;
-            _cacheConfiguration = cacheConfiguration;
         }
 
         public DistributorModule Distributor { get; private set; }
@@ -53,7 +49,7 @@ namespace Qoollo.Impl.Components
             var q = new GlobalQueue(Kernel);
             Kernel.Bind<IGlobalQueue>().ToConstant(q);
 
-            var cache = new DistributorTimeoutCache(_cacheConfiguration);
+            var cache = new DistributorTimeoutCache(config.DistributorConfiguration.Cache);
             Kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
             var net = CreateNetModule(Kernel);
@@ -75,6 +71,7 @@ namespace Qoollo.Impl.Components
 
             var receive = new NetDistributorReceiver(Kernel);
 
+            AddModule(cache);
             AddModule(receive);            
             AddModule(transaction);
             AddModule(input);

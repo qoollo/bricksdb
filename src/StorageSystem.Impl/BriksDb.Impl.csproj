@@ -278,7 +278,6 @@
     <Compile Include="Common\NetResults\SuccessResult.cs" />
     <Compile Include="Modules\ModuleSystemBase.cs" />
     <Compile Include="Configurations\AsyncTasksConfiguration.cs" />
-    <Compile Include="Configurations\DistributorCacheConfiguration.cs" />
     <Compile Include="Configurations\ProxyCacheConfiguration.cs" />
     <Compile Include="Configurations\RestoreModuleConfiguration.cs" />
     <Compile Include="Common\NetResults\System\Writer\RestoreCommand.cs" />
@@ -312,7 +311,6 @@
     <Compile Include="Writer\WriterNet\NetWriterReceiver.cs" />
     <Compile Include="Writer\InputModule.cs" />
     <Compile Include="Writer\DistributorModule.cs" />
-    <Compile Include="DistributorModules\Caches\DistributorCache.cs" />
     <Compile Include="NetInterfaces\Distributor\ICommonNetReceiverForProxy.cs" />
     <Compile Include="DistributorModules\Caches\DistributorTimeoutCache.cs" />
     <Compile Include="DistributorModules\Interfaces\IInputModule.cs" />

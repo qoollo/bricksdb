@@ -355,8 +355,8 @@ namespace Qoollo.Tests
 
                 #region hell
 
-                var distributor = DistributorSystem(DistributorCacheConfiguration(20000, 20000),
-                    30000);
+                //DistributorCacheConfiguration(20000, 20000),
+                var distributor = DistributorSystem(30000);
 
                 _writer1.Build(storageServer1);
                 _writer2.Build(storageServer2, configFile: config_file2);

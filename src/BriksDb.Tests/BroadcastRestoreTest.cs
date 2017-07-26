@@ -224,9 +224,9 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 3);
                 CreateConfigFile(countReplics: replics, hash: filename);
-                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename,
+                CreateConfigFile(distrthreads: 2, countReplics: replics, hash: filename,
                     filename: config_file2, distrport: storageServer2);
-                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename,
+                CreateConfigFile(distrthreads: 2, countReplics: replics, hash: filename,
                     filename: config_file3, distrport: storageServer3);
 
                 InitInjection.RestoreUsePackage = packageRestore;
@@ -391,6 +391,9 @@ namespace Qoollo.Tests
                 CreateConfigFile(countReplics: replics, hash: filename,
                     filename: config_file2, distrport: storageServer2);
 
+                CreateConfigFile(countReplics: replics, hash: filename,
+                    filename: config_file3, distrport: storageServer3);
+
                 InitInjection.RestoreUsePackage = packageRestore;
 
                 _distrTest.Build();
@@ -439,7 +442,7 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 3);
 
                 InitInjection.RestoreHelpFileOut = file3;
-                _writer3.Build(storageServer3, "w3");
+                _writer3.Build(storageServer3, "w3", config_file3);
                 _writer3.Start();
 
                 _writer1.Distributor.UpdateModel();

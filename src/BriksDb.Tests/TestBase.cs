@@ -28,7 +28,6 @@ using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestProxy;
 using DistributorCacheConfiguration = Qoollo.Impl.Configurations.Queue.DistributorCacheConfiguration;
 using DistributorConfiguration = Qoollo.Client.Configuration.DistributorConfiguration;
-using NetConfiguration = Qoollo.Client.Configuration.NetConfiguration;
 using ProxyConfiguration = Qoollo.Client.Configuration.ProxyConfiguration;
 
 namespace Qoollo.Tests
@@ -83,11 +82,9 @@ namespace Qoollo.Tests
 
             _writerPorts = new List<int> {storageServer1, storageServer2, storageServer3, storageServer4};
 
-            var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
             var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(10),
                 TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
 
-            //netconfig, 
             _proxy = new TestGate(toconfig);
             _proxy.Module = new TestInjectionModule();
             _proxy.Build();
@@ -110,15 +107,18 @@ namespace Qoollo.Tests
             int distrthreads = 4, int countReplics = 2, string hash = "", int distrport = storageServer1, 
             int collectorport = storageServer1, int writerport = distrServer1, int proxyport = distrServer12, 
             int pdistrport = proxyServer, int timeAliveBeforeDeleteMls = 10000, 
-            int timeAliveAfterUpdateMls = 10000)
+            int timeAliveAfterUpdateMls = 10000, int ping = 200, int check = 2000)
         {
             using (var writer = new StreamWriter(filename, false))
             {
                 writer.WriteLine(
-                    $@"{{ {GetQueue()}, {GetAsync()}, {GetDistrtibutor(distrthreads, writerport, proxyport,
-                        timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls)}, {GetWriter(distrport,
-                            collectorport)}, {GetCommon(countReplics, hash)}, {GetProxy(pdistrport)},{
-                        GetCollector()} }}");
+                    $@"{{ {GetQueue()}, {GetAsync()}, {
+                            GetDistrtibutor(distrthreads, writerport, proxyport,
+                                timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls, ping, check)
+                        }, {
+                            GetWriter(distrport,
+                                collectorport)
+                        }, {GetCommon(countReplics, hash)}, {GetProxy(pdistrport)},{GetCollector()} }}");
             }
 
             UpdateConfigReader();
@@ -132,16 +132,18 @@ namespace Qoollo.Tests
         private string GetProxy(int distrport)
         {
             return "\n" +
-                   $@"""proxy"": {{ {GetNet("netdistributor", distrport)} }} ";
+                   $@"""proxy"": {{ {GetNet("netdistributor", distrport)}, {ProxyTimeouts()} }} ";
         }
 
         private string GetDistrtibutor(int distrthreads, int portwriter, int portproxy,
-            int timeAliveBeforeDeleteMls, int timeAliveAfterUpdateMls)
+            int timeAliveBeforeDeleteMls, int timeAliveAfterUpdateMls, int ping, int check)
         {
             return "\n" +
-                   $@"""distributor"": {{ {GetParam("countthreads", distrthreads)}, {
-                       GetNet("netwriter", portwriter)}, {GetNet("netproxy", portproxy)}, {
-                       GetDCache(timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls)} }} ";
+                   $@"""distributor"": {{ {GetParam("countthreads", distrthreads)}, {GetNet("netwriter", portwriter)}, {
+                           GetNet("netproxy", portproxy)
+                       }, {GetDCache(timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls)}, {
+                           DistributorTimeouts(ping, check)
+                       } }} ";
         }
 
         private string GetDCache(int timeAliveBeforeDeleteMls, int timeAliveAfterUpdateMls)
@@ -193,6 +195,20 @@ namespace Qoollo.Tests
         private string WriterTimeouts()
         {
             return $@"""timeouts"": {{ {GetTimeout("ServersPingMls", 100)} }}";
+        }
+
+        private string ProxyTimeouts()
+        {
+            return $@"""timeouts"": {{ {GetTimeout("ServersPingMls", 10000)}, {
+                    GetTimeout("DistributorUpdateInfoMls", 10000)
+                } }}";
+        }
+
+        private string DistributorTimeouts(int ping, int check)
+        {
+            return $@"""timeouts"": {{ {GetTimeout("ServersPingMls", ping)}, {
+                    GetTimeout("CheckRestoreMls", check)}, {GetTimeout("DistributorsPingMls", 10000)},{
+                GetTimeout("UpdateHashMapMls", 10000)} }}";
         }
 
         private string GetTimeout(string name, int value)
@@ -270,12 +286,10 @@ namespace Qoollo.Tests
             return net;
         }
 
-        internal DistributorModule DistributorDistributorModule(
-            DistributorNetModule net, int pingTo = 200, int asyncCheckTo = 2000)
+        internal DistributorModule DistributorDistributorModule(DistributorNetModule net)
         {
-            return new DistributorModule(_kernel, 
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(pingTo)),
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(asyncCheckTo)));
+            //int pingTo = 200, , int asyncCheckTo = 2000
+            return new DistributorModule(_kernel);
         }
 
         internal AsyncProxyCache AsyncProxyCache()
@@ -289,9 +303,7 @@ namespace Qoollo.Tests
         {
             AsyncProxyCache();
                         
-            return new ProxyDistributorModule(_kernel,
-                new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
-                new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
+            return new ProxyDistributorModule(_kernel);
         }
 
         internal CollectorModel CollectorModel()
@@ -303,10 +315,8 @@ namespace Qoollo.Tests
 
         internal TestGate TestGate(int syncTo = 60)
         {
-            //var netconfig = new NetConfiguration("localhost", proxyPort, "testService", 10);
             var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(syncTo),
                 TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
-            //netconfig, 
             return new TestGate(toconfig);
         }
 
@@ -316,9 +326,9 @@ namespace Qoollo.Tests
                     TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(10000));
         }
 
-        internal DistributorApi DistributorApi(DistributorConfiguration distrConf)
+        internal DistributorApi DistributorApi()
         {
-            return new DistributorApi(distrConf);
+            return new DistributorApi();
         }
 
         internal StorageConfiguration StorageConfiguration(string filename, int countReplics, 
@@ -350,16 +360,13 @@ namespace Qoollo.Tests
         {
             var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(cacheToSec));
             var pcc2 = new ProxyCacheConfiguration(TimeSpan.FromSeconds(asyncCacheToSec));
-            return new TestProxySystem(pcc, pcc2,
-               new AsyncTasksConfiguration(new TimeSpan()),
-               new AsyncTasksConfiguration(new TimeSpan()));
+            return new TestProxySystem(pcc, pcc2);
         }
 
-        internal DistributorSystem DistributorSystem(int toMls1 = 200, int toMls2 = 30000)
+        internal DistributorSystem DistributorSystem()
         {
-            return new DistributorSystem(
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls1)),
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls2)));
+            //int toMls1 = 200, int toMls2 = 30000
+            return new DistributorSystem();
         }
 
         internal WriterSystem WriterSystem()

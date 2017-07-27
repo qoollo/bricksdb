@@ -34,10 +34,8 @@ namespace Qoollo.Client.ProxyGate
 
             var proxyCacheConfiguration = new ProxyCacheConfiguration(proxyConfiguration.ChangeDistributorTimeoutSec);
             var proxyCacheConfiguration2 = new ProxyCacheConfiguration(proxyConfiguration.SyncOperationsTimeoutSec);
-            var async = new AsyncTasksConfiguration(proxyConfiguration.AsyncUpdateTimeout);
-            var ping = new AsyncTasksConfiguration(proxyConfiguration.AsyncPingTimeout);
 
-            _proxySystem = new ProxySystem( proxyCacheConfiguration, proxyCacheConfiguration2, async, ping);
+            _proxySystem = new ProxySystem( proxyCacheConfiguration, proxyCacheConfiguration2);
 
             _apis = new Dictionary<string, ProxyHandlerBase>();
         }

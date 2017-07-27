@@ -11,9 +11,8 @@ namespace Qoollo.Tests.TestProxy
     {
         public TestProxySystem(
             ProxyCacheConfiguration cacheConfiguration,
-            ProxyCacheConfiguration asyncCacheConfiguration,
-            AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing)
-            : base( cacheConfiguration, asyncCacheConfiguration, asyncGetData, asyncPing)
+            ProxyCacheConfiguration asyncCacheConfiguration)
+            : base( cacheConfiguration, asyncCacheConfiguration)
         {
         }
 

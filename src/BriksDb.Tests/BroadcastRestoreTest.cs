@@ -107,8 +107,6 @@ namespace Qoollo.Tests
                 Assert.Equal(0, mem.Remote);
                 Assert.Equal(0, mem2.Remote);
                 Assert.Equal(count, mem.Local + mem2.Local);
-                Assert.Equal(false, _writer1.Restore.IsNeedRestore);
-                Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
                 _distrTest.Dispose();
                 _writer1.Dispose();
@@ -198,9 +196,6 @@ namespace Qoollo.Tests
                 Assert.Equal(0, mem2.Remote);
                 Assert.Equal(0, mem3.Remote);
                 Assert.Equal(count, mem.Local + mem2.Local + mem3.Local);
-                Assert.Equal(false, _writer1.Restore.IsNeedRestore);
-                Assert.Equal(false, _writer2.Restore.IsNeedRestore);
-                Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
                 _distrTest.Dispose();
                 _writer1.Dispose();

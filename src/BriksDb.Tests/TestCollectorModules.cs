@@ -773,8 +773,7 @@ namespace Qoollo.Tests
 
                 var proxy = TestGate();
 
-                //, distrServer1, distrServer12
-                var distr = DistributorApi(DistributorConfiguration(filename, 1));
+                var distr = DistributorApi();
                 var storage = WriterApi(StorageConfiguration(filename, 1));
 
                 var async = new AsyncTaskModule(_kernel);
@@ -783,7 +782,7 @@ namespace Qoollo.Tests
                 var serversModel = new CollectorModel(_kernel);
                 serversModel.StartConfig();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
-                //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+
                 var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 

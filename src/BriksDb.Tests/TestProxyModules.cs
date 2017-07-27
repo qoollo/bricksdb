@@ -146,9 +146,7 @@ namespace Qoollo.Tests
             var net = ProxyNetModule();
             AsyncProxyCache();
 
-            var distr = new TestProxyDistributorModule(_kernel,
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)),
-                new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+            var distr = new TestProxyDistributorModule(_kernel);
             _kernel.Bind<IProxyDistributorModule>().ToConstant(distr);
 
             distr.Start();
@@ -318,10 +316,10 @@ namespace Qoollo.Tests
                 var receive3 = new ProxyNetReceiver(_kernel, new NetConfiguration(storageServer3));
                 receive3.Start();
 
-                CreateConfigFile(countReplics: replicsCount, hash: filename1);                
+                CreateConfigFile(countReplics: replicsCount, hash: filename1, ping: 30000, check: 30000);                
 
                 var dnet = DistributorNetModule();
-                var ddistributor = DistributorDistributorModule(dnet, 30000, 30000);
+                var ddistributor = DistributorDistributorModule(dnet);
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
 
                 dnet.Start();
@@ -346,9 +344,9 @@ namespace Qoollo.Tests
                 _kernel.Rebind<IGlobalQueue>().ToConstant(q1);
 
                 CreateConfigFile(countReplics: replicsCount, hash: filename2, writerport: distrServer2,
-                    proxyport: distrServer22);
+                    proxyport: distrServer22, ping: 30000, check: 30000);
                 var dnet2 = DistributorNetModule();
-                var ddistributor2 = DistributorDistributorModule(dnet2, 200000, 30000);
+                var ddistributor2 = DistributorDistributorModule(dnet2);
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor2);
                 dnet2.Start();
 

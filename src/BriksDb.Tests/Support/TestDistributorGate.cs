@@ -38,7 +38,7 @@ namespace Qoollo.Tests.Support
             return list.First(x => x.FieldType.FullName == typeof(TRet).ToString()).GetValue(obj) as TRet;
         }
 
-        public void Build(TimeSpan asyncCheck = default(TimeSpan), bool autoRestoreEnable = false, 
+        public void Build(bool autoRestoreEnable = false, 
             string configFile = Impl.Common.Support.Consts.ConfigFilename)
         {            
             var kernel = new StandardKernel(new TestInjectionModule());
@@ -49,17 +49,12 @@ namespace Qoollo.Tests.Support
             _q = new GlobalQueue(kernel);
             kernel.Bind<IGlobalQueue>().ToConstant(_q);
 
-            asyncCheck = asyncCheck == default(TimeSpan) ? TimeSpan.FromMinutes(5) : asyncCheck;
-
             _dnet = new DistributorNetModule(kernel);
             kernel.Bind<IDistributorNetModule>().ToConstant(_dnet);
 
-            Distributor = new DistributorModule(kernel, 
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
-                new AsyncTasksConfiguration(asyncCheck), autoRestoreEnable);
+            Distributor = new DistributorModule(kernel, autoRestoreEnable);
             kernel.Bind<IDistributorModule>().ToConstant(Distributor);
 
-            //TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)
             var cache = new DistributorTimeoutCache(new DistributorCacheConfiguration(200000, 200000));
             kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 

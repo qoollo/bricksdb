@@ -36,7 +36,7 @@ namespace Qoollo.Impl.Modules.Config
             Fill(WriterConfiguration, common);
 
             ProxyConfiguration = reader.LoadSection<ProxyConfiguration>();
-            Fill(ProxyConfiguration.NetDistributor, common);
+            Fill(ProxyConfiguration, common);
 
             CollectorConfiguration = reader.LoadSection<CollectorConfiguration>();
             Fill(CollectorConfiguration);
@@ -55,16 +55,27 @@ namespace Qoollo.Impl.Modules.Config
             Fill(writer.Timeouts.ServersPingMls);
         }
 
-        private void Fill(DistributorConfiguration writer, CommonConfiguration common)
+        private void Fill(DistributorConfiguration distributor, CommonConfiguration common)
         {
-            Fill(writer.NetProxy, common);
-            Fill(writer.NetWriter, common);
+            Fill(distributor.NetProxy, common);
+            Fill(distributor.NetWriter, common);
+            Fill(distributor.Timeouts.ServersPingMls);
+            Fill(distributor.Timeouts.CheckRestoreMls);
+            Fill(distributor.Timeouts.DistributorsPingMls);
+            Fill(distributor.Timeouts.UpdateHashMapMls);
         }
 
         private void Fill(CollectorConfiguration collector)
         {
             Fill(collector.Timeouts.ServersPingMls);
             Fill(collector.Timeouts.DistributorUpdateHashMls);
+        }
+
+        private void Fill(ProxyConfiguration proxy, CommonConfiguration common)
+        {
+            Fill(proxy.NetDistributor, common);
+            Fill(proxy.Timeouts.ServersPingMls);
+            Fill(proxy.Timeouts.DistributorUpdateInfoMls);
         }
 
         private void Fill(NetConfiguration config, CommonConfiguration common)

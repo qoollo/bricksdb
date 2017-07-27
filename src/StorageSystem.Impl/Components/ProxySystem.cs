@@ -22,24 +22,16 @@ namespace Qoollo.Impl.Components
     {
         private readonly ProxyCacheConfiguration _cacheConfiguration;
         private readonly ProxyCacheConfiguration _asyncCacheConfiguration;
-        private readonly AsyncTasksConfiguration _asyncGetData;
-        private readonly AsyncTasksConfiguration _asyncPing;
 
         public ProxySystem(
             ProxyCacheConfiguration cacheConfiguration,
-            ProxyCacheConfiguration asyncCacheConfiguration,
-            AsyncTasksConfiguration asyncGetData,
-            AsyncTasksConfiguration asyncPing)
+            ProxyCacheConfiguration asyncCacheConfiguration)
         {
             Contract.Requires(cacheConfiguration != null);
             Contract.Requires(asyncCacheConfiguration != null);
-            Contract.Requires(asyncGetData != null);
-            Contract.Requires(asyncPing != null);
 
             _cacheConfiguration = cacheConfiguration;
             _asyncCacheConfiguration = asyncCacheConfiguration;
-            _asyncGetData = asyncGetData;
-            _asyncPing = asyncPing;
         }
 
         public Func<string, bool, IHashCalculater, IStorageInner> CreateApi { get; private set; }
@@ -61,7 +53,7 @@ namespace Qoollo.Impl.Components
             var net = new ProxyNetModule(kernel);
             kernel.Bind<IProxyNetModule>().ToConstant(net);
 
-            var distributor = new ProxyDistributorModule(kernel, _asyncGetData, _asyncPing);
+            var distributor = new ProxyDistributorModule(kernel);
             kernel.Bind<IProxyDistributorModule>().ToConstant(distributor);
 
             var cache = new ProxyCache(_cacheConfiguration.TimeAliveSec);

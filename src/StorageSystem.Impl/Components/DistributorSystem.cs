@@ -1,8 +1,6 @@
-﻿using System.Diagnostics.Contracts;
-using Ninject;
+﻿using Ninject;
 using Ninject.Modules;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
@@ -18,18 +16,6 @@ namespace Qoollo.Impl.Components
 {
     internal class DistributorSystem : ModuleSystemBase
     {
-        private readonly AsyncTasksConfiguration _pingConfig;
-        private readonly AsyncTasksConfiguration _checkConfig;
-
-        public DistributorSystem(
-            AsyncTasksConfiguration pingConfig,
-            AsyncTasksConfiguration checkConfig)
-        {
-            Contract.Requires(pingConfig != null);
-            Contract.Requires(checkConfig != null);
-            _pingConfig = pingConfig;
-            _checkConfig = checkConfig;
-        }
 
         public DistributorModule Distributor { get; private set; }
 
@@ -55,7 +41,7 @@ namespace Qoollo.Impl.Components
             var net = CreateNetModule(Kernel);
             Kernel.Bind<IDistributorNetModule>().ToConstant(net);
 
-            var distributor = new DistributorModule(Kernel, _pingConfig, _checkConfig);
+            var distributor = new DistributorModule(Kernel);
             Kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             Distributor = distributor;

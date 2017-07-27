@@ -11,7 +11,6 @@ using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
@@ -26,30 +25,26 @@ namespace Qoollo.Impl.Proxy
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
         private readonly DistributorSystemModel _distributorSystemModel;
-        private readonly AsyncTasksConfiguration _asynGetData;
-        private readonly AsyncTasksConfiguration _asynPing;
         private readonly AsyncTaskModule _async;
         private ServerId _local;
         private IProxyNetModule _net;
         private IGlobalQueue _queue;
         private IAsyncProxyCache _asyncProxyCache;
+        private IProxyConfiguration _config;
 
         public ServerId ProxyServerId => _local;
 
-        public ProxyDistributorModule(StandardKernel kernel,
-            AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing)
+        public ProxyDistributorModule(StandardKernel kernel)
             : base(kernel)
         {
-            _asynPing = asyncPing;
-            _asynGetData = asyncGetData;
             _distributorSystemModel = new DistributorSystemModel();
             _async = new AsyncTaskModule(kernel);
         }
 
         public override void Start()
         {
-            var config = Kernel.Get<IProxyConfiguration>();
-            _local = config.NetDistributor.ServerId;
+            _config = Kernel.Get<IProxyConfiguration>();
+            _local = _config.NetDistributor.ServerId;
 
             _queue = Kernel.Get<IGlobalQueue>();
             _asyncProxyCache = Kernel.Get<IAsyncProxyCache>();
@@ -124,13 +119,13 @@ namespace Qoollo.Impl.Proxy
         private void StartAsyncTasks()
         {
             _async.AddAsyncTask(
-                new AsyncDataPeriod(_asynGetData.TimeoutPeriod, TakeInfoFromAllDistributor, 
-                    AsyncTasksNames.GetInfo, -1), false);
+                new AsyncDataPeriod(_config.Timeouts.DistributorUpdateInfoMls.PeriodTimeSpan,
+                    TakeInfoFromAllDistributor, AsyncTasksNames.GetInfo, -1), false);
 
             _async.AddAsyncTask(
-                new AsyncDataPeriod(_asynPing.TimeoutPeriod, PingProcess, AsyncTasksNames.AsyncPing, -1),
-                false);
-            
+                new AsyncDataPeriod(_config.Timeouts.ServersPingMls.PeriodTimeSpan, PingProcess,
+                    AsyncTasksNames.AsyncPing, -1), false);
+
         }
 
         private void PingProcess(AsyncData data)

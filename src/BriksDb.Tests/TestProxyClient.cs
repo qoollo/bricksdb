@@ -36,10 +36,9 @@ namespace Qoollo.Tests
             using (new FileCleaner(Impl.Common.Support.Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
-                CreateConfigFile(countReplics: 1, hash: filename);
+                CreateConfigFile(countReplics: 1, hash: filename, ping: 10000, check: 10000);
 
-                //DistributorCacheConfiguration(10000, 10000000),
-                var distr = DistributorSystem(10000, 10000);                
+                var distr = DistributorSystem();
 
                 distr.Build(new TestInjectionModule());
                 distr.Start();
@@ -97,10 +96,9 @@ namespace Qoollo.Tests
             using (new FileCleaner(Impl.Common.Support.Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
-                CreateConfigFile(countReplics: 1, hash: filename);
+                CreateConfigFile(countReplics: 1, hash: filename, ping: 10000, check: 10000);
 
-                //DistributorCacheConfiguration(10000, 10000000),
-                var distr = DistributorSystem(10000, 10000);
+                var distr = DistributorSystem();
 
                 distr.Build(new TestInjectionModule());
                 distr.Start();

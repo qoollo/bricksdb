@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
-using Qoollo.Client.Configuration;
 using Qoollo.Impl.Components;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Client.DistributorGate
@@ -18,14 +15,9 @@ namespace Qoollo.Client.DistributorGate
 
         internal InjectionModule Module = null;
 
-        public DistributorApi(DistributorConfiguration distributorConfiguration)
+        public DistributorApi()
         {
-            Contract.Requires(distributorConfiguration != null);
-
-            var asyncPing = new AsyncTasksConfiguration(distributorConfiguration.PingPeriod);
-            var asyncCheck = new AsyncTasksConfiguration(distributorConfiguration.CheckPeriod);
-
-            _distributorSystem = new DistributorSystem(asyncPing, asyncCheck);
+            _distributorSystem = new DistributorSystem();
 
             _handler = new DistributorHandler(_distributorSystem);
         }

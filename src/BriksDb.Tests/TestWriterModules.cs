@@ -351,12 +351,11 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 2);
                 CreateConfigFile(countReplics: 1, hash: filename);
                 CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
-                    distrport: storageServer2);
+                    distrport: storageServer2, check: 30000);
 
                 #region hell
 
-                //DistributorCacheConfiguration(20000, 20000),
-                var distributor = DistributorSystem(30000);
+                var distributor = DistributorSystem();
 
                 _writer1.Build(storageServer1);
                 _writer2.Build(storageServer2, configFile: config_file2);

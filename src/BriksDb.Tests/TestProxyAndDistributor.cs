@@ -113,14 +113,15 @@ namespace Qoollo.Tests
                 writer.Save();
 
                 CreateConfigFile(hash: filename1, filename: config_file1, 
-                    timeAliveBeforeDeleteMls: 400, timeAliveAfterUpdateMls: 1000);
+                    timeAliveBeforeDeleteMls: 400, timeAliveAfterUpdateMls: 1000, ping: 30000, 
+                    check: 3000);
                 CreateConfigFile(hash: filename2, filename: config_file2,
                     proxyport: distrServer22, writerport:distrServer2,
-                    timeAliveBeforeDeleteMls: 400, timeAliveAfterUpdateMls: 1000);
+                    timeAliveBeforeDeleteMls: 400, timeAliveAfterUpdateMls: 1000, ping: 30000, 
+                    check: 30000);
 
-                var distr = DistributorSystem(30000, 30000);
-
-                var distr2 = DistributorSystem(30000, 30000);
+                var distr = DistributorSystem();
+                var distr2 = DistributorSystem();
 
                 try
                 {
@@ -172,9 +173,9 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename,
-                    timeAliveBeforeDeleteMls: 600, timeAliveAfterUpdateMls: 1000);
+                    timeAliveBeforeDeleteMls: 600, timeAliveAfterUpdateMls: 1000, check: 30000);
 
-                var distr = DistributorSystem(30000);
+                var distr = DistributorSystem();
 
                 distr.Build(new TestInjectionModule());
 
@@ -210,9 +211,9 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename,
-                    timeAliveBeforeDeleteMls: 600, timeAliveAfterUpdateMls: 1000);
+                    timeAliveBeforeDeleteMls: 600, timeAliveAfterUpdateMls: 1000, check: 30000);
 
-                var distr = DistributorSystem(30000);
+                var distr = DistributorSystem();
 
                 var storage = WriterSystem();
                 storage.Build(new TestInjectionModule());
@@ -261,9 +262,10 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 2);
                 CreateConfigFile(countReplics: 1, hash: filename);
                 CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
-                    distrport: storageServer2, timeAliveBeforeDeleteMls: 600, timeAliveAfterUpdateMls: 1000);
+                    distrport: storageServer2, timeAliveBeforeDeleteMls: 600, timeAliveAfterUpdateMls: 1000, 
+                    check: 3000);
 
-                var distr = DistributorSystem(30000);
+                var distr = DistributorSystem();
 
                 var storage1 = WriterSystem();
                 var storage2 = WriterSystem();
@@ -316,10 +318,10 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 2);
                 CreateConfigFile(hash: filename);
-                CreateConfigFile(hash: filename, filename: config_file2, distrport: storageServer2);
+                CreateConfigFile(hash: filename, filename: config_file2, distrport: storageServer2, 
+                    check: 3000);
 
-                //DistributorCacheConfiguration(600000, 10000000),
-                var distr = DistributorSystem(30000);
+                var distr = DistributorSystem();
 
                 var storage1 = WriterSystem();
                 var storage2 = WriterSystem();
@@ -373,9 +375,9 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 2);
                 CreateConfigFile(hash: filename);
                 CreateConfigFile(hash: filename, filename: config_file2, distrport: storageServer2,
-                    timeAliveBeforeDeleteMls: 600, timeAliveAfterUpdateMls: 1000);
+                    timeAliveBeforeDeleteMls: 600, timeAliveAfterUpdateMls: 1000, check: 30000);
 
-                var distr = DistributorSystem(30000);
+                var distr = DistributorSystem();
 
                 var storage1 = WriterSystem();
                 var storage2 = WriterSystem();
@@ -419,7 +421,7 @@ namespace Qoollo.Tests
                 CreateConfigFile(hash: filename, filename: config_file2, distrport: storageServer2,
                     timeAliveBeforeDeleteMls: 600, timeAliveAfterUpdateMls: 1000);
 
-                var distr = DistributorSystem(120, 120);
+                var distr = DistributorSystem();
 
                 var storage1 = WriterSystem();
                 var storage2 = WriterSystem();

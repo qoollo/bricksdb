@@ -7,6 +7,7 @@
         NetConfiguration NetProxy { get; }
         NetConfiguration NetWriter { get; }
         DistributorCacheConfiguration Cache { get; }
+        Distributor.TimeoutsConfiguration Timeouts { get; }
     }
 
     public class DistributorConfiguration : IDistributorConfiguration
@@ -15,6 +16,7 @@
         public NetConfiguration NetProxy { get; protected set; }
         public NetConfiguration NetWriter { get; protected set; }
         public DistributorCacheConfiguration Cache { get; protected set; }
+        public Distributor.TimeoutsConfiguration Timeouts { get; protected set; }
     }
 
     public class DistributorCacheConfiguration
@@ -30,6 +32,17 @@
 
         public DistributorCacheConfiguration()
         {
+        }
+    }
+
+    namespace Distributor
+    {
+        public class TimeoutsConfiguration
+        {
+            public TimeoutConfiguration ServersPingMls { get; protected set; }
+            public TimeoutConfiguration DistributorsPingMls { get; protected set; }
+            public TimeoutConfiguration CheckRestoreMls { get; protected set; }
+            public TimeoutConfiguration UpdateHashMapMls { get; protected set; }
         }
     }
 }

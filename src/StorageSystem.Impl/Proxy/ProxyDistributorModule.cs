@@ -29,7 +29,7 @@ namespace Qoollo.Impl.Proxy
         private ServerId _local;
         private IProxyNetModule _net;
         private IGlobalQueue _queue;
-        private IAsyncProxyCache _asyncProxyCache;
+        private IAsyncProxyCache _transactionCache;
         private IProxyConfiguration _config;
 
         public ServerId ProxyServerId => _local;
@@ -47,7 +47,7 @@ namespace Qoollo.Impl.Proxy
             _local = _config.NetDistributor.ServerId;
 
             _queue = Kernel.Get<IGlobalQueue>();
-            _asyncProxyCache = Kernel.Get<IAsyncProxyCache>();
+            _transactionCache = Kernel.Get<IAsyncProxyCache>();
             _net = Kernel.Get<IProxyNetModule>();
 
             _async.Start();
@@ -86,10 +86,10 @@ namespace Qoollo.Impl.Proxy
 
         private void CompleteOperation(Transaction transaction)
         {
-            var data = _asyncProxyCache.Get(transaction.CacheKey);
+            var data = _transactionCache.Get(transaction.CacheKey);
             if (data != null)
             {
-                _asyncProxyCache.Remove(transaction.CacheKey);
+                _transactionCache.Remove(transaction.CacheKey);
                 data.UserSupportCallback.SetResult(transaction.UserTransaction);
             }
             else
@@ -100,10 +100,10 @@ namespace Qoollo.Impl.Proxy
 
         private void CompleteOperation(InnerData obj)
         {
-            var data = _asyncProxyCache.Get(obj.Transaction.CacheKey);
+            var data = _transactionCache.Get(obj.Transaction.CacheKey);
             if (data != null)
             {
-                _asyncProxyCache.Remove(obj.Transaction.CacheKey);
+                _transactionCache.Remove(obj.Transaction.CacheKey);
                 data.InnerSupportCallback.SetResult(obj);
             }
             else

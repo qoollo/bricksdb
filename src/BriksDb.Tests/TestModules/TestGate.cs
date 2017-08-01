@@ -1,5 +1,4 @@
-﻿using Qoollo.Client.Configuration;
-using Qoollo.Client.ProxyGate;
+﻿using Qoollo.Client.ProxyGate;
 using Qoollo.Tests.Support;
 
 namespace Qoollo.Tests.TestModules
@@ -7,11 +6,6 @@ namespace Qoollo.Tests.TestModules
     public class TestGate : ProxyApi
     {
         //private IStorage<int, DataWithBuffer> _data;
-
-        public TestGate(ProxyConfiguration proxyConfiguration)
-            : base(proxyConfiguration)
-        {
-        }
 
         //public IStorage<int, DataWithBuffer> Test
         //{

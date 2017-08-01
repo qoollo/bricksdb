@@ -1,6 +1,7 @@
 ﻿using System;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Support;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Cache;
 using Qoollo.Impl.Proxy.Interfaces;
 
@@ -8,7 +9,8 @@ namespace Qoollo.Impl.Proxy.Caches
 {
     internal class AsyncProxyCache:CacheModule<Transaction>, IAsyncProxyCache
     {
-        public AsyncProxyCache(TimeSpan timeout) : base(timeout)
+        public AsyncProxyCache(ProxyCacheConfiguration proxyConfigurationCache) 
+            : base(TimeSpan.FromMilliseconds(proxyConfigurationCache.Transaction))
         {
         }
 

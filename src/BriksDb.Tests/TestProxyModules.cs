@@ -10,7 +10,6 @@ using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
@@ -116,7 +115,7 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncProxyCache_AddToCache_WaitRemovedCallback_ExpiredData()
         {
-            var cache = new AsyncProxyCache(TimeSpan.FromMilliseconds(200));
+            var cache = new AsyncProxyCache(new ProxyCacheConfiguration(200, 200));
             var ev = new InnerData(new Transaction("123", ""))
             {
                 Transaction = { UserSupportCallback = new TaskCompletionSource<UserTransaction>() }
@@ -228,8 +227,8 @@ namespace Qoollo.Tests
 
             var distributor = ProxyDistributorModule(net);
             _kernel.Bind<IProxyDistributorModule>().ToConstant(distributor);
-
-            var cache = new ProxyCache(TimeSpan.FromSeconds(20));
+            //TimeSpan.FromSeconds(20)
+            var cache = new ProxyCache(new ProxyCacheConfiguration(10, 20000));
             _kernel.Bind<IProxyCache>().ToConstant(cache);
 
             var main = new ProxyMainLogicModule(_kernel);

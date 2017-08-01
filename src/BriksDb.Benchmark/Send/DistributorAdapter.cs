@@ -2,7 +2,6 @@
 using System.Diagnostics.Contracts;
 using Qoollo.Benchmark.Commands;
 using Qoollo.Benchmark.Send.Interfaces;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.Request;
 
 namespace Qoollo.Benchmark.Send
@@ -14,7 +13,7 @@ namespace Qoollo.Benchmark.Send
             Contract.Requires(command != null);
             _command = command;
             //, new NetConfiguration(_command.Localhost, command.Localport)
-            _proxy = new ProxyGate(command.TableName, new ProxyConfiguration());
+            _proxy = new ProxyGate(command.TableName);
             _proxy.Build();
         }
 

@@ -25,7 +25,7 @@ namespace Qoollo.Tests
 
         public TestWriterModules():base()
         {
-            _proxyTest = TestProxySystem(20, 40);
+            _proxyTest = TestProxySystem();
             _proxyTest.Build(new TestInjectionModule());
 
             _writer1 = new TestWriterGate();

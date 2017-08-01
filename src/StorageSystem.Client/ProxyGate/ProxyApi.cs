@@ -1,16 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.ProxyGate.Handlers;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Exceptions;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.TestSupport;
-using Consts = Qoollo.Client.Support.Consts;
 
 namespace Qoollo.Client.ProxyGate
 {
@@ -24,18 +19,14 @@ namespace Qoollo.Client.ProxyGate
 
         internal InjectionModule Module = null;
 
-        protected ProxyApi(ProxyConfiguration proxyConfiguration)
+        protected ProxyApi()
         {
-            Contract.Requires(proxyConfiguration != null);
 
             _isStarted = false;
             _isBuild = false;
             _isDispose = false;
 
-            var proxyCacheConfiguration = new ProxyCacheConfiguration(proxyConfiguration.ChangeDistributorTimeoutSec);
-            var proxyCacheConfiguration2 = new ProxyCacheConfiguration(proxyConfiguration.SyncOperationsTimeoutSec);
-
-            _proxySystem = new ProxySystem( proxyCacheConfiguration, proxyCacheConfiguration2);
+            _proxySystem = new ProxySystem();
 
             _apis = new Dictionary<string, ProxyHandlerBase>();
         }

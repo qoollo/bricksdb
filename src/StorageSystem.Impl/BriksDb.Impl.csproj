@@ -279,7 +279,6 @@
     <Compile Include="Common\RemoteResult.cs" />
     <Compile Include="Common\NetResults\SuccessResult.cs" />
     <Compile Include="Modules\ModuleSystemBase.cs" />
-    <Compile Include="Configurations\ProxyCacheConfiguration.cs" />
     <Compile Include="Configurations\RestoreModuleConfiguration.cs" />
     <Compile Include="Common\NetResults\System\Writer\RestoreCommand.cs" />
     <Compile Include="Common\NetResults\System\Writer\RestoreCommandWithData.cs" />

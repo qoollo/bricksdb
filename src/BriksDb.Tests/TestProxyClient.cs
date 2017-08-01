@@ -12,7 +12,7 @@ namespace Qoollo.Tests
     {
         public TestProxyClient():base()
         {
-            _proxy = TestGate(proxyServer);
+            _proxy = TestGate();
 
             CreateConfigFile(countReplics: 1);
 

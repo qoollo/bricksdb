@@ -17,11 +17,24 @@
         public NetConfiguration NetDistributor { get; protected set; }
         public NetConfiguration NetCollector { get; protected set; }
         public TimeoutsConfiguration Timeouts { get; protected set; }
+        public RestoreConfiguration Restore { get; protected set; }
     }
 
     public class TimeoutsConfiguration
     {
         public TimeoutConfiguration ServersPingMls { get; protected set; }
 
+    }
+
+    public class RestoreConfiguration
+    {
+        public TimeoutDeleteConfiguration TimeoutDelete { get; protected set; }
+    }
+
+    public class TimeoutDeleteConfiguration
+    {
+        public int PeriodRetryMls { get; protected set; }
+        public bool ForceStart { get; protected set; }
+        public int DeleteTimeoutMls { get; protected set; }
     }
 }

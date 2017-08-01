@@ -21,7 +21,7 @@ namespace Qoollo.Tests
 
         public TestProxyAndDistributor():base()
         {
-            _proxySystem = TestProxySystem(20, 40);
+            _proxySystem = TestProxySystem();
             _proxySystem.Build(new TestInjectionModule());
         }
 
@@ -35,7 +35,7 @@ namespace Qoollo.Tests
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename, timeAliveBeforeDeleteMls: 600,
                     timeAliveAfterUpdateMls: 1000);
-                //DistributorCacheConfiguration(600, 1000)
+
                 var distr = DistributorSystem();
 
                 try

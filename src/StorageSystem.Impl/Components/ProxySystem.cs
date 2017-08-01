@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
 using Ninject;
 using Ninject.Modules;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Queue;
@@ -20,20 +18,6 @@ namespace Qoollo.Impl.Components
 {
     internal class ProxySystem : ModuleSystemBase
     {
-        private readonly ProxyCacheConfiguration _cacheConfiguration;
-        private readonly ProxyCacheConfiguration _asyncCacheConfiguration;
-
-        public ProxySystem(
-            ProxyCacheConfiguration cacheConfiguration,
-            ProxyCacheConfiguration asyncCacheConfiguration)
-        {
-            Contract.Requires(cacheConfiguration != null);
-            Contract.Requires(asyncCacheConfiguration != null);
-
-            _cacheConfiguration = cacheConfiguration;
-            _asyncCacheConfiguration = asyncCacheConfiguration;
-        }
-
         public Func<string, bool, IHashCalculater, IStorageInner> CreateApi { get; private set; }
 
         public override void Build(NinjectModule module = null, string configFile = Consts.ConfigFilename)
@@ -47,7 +31,7 @@ namespace Qoollo.Impl.Components
             var q = new GlobalQueue(kernel);
             kernel.Bind<IGlobalQueue>().ToConstant(q);
 
-            var asyncCache = new AsyncProxyCache(_asyncCacheConfiguration.TimeAliveSec);
+            var asyncCache = new AsyncProxyCache(config.ProxyConfiguration.Cache);
             kernel.Bind<IAsyncProxyCache>().ToConstant(asyncCache);
 
             var net = new ProxyNetModule(kernel);
@@ -56,7 +40,7 @@ namespace Qoollo.Impl.Components
             var distributor = new ProxyDistributorModule(kernel);
             kernel.Bind<IProxyDistributorModule>().ToConstant(distributor);
 
-            var cache = new ProxyCache(_cacheConfiguration.TimeAliveSec);
+            var cache = new ProxyCache(config.ProxyConfiguration.Cache);
             kernel.Bind<IProxyCache>().ToConstant(cache);
 
             var main = new ProxyMainLogicModule(kernel);

@@ -1,8 +1,6 @@
 ﻿using System;
 using BricksDb.RedisInterface.BriksCommunication;
 using BricksDb.RedisInterface.RedisOperations;
-using Qoollo.Client.Configuration;
-using Qoollo.Client.Support;
 
 namespace BricksDb.RedisInterface.Server
 {
@@ -13,8 +11,8 @@ namespace BricksDb.RedisInterface.Server
         public RedisToBriks()
         {
             //new NetConfiguration(ConfigurationHelper.Instance.Localhost, 8000, Consts.WcfServiceName),
-            _redisGate = new RedisGate(
-                    new ProxyConfiguration(Consts.ChangeDistributorTimeoutSec));
+            //new ProxyConfiguration(Consts.ChangeDistributorTimeoutSec)
+            _redisGate = new RedisGate();
         }
 
         protected override void InnerBuild(RedisMessageProcessor processor)

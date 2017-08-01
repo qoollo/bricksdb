@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.Contracts;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.ProxyGate;
 
 namespace Qoollo.Benchmark.Send
@@ -8,8 +7,7 @@ namespace Qoollo.Benchmark.Send
     {
         public IStorage<long, string> Api { get { return _api; } }
         
-        public ProxyGate(string tableName, ProxyConfiguration proxyConfiguration)
-            : base(proxyConfiguration)
+        public ProxyGate(string tableName)
         {
             Contract.Requires(!string.IsNullOrEmpty(tableName));
             _tableName = tableName;

@@ -427,7 +427,8 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, isForceStart: true,
+                    deleteTimeoutMls: 1, periodRetryMls: 60);
 
                 var factory = new TestInMemoryDbFactory(_kernel);
                 var storage1 = WriterApi(StorageConfiguration(filename, 1, 200, 1, 60, true));

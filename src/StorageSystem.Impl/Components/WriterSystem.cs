@@ -21,20 +21,17 @@ namespace Qoollo.Impl.Components
     {
         private readonly RestoreModuleConfiguration _transferRestoreConfiguration;
         private readonly RestoreModuleConfiguration _initiatorRestoreConfiguration;
-        private readonly RestoreModuleConfiguration _timeoutRestoreConfiguration;
         private readonly bool _isNeedRestore;        
 
         public WriterSystem(
             RestoreModuleConfiguration transferRestoreConfiguration,
             RestoreModuleConfiguration initiatorRestoreConfiguration, 
-            RestoreModuleConfiguration timeoutRestoreConfiguration,            
             bool isNeedRestore = false)
         {
             Contract.Requires(transferRestoreConfiguration != null);
             Contract.Requires(initiatorRestoreConfiguration != null);
 
             _initiatorRestoreConfiguration = initiatorRestoreConfiguration;
-            _timeoutRestoreConfiguration = timeoutRestoreConfiguration;
             _isNeedRestore = isNeedRestore;
             _transferRestoreConfiguration = transferRestoreConfiguration;
         }
@@ -67,7 +64,7 @@ namespace Qoollo.Impl.Components
             kernel.Bind<IWriterModel>().ToConstant(model);
 
             var restore = new AsyncDbWorkModule(kernel, _initiatorRestoreConfiguration,
-                _transferRestoreConfiguration, _timeoutRestoreConfiguration, _isNeedRestore);
+                _transferRestoreConfiguration, _isNeedRestore);
             kernel.Bind<IAsyncDbWorkModule>().ToConstant(restore);
 
             var distributor = new DistributorModule(kernel);

@@ -8,6 +8,7 @@
         NetConfiguration NetDistributor { get; }
         NetConfiguration NetCollector { get; }
         TimeoutsConfiguration Timeouts { get; }
+        RestoreConfiguration Restore { get; }
     }
 
     public class WriterConfiguration : IWriterConfiguration

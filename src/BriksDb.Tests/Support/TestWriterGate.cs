@@ -59,8 +59,7 @@ namespace Qoollo.Tests.Support
 
             Restore = new AsyncDbWorkModule(_kernel, 
                 new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(300)),
-                new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(100)),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
+                new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(100)));
             _kernel.Bind<IAsyncDbWorkModule>().ToConstant(Restore);
 
             Distributor = new DistributorModule(_kernel);

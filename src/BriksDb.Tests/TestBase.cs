@@ -104,7 +104,8 @@ namespace Qoollo.Tests
             int collectorport = storageServer1, int writerport = distrServer1, int proxyport = distrServer12, 
             int pdistrport = proxyServer, int timeAliveBeforeDeleteMls = 10000, 
             int timeAliveAfterUpdateMls = 10000, int ping = 200, int check = 2000,
-            int transaction= 10000, int support = 10000)
+            int transaction= 10000, int support = 10000,
+            bool isForceStart = false, int periodRetryMls = 100000, int deleteTimeoutMls= 100000)
         {
             using (var writer = new StreamWriter(filename, false))
             {
@@ -112,9 +113,9 @@ namespace Qoollo.Tests
                     $@"{{ {GetQueue()}, {GetAsync()}, {
                             GetDistrtibutor(distrthreads, writerport, proxyport,
                                 timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls, ping, check)
-                        }, {GetWriter(distrport, collectorport)}, {GetCommon(countReplics, hash)}, {
-                            GetProxy(pdistrport, transaction, support)
-                        },{GetCollector()} }}");
+                        }, {GetWriter(distrport, collectorport, isForceStart, periodRetryMls, deleteTimeoutMls)}, {
+                            GetCommon(countReplics, hash)
+                        }, {GetProxy(pdistrport, transaction, support)},{GetCollector()} }}");
             }
 
             UpdateConfigReader();
@@ -175,24 +176,28 @@ namespace Qoollo.Tests
                    $@"""connectiontimeout"": {{ {GetParam("sendtimeoutmls", 1000)}, {GetParam("opentimeoutmls", 100)} }} ";
         }
 
-        private string GetWriter(int distrport, int collectorport)
+        private string GetWriter(int distrport, int collectorport, bool isForceStart, int periodRetryMls, int deleteTimeoutMls)
         {
             return
-                $@"""writer"": {{ {GetParam("packagesizerestore", 1000)}, {GetParam("packagesizebroadcast", 1000)
-                    }, {GetParam("packagesizetimeout", 1000)}, {GetNet("netdistributor", distrport)}, {
-                    GetNet("netcollector", collectorport)}, {WriterTimeouts()}}} ";
+                $@"""writer"": {{ {GetParam("packagesizerestore", 1000)}, {GetParam("packagesizebroadcast", 1000)}, {
+                        GetParam("packagesizetimeout", 1000)
+                    }, {GetNet("netdistributor", distrport)}, {GetNet("netcollector", collectorport)}, {
+                        WriterTimeouts()
+                    }, {
+                        GetRestore(isForceStart, periodRetryMls, deleteTimeoutMls)
+                    }}} ";
         }
 
-        private string GetRestore()
+        private string GetRestore(bool isForceStart, int periodRetryMls, int deleteTimeoutMls)
         {
-            return $@"""restore"": {{ {GetTimeout()} }} ";
+            return $@"""restore"": {{ {GetTimeout(isForceStart, periodRetryMls, deleteTimeoutMls)} }} ";
         }
 
-        private string GetTimeout()
+        private string GetTimeout(bool isForceStart, int periodRetryMls, int deleteTimeoutMls)
         {
-            return $@"""timeoutdelete"": {{ {GetParam("PeriodRetryMls", 1000)}, {GetParam("ForceStart", false)}, {
-                    GetParam("DeleteTimeoutMls", 10000000)
-                } }} ";
+            return $@"""timeoutdelete"": {{ {GetParam("PeriodRetryMls", periodRetryMls)}, {
+                    GetParam("ForceStart", isForceStart)
+                }, {GetParam("DeleteTimeoutMls", deleteTimeoutMls)} }} ";
         }
 
         private string GetCollector()
@@ -267,6 +272,8 @@ namespace Qoollo.Tests
             var strValue = value.ToString();
             if (value is string)
                 strValue = $@"""{strValue}""";
+            if (value is bool)
+                strValue = strValue.ToLower();
             return $@"""{name}"":{strValue}";
         }
 
@@ -384,8 +391,7 @@ namespace Qoollo.Tests
         {
             return new WriterSystem(
                 new RestoreModuleConfiguration(10, new TimeSpan()),
-                new RestoreModuleConfiguration(10, new TimeSpan()),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
+                new RestoreModuleConfiguration(10, new TimeSpan()));
         }
 
         internal GlobalQueue GetBindedQueue(string name = "")

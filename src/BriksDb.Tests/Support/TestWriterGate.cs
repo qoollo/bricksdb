@@ -1,7 +1,6 @@
 ﻿using System;
 using Ninject;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Interfaces;
@@ -56,8 +55,7 @@ namespace Qoollo.Tests.Support
 
             WriterModel = new WriterModel(_kernel, local);
             _kernel.Bind<IWriterModel>().ToConstant(WriterModel);
-            //new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(100))
-            //new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(300))
+
             Restore = new AsyncDbWorkModule(_kernel);
             _kernel.Bind<IAsyncDbWorkModule>().ToConstant(Restore);
 

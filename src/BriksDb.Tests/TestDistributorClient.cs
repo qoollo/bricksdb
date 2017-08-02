@@ -23,7 +23,7 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 1);
                 CreateConfigFile(countReplics: 1, hash: filename);
-                //600
+                
                 var proxy = TestGate();
                 var distr = DistributorApi();
                 var storage = WriterApi();

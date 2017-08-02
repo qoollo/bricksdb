@@ -227,7 +227,7 @@ namespace Qoollo.Tests
 
             var distributor = ProxyDistributorModule(net);
             _kernel.Bind<IProxyDistributorModule>().ToConstant(distributor);
-            //TimeSpan.FromSeconds(20)
+            
             var cache = new ProxyCache(new ProxyCacheConfiguration(10, 20000));
             _kernel.Bind<IProxyCache>().ToConstant(cache);
 

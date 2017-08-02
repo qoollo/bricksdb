@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Ninject;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Writer.Db;
 using Qoollo.Tests.Support;

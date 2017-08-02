@@ -13,9 +13,7 @@ using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Collector.Tasks;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Impl.Sql.Internal;
@@ -39,7 +37,7 @@ namespace Qoollo.Tests
             _parser = new TestIntParser();
             _parser.SetCommandsHandler(new UserCommandsHandler
                 <TestCommand, Type, TestCommand, int, int, TestDbReader>(
-                new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
+                    new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
             _back = new BackgroundModule(_kernel);
             _kernel.Bind<IBackgroundModule>().ToConstant(_back);
@@ -51,11 +49,11 @@ namespace Qoollo.Tests
         public void SingleServerSearchTask_GetData_CheckData()
         {
             var task = new SingleServerSearchTask(new ServerId("", 0), "",
-                new FieldDescription("", typeof (int)), "");
+                new FieldDescription("", typeof(int)), "");
             var page = new List<SearchData>();
 
             const int count = 5;
-            for (int i = 0; i < count*2; i++)
+            for (int i = 0; i < count * 2; i++)
             {
                 page.Add(new SearchData(null, i));
             }
@@ -68,15 +66,15 @@ namespace Qoollo.Tests
             }
             task.AddPage(page);
 
-            for (int i = count; i < count*2; i++)
+            for (int i = count; i < count * 2; i++)
             {
                 Assert.Equal(i, task.GetData().Key);
                 task.IncrementPosition();
             }
 
-            for (int i = count*2; i < count*4; i++)
+            for (int i = count * 2; i < count * 4; i++)
             {
-                Assert.Equal(i - count*2, task.GetData().Key);
+                Assert.Equal(i - count * 2, task.GetData().Key);
                 task.IncrementPosition();
             }
         }
@@ -131,7 +129,7 @@ namespace Qoollo.Tests
             var background = new BackgroundModule(_kernel);
             background.Start();
 
-            var search = new TestSelectTask("", new List<ServerId>(), "", new FieldDescription("", typeof (int)));
+            var search = new TestSelectTask("", new List<ServerId>(), "", new FieldDescription("", typeof(int)));
 
             background.Run(search,
                 () => search.BackgroundLoadInner(() => SystemSearchStateInner.AllDataAvailable, null, null));
@@ -223,7 +221,7 @@ namespace Qoollo.Tests
                 #endregion
 
                 var task = new OrderSelectTask(new List<ServerId> {server1, server2, server3},
-                    new FieldDescription("Id", typeof (int)), new FieldDescription("Id", typeof (int)), "asc", -1, 5,
+                    new FieldDescription("Id", typeof(int)), new FieldDescription("Id", typeof(int)), "asc", -1, 5,
                     new List<FieldDescription>(), "");
                 var function = merge.GetMergeFunction(ScriptType.OrderAsc);
 
@@ -276,7 +274,7 @@ namespace Qoollo.Tests
                 var merge = new OrderMerge(_kernel, _parser);
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
-                //new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)
+
                 var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
@@ -374,7 +372,7 @@ namespace Qoollo.Tests
                 var merge = new OrderMerge(_kernel, _parser);
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
-                //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+
                 var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
@@ -459,7 +457,7 @@ namespace Qoollo.Tests
                     reader.ReadNext();
 
                     Assert.Equal(expectedOrder[i], reader.GetValue(0));
-                    Assert.Equal((long) (2 - (expectedOrder[i]%2)), reader.GetValue(1));
+                    Assert.Equal((long) (2 - (expectedOrder[i] % 2)), reader.GetValue(1));
                 }
                 reader.ReadNext();
                 Assert.False(reader.IsCanRead);
@@ -489,7 +487,7 @@ namespace Qoollo.Tests
                 var merge = new OrderMerge(_kernel, _parser);
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
-                //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+
                 var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
@@ -585,7 +583,7 @@ namespace Qoollo.Tests
                 var merge = new OrderMerge(_kernel, _parser);
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
-                //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+
                 var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
@@ -681,7 +679,7 @@ namespace Qoollo.Tests
                 var merge = new OrderMerge(_kernel, _parser);
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
-                //, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1))
+
                 var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 

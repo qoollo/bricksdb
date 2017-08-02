@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Reflection;
 using Ninject;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;

@@ -17,13 +17,13 @@ using Xunit;
 namespace Qoollo.Tests
 {
     [Collection("test collection 1")]
-    public class TestWriterModules:TestBase
+    public class TestWriterModules : TestBase
     {
         private readonly TestProxySystem _proxyTest;
         private readonly TestDistributorGate _distributor1;
         private readonly IntHashConvertor _provider;
 
-        public TestWriterModules():base()
+        public TestWriterModules() : base()
         {
             _proxyTest = TestProxySystem();
             _proxyTest.Build(new TestInjectionModule());
@@ -32,7 +32,7 @@ namespace Qoollo.Tests
             _writer2 = new TestWriterGate();
             _distributor1 = new TestDistributorGate();
 
-             _provider = new IntHashConvertor();
+            _provider = new IntHashConvertor();
         }
 
         private InnerData InnerData(int i)
@@ -175,7 +175,8 @@ namespace Qoollo.Tests
                 for (int i = 1; i < count + 1; i++)
                 {
                     var data =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
+                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
+                            "")
                         {
                             OperationName = OperationName.Create,
                             OperationType = OperationType.Async
@@ -183,7 +184,7 @@ namespace Qoollo.Tests
                         {
                             Data = CommonDataSerializer.Serialize(i),
                             Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { TableName = "Int" }
+                            Transaction = {TableName = "Int"}
                         };
                     list.Add(data);
                 }
@@ -235,7 +236,8 @@ namespace Qoollo.Tests
                 for (int i = 1; i < count + 1; i++)
                 {
                     var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
+                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
+                            "")
                         {
                             OperationName = OperationName.Create,
                             OperationType = OperationType.Async
@@ -243,7 +245,7 @@ namespace Qoollo.Tests
                         {
                             Data = CommonDataSerializer.Serialize(i),
                             Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { TableName = "Int" }
+                            Transaction = {TableName = "Int"}
                         };
 
                     list.Add(ev);
@@ -283,7 +285,7 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 2);
                 CreateConfigFile(countReplics: 2, hash: filename);
-                
+
                 _distributor1.Build();
                 _distributor1.Start();
 
@@ -301,7 +303,8 @@ namespace Qoollo.Tests
                 for (int i = 1; i < count + 1; i++)
                 {
                     var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
+                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
+                            "")
                         {
                             OperationName = OperationName.Create,
                             OperationType = OperationType.Async
@@ -309,7 +312,7 @@ namespace Qoollo.Tests
                         {
                             Data = CommonDataSerializer.Serialize(i),
                             Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { TableName = "Int" }
+                            Transaction = {TableName = "Int"}
                         };
 
                     list.Add(ev);
@@ -321,7 +324,7 @@ namespace Qoollo.Tests
                 }
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-                
+
                 foreach (var data in list)
                 {
                     var transaction = _distributor1.Main.GetTransactionState(data.Transaction.UserTransaction);
@@ -411,7 +414,7 @@ namespace Qoollo.Tests
                 distributor.Dispose();
                 _proxyTest.Dispose();
             }
-            
+
         }
     }
 }

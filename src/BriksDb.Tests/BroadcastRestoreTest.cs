@@ -10,7 +10,6 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestWriter;
 using Xunit;
@@ -47,9 +46,11 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1, usePackage: packageRestore);
-                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, 
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: packageRestore);
+                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1,
+                    usePackage: packageRestore);
+                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename,
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2,
+                    usePackage: packageRestore);
 
                 _distrTest.Build();
 
@@ -122,13 +123,16 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 3);
-                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1, usePackage: packageRestore);
+                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1,
+                    usePackage: packageRestore);
                 CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: packageRestore);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2,
+                    usePackage: packageRestore);
 
                 CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename,
-                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3, usePackage: packageRestore);
-                
+                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3,
+                    usePackage: packageRestore);
+
                 _distrTest.Build();
 
                 _writer1.Build(storageServer1, filename);
@@ -196,7 +200,7 @@ namespace Qoollo.Tests
         [Theory]
         [InlineData(50, 1, false)]
         [InlineData(50, 1, true)]
-        [InlineData(50, 2, false)]        
+        [InlineData(50, 2, false)]
         [InlineData(50, 2, true)]
         public void Writer_SimpleRestore_ThreeServers_TwoBroadcast(int count, int replics, bool packageRestore)
         {
@@ -207,11 +211,14 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 3);
-                CreateConfigFile(countReplics: replics, hash: filename, restoreStateFilename: file1, usePackage: packageRestore);
+                CreateConfigFile(countReplics: replics, hash: filename, restoreStateFilename: file1,
+                    usePackage: packageRestore);
                 CreateConfigFile(distrthreads: 2, countReplics: replics, hash: filename,
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: packageRestore);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2,
+                    usePackage: packageRestore);
                 CreateConfigFile(distrthreads: 2, countReplics: replics, hash: filename,
-                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3, usePackage: packageRestore);
+                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3,
+                    usePackage: packageRestore);
 
                 _distrTest.Build();
 
@@ -253,7 +260,7 @@ namespace Qoollo.Tests
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
                 var mem3 = _writer3.Db.GetDbModules.First() as TestDbInMemory;
 
-                Assert.Equal(count*replics, mem.Local + mem.Remote + mem2.Local + mem2.Remote);
+                Assert.Equal(count * replics, mem.Local + mem.Remote + mem2.Local + mem2.Remote);
 
                 _writer3.Start();
 
@@ -264,7 +271,7 @@ namespace Qoollo.Tests
 
                 Assert.Equal(0, mem.Remote);
                 Assert.Equal(0, mem2.Remote);
-                Assert.Equal(count*replics, mem.Local + mem2.Local + mem3.Local);
+                Assert.Equal(count * replics, mem.Local + mem2.Local + mem3.Local);
 
                 _distrTest.Dispose();
                 _writer1.Dispose();
@@ -284,10 +291,12 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             {
                 CreateHashFile(filename, 1);
-                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1, usePackage: packageRestore);
+                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1,
+                    usePackage: packageRestore);
 
                 CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: packageRestore);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2,
+                    usePackage: packageRestore);
 
                 _distrTest.Build();
 
@@ -360,12 +369,15 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(countReplics: replics, hash: filename, restoreStateFilename: file1, usePackage: packageRestore);
+                CreateConfigFile(countReplics: replics, hash: filename, restoreStateFilename: file1,
+                    usePackage: packageRestore);
                 CreateConfigFile(countReplics: replics, hash: filename,
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: packageRestore);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2,
+                    usePackage: packageRestore);
 
                 CreateConfigFile(countReplics: replics, hash: filename,
-                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3, usePackage: packageRestore);
+                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3,
+                    usePackage: packageRestore);
 
                 _distrTest.Build();
 
@@ -405,7 +417,7 @@ namespace Qoollo.Tests
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
 
-                Assert.Equal(count*replics, mem.Local + mem.Remote + mem2.Local + mem2.Remote);
+                Assert.Equal(count * replics, mem.Local + mem.Remote + mem2.Local + mem2.Remote);
 
                 CreateHashFile(filename, 3);
 
@@ -423,7 +435,7 @@ namespace Qoollo.Tests
                 Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
                 Assert.NotEqual(0, mem3.Local);
-                Assert.Equal(count*replics, mem.Local + mem2.Local + mem3.Local);
+                Assert.Equal(count * replics, mem.Local + mem2.Local + mem3.Local);
 
                 _distrTest.Dispose();
                 _writer1.Dispose();

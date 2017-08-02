@@ -14,7 +14,7 @@ using Xunit;
 namespace Qoollo.Tests
 {
     [Collection("test collection 1")]
-    public class SimpleTests: TestBase
+    public class SimpleTests : TestBase
     {
         #region Test cache
 
@@ -45,7 +45,7 @@ namespace Qoollo.Tests
 
             var ev = new InnerData(new Transaction("123", ""))
             {
-                DistributorData = new DistributorData{ Destination = new List<ServerId>() }
+                DistributorData = new DistributorData {Destination = new List<ServerId>()}
             };
 
             cache.AddToCache("123", ev);
@@ -80,7 +80,7 @@ namespace Qoollo.Tests
             int value = 0;
             const string name1 = "test1";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(500), async => Interlocked.Increment(ref value),
-                                             name1, -1);            
+                name1, -1);
 
             test.AddAsyncTask(async1, false);
             Thread.Sleep(TimeSpan.FromMilliseconds(600));
@@ -105,9 +105,9 @@ namespace Qoollo.Tests
             const string name1 = "test1";
             const string name2 = "test2";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(500), async => Interlocked.Increment(ref value),
-                                             name1, -1);
+                name1, -1);
             var async2 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(500), async => Interlocked.Increment(ref value),
-                                             name2, -1);
+                name2, -1);
             test.Start();
 
             test.AddAsyncTask(async1, true);
@@ -128,7 +128,7 @@ namespace Qoollo.Tests
             int value = 0;
             const string name1 = "test1";
             var async1 = new AsyncDataPeriod(TimeSpan.FromMilliseconds(100), async => Interlocked.Increment(ref value),
-                                             name1, 4);
+                name1, 4);
             test.Start();
 
             test.AddAsyncTask(async1, true);

@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Text;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Tests.Support;
 using Xunit;
 

@@ -3,7 +3,6 @@ using System.Diagnostics.Contracts;
 using Qoollo.Benchmark.Commands;
 using Qoollo.Benchmark.Send.Interfaces;
 using Qoollo.Client.CollectorGate;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.WriterGate;
 
 namespace Qoollo.Benchmark.Send
@@ -20,8 +19,7 @@ namespace Qoollo.Benchmark.Send
 
             _command = command;
             bool useDistributor = !IsUseDistributor();
-            _collector = new CollectorGate(command.TableName, dbFactory,
-                new CollectorConfiguration(command.HashFileName, command.CountReplics, command.PageSize, useDistributor));
+            _collector = new CollectorGate(command.TableName, dbFactory);
             _collector.Build();            
         }
 

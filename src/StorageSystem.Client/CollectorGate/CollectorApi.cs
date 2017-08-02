@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using Qoollo.Client.CollectorGate.Handlers;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.Exceptions;
 using Qoollo.Impl.Common.Support;
@@ -21,15 +19,13 @@ namespace Qoollo.Client.CollectorGate
 
         internal InjectionModule Module = null;
 
-        protected CollectorApi(CollectorConfiguration collectorConfiguration)
+        protected CollectorApi()
         {
-            Contract.Requires(collectorConfiguration != null);
-
             _isStarted = false;
             _isBuild = false;
             _isDispose = false;
 
-            _collectorSystem = new CollectorSystem(collectorConfiguration.PageSize, collectorConfiguration.UseHashFile);
+            _collectorSystem = new CollectorSystem();
 
             _apis = new Dictionary<string, CollectorHandlerTuple>();
         }

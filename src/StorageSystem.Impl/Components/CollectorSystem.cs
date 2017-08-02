@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
 using Ninject;
 using Ninject.Modules;
 using Qoollo.Impl.Collector;
@@ -10,7 +9,6 @@ using Qoollo.Impl.Collector.Load;
 using Qoollo.Impl.Collector.Model;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Config;
@@ -21,17 +19,6 @@ namespace Qoollo.Impl.Components
 {
     internal class CollectorSystem : ModuleSystemBase
     {
-        private readonly int _serverPageSize;
-        private readonly bool _useHashFile;
-
-        public CollectorSystem(int serverPageSize, bool useHashFile = true)
-        {
-            Contract.Requires(serverPageSize>0);
-
-            _serverPageSize = serverPageSize;
-            _useHashFile = useHashFile;
-        }
-
         public DistributorModule Distributor { get; private set; }
 
         public Func<string, ScriptParser,  SearchTaskModule> CreateApi { get; private set; }
@@ -48,7 +35,7 @@ namespace Qoollo.Impl.Components
             var async = new AsyncTaskModule(kernel);
             kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-            var serversModel = new CollectorModel(kernel, _useHashFile);
+            var serversModel = new CollectorModel(kernel);
             kernel.Bind<ICollectorModel>().ToConstant(serversModel);
             serversModel.StartConfig();
             var distributor = new DistributorModule(kernel);
@@ -58,7 +45,7 @@ namespace Qoollo.Impl.Components
             kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
             var back = new BackgroundModule(kernel);
-            var loader = new DataLoader(kernel, net, _serverPageSize, back);
+            var loader = new DataLoader(kernel, net, back);
 
             var searchModule = new SearchTaskCommonModule(kernel);
             CreateApi = searchModule.CreateApi;

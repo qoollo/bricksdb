@@ -16,15 +16,14 @@ namespace Qoollo.Impl.Collector.Model
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public bool UseStart { get; }
+        public bool UseStart { get; protected set; }
         private List<WriterDescription> _servers; 
         private readonly ReaderWriterLockSlim _lock;
         private int _countReplics;
         private readonly HashMap _map;
 
-        public CollectorModel(StandardKernel kernel, bool useStart = true) :base(kernel)
+        public CollectorModel(StandardKernel kernel) :base(kernel)
         {
-            UseStart = useStart;
             _lock = new ReaderWriterLockSlim();
             _servers = new List<WriterDescription>();
             _map = new HashMap(kernel, HashFileType.Collector);
@@ -71,6 +70,7 @@ namespace Qoollo.Impl.Collector.Model
         public void StartConfig()
         {
             var config = Kernel.Get<ICommonConfiguration>();
+            UseStart = Kernel.Get<ICollectorConfiguration>().UseHashFile;   
             _countReplics = config.CountReplics;
 
             _map.Start();

@@ -789,7 +789,7 @@ namespace Qoollo.Tests
                 var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
-                var loader = new DataLoader(_kernel, net, 100, _back);
+                var loader = new DataLoader(_kernel, net, _back);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
                 var merge = new OrderMerge(_kernel, _parser);
@@ -813,6 +813,7 @@ namespace Qoollo.Tests
                 proxy.Start();
                 distr.Start();
 
+                loader.Start();
                 searchModule.Start();
                 distributor.Start();
                 merge.Start();

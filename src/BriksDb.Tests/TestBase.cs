@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Ninject;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
 using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Collector.Model;
@@ -26,7 +25,6 @@ using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Qoollo.Tests.TestProxy;
-using DistributorConfiguration = Qoollo.Client.Configuration.DistributorConfiguration;
 
 namespace Qoollo.Tests
 {
@@ -103,7 +101,8 @@ namespace Qoollo.Tests
             int collectorport = storageServer1, int writerport = distrServer1, int proxyport = distrServer12, 
             int pdistrport = proxyServer, int timeAliveBeforeDeleteMls = 10000, 
             int timeAliveAfterUpdateMls = 10000, int ping = 200, int check = 2000,
-            int transaction= 10000, int support = 10000,
+            int transaction= 10000, int support = 10000, 
+            int serverPageSize = 1000, bool useHashFile = true,
             bool isForceStart = false, int periodRetryMls = 100000, int deleteTimeoutMls= 100000)
         {
             using (var writer = new StreamWriter(filename, false))
@@ -114,7 +113,9 @@ namespace Qoollo.Tests
                                 timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls, ping, check)
                         }, {GetWriter(distrport, collectorport, isForceStart, periodRetryMls, deleteTimeoutMls)}, {
                             GetCommon(countReplics, hash)
-                        }, {GetProxy(pdistrport, transaction, support)},{GetCollector()} }}");
+                        }, {GetProxy(pdistrport, transaction, support)},{
+                            GetCollector(serverPageSize, useHashFile)
+                        } }}");
             }
 
             UpdateConfigReader();
@@ -217,9 +218,11 @@ namespace Qoollo.Tests
             return $@"""Transfer"": {{ {GetParam("PeriodRetryMls", periodRetryMls)} }} ";
         }
 
-        private string GetCollector()
+        private string GetCollector(int serverPageSize, bool useHashFile)
         {
-            return $@"""collector"": {{ {CollectorTimeouts()} }} ";
+            return $@"""collector"": {{ {CollectorTimeouts()}, {GetParam("ServerPageSize", serverPageSize)}, {
+                    GetParam("UseHashFile", useHashFile)
+                } }} ";
         }
         
         private string CollectorTimeouts()
@@ -358,25 +361,9 @@ namespace Qoollo.Tests
             return new TestGate();
         }
 
-        internal DistributorConfiguration DistributorConfiguration(string filename, int countReplics)
-        {
-            return new DistributorConfiguration(countReplics, filename, TimeSpan.FromMilliseconds(100000),
-                    TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(10000));
-        }
-
         internal DistributorApi DistributorApi()
         {
             return new DistributorApi();
-        }
-
-        internal StorageConfiguration StorageConfiguration(string filename, int countReplics, 
-            int restoreAnswerMls = 10000000, int deleteRestoreMls = 1000000, int periodStartDelete = 1000000, 
-            bool isForceDelete = false)
-        {
-            return new StorageConfiguration(filename, countReplics, 10, TimeSpan.FromHours(1),
-                TimeSpan.FromMilliseconds(restoreAnswerMls), 
-                TimeSpan.FromMilliseconds(deleteRestoreMls), 
-                TimeSpan.FromMilliseconds(periodStartDelete), isForceDelete);
         }
 
         internal WriterApi WriterApi()

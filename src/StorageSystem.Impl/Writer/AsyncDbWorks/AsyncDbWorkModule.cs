@@ -6,6 +6,7 @@ using Ninject;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks.Restore;
@@ -60,7 +61,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             : base(kernel)
         {
             _stateHolder = new RestoreStateHolder(needRestore);
-            _saver = LoadRestoreStateFromFile();
         }
 
         private IWriterModel _writerModel;
@@ -71,11 +71,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         private TimeoutModule _timeout;
 
         private RestoreStateHolder _stateHolder;
-        private readonly RestoreStateFileLogger _saver;
+        private RestoreStateFileLogger _saver;
 
         public override void Start()
         {
             _writerModel = Kernel.Get<IWriterModel>();
+
+            _saver = LoadRestoreStateFromFile(Kernel.Get<IWriterConfiguration>().RestoreStateFilename);
 
             _initiatorRestore = new InitiatorRestoreModule(Kernel, _stateHolder, _saver);
             _transferRestore = new TransferRestoreModule(Kernel);
@@ -123,11 +125,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _initiatorRestore.LastMessageIncome(server);
         }
 
-        private RestoreStateFileLogger LoadRestoreStateFromFile()
+        private RestoreStateFileLogger LoadRestoreStateFromFile(string filename)
         {
-            var saver = new RestoreStateFileLogger(InitInjection.RestoreHelpFile);
+            var saver = new RestoreStateFileLogger(filename);
             if (!saver.Load())
-                return new RestoreStateFileLogger(InitInjection.RestoreHelpFile, _stateHolder);
+                return new RestoreStateFileLogger(filename, _stateHolder);
             
             _stateHolder = saver.StateHolder;
             return saver;

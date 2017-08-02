@@ -8,6 +8,7 @@ using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Collector.Model;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
@@ -74,7 +75,6 @@ namespace Qoollo.Tests
                 .Start();
 
             InitInjection.RestoreUsePackage = false;
-            InitInjection.RestoreHelpFileOut = Impl.Common.Support.Consts.RestoreHelpFile;
 
             _writerPorts = new List<int> {storageServer1, storageServer2, storageServer3, storageServer4};
 
@@ -103,7 +103,8 @@ namespace Qoollo.Tests
             int timeAliveAfterUpdateMls = 10000, int ping = 200, int check = 2000,
             int transaction= 10000, int support = 10000, 
             int serverPageSize = 1000, bool useHashFile = true,
-            bool isForceStart = false, int periodRetryMls = 100000, int deleteTimeoutMls= 100000)
+            bool isForceStart = false, int periodRetryMls = 100000, int deleteTimeoutMls= 100000,
+            string restoreStateFilename = Consts.RestoreHelpFile)
         {
             using (var writer = new StreamWriter(filename, false))
             {
@@ -111,9 +112,10 @@ namespace Qoollo.Tests
                     $@"{{ {GetQueue()}, {GetAsync()}, {
                             GetDistrtibutor(distrthreads, writerport, proxyport,
                                 timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls, ping, check)
-                        }, {GetWriter(distrport, collectorport, isForceStart, periodRetryMls, deleteTimeoutMls)}, {
-                            GetCommon(countReplics, hash)
-                        }, {GetProxy(pdistrport, transaction, support)},{
+                        }, {
+                            GetWriter(distrport, collectorport, isForceStart, periodRetryMls, deleteTimeoutMls,
+                                restoreStateFilename)
+                        }, {GetCommon(countReplics, hash)}, {GetProxy(pdistrport, transaction, support)},{
                             GetCollector(serverPageSize, useHashFile)
                         } }}");
             }
@@ -176,7 +178,8 @@ namespace Qoollo.Tests
                    $@"""connectiontimeout"": {{ {GetParam("sendtimeoutmls", 1000)}, {GetParam("opentimeoutmls", 100)} }} ";
         }
 
-        private string GetWriter(int distrport, int collectorport, bool isForceStart, int periodRetryMls, int deleteTimeoutMls)
+        private string GetWriter(int distrport, int collectorport, bool isForceStart, int periodRetryMls,
+            int deleteTimeoutMls, string restoreStateFilename)
         {
             return
                 $@"""writer"": {{ {GetParam("packagesizerestore", 1000)}, {GetParam("packagesizebroadcast", 1000)}, {
@@ -185,7 +188,7 @@ namespace Qoollo.Tests
                         WriterTimeouts()
                     }, {
                         GetRestore(isForceStart, periodRetryMls, deleteTimeoutMls)
-                    }}} ";
+                    }, {GetParam("RestoreStateFilename", restoreStateFilename)}}} ";
         }
 
         private string GetRestore(bool isForceStart, int periodRetryMls, int deleteTimeoutMls)

@@ -81,15 +81,15 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100000);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100000, restoreStateFilename: file1);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build();
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file3;
+                //InitInjection.RestoreHelpFileOut = file3;
                 _writer2.Build(storageServer2, configFile:config_file2);
 
                 _distrTest.Start();
@@ -160,24 +160,23 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 3);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100000);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100000, restoreStateFilename: file1);
 
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
 
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
-                    filename: config_file3, distrport: storageServer3);
+                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3);
 
-                //3, 4
                 var proxy = TestProxySystem();
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build();
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file3;
+                //InitInjection.RestoreHelpFileOut = file3;
                 _writer2.Build(storageServer2, configFile: config_file2);
-                InitInjection.RestoreHelpFileOut = file4;
+                //InitInjection.RestoreHelpFileOut = file4;
                 _writer3.Build(storageServer3, configFile: config_file3);
 
                 #region hell2
@@ -276,26 +275,26 @@ namespace Qoollo.Tests
                 #region hell
 
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, filename: config_file);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, filename: config_file, restoreStateFilename: file1);
 
                 CreateHashFile(filename1, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename1, filename: config_file1);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename1, filename: config_file1, restoreStateFilename: file2);
 
                 CreateHashFile(filename2, 2);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename2, filename: config_file2,
-                    distrport: storageServer2);
+                    distrport: storageServer2, restoreStateFilename: file3);
 
                 CreateHashFile(filename3, 3);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename3, filename: config_file3,
-                    distrport: storageServer3);
+                    distrport: storageServer3, restoreStateFilename: file4);
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build(configFile: config_file);
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer1.Build(storageServer1, configFile: config_file1);
-                InitInjection.RestoreHelpFileOut = file3;
+                //InitInjection.RestoreHelpFileOut = file3;
                 _writer2.Build(storageServer2, configFile: config_file2);
-                InitInjection.RestoreHelpFileOut = file4;
+                //InitInjection.RestoreHelpFileOut = file4;
                 _writer3.Build(storageServer3, configFile: config_file3);
 
                 _distrTest.Start();
@@ -487,20 +486,20 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 3);
-                CreateConfigFile(countReplics: 2, hash: filename, check: 100000);
+                CreateConfigFile(countReplics: 2, hash: filename, check: 100000, restoreStateFilename: file1);
                 CreateConfigFile(countReplics: 2, hash: filename, filename: config_file2,
-                    distrport: storageServer2);
+                    distrport: storageServer2, restoreStateFilename: file2);
                 CreateConfigFile(countReplics: 2, hash: filename, filename: config_file3,
-                    distrport: storageServer3);
+                    distrport: storageServer3, restoreStateFilename: file3);
 
                 _proxy.Start();
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build();
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file3;
+                //InitInjection.RestoreHelpFileOut = file3;
                 _writer2.Build(storageServer2, configFile: config_file2);
-                InitInjection.RestoreHelpFileOut = file4;
+                //InitInjection.RestoreHelpFileOut = file4;
                 _writer3.Build(storageServer3, configFile: config_file3);
 
                 _distrTest.Start();
@@ -568,20 +567,20 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(countReplics: 2, hash: filename);
+                CreateConfigFile(countReplics: 2, hash: filename, restoreStateFilename: file1);
                 CreateConfigFile(countReplics: 2, hash: filename, filename: config_file2,
-                    distrport: storageServer2);
+                    distrport: storageServer2, restoreStateFilename: file2);
                 CreateConfigFile(countReplics: 2, hash: filename, filename: config_file3,
-                    distrport: storageServer3);
+                    distrport: storageServer3, restoreStateFilename: file3);
 
                 _proxy.Start();
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build();
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file3;
+                //InitInjection.RestoreHelpFileOut = file3;
                 _writer2.Build(storageServer2, configFile: config_file2);
-                InitInjection.RestoreHelpFileOut = file4;
+                //InitInjection.RestoreHelpFileOut = file4;
                 _writer3.Build(storageServer3, configFile: config_file3);
 
                 _distrTest.Start();
@@ -658,19 +657,19 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1);
                 CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
-                    distrport: storageServer2);
+                    distrport: storageServer2, restoreStateFilename: file2);
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer2.Build(storageServer2, configFile: config_file2);
 
                 _proxy.Start();
                 _writer1.Start();
 
-                InitInjection.RestoreHelpFileOut = file3;
+                //InitInjection.RestoreHelpFileOut = file3;
 
                 _distrTest.Build();
                 _distrTest.Start();
@@ -756,29 +755,29 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, filename: config_file, check: 1000);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, filename: config_file, check: 1000, restoreStateFilename: file1);
 
                 CreateHashFile(filename2, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename2, filename: config_file2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename2, filename: config_file2, restoreStateFilename: file2);
 
                 CreateHashFile(filename3, 2);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename3, filename: config_file3,
-                    distrport: storageServer2);
+                    distrport: storageServer2, restoreStateFilename: file3);
 
                 CreateHashFile(filename4, 3);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename4, filename: config_file4,
-                    distrport: storageServer3);
+                    distrport: storageServer3, restoreStateFilename: file4);
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1, configFile: config_file2);
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer2.Build(storageServer2, configFile: config_file3);
 
                 _proxy.Start();
                 _writer1.Start();
                 _writer2.Start();
 
-                InitInjection.RestoreHelpFileOut = file3;
+                //InitInjection.RestoreHelpFileOut = file3;
                 _distrTest.Build(configFile: config_file);
                 _distrTest.Start();
 
@@ -858,15 +857,15 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, restoreStateFilename: file1);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
 
                 _distrTest.Build();
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 CreateRestoreFile(file2, string.Empty, RestoreState.SimpleRestoreNeed,
                     new List<RestoreServerSave>
                     {
@@ -941,15 +940,15 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1);
                 CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
-                    distrport: storageServer2);
+                    distrport: storageServer2, restoreStateFilename: file2);
 
                 _distrTest.Build(true);
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distrTest.Start();
@@ -1019,15 +1018,15 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 200);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 200, restoreStateFilename: file1);
                 CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
-                    distrport: storageServer2);
+                    distrport: storageServer2, restoreStateFilename: file2);
 
                 _distrTest.Build();
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distrTest.Start();
@@ -1105,26 +1104,27 @@ namespace Qoollo.Tests
             {
                 CreateHashFile(filename, 2);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, filename: config_file, 
-                    check: 2000);
+                    check: 2000, restoreStateFilename: file1);
 
                 CreateHashFile(filename1, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename1, filename: config_file1);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename1, filename: config_file1,
+                    restoreStateFilename: file2);
 
                 CreateHashFile(filename2, 2);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename2, filename: config_file2,
-                    distrport: storageServer2);
+                    distrport: storageServer2, restoreStateFilename: file3);
 
                 CreateHashFile(filename3, 3);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename3, filename: config_file3,
-                    distrport: storageServer3);
+                    distrport: storageServer3, restoreStateFilename: file4);
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build(configFile: config_file);
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer1.Build(storageServer1, configFile: config_file1);
-                InitInjection.RestoreHelpFileOut = file3;
+                //InitInjection.RestoreHelpFileOut = file3;
                 _writer2.Build(storageServer2, configFile: config_file2);
-                InitInjection.RestoreHelpFileOut = file4;
+                //InitInjection.RestoreHelpFileOut = file4;
                 _writer3.Build(storageServer3, configFile: config_file3);
 
                 _distrTest.Start();
@@ -1201,22 +1201,21 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 3);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, restoreStateFilename: file1);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, filename: config_file2,
-                    distrport: storageServer2);
+                    distrport: storageServer2, restoreStateFilename: file2);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, filename: config_file3,
-                    distrport: storageServer3);
+                    distrport: storageServer3, restoreStateFilename: file3);
 
-                //3, 3
                 var proxy = TestProxySystem();
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build();
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file3;
+                //InitInjection.RestoreHelpFileOut = file3;
                 _writer2.Build(storageServer2, configFile: config_file2);
-                InitInjection.RestoreHelpFileOut = file4;
+                //InitInjection.RestoreHelpFileOut = file4;
                 _writer3.Build(storageServer3, configFile: config_file3);
 
                 #region hell2
@@ -1322,15 +1321,15 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
 
                 _distrTest.Build(true);
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distrTest.Start();
@@ -1411,15 +1410,15 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
 
                 _distrTest.Build();
 
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distrTest.Start();
@@ -1491,16 +1490,16 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100000);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100000, restoreStateFilename: file1);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
 
                 InitInjection.RestoreUsePackage = true;
-                InitInjection.RestoreHelpFileOut = file1;
+                //InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build();
-                InitInjection.RestoreHelpFileOut = file2;
+                //InitInjection.RestoreHelpFileOut = file2;
                 _writer1.Build(storageServer1);
-                InitInjection.RestoreHelpFileOut = file3;
+                //InitInjection.RestoreHelpFileOut = file3;
                 _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distrTest.Start();

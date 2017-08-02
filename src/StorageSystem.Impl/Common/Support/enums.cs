@@ -89,7 +89,7 @@ namespace Qoollo.Impl.Common.Support
         public static string Page = "pageSize";
         
         public static string AllTables = "AllTablesyNameThatMustntBeUsedAsTableName";
-        public static string RestoreHelpFile = "RestoreHelp.txt";
+        public const string RestoreHelpFile = "RestoreHelp.txt";
         public const string ConfigFilename = "briks_config.txt";
     }
 

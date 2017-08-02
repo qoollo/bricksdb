@@ -6,6 +6,7 @@ using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Writer.AsyncDbWorks.Processes;
 using Qoollo.Impl.Writer.Interfaces;
@@ -43,21 +44,17 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
-        public TransferRestoreModule(StandardKernel kernel, RestoreModuleConfiguration configuration)
-            : base(kernel)
+        public TransferRestoreModule(StandardKernel kernel): base(kernel)
         {
-            Contract.Requires(configuration != null);
-
-            _configuration = configuration;
             _lastDateTime = string.Empty;
         }
 
-        private readonly RestoreModuleConfiguration _configuration;
         private IWriterModel _writerModel;
         private IDbModule _db;
         private ServerId _remoteServer;
         private SingleServerRestoreProcess _restore;
         private string _lastDateTime;
+        private IWriterConfiguration _config;
 
         public override void Start()
         {
@@ -65,6 +62,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             _db = Kernel.Get<IDbModule>();
             _writerModel = Kernel.Get<IWriterModel>();
+            _config = Kernel.Get<IWriterConfiguration>();
         }
 
         public void Restore(ServerId remoteServer, bool isSystemUpdated, string tableName)
@@ -92,7 +90,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _restore.Start();
 
             AsyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_configuration.PeriodRetry, RestoreAnswerCallback,
+                new AsyncDataPeriod(_config.Restore.Transfer.PeriodRetryMls, RestoreAnswerCallback,
                     AsyncTasksNames.RestoreLocal, -1), false);
         }
 

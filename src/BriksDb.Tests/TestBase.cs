@@ -191,8 +191,7 @@ namespace Qoollo.Tests
         private string GetRestore(bool isForceStart, int periodRetryMls, int deleteTimeoutMls)
         {
             return $@"""restore"": {{ {GetTimeout(isForceStart, periodRetryMls, deleteTimeoutMls)}, {
-                    GetInitiator(100, 3)
-                } }} ";
+                    GetInitiator(100, 3)}, {GetBroadcast(100)}, {GetTransfer(100)} }} ";
         }
 
         private string GetTimeout(bool isForceStart, int periodRetryMls, int deleteTimeoutMls)
@@ -207,6 +206,16 @@ namespace Qoollo.Tests
             return $@"""Initiator"": {{ {GetParam("PeriodRetryMls", periodRetryMls)}, {
                     GetParam("CountRetry", countRetry)
                 } }} ";
+        }
+
+        private string GetBroadcast(int periodRetryMls)
+        {
+            return $@"""Broadcast"": {{ {GetParam("PeriodRetryMls", periodRetryMls)} }} ";
+        }
+
+        private string GetTransfer(int periodRetryMls)
+        {
+            return $@"""Transfer"": {{ {GetParam("PeriodRetryMls", periodRetryMls)} }} ";
         }
 
         private string GetCollector()
@@ -371,9 +380,9 @@ namespace Qoollo.Tests
                 TimeSpan.FromMilliseconds(periodStartDelete), isForceDelete);
         }
 
-        internal WriterApi WriterApi(StorageConfiguration storageConfiguration)
+        internal WriterApi WriterApi()
         {
-            return new WriterApi(storageConfiguration);
+            return new WriterApi();
         }
 
         internal DistributorCacheConfiguration DistributorCacheConfiguration(int deleteMls = 2000, int updateMls = 200000)
@@ -399,8 +408,7 @@ namespace Qoollo.Tests
         internal WriterSystem WriterSystem()
         {
             //new RestoreModuleConfiguration(10, new TimeSpan())
-            return new WriterSystem(
-                new RestoreModuleConfiguration(10, new TimeSpan()));
+            return new WriterSystem();
         }
 
         internal GlobalQueue GetBindedQueue(string name = "")

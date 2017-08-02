@@ -33,7 +33,7 @@ namespace Qoollo.Tests
                 CreateConfigFile(countReplics: 1, hash: filename);
 
                 var distr = DistributorApi();
-                var storage = WriterApi(StorageConfiguration(filename, 1));
+                var storage = WriterApi();
 
                 storage.Module = new TestInjectionModule();
                 storage.Build();
@@ -106,8 +106,8 @@ namespace Qoollo.Tests
                     distrport: storageServer2);
 
                 var distr = DistributorApi();
-                var storage1 = WriterApi(StorageConfiguration(filename, 1));
-                var storage2 = WriterApi(StorageConfiguration(filename, 1));
+                var storage1 = WriterApi();
+                var storage2 = WriterApi();
 
                 storage1.Module = new TestInjectionModule();
                 storage1.Build();
@@ -185,7 +185,7 @@ namespace Qoollo.Tests
                 CreateConfigFile(countReplics: 1, hash: filename);
 
                 var distr = DistributorApi();
-                var storage = WriterApi(StorageConfiguration(filename, 1));
+                var storage = WriterApi();
 
                 storage.Module = new TestInjectionModule();
                 storage.Build();
@@ -249,8 +249,8 @@ namespace Qoollo.Tests
                     distrport: storageServer2);
 
                 var distr = DistributorApi();
-                var storage1 = WriterApi(StorageConfiguration(filename, 1));
-                var storage2 = WriterApi(StorageConfiguration(filename, 1));
+                var storage1 = WriterApi();
+                var storage2 = WriterApi();
 
                 storage1.Module = new TestInjectionModule();
                 storage1.Build();

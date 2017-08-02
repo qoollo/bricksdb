@@ -30,6 +30,8 @@
     {
         public TimeoutDeleteConfiguration TimeoutDelete { get; protected set; }
         public RestoreInitConfiguration Initiator { get; protected set; }
+        public RestoreBroadcastConfiguration Broadcast { get; protected set; }
+        public RestoreTransferConfiguration Transfer { get; protected set; }
     }
 
     public class TimeoutDeleteConfiguration
@@ -43,5 +45,15 @@
     {
         public int PeriodRetryMls { get; protected set; }
         public int CountRetry { get; protected set; }
+    }
+
+    public class RestoreBroadcastConfiguration
+    {
+        public int PeriodRetryMls { get; protected set; }
+    }
+
+    public class RestoreTransferConfiguration
+    {
+        public int PeriodRetryMls { get; protected set; }
     }
 }

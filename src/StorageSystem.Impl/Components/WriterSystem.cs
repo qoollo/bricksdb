@@ -1,8 +1,6 @@
-﻿using System.Diagnostics.Contracts;
-using Ninject;
+﻿using Ninject;
 using Ninject.Modules;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Config;
@@ -19,16 +17,11 @@ namespace Qoollo.Impl.Components
 {
     internal class WriterSystem: ModuleSystemBase
     {
-        private readonly RestoreModuleConfiguration _transferRestoreConfiguration;
         private readonly bool _isNeedRestore;        
 
-        public WriterSystem(RestoreModuleConfiguration transferRestoreConfiguration,
-            bool isNeedRestore = false)
+        public WriterSystem(bool isNeedRestore = false)
         {
-            Contract.Requires(transferRestoreConfiguration != null);
-
             _isNeedRestore = isNeedRestore;
-            _transferRestoreConfiguration = transferRestoreConfiguration;
         }
 
         public DistributorModule Distributor { get; private set; }
@@ -58,7 +51,7 @@ namespace Qoollo.Impl.Components
             var model = new WriterModel(kernel, config.WriterConfiguration.NetDistributor.ServerId);
             kernel.Bind<IWriterModel>().ToConstant(model);
 
-            var restore = new AsyncDbWorkModule(kernel, _transferRestoreConfiguration, _isNeedRestore);
+            var restore = new AsyncDbWorkModule(kernel, _isNeedRestore);
             kernel.Bind<IAsyncDbWorkModule>().ToConstant(restore);
 
             var distributor = new DistributorModule(kernel);

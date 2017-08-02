@@ -57,8 +57,8 @@ namespace Qoollo.Tests.Support
             WriterModel = new WriterModel(_kernel, local);
             _kernel.Bind<IWriterModel>().ToConstant(WriterModel);
             //new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(100))
-            Restore = new AsyncDbWorkModule(_kernel, 
-                new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(300)));
+            //new RestoreModuleConfiguration(3, TimeSpan.FromMilliseconds(300))
+            Restore = new AsyncDbWorkModule(_kernel);
             _kernel.Bind<IAsyncDbWorkModule>().ToConstant(Restore);
 
             Distributor = new DistributorModule(_kernel);

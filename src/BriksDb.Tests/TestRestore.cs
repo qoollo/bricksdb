@@ -373,7 +373,7 @@ namespace Qoollo.Tests
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename);
 
                 var factory = new TestInMemoryDbFactory(_kernel);
-                var storage1 = WriterApi(StorageConfiguration(filename, 1, 200));
+                var storage1 = WriterApi();
                 var distr = DistributorApi();
 
                 distr.Module = new TestInjectionModule();
@@ -431,7 +431,7 @@ namespace Qoollo.Tests
                     deleteTimeoutMls: 1, periodRetryMls: 60);
 
                 var factory = new TestInMemoryDbFactory(_kernel);
-                var storage1 = WriterApi(StorageConfiguration(filename, 1, 200, 1, 60, true));
+                var storage1 = WriterApi();
 
                 var distr = DistributorApi();
                 distr.Module = new TestInjectionModule();

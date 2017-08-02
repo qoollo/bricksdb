@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.Request;
 using Qoollo.Impl.Components;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Client.WriterGate
@@ -19,18 +16,13 @@ namespace Qoollo.Client.WriterGate
 
         internal InjectionModule Module = null;
 
-        public WriterApi(StorageConfiguration storageConfiguration,
-            bool isNeedRestore = false)
+        public WriterApi(bool isNeedRestore = false)
         {
-            Contract.Requires(storageConfiguration != null);
-
             _isStarted = false;
             _isBuild = false;
             _isDispose = false;
 
-            var restoreTransfer = new RestoreModuleConfiguration(1, storageConfiguration.TimeoutSendAnswerInRestore);
-
-            _writerSystem = new WriterSystem(restoreTransfer, isNeedRestore);
+            _writerSystem = new WriterSystem(isNeedRestore);
 
             _handler = new WriterHandler(_writerSystem);
         }

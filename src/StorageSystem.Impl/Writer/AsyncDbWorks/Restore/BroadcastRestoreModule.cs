@@ -5,7 +5,7 @@ using Ninject;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Writer.AsyncDbWorks.Processes;
 using Qoollo.Impl.Writer.Interfaces;
@@ -15,13 +15,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
     internal class BroadcastRestoreModule: CommonAsyncWorkModule
     {
         private IWriterModel _writerModel;
-        private readonly RestoreModuleConfiguration _configuration;
         private IDbModule _db;
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
         private BroadcastRestoreProcess _restoreProcess;
 
         private string _lastDateTime;
+        private IWriterConfiguration _config;
+
         public string LastStartedTime
         {
             get
@@ -38,10 +39,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
-        public BroadcastRestoreModule(StandardKernel kernel,RestoreModuleConfiguration configuration)
-            : base(kernel)
+        public BroadcastRestoreModule(StandardKernel kernel): base(kernel)
         {
-            _configuration = configuration;
             _lastDateTime = string.Empty;
         }
 
@@ -51,6 +50,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             _db = Kernel.Get<IDbModule>();
             _writerModel = Kernel.Get<IWriterModel>();
+            _config = Kernel.Get<IWriterConfiguration>();
         }
 
         public void Restore(List<RestoreServer> servers, RestoreState state)
@@ -74,7 +74,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _restoreProcess.Start();
 
             AsyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_configuration.PeriodRetry, RestoreCheckStateCallback,
+                new AsyncDataPeriod(_config.Restore.Broadcast.PeriodRetryMls, RestoreCheckStateCallback,
                     AsyncTasksNames.RestoreBroadcast, -1), false);
         }
 

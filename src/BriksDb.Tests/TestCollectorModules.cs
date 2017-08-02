@@ -774,7 +774,7 @@ namespace Qoollo.Tests
                 var proxy = TestGate();
 
                 var distr = DistributorApi();
-                var storage = WriterApi(StorageConfiguration(filename, 1));
+                var storage = WriterApi();
 
                 var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);

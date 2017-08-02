@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
 using Ninject;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks.Restore;
@@ -58,15 +56,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             }
         }
 
-        public AsyncDbWorkModule(StandardKernel kernel,
-            RestoreModuleConfiguration transferConfiguration,
-            bool needRestore = false)
+        public AsyncDbWorkModule(StandardKernel kernel, bool needRestore = false)
             : base(kernel)
         {
-            Contract.Requires(transferConfiguration != null);
-
-            _transferConfiguration = transferConfiguration;
-
             _stateHolder = new RestoreStateHolder(needRestore);
             _saver = LoadRestoreStateFromFile();
         }
@@ -81,16 +73,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         private RestoreStateHolder _stateHolder;
         private readonly RestoreStateFileLogger _saver;
 
-        private readonly RestoreModuleConfiguration _transferConfiguration;
-
         public override void Start()
         {
             _writerModel = Kernel.Get<IWriterModel>();
 
             _initiatorRestore = new InitiatorRestoreModule(Kernel, _stateHolder, _saver);
-            _transferRestore = new TransferRestoreModule(Kernel, _transferConfiguration);
+            _transferRestore = new TransferRestoreModule(Kernel);
             _timeout = new TimeoutModule(Kernel);
-            _broadcastRestore = new BroadcastRestoreModule(Kernel, _transferConfiguration);
+            _broadcastRestore = new BroadcastRestoreModule(Kernel);
 
             _initiatorRestore.Start();
             _transferRestore.Start();

@@ -1490,11 +1490,11 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100000, restoreStateFilename: file1);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100000, restoreStateFilename: file1, usePackage: true);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: true);
 
-                InitInjection.RestoreUsePackage = true;
+                //InitInjection.RestoreUsePackage = true;
                 //InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build();
                 //InitInjection.RestoreHelpFileOut = file2;

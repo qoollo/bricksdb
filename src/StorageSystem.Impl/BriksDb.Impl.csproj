@@ -203,7 +203,6 @@
     <Compile Include="Proxy\Interfaces\IProxyDistributorModule.cs" />
     <Compile Include="Proxy\Interfaces\IProxyMainLogicModule.cs" />
     <Compile Include="Proxy\Interfaces\IProxyNetModule.cs" />
-    <Compile Include="TestSupport\InitInjection.cs" />
     <Compile Include="TestSupport\InjectionModule.cs" />
     <Compile Include="Writer\AsyncDbWorks\IAsyncDbWorkModule.cs" />
     <Compile Include="Writer\AsyncDbWorks\Processes\BroadcastRestoreProcess.cs" />

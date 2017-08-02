@@ -19,8 +19,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         private readonly List<RestoreServer> _serversToRestore;
         public readonly HashSet<ServerId> FailedServers = new HashSet<ServerId>();
 
-        public BroadcastRestoreProcess(StandardKernel kernel, IDbModule db, IWriterModel writerModel, IWriterNetModule writerNet, List<RestoreServer> serversToRestore, bool isSystemUpdated)
-            : base(kernel, db, writerModel, writerNet, Consts.AllTables, isSystemUpdated)
+        public BroadcastRestoreProcess(StandardKernel kernel, IDbModule db, IWriterModel writerModel, IWriterNetModule writerNet, List<RestoreServer> serversToRestore, bool isSystemUpdated, bool usePackage)
+            : base(kernel, db, writerModel, writerNet, Consts.AllTables, isSystemUpdated, usePackage)
         {
             _serversToRestore = serversToRestore;
         }

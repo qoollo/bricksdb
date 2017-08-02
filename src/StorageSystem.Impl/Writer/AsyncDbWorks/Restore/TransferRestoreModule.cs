@@ -84,7 +84,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }            
 
             _restore = new SingleServerRestoreProcess(Kernel, _db, _writerModel, WriterNet, 
-                tableName, _remoteServer, isSystemUpdated);
+                tableName, _remoteServer, isSystemUpdated, _config.Restore.Transfer.UsePackage);
             _restore.Start();
 
             AsyncTaskModule.AddAsyncTask(

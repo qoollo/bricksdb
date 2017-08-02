@@ -53,10 +53,12 @@
     public class RestoreBroadcastConfiguration
     {
         public int PeriodRetryMls { get; protected set; }
+        public bool UsePackage { get; protected set; }
     }
 
     public class RestoreTransferConfiguration
     {
         public int PeriodRetryMls { get; protected set; }
+        public bool UsePackage { get; protected set; }
     }
 }

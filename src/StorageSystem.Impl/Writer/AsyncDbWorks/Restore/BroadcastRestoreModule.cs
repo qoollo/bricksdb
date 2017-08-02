@@ -70,7 +70,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
 
             _restoreProcess = new BroadcastRestoreProcess(Kernel, _db, _writerModel, WriterNet, servers,
-                state == RestoreState.FullRestoreNeed);
+                state == RestoreState.FullRestoreNeed, _config.Restore.Broadcast.UsePackage);
             _restoreProcess.Start();
 
             AsyncTaskModule.AddAsyncTask(

@@ -47,11 +47,10 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1);
+                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1, usePackage: packageRestore);
                 CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, 
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: packageRestore);
 
-                InitInjection.RestoreUsePackage = packageRestore;
                 _distrTest.Build();
 
                 _writer1.Build(storageServer1);
@@ -123,14 +122,12 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 3);
-                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1);
+                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1, usePackage: packageRestore);
                 CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: packageRestore);
 
                 CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename,
-                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3);
-
-                InitInjection.RestoreUsePackage = packageRestore;
+                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3, usePackage: packageRestore);
                 
                 _distrTest.Build();
 
@@ -210,13 +207,11 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 3);
-                CreateConfigFile(countReplics: replics, hash: filename, restoreStateFilename: file1);
+                CreateConfigFile(countReplics: replics, hash: filename, restoreStateFilename: file1, usePackage: packageRestore);
                 CreateConfigFile(distrthreads: 2, countReplics: replics, hash: filename,
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: packageRestore);
                 CreateConfigFile(distrthreads: 2, countReplics: replics, hash: filename,
-                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3);
-
-                InitInjection.RestoreUsePackage = packageRestore;
+                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3, usePackage: packageRestore);
 
                 _distrTest.Build();
 
@@ -289,12 +284,10 @@ namespace Qoollo.Tests
             using (new FileCleaner(file2))
             {
                 CreateHashFile(filename, 1);
-                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1);
+                CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename, restoreStateFilename: file1, usePackage: packageRestore);
 
                 CreateConfigFile(distrthreads: 2, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
-
-                InitInjection.RestoreUsePackage = packageRestore;
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: packageRestore);
 
                 _distrTest.Build();
 
@@ -367,14 +360,12 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(countReplics: replics, hash: filename, restoreStateFilename: file1);
+                CreateConfigFile(countReplics: replics, hash: filename, restoreStateFilename: file1, usePackage: packageRestore);
                 CreateConfigFile(countReplics: replics, hash: filename,
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: packageRestore);
 
                 CreateConfigFile(countReplics: replics, hash: filename,
-                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3);
-
-                InitInjection.RestoreUsePackage = packageRestore;
+                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3, usePackage: packageRestore);
 
                 _distrTest.Build();
 

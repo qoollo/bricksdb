@@ -190,7 +190,9 @@ namespace Qoollo.Tests
 
         private string GetRestore(bool isForceStart, int periodRetryMls, int deleteTimeoutMls)
         {
-            return $@"""restore"": {{ {GetTimeout(isForceStart, periodRetryMls, deleteTimeoutMls)} }} ";
+            return $@"""restore"": {{ {GetTimeout(isForceStart, periodRetryMls, deleteTimeoutMls)}, {
+                    GetInitiator(100, 3)
+                } }} ";
         }
 
         private string GetTimeout(bool isForceStart, int periodRetryMls, int deleteTimeoutMls)
@@ -198,6 +200,13 @@ namespace Qoollo.Tests
             return $@"""timeoutdelete"": {{ {GetParam("PeriodRetryMls", periodRetryMls)}, {
                     GetParam("ForceStart", isForceStart)
                 }, {GetParam("DeleteTimeoutMls", deleteTimeoutMls)} }} ";
+        }
+
+        private string GetInitiator(int periodRetryMls, int countRetry)
+        {
+            return $@"""Initiator"": {{ {GetParam("PeriodRetryMls", periodRetryMls)}, {
+                    GetParam("CountRetry", countRetry)
+                } }} ";
         }
 
         private string GetCollector()
@@ -389,8 +398,8 @@ namespace Qoollo.Tests
 
         internal WriterSystem WriterSystem()
         {
+            //new RestoreModuleConfiguration(10, new TimeSpan())
             return new WriterSystem(
-                new RestoreModuleConfiguration(10, new TimeSpan()),
                 new RestoreModuleConfiguration(10, new TimeSpan()));
         }
 

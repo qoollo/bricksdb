@@ -29,10 +29,8 @@ namespace Qoollo.Client.WriterGate
             _isDispose = false;
 
             var restoreTransfer = new RestoreModuleConfiguration(1, storageConfiguration.TimeoutSendAnswerInRestore);
-            var restoreInitiator = new RestoreModuleConfiguration(storageConfiguration.CountRetryWaitAnswerInRestore,
-                storageConfiguration.TimeoutWaitAnswerInRestore);
 
-            _writerSystem = new WriterSystem(restoreTransfer, restoreInitiator, isNeedRestore);
+            _writerSystem = new WriterSystem(restoreTransfer, isNeedRestore);
 
             _handler = new WriterHandler(_writerSystem);
         }

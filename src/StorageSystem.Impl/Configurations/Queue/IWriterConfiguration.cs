@@ -24,12 +24,12 @@
     public class TimeoutsConfiguration
     {
         public TimeoutConfiguration ServersPingMls { get; protected set; }
-
     }
 
     public class RestoreConfiguration
     {
         public TimeoutDeleteConfiguration TimeoutDelete { get; protected set; }
+        public RestoreInitConfiguration Initiator { get; protected set; }
     }
 
     public class TimeoutDeleteConfiguration
@@ -37,5 +37,11 @@
         public int PeriodRetryMls { get; protected set; }
         public bool ForceStart { get; protected set; }
         public int DeleteTimeoutMls { get; protected set; }
+    }
+
+    public class RestoreInitConfiguration
+    {
+        public int PeriodRetryMls { get; protected set; }
+        public int CountRetry { get; protected set; }
     }
 }

@@ -58,17 +58,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             }
         }
 
-        public AsyncDbWorkModule(
-            StandardKernel kernel,
-            RestoreModuleConfiguration initiatorConfiguration,
+        public AsyncDbWorkModule(StandardKernel kernel,
             RestoreModuleConfiguration transferConfiguration,
             bool needRestore = false)
             : base(kernel)
         {
-            Contract.Requires(initiatorConfiguration != null);
             Contract.Requires(transferConfiguration != null);
 
-            _initiatorConfiguration = initiatorConfiguration;
             _transferConfiguration = transferConfiguration;
 
             _stateHolder = new RestoreStateHolder(needRestore);
@@ -85,14 +81,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         private RestoreStateHolder _stateHolder;
         private readonly RestoreStateFileLogger _saver;
 
-        private readonly RestoreModuleConfiguration _initiatorConfiguration;
         private readonly RestoreModuleConfiguration _transferConfiguration;
 
         public override void Start()
         {
             _writerModel = Kernel.Get<IWriterModel>();
 
-            _initiatorRestore = new InitiatorRestoreModule(Kernel, _initiatorConfiguration, _stateHolder, _saver);
+            _initiatorRestore = new InitiatorRestoreModule(Kernel, _stateHolder, _saver);
             _transferRestore = new TransferRestoreModule(Kernel, _transferConfiguration);
             _timeout = new TimeoutModule(Kernel);
             _broadcastRestore = new BroadcastRestoreModule(Kernel, _transferConfiguration);

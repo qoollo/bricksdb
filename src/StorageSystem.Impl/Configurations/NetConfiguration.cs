@@ -1,7 +1,6 @@
-﻿using System.Diagnostics.Contracts;
-using Qoollo.Impl.Common.Server;
+﻿using Qoollo.Impl.Common.Server;
 
-namespace Qoollo.Impl.Configurations.Queue
+namespace Qoollo.Impl.Configurations
 {
     public class NetConfiguration
     {

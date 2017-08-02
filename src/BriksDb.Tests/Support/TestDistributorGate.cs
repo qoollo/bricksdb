@@ -13,7 +13,7 @@ using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Tests.NetMock;
-using DistributorCacheConfiguration = Qoollo.Impl.Configurations.Queue.DistributorCacheConfiguration;
+using DistributorCacheConfiguration = Qoollo.Impl.Configurations.DistributorCacheConfiguration;
 
 namespace Qoollo.Tests.Support
 {

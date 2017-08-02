@@ -1,7 +1,4 @@
-﻿using System;
-using System.Diagnostics.Contracts;
-
-namespace Qoollo.Impl.Configurations.Queue
+﻿namespace Qoollo.Impl.Configurations
 {
     public class ConnectionTimeoutConfiguration
     {

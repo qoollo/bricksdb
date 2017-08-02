@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using System.ServiceModel;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.NetInterfaces.Data;
 
 namespace Qoollo.Impl.Modules.Net.ReceiveBehavior

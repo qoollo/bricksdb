@@ -2,7 +2,7 @@
 using System.Diagnostics.Contracts;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.Cache;
 

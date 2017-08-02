@@ -2,7 +2,7 @@
 using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Proxy;
 using Qoollo.Impl.Proxy.Interfaces;

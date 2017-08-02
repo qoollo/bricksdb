@@ -5,7 +5,7 @@ using System.Threading;
 using Ninject;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.NetInterfaces;
 
 namespace Qoollo.Impl.Modules.Net

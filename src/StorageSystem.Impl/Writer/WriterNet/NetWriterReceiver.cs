@@ -1,5 +1,5 @@
 ﻿using Ninject;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 
 namespace Qoollo.Impl.Writer.WriterNet

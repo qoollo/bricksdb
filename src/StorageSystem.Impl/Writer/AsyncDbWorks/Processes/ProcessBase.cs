@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.TestSupport;

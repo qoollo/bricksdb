@@ -5,7 +5,7 @@ using Ninject;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Writer.AsyncDbWorks.Processes;
 using Qoollo.Impl.Writer.Interfaces;

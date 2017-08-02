@@ -3,7 +3,7 @@ using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 
 namespace Qoollo.Impl.Modules.Queue
 {

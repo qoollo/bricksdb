@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Qoollo.Impl.Configurations.Queue
+namespace Qoollo.Impl.Configurations
 {
     public class TimeoutConfiguration
     {

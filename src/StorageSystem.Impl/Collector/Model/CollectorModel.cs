@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using Ninject;
@@ -8,7 +7,7 @@ using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 
 namespace Qoollo.Impl.Collector.Model

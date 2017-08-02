@@ -4,7 +4,7 @@ using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Distributor;

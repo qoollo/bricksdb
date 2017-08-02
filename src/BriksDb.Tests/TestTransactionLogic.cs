@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Cache;
 using Xunit;
 

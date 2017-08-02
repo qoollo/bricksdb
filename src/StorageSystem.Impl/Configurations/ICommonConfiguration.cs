@@ -1,4 +1,4 @@
-﻿namespace Qoollo.Impl.Configurations.Queue
+﻿namespace Qoollo.Impl.Configurations
 {
     public interface ICommonConfiguration
     {
@@ -20,6 +20,6 @@
     {
         public string ServiceName { get; protected set; }
         public int CountConnections { get; protected set; }
-        public int TrimPeriod { get; protected set; } // 10000
+        public int TrimPeriod { get; protected set; }
     }
 }

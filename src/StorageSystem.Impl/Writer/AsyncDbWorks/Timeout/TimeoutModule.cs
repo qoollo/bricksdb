@@ -3,7 +3,6 @@ using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Writer.Interfaces;

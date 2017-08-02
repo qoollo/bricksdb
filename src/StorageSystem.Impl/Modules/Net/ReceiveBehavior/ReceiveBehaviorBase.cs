@@ -1,4 +1,4 @@
-﻿using Qoollo.Impl.Configurations.Queue;
+﻿using Qoollo.Impl.Configurations;
 
 namespace Qoollo.Impl.Modules.Net.ReceiveBehavior
 {

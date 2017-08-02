@@ -11,7 +11,6 @@ using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.DistributorModules.Interfaces;
@@ -334,7 +333,7 @@ namespace Qoollo.Tests
         internal AsyncProxyCache AsyncProxyCache()
         {
             //TimeSpan.FromMinutes(100)
-            var cache = new AsyncProxyCache(new Impl.Configurations.Queue.ProxyCacheConfiguration(1000000, 1000));
+            var cache = new AsyncProxyCache(new ProxyCacheConfiguration(1000000, 1000));
             _kernel.Rebind<IAsyncProxyCache>().ToConstant(cache);
             return cache;
         }

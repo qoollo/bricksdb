@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.Contracts;
 using Ninject;
 using Ninject.Parameters;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net.ReceiveBehavior;
 
 namespace Qoollo.Impl.Modules.Net

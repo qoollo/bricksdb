@@ -5,7 +5,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using Ninject;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 
 namespace Qoollo.Impl.Common.HashFile

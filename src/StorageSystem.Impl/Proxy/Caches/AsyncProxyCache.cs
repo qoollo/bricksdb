@@ -1,7 +1,7 @@
 ﻿using System;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Cache;
 using Qoollo.Impl.Proxy.Interfaces;
 

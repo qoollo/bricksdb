@@ -1,7 +1,7 @@
 ﻿using System;
 using Ninject;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 
 namespace Qoollo.Impl.Modules.Config
 {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ServiceModel;
 using Ninject;
 using Ninject.Parameters;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -9,7 +8,6 @@ using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.Configurations.Queue;
 using Qoollo.Impl.Modules.Net.ReceiveBehavior;
 using Qoollo.Impl.NetInterfaces.Distributor;
 using Qoollo.Impl.NetInterfaces.Writer;

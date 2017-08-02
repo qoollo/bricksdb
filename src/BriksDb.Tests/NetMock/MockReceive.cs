@@ -1,5 +1,5 @@
 ﻿using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net.ReceiveBehavior;
 
 namespace Qoollo.Tests.NetMock

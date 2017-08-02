@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using Ninject;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 
 namespace Qoollo.Impl.Modules.ParallelWork
 {

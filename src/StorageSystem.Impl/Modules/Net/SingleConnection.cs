@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Ninject;
 using Ninject.Parameters;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net.ConnectionBehavior;
 
 namespace Qoollo.Impl.Modules.Net

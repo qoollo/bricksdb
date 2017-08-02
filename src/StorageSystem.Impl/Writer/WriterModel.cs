@@ -7,7 +7,7 @@ using Ninject;
 using Qoollo.Impl.Common.Exceptions;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations.Queue;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.HashModule;
 using Qoollo.Impl.Writer.Interfaces;

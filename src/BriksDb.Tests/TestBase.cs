@@ -182,10 +182,8 @@ namespace Qoollo.Tests
         {
             return
                 $@"""writer"": {{ {GetParam("packagesizerestore", 1000)}, {GetParam("packagesizebroadcast", 1000)}, {
-                        GetParam("packagesizetimeout", 1000)
-                    }, {GetNet("netdistributor", distrport)}, {GetNet("netcollector", collectorport)}, {
-                        WriterTimeouts()
-                    }, {
+                        GetNet("netdistributor", distrport)
+                    }, {GetNet("netcollector", collectorport)}, {WriterTimeouts()}, {
                         GetRestore(isForceStart, periodRetryMls, deleteTimeoutMls, usePackage)
                     }, {GetParam("RestoreStateFilename", restoreStateFilename)}}} ";
         }
@@ -200,7 +198,7 @@ namespace Qoollo.Tests
         {
             return $@"""timeoutdelete"": {{ {GetParam("PeriodRetryMls", periodRetryMls)}, {
                     GetParam("ForceStart", isForceStart)
-                }, {GetParam("DeleteTimeoutMls", deleteTimeoutMls)} }} ";
+                }, {GetParam("DeleteTimeoutMls", deleteTimeoutMls)}, {GetParam("packagesizetimeout", 1000)} }} ";
         }
 
         private string GetInitiator(int periodRetryMls, int countRetry)

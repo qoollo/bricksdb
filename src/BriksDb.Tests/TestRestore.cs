@@ -1494,12 +1494,8 @@ namespace Qoollo.Tests
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
                     filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: true);
 
-                //InitInjection.RestoreUsePackage = true;
-                //InitInjection.RestoreHelpFileOut = file1;
                 _distrTest.Build();
-                //InitInjection.RestoreHelpFileOut = file2;
                 _writer1.Build(storageServer1);
-                //InitInjection.RestoreHelpFileOut = file3;
                 _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distrTest.Start();

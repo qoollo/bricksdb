@@ -3,7 +3,6 @@
     public interface IWriterConfiguration
     {
         int PackageSizeRestore { get; }
-        int PackageSizeTimeout { get; }
 
         string RestoreStateFilename { get; }
 
@@ -16,7 +15,6 @@
     public class WriterConfiguration : IWriterConfiguration
     {
         public int PackageSizeRestore { get; protected set; }
-        public int PackageSizeTimeout { get; protected set; }
         public string RestoreStateFilename { get; protected set; }
         public NetConfiguration NetDistributor { get; protected set; }
         public NetConfiguration NetCollector { get; protected set; }
@@ -42,6 +40,7 @@
         public int PeriodRetryMls { get; protected set; }
         public bool ForceStart { get; protected set; }
         public int DeleteTimeoutMls { get; protected set; }
+        public int PackageSizeTimeout { get; protected set; }
     }
 
     public class RestoreInitConfiguration

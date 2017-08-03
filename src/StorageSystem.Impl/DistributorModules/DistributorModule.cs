@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using Ninject;
@@ -30,74 +29,59 @@ namespace Qoollo.Impl.DistributorModules
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public ServerId LocalForDb
-        {
-            get { return _localfordb; }
-        }
+        public ServerId LocalForDb => _localfordb;
 
-        public DistributorModule(
-            StandardKernel kernel,
-            AsyncTasksConfiguration asyncPing,
-            AsyncTasksConfiguration asyncCheck,
-            DistributorHashConfiguration configuration,
-            QueueConfiguration queueConfiguration,
-            ServerId localfordb,
-            ServerId localforproxy,
-            HashMapConfiguration hashMapConfiguration, bool autoRestoreEnable = false)
+        public DistributorModule(StandardKernel kernel, bool autoRestoreEnable = false)
             :base(kernel)
         {
-            Contract.Requires(configuration != null);
-            Contract.Requires(queueConfiguration != null);
-            Contract.Requires(localfordb != null);
-            Contract.Requires(localforproxy != null);
-            Contract.Requires(asyncPing != null);
-            _asyncPing = asyncPing;
-            _asyncTaskModule = new AsyncTaskModule(kernel, queueConfiguration);
+            _asyncTaskModule = new AsyncTaskModule(kernel);
 
-            _queueConfiguration = queueConfiguration;
-            _modelOfDbWriters = new WriterSystemModel(configuration, hashMapConfiguration);
             _modelOfAnotherDistributors = new DistributorSystemModel();
-            _localfordb = localfordb;
-            _localforproxy = localforproxy;
             _autoRestoreEnable = autoRestoreEnable;
-            _asyncCheck = asyncCheck;
         }
 
-        private readonly WriterSystemModel _modelOfDbWriters;
-        private readonly DistributorSystemModel _modelOfAnotherDistributors;
-        private readonly QueueConfiguration _queueConfiguration;
-        private IDistributorNetModule _distributorNet;
-        private readonly ServerId _localfordb;
-        private readonly ServerId _localforproxy;
+        private WriterSystemModel _modelOfDbWriters;
         private IGlobalQueue _queue;
+        private IDistributorNetModule _distributorNet;
+        private readonly DistributorSystemModel _modelOfAnotherDistributors;
+        private ServerId _localfordb;
+        private ServerId _localforproxy;
         private readonly AsyncTaskModule _asyncTaskModule;
-        private readonly AsyncTasksConfiguration _asyncPing;
-        private readonly AsyncTasksConfiguration _asyncCheck;
         private bool _autoRestoreEnable;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private IDistributorConfiguration _config;
 
         public override void Start()
         {
             _distributorNet = Kernel.Get<IDistributorNetModule>();
             _queue = Kernel.Get<IGlobalQueue>();
 
+            var commonConfig = Kernel.Get<ICommonConfiguration>();
+            _modelOfDbWriters = new WriterSystemModel(Kernel, commonConfig.CountReplics);
+
+            _config = Kernel.Get<IDistributorConfiguration>();
+            _localfordb = _config.NetWriter.ServerId;
+            _localforproxy = _config.NetProxy.ServerId;
+
             RegistrateCommands();
       
             _modelOfDbWriters.Start();
 
             _asyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_asyncPing.TimeoutPeriod, PingProcess, AsyncTasksNames.AsyncPing, -1), false);
+                new AsyncDataPeriod(_config.Timeouts.ServersPingMls.PeriodTimeSpan, PingProcess,
+                    AsyncTasksNames.AsyncPing, -1), false);
 
             _asyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_asyncCheck.TimeoutPeriod, CheckRestore, AsyncTasksNames.CheckRestore, -1), false);
+                new AsyncDataPeriod(_config.Timeouts.CheckRestoreMls.PeriodTimeSpan, CheckRestore,
+                    AsyncTasksNames.CheckRestore, -1), false);
 
             _asyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_asyncCheck.TimeoutPeriod, DistributerPing, AsyncTasksNames.CheckDistributors, -1),
-                false);
+                new AsyncDataPeriod(_config.Timeouts.DistributorsPingMls.PeriodTimeSpan, DistributerPing,
+                    AsyncTasksNames.CheckDistributors, -1), false);
 
             _asyncTaskModule.Start();
 
-            StartAsync(_queueConfiguration);
+            StartAsync();
         }
 
         private void RegistrateCommands()
@@ -278,7 +262,8 @@ namespace Qoollo.Impl.DistributorModules
 
             if (failedWriters.Count != 0)
             {
-                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(_asyncCheck.TimeoutPeriod,
+                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(
+                    _config.Timeouts.UpdateHashMapMls.PeriodTimeSpan,
                     data =>
                     {
                         var list = UpdateWritersAsync(failedWriters, command);
@@ -298,7 +283,8 @@ namespace Qoollo.Impl.DistributorModules
 
             if (failedDistributors.Count != 0)
             {
-                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(_asyncCheck.TimeoutPeriod,
+                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(
+                    _config.Timeouts.UpdateHashMapMls.PeriodTimeSpan,
                     data =>
                     {
                         var list = UpdateDistributorsAsync(failedDistributors, command);

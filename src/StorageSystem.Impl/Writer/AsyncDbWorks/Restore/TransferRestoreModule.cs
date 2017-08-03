@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
 using System.Globalization;
 using Ninject;
 using Qoollo.Impl.Common.NetResults.System.Writer;
@@ -43,25 +42,17 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
-        public TransferRestoreModule(StandardKernel kernel, RestoreModuleConfiguration configuration,
-            QueueConfiguration queueConfiguration)
-            : base(kernel)
+        public TransferRestoreModule(StandardKernel kernel): base(kernel)
         {
-            Contract.Requires(configuration != null);
-            Contract.Requires(queueConfiguration != null);
-
-            _configuration = configuration;
-            _queueConfiguration = queueConfiguration;
             _lastDateTime = string.Empty;
         }
 
-        private readonly RestoreModuleConfiguration _configuration;
         private IWriterModel _writerModel;
         private IDbModule _db;
         private ServerId _remoteServer;
-        private readonly QueueConfiguration _queueConfiguration;
         private SingleServerRestoreProcess _restore;
         private string _lastDateTime;
+        private IWriterConfiguration _config;
 
         public override void Start()
         {
@@ -69,6 +60,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             _db = Kernel.Get<IDbModule>();
             _writerModel = Kernel.Get<IWriterModel>();
+            _config = Kernel.Get<IWriterConfiguration>();
         }
 
         public void Restore(ServerId remoteServer, bool isSystemUpdated, string tableName)
@@ -92,11 +84,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }            
 
             _restore = new SingleServerRestoreProcess(Kernel, _db, _writerModel, WriterNet, 
-                tableName, _remoteServer, isSystemUpdated, _queueConfiguration);
+                tableName, _remoteServer, isSystemUpdated, _config.Restore.Transfer.UsePackage);
             _restore.Start();
 
             AsyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_configuration.PeriodRetry, RestoreAnswerCallback,
+                new AsyncDataPeriod(_config.Restore.Transfer.PeriodRetryMls, RestoreAnswerCallback,
                     AsyncTasksNames.RestoreLocal, -1), false);
         }
 

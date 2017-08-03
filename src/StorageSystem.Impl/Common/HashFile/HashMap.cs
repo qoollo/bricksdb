@@ -1,35 +1,48 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Xml.Serialization;
+using Ninject;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Modules;
 
 namespace Qoollo.Impl.Common.HashFile
 {
-    internal class HashMap:IDisposable
+    internal class HashMap:ControlModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
         public List<HashMapRecord> Map { get; protected set; }
-        public List<WriterDescription> Servers { get; private set; }
+        public List<WriterDescription> Servers { get; }
         public List<HashMapRecord> AvailableMap { get; private set; }
-        public string FileName { get { return _configuration.Filename; } }
+        public string Filename { get; private set; }
 
-        public HashMap(HashMapConfiguration configuration)
+        public HashMap(StandardKernel kernel, HashFileType type)
+            :base(kernel)
         {
-            Contract.Requires(configuration!=null);
-            _configuration = configuration;
-            Map = new List<HashMapRecord>(configuration.CountSlices);    
+            _type = type;
+            Map = new List<HashMapRecord>();    
             AvailableMap = new List<HashMapRecord>();
             Servers = new List<WriterDescription>();
         }
-        
-        private readonly HashMapConfiguration _configuration;
+
+        public HashMap(StandardKernel kernel, HashFileType type, string filename)
+            :this(kernel, type)
+        {
+            Filename = filename;
+        }
+
+        private readonly HashFileType _type;
+        private int _countReplic;
+
+        public override void Start()
+        {
+            var config = Kernel.Get<ICommonConfiguration>();
+            _countReplic = config.CountReplics;
+            Filename = config.HashFilename;
+        }
 
         #region Start work
 
@@ -39,26 +52,10 @@ namespace Qoollo.Impl.Common.HashFile
             Servers.Clear();
             AvailableMap.Clear();
 
-            switch (_configuration.Mode)
-            {
-                case HashMapCreationMode.CreateNew:
-                    CreateNewMap();
-                    CreateNewMapWithFile(Map);
-                    break;
-                case HashMapCreationMode.ReadFromFile:
-                    ReadFromFile();
-                    PrepareServerList();
-                    CreateAvailableMap();
-                    break;
-            }
-        }
-
-        public void CreateNewMapWithFile(List<HashMapRecord> servers)
-        {
-            Map = servers;
-            CreateNewFile();
+            ReadFromFile();
             PrepareServerList();
-        }
+            CreateAvailableMap();
+        }        
 
         public void CreateMapFromDistributor(List<Tuple<ServerId, string, string>> servers)
         {
@@ -77,30 +74,44 @@ namespace Qoollo.Impl.Common.HashFile
             CreateAvailableMap();
         }       
 
-        private void CreateNewMap()
+        private void ReadFromFile()
         {
-            var maxVal = BigInteger.Parse("100000000000000000000000", NumberStyles.HexNumber) * 0x10 - 1;
-            var minVal = BigInteger.Parse("0", NumberStyles.HexNumber);
-            var step = maxVal / _configuration.CountSlices;
-            BigInteger current;
-            string min, cur;
-
-            for (int i = 0; i < _configuration.CountSlices - 1; i++)
+            try
             {
-                current = minVal + step;
-
-                min = i == 0 ? "000000000000000000000000" : minVal.ToString("x2");
-                cur = current.ToString("x2");
-
-                Map.Add(new HashMapRecord(min, cur));
-
-                minVal = current;
+                var formatter = new XmlSerializer(Map.GetType());                
+                var stream = new FileStream(Filename, FileMode.Open);
+                Map =  (List<HashMapRecord>) formatter.Deserialize(stream);
+                stream.Close();
             }
+            catch (FileNotFoundException e)
+            {
+                _logger.ErrorFormat(e, "file name = {0}", Filename);
+            }
+            catch (System.Security.SecurityException e)
+            {
+                _logger.ErrorFormat(e, "file name = {0}", Filename);
+            }
+            catch (DirectoryNotFoundException e)
+            {
+                _logger.ErrorFormat(e, "file name = {0}", Filename);
+            }
+            catch (IOException e)
+            {
+                _logger.ErrorFormat(e, "file name = {0}", Filename);
+            }
+        }
 
-            min = _configuration.CountSlices == 1 ? "000000000000000000000000" : minVal.ToString("x2");
-            cur = maxVal.ToString("x2");
-
-            Map.Add(new HashMapRecord(min, cur));
+        protected void PrepareServerList()
+        {
+            foreach (var record in Map)
+            {                
+                record.Prepare(_type);
+                var s = Servers.FirstOrDefault(x => x.Equals(record.ServerId));
+                if(s==null)
+                    Servers.Add(record.ServerId);
+                else
+                    record.SetServer(s);
+            }
         }
 
         protected void CreateNewFile()
@@ -108,66 +119,33 @@ namespace Qoollo.Impl.Common.HashFile
             try
             {
                 var formatter = new XmlSerializer(Map.GetType());
-                var stream = new FileStream(_configuration.Filename, FileMode.Create);
+                var stream = new FileStream(Filename, FileMode.Create);
                 formatter.Serialize(stream, Map);
                 stream.Close();
             }
             catch (FileNotFoundException e)
             {
-                _logger.ErrorFormat(e,"file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e, "file name = {0}", Filename);
             }
             catch (System.Security.SecurityException e)
             {
-                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e, "file name = {0}", Filename);
             }
             catch (DirectoryNotFoundException e)
             {
-                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e, "file name = {0}", Filename);
             }
             catch (IOException e)
             {
-                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
+                _logger.ErrorFormat(e, "file name = {0}", Filename);
             }
         }
 
-        private void ReadFromFile()
+        public void CreateNewMapWithFile(List<HashMapRecord> servers)
         {
-            try
-            {
-                var formatter = new XmlSerializer(Map.GetType());                
-                var stream = new FileStream(_configuration.Filename, FileMode.Open);
-                Map =  (List<HashMapRecord>) formatter.Deserialize(stream);
-                stream.Close();
-            }
-            catch (FileNotFoundException e)
-            {
-                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
-            }
-            catch (System.Security.SecurityException e)
-            {
-                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
-            }
-            catch (DirectoryNotFoundException e)
-            {
-                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
-            }
-            catch (IOException e)
-            {
-                _logger.ErrorFormat(e, "file name = {0}", _configuration.Filename);
-            }
-        }
-
-        private void PrepareServerList()
-        {
-            foreach (var record in Map)
-            {                
-                record.Prepare(_configuration.Type);
-                var s = Servers.FirstOrDefault(x => x.Equals(record.ServerId));
-                if(s==null)
-                    Servers.Add(record.ServerId);
-                else
-                    record.SetServer(s);
-            }
+            Map = servers;
+            CreateNewFile();
+            PrepareServerList();
         }
 
         #endregion
@@ -208,7 +186,7 @@ namespace Qoollo.Impl.Common.HashFile
                 if (Map[i].Save.Equals(server))
                 {
 
-                    var list = Copy(i, _configuration.CountReplics);
+                    var list = Copy(i, _countReplic);
 
                     var intersect = ret.Intersect(list);
                     if (intersect.Count() != 0)
@@ -236,7 +214,7 @@ namespace Qoollo.Impl.Common.HashFile
 
         #endregion
 
-        public void Dispose()
+        protected override void Dispose(bool isUserCall)
         {
             //TODO save to file
         }

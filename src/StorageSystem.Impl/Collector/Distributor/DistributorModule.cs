@@ -20,11 +20,10 @@ namespace Qoollo.Impl.Collector.Distributor
         private ICollectorModel _model;
         private ICollectorNetModule _collectorNet;
         private IAsyncTaskModule _asyncTaskModule;
-        private readonly AsyncTasksConfiguration _asyncPing;
+        private ICollectorConfiguration _config;
 
-        public DistributorModule(StandardKernel kernel, AsyncTasksConfiguration asyncPing) : base(kernel)
+        public DistributorModule(StandardKernel kernel) : base(kernel)
         {
-            _asyncPing = asyncPing;
         }
 
         public override void Start()
@@ -33,11 +32,14 @@ namespace Qoollo.Impl.Collector.Distributor
             _asyncTaskModule = Kernel.Get<IAsyncTaskModule>();
             _collectorNet = Kernel.Get<ICollectorNetModule>();
 
+            _config = Kernel.Get<ICollectorConfiguration>();
+
             if (_model.UseStart)
             {
                 _model.Start();
                 _asyncTaskModule.AddAsyncTask(
-                    new AsyncDataPeriod(_asyncPing.TimeoutPeriod, PingProcess, AsyncTasksNames.AsyncPing, -1), false);
+                    new AsyncDataPeriod(_config.Timeouts.ServersPingMls.PeriodTimeSpan,
+                        PingProcess, AsyncTasksNames.AsyncPing, -1), false);
             }
         }
 
@@ -74,11 +76,12 @@ namespace Qoollo.Impl.Collector.Distributor
 
                 if (!_model.UseStart)
                     _asyncTaskModule.AddAsyncTask(
-                        new AsyncDataPeriod(_asyncPing.TimeoutPeriod, PingProcess, AsyncTasksNames.AsyncPing, -1), false);
+                        new AsyncDataPeriod(_config.Timeouts.ServersPingMls.PeriodTimeSpan,
+                            PingProcess, AsyncTasksNames.AsyncPing, -1), false);
 
                 _asyncTaskModule.AddAsyncTask(
-                    new AsyncDataPeriod(TimeSpan.FromMinutes(1), data => GetHashInfo(server),
-                        AsyncTasksNames.GetHashFromDistributor, -1), false);
+                    new AsyncDataPeriod(_config.Timeouts.DistributorUpdateHashMls.PeriodTimeSpan,
+                        data => GetHashInfo(server), AsyncTasksNames.GetHashFromDistributor, -1), false);
             }
 
             return "";

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.Contracts;
-using System.ServiceModel;
+﻿using System.ServiceModel;
 using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -18,7 +17,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         private IInputModule _input;
         private IDistributorModule _distributorModule;
 
-        public NetDistributorReceiverForProxy(StandardKernel kernel, NetReceiverConfiguration receiverConfiguration)
+        public NetDistributorReceiverForProxy(StandardKernel kernel, NetConfiguration receiverConfiguration)
             : base(kernel, receiverConfiguration)
         {
         }

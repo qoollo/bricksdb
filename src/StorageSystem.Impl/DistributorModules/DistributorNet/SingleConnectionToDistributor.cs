@@ -11,9 +11,9 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
     internal class SingleConnectionToDistributor : SingleConnection<ICommonCommunicationNet>, ICommonCommunicationNet,
         ISingleConnection
     {
-        public SingleConnectionToDistributor(StandardKernel kernel, ServerId server, ConnectionConfiguration configuration,
-            ConnectionTimeoutConfiguration timeoutConfiguration) 
-            : base(kernel, server, configuration, timeoutConfiguration)
+        public SingleConnectionToDistributor(StandardKernel kernel, ServerId server,
+            ICommonConfiguration config)
+            : base(kernel, server, config)
         {
         }
 

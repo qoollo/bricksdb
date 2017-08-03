@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
-using Ninject;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -24,7 +23,6 @@ using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;
 using Xunit;
-using Consts = Qoollo.Impl.Common.Support.Consts;
 using SingleConnectionToDistributor = Qoollo.Impl.Writer.WriterNet.SingleConnectionToDistributor;
 
 namespace Qoollo.Tests
@@ -42,12 +40,7 @@ namespace Qoollo.Tests
                 var server2 = ServerId(storageServer2);
                 var server3 = ServerId(storageServer3);
 
-                var config = new DistributorHashConfiguration(1);
-
-                var writer =
-                    new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 6, 3,
-                        HashFileType.Collector));
-                writer.CreateMap();
+                var writer = new HashWriter(_kernel, filename, 6);
                 writer.SetServer(0, server1.RemoteHost, server1.Port, 157);
                 writer.SetServer(1, server2.RemoteHost, server2.Port, 157);
                 writer.SetServer(2, server3.RemoteHost, server3.Port, 157);
@@ -56,8 +49,9 @@ namespace Qoollo.Tests
                 writer.SetServer(5, server3.RemoteHost, server3.Port, 157);
                 writer.Save();
 
-                var model = new WriterSystemModel(config,
-                    new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Writer));
+                CreateConfigFile(hash: filename);
+
+                var model = new WriterSystemModel(_kernel, 1);
                 model.Start();
 
                 model.ServerNotAvailable(server1);
@@ -88,30 +82,30 @@ namespace Qoollo.Tests
             {
                 #region hell
 
+                CreateConfigFile(countReplics: countReplics, hash: filename, ping: 3000, check: 3000);
+
                 var queue = GetBindedQueue();
 
-                var distrconfig = new DistributorHashConfiguration(countReplics);
                 var dnet = DistributorNetModule();
-                var ddistributor = DistributorDistributorModule(filename, countReplics, dnet, 3000, 3000);
+                var ddistributor = DistributorDistributorModule(dnet);
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
                 dnet.Start();
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), distrconfig.CountReplics);
+                var tranc = new TransactionModule(_kernel);
                 _kernel.Bind<ITransactionModule>().ToConstant(tranc);
 
                 var main = new MainLogicModule(_kernel);
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
                 main.Start();
 
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                tranc.Start();
+                var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
-                    NetReceiverConfiguration(distrServer1),
-                    NetReceiverConfiguration(distrServer12));
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel);
 
                 ddistributor.Start();
                 netDistributorReceiver.Start();
@@ -122,8 +116,8 @@ namespace Qoollo.Tests
                 queue.TransactionQueue.Registrate(data => Interlocked.Increment(ref t));
                 queue.Start();
 
-                var connection = new SingleConnectionToDistributor(_kernel, ServerId(distrServer1), ConnectionConfiguration,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var connection = new SingleConnectionToDistributor(_kernel, ServerId(distrServer1),
+                    new CommonConfiguration());
                 connection.Connect();
 
                 connection.TransactionAnswerResult(new Transaction("123", "123"));
@@ -146,6 +140,8 @@ namespace Qoollo.Tests
         [Fact]
         public void TransactionModule_ProcessSyncWithExecutor_NoServersToSendData()
         {
+            CreateConfigFile(countReplics: 2);
+
             var s1 = new TestServerDescription(1);
             var s2 = new TestServerDescription(2);
 
@@ -157,7 +153,7 @@ namespace Qoollo.Tests
             var net = new NetModuleTest(new Dictionary<ServerId, bool> {{s1, false}, {s2, true}});
             _kernel.Bind<IDistributorNetModule>().ToConstant(net);
 
-            var trm = new TransactionModule(_kernel, new TransactionConfiguration(1), 2);
+            var trm = new TransactionModule(_kernel);
 
             trm.Start();
 
@@ -194,12 +190,14 @@ namespace Qoollo.Tests
             var filename = nameof(TransactionModule_ProcessSyncWithExecutor_SuccessSendDataToServers);
             using (new FileCleaner(filename))
             {
+                CreateConfigFile(countReplics: countReplics, hash: filename, ping: 3000, check: 3000);
+
                 var server1 = ServerId(storageServer1);
                 var server2 = ServerId(storageServer2);
 
                 var queue = GetBindedQueue();
 
-                var distributor = DistributorDistributorModule(filename, countReplics, null, 3000, 3000);
+                var distributor = DistributorDistributorModule(null);
                 var net = DistributorNetModule();
                 _kernel.Rebind<IDistributorModule>().ToConstant(distributor);
 
@@ -222,7 +220,7 @@ namespace Qoollo.Tests
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var trm = new TransactionModule(_kernel, new TransactionConfiguration(1), countReplics);
+                var trm = new TransactionModule(_kernel);
                 trm.Start();
 
                 using (var trans = trm.Rent())
@@ -256,9 +254,11 @@ namespace Qoollo.Tests
 
                 #region hell
 
+                CreateConfigFile(countReplics: 2, hash: filename, ping: 3000, check: 3000);
+
                 var queue = GetBindedQueue();
 
-                var distributor = DistributorDistributorModule(filename, 2, null, 3000, 3000);
+                var distributor = DistributorDistributorModule(null);
                 var net = DistributorNetModule();
 
                 _kernel.Rebind<IDistributorModule>().ToConstant(distributor);
@@ -269,7 +269,10 @@ namespace Qoollo.Tests
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var trm = new TransactionModule(_kernel, new TransactionConfiguration(1), 3);
+                CreateConfigFile(countReplics: 3);
+                UpdateConfigReader();
+
+                var trm = new TransactionModule(_kernel);
                 trm.Start();
 
                 queue.Start();
@@ -323,6 +326,8 @@ namespace Qoollo.Tests
             var filename = nameof(NetModule_Process_SendDatatoAvaliableAndUnavalilableServers);
             using (new FileCleaner(filename))
             {
+                CreateConfigFile(countReplics: 2, hash: filename, ping: 3000, check: 3000);
+
                 var server1 = ServerId(storageServer1);
                 var server2 = ServerId(storageServer2);
                 var server3 = ServerId(storageServer3);
@@ -332,7 +337,7 @@ namespace Qoollo.Tests
 
                 var queue = GetBindedQueue();
                 var net = DistributorNetModule();
-                var distributor = DistributorDistributorModule(filename, 2, net, 3000, 3000);
+                var distributor = DistributorDistributorModule(net);
 
                 _kernel.Rebind<IDistributorModule>().ToConstant(distributor);
 
@@ -396,12 +401,14 @@ namespace Qoollo.Tests
         [Fact]
         public void DistributorTimeoutCache_TimeoutData_SendToMainLogicModuleObsoleteData()
         {
+            CreateConfigFile(countReplics: 1);
+
             var queue = GetBindedQueue();
 
             var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(200, 500));
             _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
             var net = DistributorNetModule();
-            var trans = new TransactionModule(_kernel, new TransactionConfiguration(1), 1);
+            var trans = new TransactionModule(_kernel);
             trans.Start();
 
             var ev = new InnerData(new Transaction("123", "") {OperationName = OperationName.Create})
@@ -451,10 +458,7 @@ namespace Qoollo.Tests
             var filename = nameof(WriterSystemModel_GetDestination_ChechAvailableServers);
             using (new FileCleaner(filename))
             {
-                var writer =
-                    new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 6, 3,
-                        HashFileType.Distributor));
-                writer.CreateMap();
+                var writer = new HashWriter(_kernel, filename, 6);
                 writer.SetServer(0, "local", 11010, 157);
                 writer.SetServer(1, "local", 11011, 157);
                 writer.SetServer(2, "local", 11012, 157);
@@ -463,7 +467,9 @@ namespace Qoollo.Tests
                 writer.SetServer(5, "local", 11012, 157);
                 writer.Save();
 
-                var model = WriterSystemModel(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
+
+                var model = WriterSystemModel(1);
                 model.Start();
 
                 var ev = new InnerData(new Transaction("123", ""))
@@ -496,8 +502,7 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
-
-                var distrconfig = new DistributorHashConfiguration(2);
+                CreateConfigFile(countReplics: 2, hash: filename, ping: 3000, check: 3000);
 
                 var queue = GetBindedQueue();
 
@@ -505,11 +510,10 @@ namespace Qoollo.Tests
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
                 var net = DistributorNetModule();
-                var distributor = DistributorDistributorModule(filename, 2, net, 3000, 3000);
+                var distributor = DistributorDistributorModule(net);
                 _kernel.Rebind<IDistributorModule>().ToConstant(distributor);
 
-                var transaction = new TransactionModule(_kernel, new TransactionConfiguration(1),
-                    distrconfig.CountReplics);
+                var transaction = new TransactionModule(_kernel);
 
                 _kernel.Bind<ITransactionModule>().ToConstant(transaction);
 
@@ -577,10 +581,7 @@ namespace Qoollo.Tests
             var filename = nameof(WriterSystemModel_GetDestination_CountReplics);
             using (new FileCleaner(filename))
             {
-                var writer =
-                    new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 6, 3,
-                        HashFileType.Distributor));
-                writer.CreateMap();
+                var writer = new HashWriter(_kernel, filename, 6);
                 writer.SetServer(0, "local", 11010, 157);
                 writer.SetServer(1, "local", 11011, 157);
                 writer.SetServer(2, "local", 11012, 157);
@@ -589,7 +590,9 @@ namespace Qoollo.Tests
                 writer.SetServer(5, "local", 11012, 157);
                 writer.Save();
 
-                var model = WriterSystemModel(filename, 4);
+                CreateConfigFile(countReplics: 4, hash: filename);
+
+                var model = WriterSystemModel(4);
                 model.Start();
 
                 var ev = new InnerData(new Transaction("123", ""))
@@ -600,8 +603,7 @@ namespace Qoollo.Tests
 
                 var ret = model.GetDestination(ev);
                 Assert.True(ret.Count == 0);
-                model = new WriterSystemModel(new DistributorHashConfiguration(3),
-                    new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
+                model = WriterSystemModel(3);
                 model.Start();
 
                 ret = model.GetDestination(ev);
@@ -622,27 +624,27 @@ namespace Qoollo.Tests
 
                 #region hell
 
+                CreateConfigFile(countReplics: 1, hash: filename, ping: 3000, check: 3000);
+
                 var q1 = GetBindedQueue();
 
                 var dnet = DistributorNetModule();
-                var ddistributor = DistributorDistributorModule(filename, 1, dnet, 3000, 3000);
+                var ddistributor = DistributorDistributorModule(dnet);
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(20000, 20000));
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 1);
+                var tranc = new TransactionModule(_kernel);
                 _kernel.Bind<ITransactionModule>().ToConstant(tranc);
 
                 var main = new MainLogicModule(_kernel);
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
 
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
-                    NetReceiverConfiguration(distrServer1),
-                    NetReceiverConfiguration(distrServer12));
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel);
 
                 #endregion
 
@@ -718,30 +720,29 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 2, hash: filename, ping: 3000, check: 3000);
 
                 #region hell
 
                 var q1 = GetBindedQueue();
 
                 var dnet = DistributorNetModule();
-                var ddistributor = DistributorDistributorModule(filename, 2, dnet, 3000, 3000);
+                var ddistributor = DistributorDistributorModule(dnet);
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(2000000, 200000));
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 2);
+                var tranc = new TransactionModule(_kernel);
                 _kernel.Bind<ITransactionModule>().ToConstant(tranc);
 
                 var main = new MainLogicModule(_kernel);
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
 
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
-                    NetReceiverConfiguration(distrServer1),
-                    NetReceiverConfiguration(distrServer12));
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel);
 
                 #endregion
 
@@ -825,30 +826,29 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename, ping: 3000, check: 3000);
 
                 #region hell
 
                 var q1 = GetBindedQueue();
 
                 var dnet = DistributorNetModule();
-                var ddistributor = DistributorDistributorModule(filename, 1, dnet, 3000, 3000);
+                var ddistributor = DistributorDistributorModule(dnet);
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration());
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 1);
+                var tranc = new TransactionModule(_kernel);
                 _kernel.Bind<ITransactionModule>().ToConstant(tranc);
 
                 var main = new MainLogicModule(_kernel);
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
 
-                var input = new InputModuleWithParallel(_kernel, new QueueConfiguration(2, 100000));
+                var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
-                var netDistributorReceiver = new NetDistributorReceiver(_kernel,
-                    NetReceiverConfiguration(distrServer1),
-                    NetReceiverConfiguration(distrServer12));
+                var netDistributorReceiver = new NetDistributorReceiver(_kernel);
 
                 #endregion
 

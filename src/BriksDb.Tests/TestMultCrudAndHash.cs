@@ -15,8 +15,7 @@ namespace Qoollo.Tests
     {
         public TestMultCrudAndHash():base()
         {
-            _proxy = TestGate(proxyServer, 30000);
-
+            _proxy = TestGate();
             _proxy.Module = new TestInjectionModule();
             _proxy.Build();
         }
@@ -29,12 +28,12 @@ namespace Qoollo.Tests
             var filename = nameof(Proxy_CRUD_TwoTables);
             using (new FileCleaner(filename))
             using (new FileCleaner(Consts.RestoreHelpFile))
-
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
-                var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
+                var distr = DistributorApi();
+                var storage = WriterApi();
 
                 storage.Module = new TestInjectionModule();
                 storage.Build();
@@ -52,7 +51,7 @@ namespace Qoollo.Tests
                 _proxy.Start();
                 distr.Start();
 
-                _proxy.Int.SayIAmHere("localhost", distrServer1);
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 for (int i = 0; i < count; i++)
                 {
@@ -102,16 +101,19 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
+                    distrport: storageServer2);
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
-                var storage1 = WriterApi(StorageConfiguration(filename, 1), storageServer1);
-                var storage2 = WriterApi(StorageConfiguration(filename, 1), storageServer2);
+                var distr = DistributorApi();
+                var storage1 = WriterApi();
+                var storage2 = WriterApi();
 
                 storage1.Module = new TestInjectionModule();
                 storage1.Build();
 
                 storage2.Module = new TestInjectionModule();
-                storage2.Build();
+                storage2.Build(config_file2);
 
                 distr.Module = new TestInjectionModule();
                 distr.Build();
@@ -130,7 +132,7 @@ namespace Qoollo.Tests
                 _proxy.Start();
                 distr.Start();
 
-                _proxy.Int.SayIAmHere("localhost", distrServer1);
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 for (int i = 0; i < count; i++)
                 {
@@ -180,9 +182,10 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
-                var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
+                var distr = DistributorApi();
+                var storage = WriterApi();
 
                 storage.Module = new TestInjectionModule();
                 storage.Build();
@@ -198,7 +201,7 @@ namespace Qoollo.Tests
                 _proxy.Start();
                 distr.Start();
 
-                _proxy.Int.SayIAmHere("localhost", distrServer1);
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 for (int i = 0; i < count; i++)
                 {
@@ -241,16 +244,19 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
+                    distrport: storageServer2);
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
-                var storage1 = WriterApi(StorageConfiguration(filename, 1), storageServer1);
-                var storage2 = WriterApi(StorageConfiguration(filename, 1), storageServer2);
+                var distr = DistributorApi();
+                var storage1 = WriterApi();
+                var storage2 = WriterApi();
 
                 storage1.Module = new TestInjectionModule();
                 storage1.Build();
 
                 storage2.Module = new TestInjectionModule();
-                storage2.Build();
+                storage2.Build(config_file2);
 
                 distr.Module = new TestInjectionModule();
                 distr.Build();
@@ -265,7 +271,7 @@ namespace Qoollo.Tests
                 _proxy.Start();
                 distr.Start();
 
-                _proxy.Int.SayIAmHere("localhost", distrServer1);
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 for (int i = 0; i < count; i++)
                 {

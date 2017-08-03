@@ -94,16 +94,6 @@
     <Compile Include="CollectorGate\QueryParameter.cs" />
     <Compile Include="CollectorGate\StorageDbReader.cs" />
     <Compile Include="CollectorGate\SystemSearchState.cs" />
-    <Compile Include="Configuration\CollectorConfiguration.cs" />
-    <Compile Include="Configuration\CollectorNetConfiguration.cs" />
-    <Compile Include="Configuration\CommonConfiguration.cs" />
-    <Compile Include="Configuration\StorageNetConfiguration.cs" />
-    <Compile Include="Configuration\DistributorConfiguration.cs" />
-    <Compile Include="Configuration\DistributorNetConfiguration.cs" />
-    <Compile Include="Configuration\StorageConfiguration.cs" />
-    <Compile Include="Configuration\NetConfiguration.cs" />
-    <Compile Include="Configuration\ProxyConfiguration.cs" />
-    <Compile Include="Configuration\TimeoutConfiguration.cs" />
     <Compile Include="DistributorGate\DistributorApi.cs" />
     <Compile Include="DistributorGate\DistributorHandler.cs" />
     <Compile Include="DistributorGate\DistributorHandlerEmpty.cs" />

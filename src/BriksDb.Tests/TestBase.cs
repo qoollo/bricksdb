@@ -1,20 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using Ninject;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.DistributorGate;
-using Qoollo.Client.Support;
 using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Collector.Model;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
+using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.DistributorNet;
 using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Model;
+using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
@@ -37,27 +38,30 @@ namespace Qoollo.Tests
         internal TestWriterGate _writer3;
         internal TestGate _proxy;
         internal TestDistributorGate _distrTest;
-        internal const int distrServer1 = 22323;
-        internal const int distrServer2 = 22423;
-        internal const int proxyServer = 22331;
-        internal const int distrServer12 = 22324;
-        internal const int distrServer22 = 22424;
-        internal const int storageServer1 = 22155;
-        internal const int storageServer2 = 22156;
-        internal const int storageServer3 = 22157;
-        internal const int storageServer4 = 22158;
+        internal const int distrServer1 = 1;
+        internal const int distrServer2 = 2;
+        internal const int distrServer12 = 3;
+        internal const int distrServer22 = 4;
+        internal const int proxyServer = 11;
+        internal const int storageServer1 = 101;
+        internal const int storageServer2 = 102;
+        internal const int storageServer3 = 103;
+        internal const int storageServer4 = 104;
 
         internal string file1 = "restoreHelp1.txt";
         internal string file2 = "restoreHelp2.txt";
         internal string file3 = "restoreHelp3.txt";
         internal string file4 = "restoreFile4.txt";
 
+        internal string config_file = "config.txt";
+        internal string config_file1 = "config1.txt";
+        internal string config_file2 = "config2.txt";
+        internal string config_file3 = "config3.txt";
+        internal string config_file4 = "config4.txt";
+
         private readonly List<int> _writerPorts;
 
         private static readonly object Lock = new object();
-        internal ConnectionConfiguration ConnectionConfiguration;
-        internal QueueConfiguration QueueConfiguration;
-        internal CommonConfiguration CommonConfiguration;
 
         public TestBase()
         {
@@ -65,20 +69,14 @@ namespace Qoollo.Tests
 
             NetMock.NetMock.Instance = new NetMock.NetMock();
 
-            InitInjection.RestoreUsePackage = false;
-            InitInjection.RestoreHelpFileOut = Impl.Common.Support.Consts.RestoreHelpFile;
+            CreateConfigFile();
+
+            new SettingsModule(_kernel, Qoollo.Impl.Common.Support.Consts.ConfigFilename)
+                .Start();
 
             _writerPorts = new List<int> {storageServer1, storageServer2, storageServer3, storageServer4};
 
-            ConnectionConfiguration = new ConnectionConfiguration("testService", 10);
-            QueueConfiguration = new QueueConfiguration(1, 100);
-
-            CommonConfiguration = new CommonConfiguration(1, 100);
-            var netconfig = new NetConfiguration("localhost", proxyServer, "testService", 10);
-            var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(10),
-                TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
-
-            _proxy = new TestGate(netconfig, toconfig, CommonConfiguration);
+            _proxy = new TestGate();
             _proxy.Module = new TestInjectionModule();
             _proxy.Build();
 
@@ -88,13 +86,225 @@ namespace Qoollo.Tests
             _writer3 = new TestWriterGate();
         }
 
+        #region Config file
+
+        protected void UpdateConfigReader()
+        {
+            new SettingsModule(_kernel, Qoollo.Impl.Common.Support.Consts.ConfigFilename)
+                .Start();
+        }
+
+        protected void CreateConfigFile(string filename = Qoollo.Impl.Common.Support.Consts.ConfigFilename,
+            int distrthreads = 4, int countReplics = 2, string hash = "", int distrport = storageServer1, 
+            int collectorport = storageServer1, int writerport = distrServer1, int proxyport = distrServer12, 
+            int pdistrport = proxyServer, int timeAliveBeforeDeleteMls = 10000, 
+            int timeAliveAfterUpdateMls = 10000, int ping = 200, int check = 2000,
+            int transaction= 10000, int support = 10000, 
+            int serverPageSize = 1000, bool useHashFile = true,
+            bool usePackage = false,
+            bool isForceStart = false, int periodRetryMls = 100000, int deleteTimeoutMls= 100000,
+            string restoreStateFilename = Consts.RestoreHelpFile)
+        {
+            using (var writer = new StreamWriter(filename, false))
+            {
+                writer.WriteLine(
+                    $@"{{ {GetQueue()}, {GetAsync()}, {
+                            GetDistrtibutor(distrthreads, writerport, proxyport,
+                                timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls, ping, check)
+                        }, {
+                            GetWriter(distrport, collectorport, isForceStart, periodRetryMls, deleteTimeoutMls,
+                                restoreStateFilename, usePackage)
+                        }, {GetCommon(countReplics, hash)}, {GetProxy(pdistrport, transaction, support)},{
+                            GetCollector(serverPageSize, useHashFile)
+                        } }}");
+            }
+
+            UpdateConfigReader();
+        }
+
+        private string GetAsync()
+        {
+            return $@"""asynctask"": {{ {GetParam("countthreads", 4)} }} ";
+        }
+
+        private string GetProxy(int distrport, int transaction, int support)
+        {
+            return "\n" +
+                   $@"""proxy"": {{ {GetNet("netdistributor", distrport)}, {ProxyTimeouts()}, {
+                           GetProxyCache(transaction, support)
+                       } }} ";
+        }
+
+        private string GetProxyCache(int transaction, int support)
+        {
+            return $@"""cache"": {{ {GetParam("Transaction", transaction)}, {GetParam("Support", support)} }} ";
+        }
+
+        private string GetDistrtibutor(int distrthreads, int portwriter, int portproxy,
+            int timeAliveBeforeDeleteMls, int timeAliveAfterUpdateMls, int ping, int check)
+        {
+            return "\n" +
+                   $@"""distributor"": {{ {GetParam("countthreads", distrthreads)}, {GetNet("netwriter", portwriter)}, {
+                           GetNet("netproxy", portproxy)
+                       }, {GetDCache(timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls)}, {
+                           DistributorTimeouts(ping, check)
+                       } }} ";
+        }
+
+        private string GetDCache(int timeAliveBeforeDeleteMls, int timeAliveAfterUpdateMls)
+        {
+            return $@"""cache"": {{ {GetParam("TimeAliveBeforeDeleteMls", timeAliveBeforeDeleteMls)}, {
+                GetParam("TimeAliveAfterUpdateMls", timeAliveAfterUpdateMls)} }} ";
+        }
+
+        private string GetCommon(int countReplice, string hash)
+        {
+            return "\n" +
+                   $@"""common"": {{ {GetParam("countreplics", countReplice)}, {GetParam("hashfilename", hash)}, {
+                       GetConnection()}, {GetConnectionTimeout()} }} ";
+        }
+
+        private string GetConnection()
+        {
+            return "\n" +
+                   $@"""connection"": {{ {GetParam("servicename", "some name")}, {GetParam("countconnections", 10)}, {
+                       GetParam("trimperiod", 100)} }} ";
+        }
+
+        private string GetConnectionTimeout()
+        {
+            return "\n" +
+                   $@"""connectiontimeout"": {{ {GetParam("sendtimeoutmls", 1000)}, {GetParam("opentimeoutmls", 100)} }} ";
+        }
+
+        private string GetWriter(int distrport, int collectorport, bool isForceStart, int periodRetryMls,
+            int deleteTimeoutMls, string restoreStateFilename, bool usePackage)
+        {
+            return
+                $@"""writer"": {{ {GetParam("packagesizerestore", 1000)}, {GetParam("packagesizebroadcast", 1000)}, {
+                        GetNet("netdistributor", distrport)
+                    }, {GetNet("netcollector", collectorport)}, {WriterTimeouts()}, {
+                        GetRestore(isForceStart, periodRetryMls, deleteTimeoutMls, usePackage)
+                    }, {GetParam("RestoreStateFilename", restoreStateFilename)}}} ";
+        }
+
+        private string GetRestore(bool isForceStart, int periodRetryMls, int deleteTimeoutMls, bool usePackage)
+        {
+            return $@"""restore"": {{ {GetTimeout(isForceStart, periodRetryMls, deleteTimeoutMls)}, {
+                    GetInitiator(100, 3)}, {GetBroadcast(100, usePackage)}, {GetTransfer(100, usePackage)} }} ";
+        }
+
+        private string GetTimeout(bool isForceStart, int periodRetryMls, int deleteTimeoutMls)
+        {
+            return $@"""timeoutdelete"": {{ {GetParam("PeriodRetryMls", periodRetryMls)}, {
+                    GetParam("ForceStart", isForceStart)
+                }, {GetParam("DeleteTimeoutMls", deleteTimeoutMls)}, {GetParam("packagesizetimeout", 1000)} }} ";
+        }
+
+        private string GetInitiator(int periodRetryMls, int countRetry)
+        {
+            return $@"""Initiator"": {{ {GetParam("PeriodRetryMls", periodRetryMls)}, {
+                    GetParam("CountRetry", countRetry)
+                } }} ";
+        }
+
+        private string GetBroadcast(int periodRetryMls, bool usePackage)
+        {
+            return $@"""Broadcast"": {{ {GetParam("PeriodRetryMls", periodRetryMls)}, {GetParam("UsePackage", usePackage)} }} ";
+        }
+
+        private string GetTransfer(int periodRetryMls, bool usePackage)
+        {
+            return $@"""Transfer"": {{ {GetParam("PeriodRetryMls", periodRetryMls)}, {GetParam("UsePackage", usePackage)} }} ";
+        }
+
+        private string GetCollector(int serverPageSize, bool useHashFile)
+        {
+            return $@"""collector"": {{ {CollectorTimeouts()}, {GetParam("ServerPageSize", serverPageSize)}, {
+                    GetParam("UseHashFile", useHashFile)
+                } }} ";
+        }
+        
+        private string CollectorTimeouts()
+        {
+            return
+                $@"""timeouts"": {{ {GetTimeout("ServersPingMls", 100)}, {
+                    GetTimeout("DistributorUpdateHashMls", 60000)} }}";
+        }
+
+        private string WriterTimeouts()
+        {
+            return $@"""timeouts"": {{ {GetTimeout("ServersPingMls", 100)} }}";
+        }
+
+        private string ProxyTimeouts()
+        {
+            return $@"""timeouts"": {{ {GetTimeout("ServersPingMls", 10000)}, {
+                    GetTimeout("DistributorUpdateInfoMls", 10000)
+                } }}";
+        }
+
+        private string DistributorTimeouts(int ping, int check)
+        {
+            return $@"""timeouts"": {{ {GetTimeout("ServersPingMls", ping)}, {
+                    GetTimeout("CheckRestoreMls", check)}, {GetTimeout("DistributorsPingMls", 10000)},{
+                GetTimeout("UpdateHashMapMls", 10000)} }}";
+        }
+
+        private string GetTimeout(string name, int value)
+        {
+            return $@"""{name}"": {{ {GetParam("PeriodMls", value)} }}";
+        }
+
+        private string GetNet(string name, int port)
+        {
+            return "\n" + $@"""{name}"": {{ {GetParam("host", "localhost")}, {GetParam("port", port)} }} ";
+        }
+
+        private string GetQueue()
+        {
+            return $@"""queue"": {{ 
+    {GetSingle("writerdistributor")},
+    {GetSingle("WriterInput")},
+    {GetSingle("WriterInputRollback")},
+    {GetSingle("WriterRestore")},
+    {GetSingle("WriterRestorePackage")},
+    {GetSingle("WriterTimeout")},
+    {GetSingle("WriterTransactionAnswer")},
+
+    {GetSingle("DistributorDistributor")},
+    {GetSingle("DistributorTransaction")},
+    {GetSingle("DistributorTransactionCallback")},
+
+    {GetSingle("ProxyDistributor")},
+    {GetSingle("ProxyInput")},
+    {GetSingle("ProxyInputOther")},
+        }} ";
+        }
+
+        private string GetSingle(string name)
+        {
+            return $@"""{name.ToLower()}"": {{ {GetParam("countthreads", 1)}, {GetParam("maxsize", 1000)} }}";
+        }
+
+        private string GetParam(string name, object value)
+        {
+            var strValue = value.ToString();
+            if (value is string)
+                strValue = $@"""{strValue}""";
+            if (value is bool)
+                strValue = strValue.ToLower();
+            return $@"""{name}"":{strValue}";
+        }
+
+        #endregion
+
         protected void CreateHashFile(string filename, int countServers)
         {
-            var writer = new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, countServers, 3, HashFileType.Distributor));
-            writer.CreateMap();
+            var writer = new HashWriter(null, filename, countServers);
             for (int i = 0; i < countServers; i++)
             {
-                writer.SetServer(i, "localhost", _writerPorts[i], 157);
+                writer.SetServer(i, "localhost", _writerPorts[i], _writerPorts[i]);
             }
             writer.Save();
         }
@@ -106,163 +316,97 @@ namespace Qoollo.Tests
 
         internal ProxyNetModule ProxyNetModule()
         {
-            var net = new ProxyNetModule(_kernel, ConnectionConfiguration,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            var net = new ProxyNetModule(_kernel);
             _kernel.Rebind<IProxyNetModule>().ToConstant(net);
             return net;
         }
 
         internal DistributorNetModule DistributorNetModule()
         {
-            var net = new DistributorNetModule(_kernel, ConnectionConfiguration,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            var net = new DistributorNetModule(_kernel);
             _kernel.Rebind<IDistributorNetModule>().ToConstant(net);
             return net;
         }
 
-        internal DistributorModule DistributorDistributorModule(string filename, int countReplics,
-            DistributorNetModule net, int pingTo = 200, int asyncCheckTo = 2000,
-            int distrPort1 = distrServer1, int distrPort2 = distrServer12)
+        internal DistributorModule DistributorDistributorModule(DistributorNetModule net)
         {
-            return new DistributorModule(_kernel, 
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(pingTo)),
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(asyncCheckTo)),
-                new DistributorHashConfiguration(countReplics),
-                QueueConfiguration,
-                new ServerId("localhost", distrPort1),
-                new ServerId("localhost", distrPort2),
-                new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Distributor));
+            return new DistributorModule(_kernel);
         }
 
         internal AsyncProxyCache AsyncProxyCache()
         {
-            var cache = new AsyncProxyCache(TimeSpan.FromMinutes(100));
+            //TimeSpan.FromMinutes(100)
+            var cache = new AsyncProxyCache(new ProxyCacheConfiguration(1000000, 1000));
             _kernel.Rebind<IAsyncProxyCache>().ToConstant(cache);
             return cache;
         }
 
-        internal ProxyDistributorModule ProxyDistributorModule(ProxyNetModule net, int proxyPort)
+        internal ProxyDistributorModule ProxyDistributorModule(ProxyNetModule net)
         {
             AsyncProxyCache();
                         
-            return new ProxyDistributorModule(_kernel, QueueConfiguration, ServerId(proxyPort),
-                new AsyncTasksConfiguration(TimeSpan.FromDays(1)),
-                new AsyncTasksConfiguration(TimeSpan.FromDays(1)));
+            return new ProxyDistributorModule(_kernel);
         }
 
-        internal CollectorModel CollectorModel(string filename, int countReplics)
+        internal CollectorModel CollectorModel()
         {
-            return new CollectorModel(new DistributorHashConfiguration(countReplics),
-                    new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, countReplics, 1,
-                        HashFileType.Writer));
+            var ret =  new CollectorModel(_kernel);
+            ret.StartConfig();
+            return ret;
         }
 
-        internal TestGate TestGate(int proxyPort, int syncTo = 60)
+        internal TestGate TestGate()
         {
-            var netconfig = new NetConfiguration("localhost", proxyPort, "testService", 10);
-            var toconfig = new ProxyConfiguration(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(syncTo),
-                TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
-
-            return new TestGate(netconfig, toconfig, CommonConfiguration);
+            //int syncTo = 60
+            return new TestGate();
         }
 
-        internal DistributorConfiguration DistributorConfiguration(string filename, int countReplics)
+        internal DistributorApi DistributorApi()
         {
-            return new DistributorConfiguration(countReplics, filename, TimeSpan.FromMilliseconds(100000),
-                    TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(10000));
+            return new DistributorApi();
         }
 
-        internal DistributorApi DistributorApi(DistributorConfiguration distrConf, int portForProxy, int portForStorage)
+        internal WriterApi WriterApi()
         {
-            var distrNet = new DistributorNetConfiguration("localhost", portForProxy, portForStorage, "testService", 10);
-            return new DistributorApi(distrNet, distrConf, CommonConfiguration);
-        }
-
-        internal StorageConfiguration StorageConfiguration(string filename, int countReplics, 
-            int restoreAnswerMls = 10000000, int deleteRestoreMls = 1000000, int periodStartDelete = 1000000, 
-            bool isForceDelete = false)
-        {
-            return new StorageConfiguration(filename, countReplics, 10, TimeSpan.FromHours(1),
-                TimeSpan.FromMilliseconds(restoreAnswerMls), 
-                TimeSpan.FromMilliseconds(deleteRestoreMls), 
-                TimeSpan.FromMilliseconds(periodStartDelete), isForceDelete);
-        }
-
-        internal WriterApi WriterApi(StorageConfiguration storageConfiguration, int portForDistr, int portForCollector = 157)
-        {
-            var storageNet = new StorageNetConfiguration("localhost", portForDistr, portForCollector, "testService", 10);
-            return new WriterApi(storageNet, storageConfiguration, CommonConfiguration);
-        }
-
-        internal NetReceiverConfiguration NetReceiverConfiguration(int serverPort)
-        {
-            return new NetReceiverConfiguration(serverPort, "localhost", "testService");
+            return new WriterApi();
         }
 
         internal DistributorCacheConfiguration DistributorCacheConfiguration(int deleteMls = 2000, int updateMls = 200000)
         {
-            return new DistributorCacheConfiguration(TimeSpan.FromMilliseconds(deleteMls), TimeSpan.FromMilliseconds(updateMls));
+            return new DistributorCacheConfiguration(deleteMls, updateMls);
         }
 
-        internal WriterSystemModel WriterSystemModel(string filename, int countReplics)
+        internal WriterSystemModel WriterSystemModel(int countReplics)
         {
-            return new WriterSystemModel(new DistributorHashConfiguration(countReplics),
-                new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics,
-                    HashFileType.Distributor));
+            return new WriterSystemModel(_kernel, countReplics);
         }
 
-        internal TestProxySystem TestProxySystem(int proxyPort, int cacheToSec = 2, int asyncCacheToSec = 2)
+        internal TestProxySystem TestProxySystem()
         {
-            var pcc = new ProxyCacheConfiguration(TimeSpan.FromSeconds(cacheToSec));
-            var pcc2 = new ProxyCacheConfiguration(TimeSpan.FromSeconds(asyncCacheToSec));
-            return new TestProxySystem(ServerId(proxyPort),
-               QueueConfiguration, ConnectionConfiguration, 
-               pcc, pcc2,
-               NetReceiverConfiguration(proxyPort),
-               new AsyncTasksConfiguration(new TimeSpan()),
-               new AsyncTasksConfiguration(new TimeSpan()),
-               new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            return new TestProxySystem();
         }
 
-        internal DistributorSystem DistributorSystem(DistributorCacheConfiguration cacheConfiguration,
-            string filename, int countReplics, int portForProxy, int portForWriter,
-            int toMls1 = 200, int toMls2 = 30000)
+        internal DistributorSystem DistributorSystem()
         {
-            return new DistributorSystem(ServerId(portForWriter), ServerId(portForProxy),
-                new DistributorHashConfiguration(countReplics),
-                QueueConfiguration, ConnectionConfiguration, cacheConfiguration,
-                NetReceiverConfiguration(portForWriter),
-                NetReceiverConfiguration(portForProxy),
-                new TransactionConfiguration(1),
-                new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics,
-                    HashFileType.Distributor),
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls1)),
-                new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(toMls2)),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+            return new DistributorSystem();
         }
 
-        internal WriterSystem WriterSystem(string filename, int countReplics, int portForDistr, int portForCollector = 157)
+        internal WriterSystem WriterSystem()
         {
-            return new WriterSystem(ServerId(portForDistr), QueueConfiguration,
-                NetReceiverConfiguration(portForDistr),
-                NetReceiverConfiguration(portForCollector),
-                new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics, HashFileType.Writer),
-                ConnectionConfiguration,
-                new RestoreModuleConfiguration(10, new TimeSpan()),
-                new RestoreModuleConfiguration(10, new TimeSpan()),
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout),
-                new RestoreModuleConfiguration(-1, TimeSpan.FromHours(1), false, TimeSpan.FromHours(1)));
+            //new RestoreModuleConfiguration(10, new TimeSpan())
+            return new WriterSystem();
         }
 
         internal GlobalQueue GetBindedQueue(string name = "")
         {
-            var queue = new GlobalQueue(name);
+            var queue = new GlobalQueue(_kernel, name);
             _kernel.Rebind<IGlobalQueue>().ToConstant(queue);
             return queue;
         }
 
         protected virtual void Dispose(bool isUserCall)
         {
+            File.Delete(Qoollo.Impl.Common.Support.Consts.ConfigFilename);
         }
 
         public void Dispose()

@@ -13,7 +13,7 @@ namespace Qoollo.Impl.Proxy.ProxyNet
     {
         private IProxyDistributorModule _distributorModule;
 
-        public ProxyNetReceiver(StandardKernel kernel, NetReceiverConfiguration receiverConfiguration)
+        public ProxyNetReceiver(StandardKernel kernel, NetConfiguration receiverConfiguration)
             :base(kernel, receiverConfiguration)
         {
         }

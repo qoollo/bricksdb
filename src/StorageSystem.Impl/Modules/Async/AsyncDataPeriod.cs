@@ -14,6 +14,11 @@ namespace Qoollo.Impl.Modules.Async
             _timeout = timeout;
         }
 
+        public AsyncDataPeriod(int timeoutMls, Action<AsyncData> action, string actionName, int totalCount)
+            : this(TimeSpan.FromMilliseconds(timeoutMls), action, actionName, totalCount)
+        {
+        }
+
         public override void GenerateNextTime(bool isforceStart)
         {
             if (!isforceStart)

@@ -18,7 +18,7 @@ namespace Qoollo.Impl.Writer.WriterNet
         private IInputModule _inputModule;
         private IDistributorModule _distributor;
 
-        public NetWriterReceiverForWrite(StandardKernel kernel, NetReceiverConfiguration receiverConfiguration)
+        public NetWriterReceiverForWrite(StandardKernel kernel, NetConfiguration receiverConfiguration)
             :base(kernel, receiverConfiguration)
         {
         }

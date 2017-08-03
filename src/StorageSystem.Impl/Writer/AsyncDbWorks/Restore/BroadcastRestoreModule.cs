@@ -15,14 +15,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
     internal class BroadcastRestoreModule: CommonAsyncWorkModule
     {
         private IWriterModel _writerModel;
-        private readonly RestoreModuleConfiguration _configuration;
         private IDbModule _db;
-        private readonly QueueConfiguration _queueConfiguration;
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
         private BroadcastRestoreProcess _restoreProcess;
 
         private string _lastDateTime;
+        private IWriterConfiguration _config;
+
         public string LastStartedTime
         {
             get
@@ -39,16 +39,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
         }
 
-        public BroadcastRestoreModule(
-            StandardKernel kernel,
-            RestoreModuleConfiguration configuration,
-            QueueConfiguration queueConfiguration)
-            : base(kernel)
+        public BroadcastRestoreModule(StandardKernel kernel): base(kernel)
         {
-            _configuration = configuration;
-            _queueConfiguration = queueConfiguration;
             _lastDateTime = string.Empty;
-            
         }
 
         public override void Start()
@@ -57,6 +50,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             _db = Kernel.Get<IDbModule>();
             _writerModel = Kernel.Get<IWriterModel>();
+            _config = Kernel.Get<IWriterConfiguration>();
         }
 
         public void Restore(List<RestoreServer> servers, RestoreState state)
@@ -76,11 +70,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }
 
             _restoreProcess = new BroadcastRestoreProcess(Kernel, _db, _writerModel, WriterNet, servers,
-                state == RestoreState.FullRestoreNeed, _queueConfiguration);
+                state == RestoreState.FullRestoreNeed, _config.Restore.Broadcast.UsePackage);
             _restoreProcess.Start();
 
             AsyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_configuration.PeriodRetry, RestoreCheckStateCallback,
+                new AsyncDataPeriod(_config.Restore.Broadcast.PeriodRetryMls, RestoreCheckStateCallback,
                     AsyncTasksNames.RestoreBroadcast, -1), false);
         }
 

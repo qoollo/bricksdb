@@ -10,23 +10,26 @@ namespace Qoollo.Impl.Modules.Net
 {
     internal abstract class SingleConnection<T> : ControlModule
     {
+        private readonly ICommonConfiguration _config;
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
-        private readonly IConnectionBehavior<T> _connection;
 
-        public ServerId Server => _connection.Server;
+        private IConnectionBehavior<T> _connection;
+        public ServerId Server { get; }
 
-        protected SingleConnection(StandardKernel kernel, ServerId server, ConnectionConfiguration configuration,
-            ConnectionTimeoutConfiguration timeoutConfiguration)
+        protected SingleConnection(StandardKernel kernel, ServerId server, ICommonConfiguration config)
             :base(kernel)
         {
-            _connection = kernel.Get<IConnectionBehavior<T>>(
-                new ConstructorArgument("server", server),
-                new ConstructorArgument("configuration", configuration),
-                new ConstructorArgument("timeoutConfiguration", timeoutConfiguration));
+            _config = config;
+            Server = server;
         }
 
         public bool Connect()
-        {
+        {            
+            _connection = Kernel.Get<IConnectionBehavior<T>>(
+                new ConstructorArgument("server", Server),
+                new ConstructorArgument("configuration", _config.Connection),
+                new ConstructorArgument("timeoutConfiguration", _config.ConnectionTimeout));
+
             return _connection.Connect();
         }
 

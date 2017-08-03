@@ -12,9 +12,9 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 {
     internal class SingleConnectionToProxy : SingleConnection<ICommonProxyNetReceiver>, ICommonCommunicationNet, ISingleConnection
     {
-        public SingleConnectionToProxy(StandardKernel kernel, ServerId server, ConnectionConfiguration configuration,
-            ConnectionTimeoutConfiguration timeoutConfiguration) 
-            : base(kernel, server, configuration, timeoutConfiguration)
+        public SingleConnectionToProxy(StandardKernel kernel, ServerId server,
+            ICommonConfiguration config)
+            : base(kernel, server, config)
         {
         }
 

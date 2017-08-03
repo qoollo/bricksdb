@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
-using Qoollo.Client.Configuration;
-using Qoollo.Client.Support;
-using Qoollo.Impl.Common.HashFile;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Client.DistributorGate
@@ -21,49 +15,11 @@ namespace Qoollo.Client.DistributorGate
 
         internal InjectionModule Module = null;
 
-        public DistributorApi(DistributorNetConfiguration netConfiguration,
-            DistributorConfiguration distributorConfiguration, CommonConfiguration commonConfiguration,
-            TimeoutConfiguration timeoutConfiguration)
+        public DistributorApi()
         {
-            Contract.Requires(netConfiguration != null);
-            Contract.Requires(distributorConfiguration != null);
-            Contract.Requires(commonConfiguration != null);
-            Contract.Requires(timeoutConfiguration != null);
-
-            var dbServer = new ServerId( netConfiguration.Host, netConfiguration.PortForStorage);
-            var proxyServer = new ServerId( netConfiguration.Host,netConfiguration.PortForProxy);
-
-            var distrHash = new DistributorHashConfiguration(distributorConfiguration.CountReplics);
-            var queue = new QueueConfiguration(commonConfiguration.CountThreads, commonConfiguration.QueueSize);
-            var connection = new ConnectionConfiguration(netConfiguration.WcfServiceName,
-                netConfiguration.CountConnectionsToSingleServer, netConfiguration.TrimPeriod);
-            var distrCache = new DistributorCacheConfiguration(distributorConfiguration.DataAliveTime,
-                distributorConfiguration.DataAliveAfterUpdate);
-            var dbNetReceive = new NetReceiverConfiguration(netConfiguration.PortForStorage,
-                netConfiguration.Host, netConfiguration.WcfServiceName);
-            var proxyNetReceive = new NetReceiverConfiguration(netConfiguration.PortForProxy,
-                netConfiguration.Host, netConfiguration.WcfServiceName);
-            var transaction = new TransactionConfiguration(commonConfiguration.CountThreads);
-            var hashMap = new HashMapConfiguration(distributorConfiguration.FileWithHashName,
-                HashMapCreationMode.ReadFromFile, 1,
-                distributorConfiguration.CountReplics, HashFileType.Distributor);
-            var asyncPing = new AsyncTasksConfiguration(distributorConfiguration.PingPeriod);
-            var asyncCheck = new AsyncTasksConfiguration(distributorConfiguration.CheckPeriod);
-            var timeou = new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout,
-                timeoutConfiguration.SendTimeout);
-
-            _distributorSystem = new DistributorSystem(dbServer, proxyServer, distrHash, queue, connection, distrCache,
-                dbNetReceive, proxyNetReceive, transaction, hashMap, asyncPing, asyncCheck, timeou);
+            _distributorSystem = new DistributorSystem();
 
             _handler = new DistributorHandler(_distributorSystem);
-        }
-
-        public DistributorApi(DistributorNetConfiguration netConfiguration,
-            DistributorConfiguration distributorConfiguration, CommonConfiguration commonConfiguration)
-            : this(
-                netConfiguration, distributorConfiguration, commonConfiguration,
-                new TimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout))
-        {
         }
 
         public IDistributorApi Api

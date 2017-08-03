@@ -6,20 +6,20 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 {
     internal class NetDistributorReceiver : ControlModule
     {
-        private readonly NetDistributorReceiverForDb _distributorReceiverForDb;
-        private readonly NetDistributorReceiverForProxy _distributorReceiverForProxy;
+        private NetDistributorReceiverForDb _distributorReceiverForDb;
+        private NetDistributorReceiverForProxy _distributorReceiverForProxy;
 
-        public NetDistributorReceiver(StandardKernel kernel, 
-            NetReceiverConfiguration receiverConfigurationForDb,
-            NetReceiverConfiguration receiverConfigurationForFroxy)
-            : base(kernel)
+        public NetDistributorReceiver(StandardKernel kernel): base(kernel)
         {
-            _distributorReceiverForDb = new NetDistributorReceiverForDb(kernel, receiverConfigurationForDb);
-            _distributorReceiverForProxy = new NetDistributorReceiverForProxy(kernel, receiverConfigurationForFroxy);
         }
 
         public override void Start()
         {
+            var config = Kernel.Get<IDistributorConfiguration>();
+
+            _distributorReceiverForDb = new NetDistributorReceiverForDb(Kernel, config.NetWriter);
+            _distributorReceiverForProxy = new NetDistributorReceiverForProxy(Kernel, config.NetProxy);
+
             _distributorReceiverForDb.Start();
             _distributorReceiverForProxy.Start();
         }

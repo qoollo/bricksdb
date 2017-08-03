@@ -10,7 +10,7 @@ namespace Qoollo.Impl.Modules.Net
     {
         private readonly IReceiveBehavior<T> _receive; 
 
-        protected NetReceiveModule(StandardKernel kernel, NetReceiverConfiguration configuration)
+        protected NetReceiveModule(StandardKernel kernel, NetConfiguration configuration)
             :base(kernel)
         {
             Contract.Requires(configuration != null);

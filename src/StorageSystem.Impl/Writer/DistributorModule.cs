@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Ninject;
 using Qoollo.Impl.Common;
@@ -16,7 +14,6 @@ using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Impl.Modules.Queue;
-using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks;
 using Qoollo.Impl.Writer.Interfaces;
 using Qoollo.Impl.Writer.WriterNet;
@@ -29,24 +26,11 @@ namespace Qoollo.Impl.Writer
 
         private IWriterModel _model;
         private IWriterNetModule _writerNet;
-        private readonly QueueConfiguration _queueConfiguration;
         private IAsyncDbWorkModule _asyncDbWork;
         private IGlobalQueue _queue;
-        private readonly TimeSpan _pingPeriod;
 
-        public DistributorModule(StandardKernel kernel,
-            QueueConfiguration configuration,
-            AsyncTasksConfiguration pingConfiguration = null)
-            :base(kernel)
+        public DistributorModule(StandardKernel kernel) :base(kernel)
         {
-            Contract.Requires(configuration != null);
-
-            _queueConfiguration = configuration;
-
-            _pingPeriod = InitInjection.PingPeriod;
-
-            if (pingConfiguration != null)
-                _pingPeriod = pingConfiguration.TimeoutPeriod;
         }
 
         public override void Start()
@@ -56,9 +40,12 @@ namespace Qoollo.Impl.Writer
             _writerNet = Kernel.Get<IWriterNetModule>();
             _asyncDbWork = Kernel.Get<IAsyncDbWorkModule>();
 
+            var config = Kernel.Get<IWriterConfiguration>();
+
             var asyncTasks = Kernel.Get<IAsyncTaskModule>();
             asyncTasks.AddAsyncTask(
-                new AsyncDataPeriod(_pingPeriod, Ping, AsyncTasksNames.AsyncPing, -1), false);
+                new AsyncDataPeriod(config.Timeouts.ServersPingMls.PeriodTimeSpan,
+                    Ping, AsyncTasksNames.AsyncPing, -1), false);
 
             RegistrateCommands();
         }
@@ -94,7 +81,7 @@ namespace Qoollo.Impl.Writer
 
             RegistrateSync<HashFileUpdateCommand, RemoteResult>(HashFileUpdate);
 
-            StartAsync(_queueConfiguration);
+            StartAsync();
         }
 
         private void Ping(AsyncData data)

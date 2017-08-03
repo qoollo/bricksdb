@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
 using Ninject;
@@ -58,27 +57,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             }
         }
 
-        public AsyncDbWorkModule(
-            StandardKernel kernel,
-            RestoreModuleConfiguration initiatorConfiguration,
-            RestoreModuleConfiguration transferConfiguration,
-            RestoreModuleConfiguration timeoutConfiguration,
-            QueueConfiguration queueConfiguration,
-            bool needRestore = false)
+        public AsyncDbWorkModule(StandardKernel kernel, bool needRestore = false)
             : base(kernel)
         {
-            Contract.Requires(initiatorConfiguration != null);
-            Contract.Requires(transferConfiguration != null);
-            Contract.Requires(timeoutConfiguration != null);
-            Contract.Requires(queueConfiguration != null);
-
-            _initiatorConfiguration = initiatorConfiguration;
-            _transferConfiguration = transferConfiguration;
-            _timeoutConfiguration = timeoutConfiguration;
-            _queueConfiguration = queueConfiguration;            
-
             _stateHolder = new RestoreStateHolder(needRestore);
-            _saver = LoadRestoreStateFromFile();
         }
 
         private IWriterModel _writerModel;
@@ -89,21 +71,18 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         private TimeoutModule _timeout;
 
         private RestoreStateHolder _stateHolder;
-        private readonly RestoreStateFileLogger _saver;
-
-        private readonly RestoreModuleConfiguration _initiatorConfiguration;
-        private readonly RestoreModuleConfiguration _transferConfiguration;
-        private readonly RestoreModuleConfiguration _timeoutConfiguration;
-        private readonly QueueConfiguration _queueConfiguration;
+        private RestoreStateFileLogger _saver;
 
         public override void Start()
         {
             _writerModel = Kernel.Get<IWriterModel>();
 
-            _initiatorRestore = new InitiatorRestoreModule(Kernel, _initiatorConfiguration, _stateHolder, _saver);
-            _transferRestore = new TransferRestoreModule(Kernel, _transferConfiguration, _queueConfiguration);
-            _timeout = new TimeoutModule(Kernel, _queueConfiguration, _timeoutConfiguration);
-            _broadcastRestore = new BroadcastRestoreModule(Kernel, _transferConfiguration, _queueConfiguration);
+            _saver = LoadRestoreStateFromFile(Kernel.Get<IWriterConfiguration>().RestoreStateFilename);
+
+            _initiatorRestore = new InitiatorRestoreModule(Kernel, _stateHolder, _saver);
+            _transferRestore = new TransferRestoreModule(Kernel);
+            _timeout = new TimeoutModule(Kernel);
+            _broadcastRestore = new BroadcastRestoreModule(Kernel);
 
             _initiatorRestore.Start();
             _transferRestore.Start();
@@ -146,11 +125,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _initiatorRestore.LastMessageIncome(server);
         }
 
-        private RestoreStateFileLogger LoadRestoreStateFromFile()
+        private RestoreStateFileLogger LoadRestoreStateFromFile(string filename)
         {
-            var saver = new RestoreStateFileLogger(InitInjection.RestoreHelpFile);
+            var saver = new RestoreStateFileLogger(filename);
             if (!saver.Load())
-                return new RestoreStateFileLogger(InitInjection.RestoreHelpFile, _stateHolder);
+                return new RestoreStateFileLogger(filename, _stateHolder);
             
             _stateHolder = saver.StateHolder;
             return saver;

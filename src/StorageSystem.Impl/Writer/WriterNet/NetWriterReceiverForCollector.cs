@@ -17,7 +17,7 @@ namespace Qoollo.Impl.Writer.WriterNet
         private IInputModule _inputModule;
         private IDistributorModule _distributor;
 
-        public NetWriterReceiverForCollector(StandardKernel kernel, NetReceiverConfiguration configuration)
+        public NetWriterReceiverForCollector(StandardKernel kernel, NetConfiguration configuration)
             : base(kernel, configuration)
         {
         }

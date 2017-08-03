@@ -8,7 +8,6 @@ using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
@@ -18,9 +17,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
         public SingleServerRestoreProcess(StandardKernel kernel, IDbModule db, IWriterModel writerModel,
-            IWriterNetModule writerNet, string tableName, ServerId remoteServer, bool isSystemUpdated,
-            QueueConfiguration queueConfiguration)
-            : base(kernel, db, writerModel, writerNet, tableName, isSystemUpdated, queueConfiguration)
+            IWriterNetModule writerNet, string tableName, ServerId remoteServer, bool isSystemUpdated, bool usePackage)
+            : base(kernel, db, writerModel, writerNet, tableName, isSystemUpdated, usePackage)
         {
             _remoteHashRange = writerModel.GetHashMap(remoteServer)
                 .Select(x => new KeyValuePair<string, string>(x.Begin, x.End))

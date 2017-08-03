@@ -7,11 +7,11 @@ namespace Qoollo.Impl.Modules.Net.ReceiveBehavior
 {
     internal class NetReceiveBehavior<TReceive> : ReceiveBehaviorBase<TReceive>
     {
-        private readonly NetReceiverConfiguration _configuration;
+        private readonly NetConfiguration _configuration;
         private readonly object _server;
         private ServiceHost _host;
 
-        public NetReceiveBehavior(NetReceiverConfiguration configuration, object server) 
+        public NetReceiveBehavior(NetConfiguration configuration, object server) 
             : base(configuration, server)
         {
             Contract.Requires(configuration != null);
@@ -21,7 +21,7 @@ namespace Qoollo.Impl.Modules.Net.ReceiveBehavior
 
         public override void Start()
         {
-            if (_configuration.Host != "fake" && _configuration.Service != "fake"
+            if (_configuration.Host != "fake" && _configuration.ServiceName != "fake"
                 && _configuration.Port != 157)
                 _host = NetConnector.CreateServer<TReceive>(_server, _configuration);
         }

@@ -12,11 +12,13 @@ namespace Qoollo.Tests
     {
         public TestProxyClient():base()
         {
-            _proxy = TestGate(proxyServer);
+            _proxy = TestGate();
+
+            CreateConfigFile(countReplics: 1);
 
             _proxy.Module = new TestInjectionModule();
             _proxy.Build();
-            _proxy.Start();
+            _proxy.Start();            
         }
 
         protected override void Dispose(bool isUserCall)
@@ -34,16 +36,17 @@ namespace Qoollo.Tests
             using (new FileCleaner(Impl.Common.Support.Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename, ping: 10000, check: 10000);
 
-                var distr = DistributorSystem(DistributorCacheConfiguration(10000, 10000000), filename, 1,
-                    distrServer12, distrServer1, 10000, 10000);
-
-                var storage = WriterSystem(filename, 2, storageServer1);
+                var distr = DistributorSystem();
 
                 distr.Build(new TestInjectionModule());
                 distr.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
+
+                var storage = WriterSystem();
+                CreateConfigFile(countReplics: 2, hash: filename);
 
                 storage.Build(new TestInjectionModule());
                 storage.DbModule.AddDbModule(new TestDbInMemory());
@@ -93,16 +96,17 @@ namespace Qoollo.Tests
             using (new FileCleaner(Impl.Common.Support.Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename, ping: 10000, check: 10000);
 
-                var distr = DistributorSystem(DistributorCacheConfiguration(10000, 10000000), filename, 1,
-                    distrServer12, distrServer1, 10000, 10000);
-
-                var storage = WriterSystem(filename, 2, storageServer1);
+                var distr = DistributorSystem();
 
                 distr.Build(new TestInjectionModule());
                 distr.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
+
+                var storage = WriterSystem();
+                CreateConfigFile(countReplics: 2, hash: filename);
 
                 storage.Build(new TestInjectionModule());
                 storage.DbModule.AddDbModule(new TestDbInMemory());

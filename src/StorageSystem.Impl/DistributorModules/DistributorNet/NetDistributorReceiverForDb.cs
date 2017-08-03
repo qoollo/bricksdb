@@ -13,7 +13,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
     {        
         private IDistributorModule _distributorModule;
 
-        public NetDistributorReceiverForDb(StandardKernel kernel, NetReceiverConfiguration receiverConfiguration)
+        public NetDistributorReceiverForDb(StandardKernel kernel, NetConfiguration receiverConfiguration)
             : base(kernel, receiverConfiguration)
         {
         }

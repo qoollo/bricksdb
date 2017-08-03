@@ -13,10 +13,7 @@ using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Collector.Tasks;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Interfaces;
 using Qoollo.Impl.Sql.Internal;
@@ -40,21 +37,23 @@ namespace Qoollo.Tests
             _parser = new TestIntParser();
             _parser.SetCommandsHandler(new UserCommandsHandler
                 <TestCommand, Type, TestCommand, int, int, TestDbReader>(
-                new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
+                    new TestUserCommandCreator(), new TestMetaDataCommandCreator()));
 
             _back = new BackgroundModule(_kernel);
             _kernel.Bind<IBackgroundModule>().ToConstant(_back);
+
+            CreateConfigFile(distrthreads: 2);
         }
 
         [Fact]
         public void SingleServerSearchTask_GetData_CheckData()
         {
             var task = new SingleServerSearchTask(new ServerId("", 0), "",
-                new FieldDescription("", typeof (int)), "");
+                new FieldDescription("", typeof(int)), "");
             var page = new List<SearchData>();
 
             const int count = 5;
-            for (int i = 0; i < count*2; i++)
+            for (int i = 0; i < count * 2; i++)
             {
                 page.Add(new SearchData(null, i));
             }
@@ -67,15 +66,15 @@ namespace Qoollo.Tests
             }
             task.AddPage(page);
 
-            for (int i = count; i < count*2; i++)
+            for (int i = count; i < count * 2; i++)
             {
                 Assert.Equal(i, task.GetData().Key);
                 task.IncrementPosition();
             }
 
-            for (int i = count*2; i < count*4; i++)
+            for (int i = count * 2; i < count * 4; i++)
             {
-                Assert.Equal(i - count*2, task.GetData().Key);
+                Assert.Equal(i - count * 2, task.GetData().Key);
                 task.IncrementPosition();
             }
         }
@@ -86,12 +85,13 @@ namespace Qoollo.Tests
             var filename = nameof(CollectorModel_GetSystemState_CheckWritersState);
             using (new FileCleaner(filename))
             {
-                const int countReplics = 2;
                 CreateHashFile(filename, 4);
+                CreateConfigFile(hash: filename, countReplics: 2);
+                UpdateConfigReader();
 
-                var model = new CollectorModel(new DistributorHashConfiguration(countReplics),
-                    new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, countReplics,
-                        HashFileType.Writer));
+                var model = new CollectorModel(_kernel);
+
+                model.StartConfig();
                 model.Start();
 
                 var state = model.GetSystemState();
@@ -129,7 +129,7 @@ namespace Qoollo.Tests
             var background = new BackgroundModule(_kernel);
             background.Start();
 
-            var search = new TestSelectTask("", new List<ServerId>(), "", new FieldDescription("", typeof (int)));
+            var search = new TestSelectTask("", new List<ServerId>(), "", new FieldDescription("", typeof(int)));
 
             background.Run(search,
                 () => search.BackgroundLoadInner(() => SystemSearchStateInner.AllDataAvailable, null, null));
@@ -163,11 +163,13 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                UpdateConfigReader();
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
                 var merge = new OrderMerge(_kernel, new TestIntParser());
@@ -219,7 +221,7 @@ namespace Qoollo.Tests
                 #endregion
 
                 var task = new OrderSelectTask(new List<ServerId> {server1, server2, server3},
-                    new FieldDescription("Id", typeof (int)), new FieldDescription("Id", typeof (int)), "asc", -1, 5,
+                    new FieldDescription("Id", typeof(int)), new FieldDescription("Id", typeof(int)), "asc", -1, 5,
                     new List<FieldDescription>(), "");
                 var function = merge.GetMergeFunction(ScriptType.OrderAsc);
 
@@ -260,24 +262,25 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                UpdateConfigReader();
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
                 var merge = new OrderMerge(_kernel, _parser);
-                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
 
-                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
@@ -356,24 +359,26 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                UpdateConfigReader();
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
+                serversModel.StartConfig();
 
                 var merge = new OrderMerge(_kernel, _parser);
-                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
 
-                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
@@ -452,7 +457,7 @@ namespace Qoollo.Tests
                     reader.ReadNext();
 
                     Assert.Equal(expectedOrder[i], reader.GetValue(0));
-                    Assert.Equal((long) (2 - (expectedOrder[i]%2)), reader.GetValue(1));
+                    Assert.Equal((long) (2 - (expectedOrder[i] % 2)), reader.GetValue(1));
                 }
                 reader.ReadNext();
                 Assert.False(reader.IsCanRead);
@@ -471,24 +476,24 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
                 var merge = new OrderMerge(_kernel, _parser);
-                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
 
-                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
@@ -567,24 +572,24 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
                 var merge = new OrderMerge(_kernel, _parser);
-                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
                 var searchModule = new SearchTaskModule(_kernel, "Test", merge, _parser);
 
-                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
@@ -663,24 +668,24 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var loader = new TestDataLoader(pageSize);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
-                var serversModel = CollectorModel(filename, 1);
+                var serversModel = CollectorModel();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
                 var merge = new OrderMerge(_kernel, _parser);
-                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
                 var searchModule = new SearchTaskModule(_kernel, "", merge, _parser);
 
-                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
                 #region hell
@@ -757,40 +762,32 @@ namespace Qoollo.Tests
             var filename = nameof(CollectorNet_ReadFromWriter);
             using (new FileCleaner(filename))
             {
-                const int st1 = 22335;
-                const int st2 = 22336;
+                #region hell                
 
-                #region hell
-
-                var writer =
-                    new HashWriter(new HashMapConfiguration(filename, HashMapCreationMode.CreateNew, 1, 1,
-                        HashFileType.Distributor));
-                writer.CreateMap();
-                writer.SetServer(0, "localhost", st1, st2);
-                writer.Save();
+                CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
                 var q1 = GetBindedQueue();
 
-                var proxy = TestGate(proxyServer);
+                var proxy = TestGate();
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
-                var storage = WriterApi(StorageConfiguration(filename, 1), st1, st2);
+                var distr = DistributorApi();
+                var storage = WriterApi();
 
-                var async = new AsyncTaskModule(_kernel, new QueueConfiguration(4, 10));
+                var async = new AsyncTaskModule(_kernel);
                 _kernel.Bind<IAsyncTaskModule>().ToConstant(async);
 
-                var serversModel = new CollectorModel(new DistributorHashConfiguration(1),
-                    new HashMapConfiguration(filename, HashMapCreationMode.ReadFromFile, 1, 1, HashFileType.Collector));
+                var serversModel = new CollectorModel(_kernel);
+                serversModel.StartConfig();
                 _kernel.Bind<ICollectorModel>().ToConstant(serversModel);
 
-                var distributor = new DistributorModule(_kernel, new AsyncTasksConfiguration(TimeSpan.FromMinutes(1)));
+                var distributor = new DistributorModule(_kernel);
                 _kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
-                var net = new CollectorNetModule(_kernel, ConnectionConfiguration,
-                    new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
+                var net = new CollectorNetModule(_kernel);
                 _kernel.Bind<ICollectorNetModule>().ToConstant(net);
 
-                var loader = new DataLoader(_kernel, net, 100, _back);
+                var loader = new DataLoader(_kernel, net, _back);
                 _kernel.Bind<IDataLoader>().ToConstant(loader);
 
                 var merge = new OrderMerge(_kernel, _parser);
@@ -814,6 +811,7 @@ namespace Qoollo.Tests
                 proxy.Start();
                 distr.Start();
 
+                loader.Start();
                 searchModule.Start();
                 distributor.Start();
                 merge.Start();
@@ -823,7 +821,7 @@ namespace Qoollo.Tests
 
                 #endregion
 
-                proxy.Int.SayIAmHere("localhost", distrServer1);
+                proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 const int count = 20;
 

@@ -37,7 +37,7 @@ namespace Qoollo.Tests
         [Fact]
         public void ProxySystem_CreateSync_SendSyncDataToFakeDistributor_NoError()
         {
-            var proxy = TestProxySystem(proxyServer);
+            var proxy = TestProxySystem();
             proxy.Build(new TestInjectionModule());
             proxy.Start();
 
@@ -73,7 +73,7 @@ namespace Qoollo.Tests
         [Fact]
         public void ProxySystem_Read_ReadFromFakeDistributor_ExpectedData()
         {
-            var proxy = TestProxySystem(proxyServer);
+            var proxy = TestProxySystem();
             proxy.Build(new TestInjectionModule());
             proxy.Start();
 
@@ -115,7 +115,7 @@ namespace Qoollo.Tests
         [Fact]
         public void AsyncProxyCache_AddToCache_WaitRemovedCallback_ExpiredData()
         {
-            var cache = new AsyncProxyCache(TimeSpan.FromMilliseconds(200));
+            var cache = new AsyncProxyCache(new ProxyCacheConfiguration(200, 200));
             var ev = new InnerData(new Transaction("123", ""))
             {
                 Transaction = { UserSupportCallback = new TaskCompletionSource<UserTransaction>() }
@@ -148,6 +148,7 @@ namespace Qoollo.Tests
             var distr = new TestProxyDistributorModule(_kernel);
             _kernel.Bind<IProxyDistributorModule>().ToConstant(distr);
 
+            distr.Start();
             net.Start();
 
             net.ConnectToDistributor(server1);
@@ -222,11 +223,12 @@ namespace Qoollo.Tests
 
             var queue = GetBindedQueue();
 
-            var net = ProxyNetModule();            
-            var distributor = ProxyDistributorModule(net, server1.Port);
-            _kernel.Bind<IProxyDistributorModule>().ToConstant(distributor);
+            var net = ProxyNetModule();
 
-            var cache = new ProxyCache(TimeSpan.FromSeconds(20));
+            var distributor = ProxyDistributorModule(net);
+            _kernel.Bind<IProxyDistributorModule>().ToConstant(distributor);
+            
+            var cache = new ProxyCache(new ProxyCacheConfiguration(10, 20000));
             _kernel.Bind<IProxyCache>().ToConstant(cache);
 
             var main = new ProxyMainLogicModule(_kernel);
@@ -275,72 +277,81 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename2))
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
+
+                CreateConfigFile(pdistrport: storageServer1);
                 var q1 = GetBindedQueue();
                 var net = ProxyNetModule();
-                var distributor = ProxyDistributorModule(net, storageServer1);
+
+                var distributor = ProxyDistributorModule(net);
                 _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor);
 
-                var receive = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer1));
+                distributor.Start();
+                net.Start();
+
+                var receive = new ProxyNetReceiver(_kernel, new NetConfiguration(storageServer1));
                 receive.Start();
 
+                CreateConfigFile(pdistrport: storageServer2);
                 var q2 = GetBindedQueue();
                 var net2 = ProxyNetModule();
-                var distributor2 = ProxyDistributorModule(net2, storageServer2);
+                var distributor2 = ProxyDistributorModule(net2);
                 _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor2);
 
-                var receive2 = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer2));
+                distributor2.Start();
+                net2.Start();
+
+                var receive2 = new ProxyNetReceiver(_kernel, new NetConfiguration(storageServer2));
                 receive2.Start();
 
+                CreateConfigFile(pdistrport: storageServer3);
                 var q3 = GetBindedQueue();
                 var net3 = ProxyNetModule();
-                var distributor3 = ProxyDistributorModule(net3, storageServer3);
+                var distributor3 = ProxyDistributorModule(net3);
                 _kernel.Rebind<IProxyDistributorModule>().ToConstant(distributor3);
 
-                var receive3 = new ProxyNetReceiver(_kernel, NetReceiverConfiguration(storageServer3));
+                distributor3.Start();
+                net3.Start();
+
+                var receive3 = new ProxyNetReceiver(_kernel, new NetConfiguration(storageServer3));
                 receive3.Start();
 
-                var dnet = DistributorNetModule();
-                var ddistributor = DistributorDistributorModule(filename1, replicsCount, dnet, 30000, 30000);
-                _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
-                dnet.Start();
+                CreateConfigFile(countReplics: replicsCount, hash: filename1, ping: 30000, check: 30000);                
 
+                var dnet = DistributorNetModule();
+                var ddistributor = DistributorDistributorModule(dnet);
+                _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor);
+
+                dnet.Start();
                 ddistributor.Start();
 
                 var cache = new DistributorTimeoutCache(DistributorCacheConfiguration(200000, 200000));
                 _kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-                var tranc = new TransactionModule(_kernel, new TransactionConfiguration(4), 1);
+                var tranc = new TransactionModule(_kernel);
                 _kernel.Bind<ITransactionModule>().ToConstant(tranc);
 
                 var main = new MainLogicModule(_kernel);
                 _kernel.Bind<IMainLogicModule>().ToConstant(main);
                 main.Start();
 
-                var input = new InputModuleWithParallel(_kernel, QueueConfiguration);
+                var input = new InputModuleWithParallel(_kernel);
                 _kernel.Bind<IInputModule>().ToConstant(input);
 
-                var receiver4 = new NetDistributorReceiver(_kernel, 
-                    NetReceiverConfiguration(distrServer1),
-                    NetReceiverConfiguration(distrServer12));
+                var receiver4 = new NetDistributorReceiver(_kernel);
                 receiver4.Start();
 
                 _kernel.Rebind<IGlobalQueue>().ToConstant(q1);
 
+                CreateConfigFile(countReplics: replicsCount, hash: filename2, writerport: distrServer2,
+                    proxyport: distrServer22, ping: 30000, check: 30000);
                 var dnet2 = DistributorNetModule();
-                var ddistributor2 = DistributorDistributorModule(filename2, replicsCount, dnet2, 200000, 30000,
-                    distrServer2, distrServer22);
+                var ddistributor2 = DistributorDistributorModule(dnet2);
                 _kernel.Rebind<IDistributorModule>().ToConstant(ddistributor2);
                 dnet2.Start();
 
-                var receiver5 = new NetDistributorReceiver(_kernel, 
-                    NetReceiverConfiguration(distrServer2),
-                    NetReceiverConfiguration(distrServer22));
+                var receiver5 = new NetDistributorReceiver(_kernel);
                 
                 receiver5.Start();
-                distributor.Start();
-                distributor2.Start();
-                distributor3.Start();
-
                 ddistributor2.Start();
 
                 q1.Start();

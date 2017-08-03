@@ -1,36 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Modules;
 
 namespace Qoollo.Impl.Collector.Model
 {
-    internal class CollectorModel : ICollectorModel
+    internal class CollectorModel : ControlModule,  ICollectorModel
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public bool UseStart { get; private set; }
+        public bool UseStart { get; protected set; }
         private List<WriterDescription> _servers; 
         private readonly ReaderWriterLockSlim _lock;
-        private readonly DistributorHashConfiguration _configuration;
+        private int _countReplics;
         private readonly HashMap _map;
 
-        public CollectorModel(DistributorHashConfiguration configuration, HashMapConfiguration mapConfiguration,
-            bool useStart = true)
+        public CollectorModel(StandardKernel kernel) :base(kernel)
         {
-            UseStart = useStart;
-            Contract.Requires(configuration != null);
-            Contract.Requires(mapConfiguration != null);
-            _configuration = configuration;
             _lock = new ReaderWriterLockSlim();
             _servers = new List<WriterDescription>();
-            _map = new HashMap(mapConfiguration);
+            _map = new HashMap(kernel, HashFileType.Collector);
         }
 
         public void ServerNotAvailable(ServerId serverId)
@@ -71,7 +67,16 @@ namespace Qoollo.Impl.Collector.Model
             _lock.ExitWriteLock();
         }
 
-        public void Start()
+        public void StartConfig()
+        {
+            var config = Kernel.Get<ICommonConfiguration>();
+            UseStart = Kernel.Get<ICollectorConfiguration>().UseHashFile;   
+            _countReplics = config.CountReplics;
+
+            _map.Start();
+        }
+
+        public override void Start()
         {
             _map.CreateMap();
             _servers = _map.Servers;
@@ -117,7 +122,7 @@ namespace Qoollo.Impl.Collector.Model
             int pos = _map.Map.FindIndex(x => x.ServerId.Equals(server));
             int index = (pos + 1)%_map.Map.Count;
 
-            for (int i = 0; i < _configuration.CountReplics-1; i++)
+            for (int i = 0; i < _countReplics-1; i++)
             {
                 while (pos != index)
                 {
@@ -131,7 +136,7 @@ namespace Qoollo.Impl.Collector.Model
                     index = ++index%_map.Map.Count;
                 }
 
-                if (pos == index && ret.Count != _configuration.CountReplics)
+                if (pos == index && ret.Count != _countReplics)
                     return null;
             }
             return ret;
@@ -147,7 +152,7 @@ namespace Qoollo.Impl.Collector.Model
 
             if (unavailableServers.Count == 0)
             {
-                ret = _configuration.CountReplics < _servers.Count
+                ret = _countReplics < _servers.Count
                     ? SystemSearchStateInner.AllServersAvailable
                     : SystemSearchStateInner.InvalidSystemConfiguration;
             }
@@ -187,12 +192,12 @@ namespace Qoollo.Impl.Collector.Model
                 if (index == -1)
                     return false;
 
-                var count = _servers.Count/_configuration.CountReplics;
+                var count = _servers.Count/ _countReplics;
                 for (int i = 0; i < count; i++)
                 {
                     if (!_servers[index].IsAvailable)
                         return false;
-                    index = (index + _configuration.CountReplics)%_servers.Count;
+                    index = (index + _countReplics) %_servers.Count;
                 }
 
                 return true;
@@ -213,11 +218,11 @@ namespace Qoollo.Impl.Collector.Model
                 if (index == -1)
                     return ret;
 
-                var count = _servers.Count / _configuration.CountReplics;
+                var count = _servers.Count / _countReplics;
                 for (int i = 0; i < count; i++)
                 {
                     ret.Add(_servers[index]);
-                    index = (index + _configuration.CountReplics) % _servers.Count;
+                    index = (index + _countReplics) % _servers.Count;
                 }
 
                 return ret;

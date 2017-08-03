@@ -2,33 +2,34 @@
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.HashModule;
 
 namespace Qoollo.Impl.DistributorModules.Model
 {
-    internal class WriterSystemModel
+    internal class WriterSystemModel:ControlModule
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
         public List<WriterDescription> Servers { get { return new List<WriterDescription>(_servers); } } 
 
-        public WriterSystemModel(DistributorHashConfiguration configuration, HashMapConfiguration mapConfiguration)
+        public WriterSystemModel(StandardKernel kernel, int countReplics)
+            :base(kernel)
         {
-            Contract.Requires(configuration != null);
-            Contract.Requires(mapConfiguration != null);
-            _configuration = configuration;
+            _countReplics = countReplics;
+
             _lock = new ReaderWriterLockSlim();
             _servers = new List<WriterDescription>();
-            _map = new HashMap(mapConfiguration);
+            _map = new HashMap(kernel, HashFileType.Distributor);
         }
 
         private List<WriterDescription> _servers;
+        private readonly int _countReplics;
         private readonly ReaderWriterLockSlim _lock;
-        private readonly DistributorHashConfiguration _configuration;
         private readonly HashMap _map;
 
         public void ServerNotAvailable(ServerId serverId)
@@ -69,8 +70,9 @@ namespace Qoollo.Impl.DistributorModules.Model
             _lock.ExitWriteLock();
         }
 
-        public void Start()
+        public override void Start()
         {
+            _map.Start();
             _map.CreateMap();
             _servers = _map.Servers;
         }
@@ -105,7 +107,7 @@ namespace Qoollo.Impl.DistributorModules.Model
             if (equal)
                 return;
 
-            HashFileUpdater.UpdateFile(_map.FileName);
+            HashFileUpdater.UpdateFile(_map.Filename);
             _map.CreateNewMapWithFile(map);
             _map.CreateAvailableMap();
         }
@@ -115,7 +117,7 @@ namespace Qoollo.Impl.DistributorModules.Model
             _lock.EnterReadLock();
             try
             {
-                return HashLogic.GetDestination(_configuration.CountReplics, ev.Transaction.DataHash,
+                return HashLogic.GetDestination(_countReplics, ev.Transaction.DataHash,
                     _map.AvailableMap);
             }
             finally

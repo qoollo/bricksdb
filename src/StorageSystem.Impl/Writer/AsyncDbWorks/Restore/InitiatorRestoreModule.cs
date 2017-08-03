@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Ninject;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.System.Writer;
@@ -22,27 +21,27 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         public List<RestoreServer> Servers => _serversController.Servers;
 
-        public InitiatorRestoreModule(StandardKernel kernel, RestoreModuleConfiguration configuration, 
-            RestoreStateHolder stateHolder, RestoreStateFileLogger saver)
+        public InitiatorRestoreModule(StandardKernel kernel, RestoreStateHolder stateHolder,
+            RestoreStateFileLogger saver)
             : base(kernel)
         {
-            _configuration = configuration;
-            _stateHolder = stateHolder;            
+            _stateHolder = stateHolder;
             _serversController = new RestoreProcessController(saver);
         }
 
         private IWriterModel _model;
-        private readonly RestoreModuleConfiguration _configuration;
         private readonly RestoreStateHolder _stateHolder;
         private string _tableName;
         private RestoreState _state;
         private readonly RestoreProcessController _serversController;
+        private IWriterConfiguration _config;
 
         public override void Start()
         {
             base.Start();
 
             _model = Kernel.Get<IWriterModel>();
+            _config = Kernel.Get<IWriterConfiguration>();
         }
 
         #region Restore start
@@ -90,8 +89,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private void StartRestore()
         {
             AsyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_configuration.PeriodRetry, NoAnswerCallback, AsyncTasksNames.RestoreRemote,
-                    _configuration.CountRetry), false);
+                new AsyncDataPeriod(_config.Restore.Initiator.PeriodRetryMls, NoAnswerCallback,
+                    AsyncTasksNames.RestoreRemote, _config.Restore.Initiator.CountRetry), false);
 
             AsyncTaskModule.StopTask(AsyncTasksNames.RestoreRemote);
 

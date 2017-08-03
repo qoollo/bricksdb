@@ -22,10 +22,11 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
-
-                var proxy = TestGate(proxyServer, 600);
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
-                var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                
+                var proxy = TestGate();
+                var distr = DistributorApi();
+                var storage = WriterApi();
 
                 proxy.Module = new TestInjectionModule();
                 proxy.Build();
@@ -35,7 +36,7 @@ namespace Qoollo.Tests
                 distr.Build();
                 distr.Start();
 
-                proxy.Int.SayIAmHere("localhost", distrServer1);
+                proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 storage.Module = new TestInjectionModule();
                 storage.Build();
@@ -87,10 +88,11 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                var proxy = TestGate(proxyServer, 600);
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
-                var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
+                var proxy = TestGate();
+                var distr = DistributorApi();
+                var storage = WriterApi();
 
                 proxy.Module = new TestInjectionModule();
                 proxy.Build();
@@ -100,7 +102,7 @@ namespace Qoollo.Tests
                 distr.Build();
                 distr.Start();
 
-                proxy.Int.SayIAmHere("localhost", distrServer1);
+                proxy.Int.SayIAmHere("localhost", distrServer12);
 
                 storage.Module = new TestInjectionModule();
                 storage.Build();

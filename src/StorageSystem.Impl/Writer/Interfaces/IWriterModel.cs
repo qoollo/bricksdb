@@ -6,7 +6,6 @@ namespace Qoollo.Impl.Writer.Interfaces
 {
     internal interface IWriterModel
     {
-        int CountReplics { get; }
         ServerId Local { get; }
         List<HashMapRecord> LocalMap { get; }
         List<ServerId> OtherServers { get; }

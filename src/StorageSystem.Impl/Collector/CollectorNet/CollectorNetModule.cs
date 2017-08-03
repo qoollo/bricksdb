@@ -7,7 +7,6 @@ using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Data;
 
@@ -19,23 +18,24 @@ namespace Qoollo.Impl.Collector.CollectorNet
 
         private IDistributorModule _distributor;
 
-        public CollectorNetModule(StandardKernel kernel, ConnectionConfiguration connectionConfiguration,
-            ConnectionTimeoutConfiguration connectionTimeout)
-            : base(kernel, connectionConfiguration, connectionTimeout)
+        public CollectorNetModule(StandardKernel kernel)
+            : base(kernel)
         {
         }
 
         public override void Start()
         {
             _distributor = Kernel.Get<IDistributorModule>();
+
+            base.Start();
         }
 
         #region Connect to Writer
 
         public bool ConnectToWriter(ServerId server)
         {
-            return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToWriter(Kernel, id, configuration, time));
+            return ConnectToServer(server, 
+                (id, config) => new SingleConnectionToWriter(Kernel, id, config));
         }
 
         public void PingWriter(List<ServerId> servers, Action<ServerId> serverAvailable)
@@ -78,7 +78,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
         public bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToDistributor(Kernel, id, configuration, time));
+                (id, config) => new SingleConnectionToDistributor(Kernel, id, config));
         }
 
         public void PingDistributors(List<ServerId> servers)

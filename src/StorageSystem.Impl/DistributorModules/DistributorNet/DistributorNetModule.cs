@@ -19,16 +19,16 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
 
         private IDistributorModule _distributor;
 
-        public DistributorNetModule(StandardKernel kernel, 
-            ConnectionConfiguration connectionConfiguration,
-            ConnectionTimeoutConfiguration connectionTimeout) 
-            : base(kernel, connectionConfiguration, connectionTimeout)
+        public DistributorNetModule(StandardKernel kernel) 
+            : base(kernel)
         {
         }
 
         public override void Start()
         {
             _distributor = Kernel.Get<IDistributorModule>();
+
+            base.Start();
         }
 
         #region Connect to distributor
@@ -42,7 +42,7 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         public virtual bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (serverId, configuration, time) => new SingleConnectionToDistributor(Kernel, serverId, configuration, time));
+                (id, config) => new SingleConnectionToDistributor(Kernel, id, config));
         }
 
         public RemoteResult SendToDistributor(ServerId server, NetCommand command)
@@ -85,10 +85,9 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
             return ConnectToServer(server, CreateConnectionToProxy);
         }
 
-        protected virtual ISingleConnection CreateConnectionToProxy(ServerId server,
-            ConnectionConfiguration configuration, ConnectionTimeoutConfiguration time)
+        protected virtual ISingleConnection CreateConnectionToProxy(ServerId server, ICommonConfiguration commonConfiguration)
         {
-            return new SingleConnectionToProxy(Kernel, server, configuration, time);
+            return new SingleConnectionToProxy(Kernel, server, commonConfiguration);
         }
 
         public RemoteResult SendToProxy(ServerId server, NetCommand command)
@@ -159,10 +158,9 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
             return ConnectToServer(server, CreateConnectionToWriter);
         }
 
-        protected virtual ISingleConnection CreateConnectionToWriter(ServerId server,
-            ConnectionConfiguration configuration, ConnectionTimeoutConfiguration time)
+        protected virtual ISingleConnection CreateConnectionToWriter(ServerId server,ICommonConfiguration commonConfiguration )
         {
-            return new SingleConnectionToWriter(Kernel, server, configuration, time);
+            return new SingleConnectionToWriter(Kernel, server, commonConfiguration);
         }
 
 

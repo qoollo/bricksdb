@@ -104,7 +104,7 @@ namespace Qoollo.Impl.Modules
         }
 
         protected abstract void RegistrateInner(Type type, FunctionHandlerBase handler);
-        public abstract void Start(bool isForceStart = false, QueueConfiguration configuration = null);
+        public abstract void Start(bool isForceStart = false);
         public TResult Execute<TValue, TResult>(TValue value)
         {
             return (TResult)Execute(value);
@@ -132,14 +132,9 @@ namespace Qoollo.Impl.Modules
                 handler.Execute(value);
         }
 
-        public override void Start(bool isForceStart = false, QueueConfiguration configuration = null)
+        public override void Start(bool isForceStart = false)
         {
-            if (isForceStart)
-                _queue.RegistrateWithStart(configuration, Process);
-            else if (configuration != null)
-                _queue.Registrate(configuration, Process);
-            else
-                _queue.Registrate(Process);
+            _queue.Registrate(Process);
         }
 
         protected override void RegistrateInner(Type type, FunctionHandlerBase handler)
@@ -232,9 +227,9 @@ namespace Qoollo.Impl.Modules
             throw new NotImplementedException();
         }
 
-        internal void StartAsync(QueueConfiguration configuration = null)
+        internal void StartAsync()
         {
-            _async.Values.ToList().ForEach(x => x.Start(false, configuration));
+            _async.Values.ToList().ForEach(x => x.Start(false));
         }
 
         public virtual void Build()

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,27 +14,16 @@ namespace Qoollo.Impl.Modules.Async
     {
         private readonly ReaderWriterLockSlim _lock;
         private readonly List<AsyncData> _tasks;
-        private readonly Lazy<StaticThreadPool> _threadPool;
+        private Lazy<StaticThreadPool> _threadPool;
         private Task _disp;
         private readonly AutoResetEvent _event;
         private readonly CancellationTokenSource _token;
 
-        public AsyncTaskModule(StandardKernel kernel, QueueConfiguration configuration)
+        public AsyncTaskModule(StandardKernel kernel)
             :base(kernel)
         {
-            Contract.Requires(configuration != null);
             _tasks = new List<AsyncData>();
-            _threadPool =
-                new Lazy<StaticThreadPool>(
-                    () =>
-                        new StaticThreadPool(configuration.ProcessotCount, -1, "AsyncTaskModule",
-                            false,
-                            new StaticThreadPoolOptions
-                            {
-                                FlowExecutionContext = false,
-                                UseOwnSyncContext = false,
-                                UseOwnTaskScheduler = false
-                            }));
+            
             _lock = new ReaderWriterLockSlim();
             _event = new AutoResetEvent(false);
             _token = new CancellationTokenSource();
@@ -177,7 +165,21 @@ namespace Qoollo.Impl.Modules.Async
         #endregion
 
         public override void Start()
-        {     
+        {
+            var config = Kernel.Get<IAsyncTaskConfiguration>();
+
+            _threadPool =
+                new Lazy<StaticThreadPool>(
+                    () =>
+                        new StaticThreadPool(config.CountThreads, -1, "AsyncTaskModule",
+                            false,
+                            new StaticThreadPoolOptions
+                            {
+                                FlowExecutionContext = false,
+                                UseOwnSyncContext = false,
+                                UseOwnTaskScheduler = false
+                            }));
+
             _disp = new Task(ProcessTasks);
             _disp.Start();
         }

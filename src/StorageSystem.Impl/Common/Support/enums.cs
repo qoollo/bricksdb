@@ -102,8 +102,6 @@ namespace Qoollo.Impl.Common.Support
         SimpleRestoreNeed = 1,
         [EnumMember]
         FullRestoreNeed = 2,
-        [EnumMember]
-        Default = 3
     }
 
     [DataContract]

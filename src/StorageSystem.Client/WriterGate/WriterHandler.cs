@@ -22,13 +22,6 @@ namespace Qoollo.Client.WriterGate
             return new RequestDescription(_writer.Distributor.UpdateModel());
         }
 
-        public RequestDescription Restore()
-        {
-            string result = _writer.Distributor.Restore();
-            return new RequestDescription(result);
-        }
-
-
         public RequestDescription Restore(RestoreMode mode)
         {
             string result = _writer.Distributor.Restore(RestoreModeConverter.Convert(mode));

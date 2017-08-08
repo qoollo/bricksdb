@@ -112,11 +112,6 @@ namespace Qoollo.Impl.Writer
             return Errors.RestoreAlreadyStarted;
         }
 
-        public string Restore()
-        {
-            return Restore(null, RestoreState.Default);
-        }
-
         public string Restore(RestoreState state)
         {
             return Restore(null, state);
@@ -127,25 +122,12 @@ namespace Qoollo.Impl.Writer
             return Restore(null, state, type);
         }
 
-        public string Restore(RestoreType type)
-        {
-            return Restore(null, RestoreState.Default, type);
-        }
-
         public string Restore(List<ServerId> servers, RestoreState state, RestoreType type = RestoreType.Single)
         {
             if (_asyncDbWork.IsRestoreStarted)
                 return Errors.RestoreAlreadyStarted;
 
-            RestoreState st = state;
-            if (state == RestoreState.Default && type == RestoreType.Single)
-            {
-                st = _asyncDbWork.RestoreState;
-                if (st == RestoreState.Restored)
-                    return Errors.RestoreDefaultStartError;
-            }
-
-            Execute<RestoreCommand, RemoteResult>(new RestoreCommand(st, type)
+            Execute<RestoreCommand, RemoteResult>(new RestoreCommand(state, type)
             {
                 DirectServers = servers
             });

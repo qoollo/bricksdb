@@ -1,7 +1,6 @@
 ﻿using Ninject.Modules;
 using Qoollo.Impl.Modules.Net.ConnectionBehavior;
 using Qoollo.Impl.Modules.Net.ReceiveBehavior;
-using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.NetInterfaces;
 using Qoollo.Impl.NetInterfaces.Distributor;
 using Qoollo.Impl.NetInterfaces.Proxy;

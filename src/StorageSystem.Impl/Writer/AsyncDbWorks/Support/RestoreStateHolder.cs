@@ -39,7 +39,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public void LocalSendState(RestoreState state)
         {
-            if (state > _state && state != RestoreState.Default)
+            if (state > _state)
                 _state = state;
         }
 

@@ -1,15 +1,12 @@
 ﻿using System.Collections.Generic;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
-using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Client.WriterGate
 {
     public interface IWriterApi
     {
         RequestDescription UpdateModel();
-
-        RequestDescription Restore();
 
         RequestDescription Restore(RestoreMode mode);
 

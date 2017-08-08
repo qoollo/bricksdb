@@ -8,13 +8,9 @@ namespace Qoollo.Impl.Writer.Interfaces
     {
         string UpdateModel();
 
-        string Restore();
-
         string Restore(RestoreState state);
 
         string Restore(RestoreState state, RestoreType type);
-
-        string Restore(RestoreType type);
 
         string Restore(List<ServerId> servers, RestoreState state, RestoreType type = RestoreType.Single);
 

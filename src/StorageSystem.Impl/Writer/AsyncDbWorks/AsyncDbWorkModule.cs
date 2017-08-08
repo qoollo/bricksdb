@@ -8,7 +8,6 @@ using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
-using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks.Restore;
 using Qoollo.Impl.Writer.AsyncDbWorks.Support;
 using Qoollo.Impl.Writer.AsyncDbWorks.Timeout;
@@ -164,40 +163,52 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                     $"Attempt to start restore state: {Enum.GetName(typeof(RestoreState), state)}, type: {Enum.GetName(typeof(RestoreType), type)}",
                     "restore");
 
-            var st = state;
-            if (state == RestoreState.Default && type == RestoreType.Single)
+            if (state == RestoreState.Restored)
             {
-                st = RestoreState;
-                if (st == RestoreState.Restored)
-                {
-                    if (_logger.IsWarnEnabled)
-                        _logger.Warn(
-                            $"Cant run restore in {Enum.GetName(typeof(RestoreState), RestoreState.Restored)} state",
-                            "restore");
-                    return;
-                }
+                if (_logger.IsWarnEnabled)
+                    _logger.Warn(
+                        $"Cant run restore in {Enum.GetName(typeof(RestoreState), RestoreState.Restored)} state",
+                        "restore");
+                return;
             }
+
+            var servers = state == RestoreState.FullRestoreNeed
+                ? _writerModel.Servers
+                : _writerModel.OtherServers;
 
             if (destServers != null)
             {
-                var servers = st == RestoreState.FullRestoreNeed
-                    ? _writerModel.Servers
-                    : _writerModel.OtherServers;
-
-                RestoreRun(ServersOnDirectRestore(servers, destServers), st, type);
+                RestoreRun(ServersOnDirectRestore(servers, destServers), state, type);
             }
-            else if (type == RestoreType.Single || state == RestoreState.SimpleRestoreNeed)
-            {
-                var servers = st == RestoreState.FullRestoreNeed
-                    ? _writerModel.Servers
-                    : _writerModel.OtherServers;
 
-                RestoreRun(ConvertRestoreServers(servers), st, type);
+            if (type == RestoreType.Single)
+            {
+                RestoreRun(ConvertRestoreServers(servers), state, type);
             }
             else if (type == RestoreType.Broadcast)
             {
-                RestoreRun(ConvertRestoreServers(_writerModel.Servers), st, type);
+                RestoreRun(ConvertRestoreServers(_writerModel.Servers), state, type);
             }
+            //if (destServers != null)
+            //{
+            //    var servers = st == RestoreState.FullRestoreNeed
+            //        ? _writerModel.Servers
+            //        : _writerModel.OtherServers;
+
+            //    RestoreRun(ServersOnDirectRestore(servers, destServers), st, type);
+            //}
+            //else if (type == RestoreType.Single || state == RestoreState.SimpleRestoreNeed)
+            //{
+            //    var servers = st == RestoreState.FullRestoreNeed
+            //        ? _writerModel.Servers
+            //        : _writerModel.OtherServers;
+
+            //    RestoreRun(ConvertRestoreServers(servers), st, type);
+            //}
+            //else if (type == RestoreType.Broadcast)
+            //{
+            //    RestoreRun(ConvertRestoreServers(_writerModel.Servers), st, type);
+            //}
         }
 
         private void RestoreRun(List<RestoreServer> servers, RestoreState state, RestoreType type)

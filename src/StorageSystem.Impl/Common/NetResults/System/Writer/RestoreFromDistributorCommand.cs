@@ -17,7 +17,7 @@ namespace Qoollo.Impl.Common.NetResults.System.Writer
         [DataMember]
         public ServerId Server { get; set; } 
 
-        public RestoreFromDistributorCommand(RestoreState state = RestoreState.Default, ServerId server = null, RestoreType type = RestoreType.Single)
+        public RestoreFromDistributorCommand(RestoreState state, ServerId server = null, RestoreType type = RestoreType.Single)
         {
             Type = type;
             RestoreState = state;

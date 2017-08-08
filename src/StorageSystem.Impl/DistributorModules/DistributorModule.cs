@@ -190,7 +190,7 @@ namespace Qoollo.Impl.DistributorModules
             var server = servers.FirstOrDefault(x => x.RestoreState == RestoreState.SimpleRestoreNeed);
             if (server != null)
             {
-                _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand());
+                _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand(RestoreState.SimpleRestoreNeed));
             }
         }
 
@@ -387,11 +387,11 @@ namespace Qoollo.Impl.DistributorModules
         public string Restore(ServerId server, ServerId restoreDest, RestoreState state)
         {
             if (!_modelOfDbWriters.Servers.Contains(server))
-                return "non existed server";
+                return $"Server {server} is unknown";
 
             var firstOrDefault = _modelOfDbWriters.Servers.FirstOrDefault(x => Equals(x, server));
-            if ((state == RestoreState.Default && firstOrDefault.RestoreState == RestoreState.Restored))
-                return $"server {restoreDest} is in restore mode. Change restore mode";
+            if (state == RestoreState.Restored && firstOrDefault.RestoreState == RestoreState.Restored)
+                return $"Cannot run restore in {Enum.GetName(typeof(RestoreState), RestoreState.Restored)} mode";
             var result = _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand(state, restoreDest));
 
             return result.IsError ? result.ToString() : Errors.NoErrors;

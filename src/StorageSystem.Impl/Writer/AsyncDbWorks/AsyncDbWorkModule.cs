@@ -189,26 +189,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             {
                 RestoreRun(ConvertRestoreServers(_writerModel.Servers), state, type);
             }
-            //if (destServers != null)
-            //{
-            //    var servers = st == RestoreState.FullRestoreNeed
-            //        ? _writerModel.Servers
-            //        : _writerModel.OtherServers;
-
-            //    RestoreRun(ServersOnDirectRestore(servers, destServers), st, type);
-            //}
-            //else if (type == RestoreType.Single || state == RestoreState.SimpleRestoreNeed)
-            //{
-            //    var servers = st == RestoreState.FullRestoreNeed
-            //        ? _writerModel.Servers
-            //        : _writerModel.OtherServers;
-
-            //    RestoreRun(ConvertRestoreServers(servers), st, type);
-            //}
-            //else if (type == RestoreType.Broadcast)
-            //{
-            //    RestoreRun(ConvertRestoreServers(_writerModel.Servers), st, type);
-            //}
         }
 
         private void RestoreRun(List<RestoreServer> servers, RestoreState state, RestoreType type)

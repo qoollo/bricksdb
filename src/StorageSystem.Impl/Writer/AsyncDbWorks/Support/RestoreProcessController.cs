@@ -114,10 +114,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             _lock.ExitWriteLock();
         }
 
-        public void SetRestoreDate(RestoreState state, List<RestoreServer> servers)
+        public void SetRestoreDate(RestoreState restoreRunState, List<RestoreServer> servers)
         {
             SetServers(servers);
-            _saver.SetRestoreDate(state, _restoreServers);
+            _saver.SetRestoreDate(RestoreType.Single, restoreRunState, _restoreServers);
             Save();
         }
 

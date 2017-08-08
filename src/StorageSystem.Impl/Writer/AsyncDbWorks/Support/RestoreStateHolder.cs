@@ -1,10 +1,13 @@
 ﻿using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
-{    
+{
     internal class RestoreStateHolder
     {
-        public RestoreState State { get { return _state; } }
+        public RestoreState State
+        {
+            get { return _state; }
+        }
 
         public RestoreStateHolder(bool needRestore)
         {
@@ -14,7 +17,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public RestoreStateHolder(RestoreState state)
         {
-            _state = state; 
+            _state = state;
             _canRemoteStateUpdate = true;
         }
 
@@ -30,26 +33,23 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         }
 
         public void ModelUpdate()
-        {            
-            var state = RestoreState.FullRestoreNeed;
+        {
+            LocalSendState(RestoreState.FullRestoreNeed);
+        }
 
-            if (state > _state)
-                _state = state;
-        }        
-
-        public void LocalSendState(RestoreState state)
+        private void LocalSendState(RestoreState state)
         {
             if (state > _state)
                 _state = state;
         }
 
-        public void FinishRestore(RestoreState state)
-        {
-            if (state == _state)
-            {
-                _state = RestoreState.Restored;
-                _canRemoteStateUpdate = false;
-            }
-        }
+        //public void FinishRestore(RestoreState state)
+        //{
+        //    if (state == _state)
+        //    {
+        //        _state = RestoreState.Restored;
+        //        _canRemoteStateUpdate = false;
+        //    }
+        //}
     }
 }

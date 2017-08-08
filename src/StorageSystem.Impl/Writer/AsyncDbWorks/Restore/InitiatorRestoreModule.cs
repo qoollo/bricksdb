@@ -51,7 +51,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if (ParametersCheck(state, tableName, servers))
                 return;
 
-            _serversController.SetRestoreDate(_state, servers);
+            _serversController.SetRestoreDate(state, servers);
 
             StartRestore();
         }
@@ -61,7 +61,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if (ParametersCheck(state, tableName, servers))
                 return;
             
-            _serversController.SetRestoreDate(_state, servers);
+            _serversController.SetRestoreDate(state, servers);
 
             StartRestore();
         }
@@ -166,7 +166,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             if (_serversController.IsAllServersRestored())
             {
-                _stateHolder.FinishRestore(_state);
+                //todo
+                //_stateHolder.FinishRestore(_state);
                 _serversController.FinishRestore();
             }
 

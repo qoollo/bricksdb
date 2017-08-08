@@ -41,8 +41,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         private readonly string _filename;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
-        public void SetRestoreDate(RestoreType type, RestoreState runState,
-            List<RestoreServer> restoreServers)
+        public void SetRestoreDate(RestoreType type, RestoreState runState, List<RestoreServer> restoreServers)
         {
             _lock.EnterWriteLock();
 
@@ -53,21 +52,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             _lock.ExitWriteLock();
         }
 
-        public void SetRestoreDate(RestoreState localState, List<RestoreServer> restoreServers)
-        {
-            _lock.EnterWriteLock();
-
-            RestoreType = RestoreType.Single;
-            RestoreServers = restoreServers;
-
-            _lock.ExitWriteLock();
-        }
-
         public void Save()
         {
             _lock.EnterWriteLock();
-            if(IsNeedSave())
-                SaveInner();
+            SaveInner();
             _lock.ExitWriteLock();
         }
 
@@ -114,15 +102,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public bool IsNeedRestore()
         {
-            return StateHolder.State != RestoreState.Restored
-                   && RestoreServers != null
-                   && RestoreServers.Count != 0
-                   || RestoreType == RestoreType.Broadcast;
-        }
-
-        private bool IsNeedSave()
-        {
-            return StateHolder.State != RestoreState.Restored;
+            return RestoreType != RestoreType.None;
+            //return StateHolder.State != RestoreState.Restored
+            //       && RestoreServers != null
+            //       && RestoreServers.Count != 0
+            //       || RestoreType == RestoreType.Broadcast;
         }
 
         private void SaveInner()
@@ -155,7 +139,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public void RemoveFile()
         {
+            _lock.EnterWriteLock();
             File.Delete(_filename);
+            _lock.ExitWriteLock();            
         }        
     }
 

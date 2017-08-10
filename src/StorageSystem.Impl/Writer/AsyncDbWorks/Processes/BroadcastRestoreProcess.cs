@@ -38,7 +38,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
             var destination = GetDestinationCollection();
             var dataListWrap = dataList.Select(d => new InnerDataWrapper(d)).ToList();
 
-
             foreach (var server in destination)
             {
                 var data = dataListWrap
@@ -49,7 +48,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Processes
                 {
                     if (Equals(server.Key, WriterModel.Local))
                     {
-                        data.ForEach(d => d.IsLocal = true);
+                        data.ForEach(d => d.IsLocal = d.Data.MetaData.IsLocal);
                         data.RemoveAll(d => d.IsLocal);
                     }
 

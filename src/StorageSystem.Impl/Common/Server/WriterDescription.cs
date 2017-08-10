@@ -8,6 +8,8 @@ namespace Qoollo.Impl.Common.Server
 {
     public class WriterDescription:ServerId
     {
+        private readonly ConcurrentDictionary<string, string> _stateInfo = new ConcurrentDictionary<string, string>();
+
         public bool IsAvailable { get; private set; }
 
         public bool IsServerRestored { get { return RestoreState == RestoreState.Restored; } }
@@ -39,34 +41,12 @@ namespace Qoollo.Impl.Common.Server
             }
         }
 
-        public bool RestoreSendStatus
-        {
-            get
-            {
-                string value;
-                if (_stateInfo.TryGetValue(ServerState.RestoreSendStatus, out value) && value != string.Empty)
-                {
-                    return bool.Parse(value);
-                }
-
-                return false;
-            }
-
-            set { SetInfoMessage(ServerState.RestoreSendStatus, value.ToString()); }
-        }
-
         public WriterDescription(string host,  int port)
             : base(host,  port)
         {
             IsAvailable = true;
             RestoreState = RestoreState.Restored;
         }
-
-        public WriterDescription(ServerId server) : this(server.RemoteHost, server.Port)
-        {            
-        }
-
-        private readonly ConcurrentDictionary<string, string> _stateInfo = new ConcurrentDictionary<string, string>();
 
         private string GetInnerState()
         {

@@ -184,6 +184,7 @@
     <Compile Include="DistributorModules\Interfaces\IDistributorModule.cs" />
     <Compile Include="DistributorModules\Interfaces\IDistributorNetModule.cs" />
     <Compile Include="DistributorModules\Interfaces\ITransactionModule.cs" />
+    <Compile Include="DistributorModules\Model\RestoreWritersModule.cs" />
     <Compile Include="Modules\Config\SettingsModule.cs" />
     <Compile Include="Modules\Config\SettingsReader.cs" />
     <Compile Include="Modules\Interfaces\ICacheModule.cs" />

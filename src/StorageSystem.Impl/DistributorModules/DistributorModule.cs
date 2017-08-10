@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Commands;
@@ -11,7 +9,6 @@ using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.NetResults.System.Collector;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
-using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
@@ -37,7 +34,7 @@ namespace Qoollo.Impl.DistributorModules
             _asyncTaskModule = new AsyncTaskModule(kernel);
 
             _modelOfAnotherDistributors = new DistributorSystemModel();
-            _autoRestoreEnable = autoRestoreEnable;
+            _autoRestoreEnable = autoRestoreEnable;            
         }
 
         private WriterSystemModel _modelOfDbWriters;
@@ -47,9 +44,9 @@ namespace Qoollo.Impl.DistributorModules
         private ServerId _localfordb;
         private ServerId _localforproxy;
         private readonly AsyncTaskModule _asyncTaskModule;
-        private bool _autoRestoreEnable;
-        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private readonly bool _autoRestoreEnable;
         private IDistributorConfiguration _config;
+        private RestoreWritersModule _restoreWriters;
 
         public override void Start()
         {
@@ -66,14 +63,12 @@ namespace Qoollo.Impl.DistributorModules
             RegistrateCommands();
       
             _modelOfDbWriters.Start();
+            _restoreWriters = new RestoreWritersModule(Kernel, _modelOfDbWriters, _asyncTaskModule, _autoRestoreEnable);
+            _restoreWriters.Start();
 
             _asyncTaskModule.AddAsyncTask(
                 new AsyncDataPeriod(_config.Timeouts.ServersPingMls.PeriodTimeSpan, PingProcess,
                     AsyncTasksNames.AsyncPing, -1), false);
-
-            _asyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_config.Timeouts.CheckRestoreMls.PeriodTimeSpan, CheckRestore,
-                    AsyncTasksNames.CheckRestore, -1), false);
 
             _asyncTaskModule.AddAsyncTask(
                 new AsyncDataPeriod(_config.Timeouts.DistributorsPingMls.PeriodTimeSpan, DistributerPing,
@@ -152,46 +147,6 @@ namespace Qoollo.Impl.DistributorModules
             {
             }
             
-        }
-
-        private void CheckRestore(AsyncData data)
-        {
-            CheckRestoreInner(true);
-        }
-
-        private void CheckRestoreInner(bool isRestore = false)
-        {
-            var servers = _modelOfDbWriters.GetAllAvailableServers();
-            servers.ForEach(x =>
-            {
-                var result = _distributorNet.SendToWriter(x, new SetGetRestoreStateCommand(x.RestoreState));
-
-                if (result is SetGetRestoreStateResult)
-                {
-                    var command = ((SetGetRestoreStateResult)result);
-                    x.UpdateState(command.State);
-                    x.SetInfoMessageList(command.FullState);
-                }
-            });
-
-            _lock.EnterReadLock();
-            var autoRestore = isRestore && _autoRestoreEnable;
-            _lock.ExitReadLock();
-
-            if (autoRestore)
-                RestoreWriters(servers);
-        }
-
-
-        private void RestoreWriters(List<WriterDescription> servers)
-        {
-            if (!servers.All(x => x.IsAvailable && !x.IsRestoreInProcess))
-                return;
-            var server = servers.FirstOrDefault(x => x.RestoreState == RestoreState.SimpleRestoreNeed);
-            if (server != null)
-            {
-                _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand(RestoreState.SimpleRestoreNeed));
-            }
         }
 
         private void DistributerPing(AsyncData data)
@@ -363,11 +318,7 @@ namespace Qoollo.Impl.DistributorModules
 
         public string GetServersState()
         {
-            var servers = _modelOfDbWriters.GetAllAvailableServers();
-            if (servers.TrueForAll(x => x.IsAvailable))
-                CheckRestoreInner();
-            return _modelOfDbWriters.Servers.Aggregate(string.Empty,
-                (current, writerDescription) => current + "\n" + writerDescription.StateString);
+            return _restoreWriters.GetServersState();
         }
 
         public List<ServerId> GetDistributors()
@@ -376,25 +327,14 @@ namespace Qoollo.Impl.DistributorModules
         }
 
         public string AutoRestoreSetMode(bool mode)
-        {            
-            _lock.EnterWriteLock();
-            _autoRestoreEnable = mode;
-            _lock.ExitWriteLock();
-
+        {   
+            _restoreWriters.AutoRestoreSetMode(mode);
             return Errors.NoErrors;
         }
 
         public string Restore(ServerId server, ServerId restoreDest, RestoreState state)
         {
-            if (!_modelOfDbWriters.Servers.Contains(server))
-                return $"Server {server} is unknown";
-
-            var firstOrDefault = _modelOfDbWriters.Servers.FirstOrDefault(x => Equals(x, server));
-            if (state == RestoreState.Restored && firstOrDefault.RestoreState == RestoreState.Restored)
-                return $"Cannot run restore in {Enum.GetName(typeof(RestoreState), RestoreState.Restored)} mode";
-            var result = _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand(state, restoreDest));
-
-            return result.IsError ? result.ToString() : Errors.NoErrors;
+            return _restoreWriters.Restore(server, restoreDest, state);
         }
 
         #endregion

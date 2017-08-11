@@ -28,13 +28,11 @@ namespace Qoollo.Impl.DistributorModules
 
         public ServerId LocalForDb => _localfordb;
 
-        public DistributorModule(StandardKernel kernel, bool autoRestoreEnable = false)
-            :base(kernel)
+        public DistributorModule(StandardKernel kernel) :base(kernel)
         {
             _asyncTaskModule = new AsyncTaskModule(kernel);
 
             _modelOfAnotherDistributors = new DistributorSystemModel();
-            _autoRestoreEnable = autoRestoreEnable;            
         }
 
         private WriterSystemModel _modelOfDbWriters;
@@ -44,7 +42,6 @@ namespace Qoollo.Impl.DistributorModules
         private ServerId _localfordb;
         private ServerId _localforproxy;
         private readonly AsyncTaskModule _asyncTaskModule;
-        private readonly bool _autoRestoreEnable;
         private IDistributorConfiguration _config;
         private RestoreWritersModule _restoreWriters;
 
@@ -63,7 +60,7 @@ namespace Qoollo.Impl.DistributorModules
             RegistrateCommands();
       
             _modelOfDbWriters.Start();
-            _restoreWriters = new RestoreWritersModule(Kernel, _modelOfDbWriters, _asyncTaskModule, _autoRestoreEnable);
+            _restoreWriters = new RestoreWritersModule(Kernel, _modelOfDbWriters, _asyncTaskModule);
             _restoreWriters.Start();
 
             _asyncTaskModule.AddAsyncTask(

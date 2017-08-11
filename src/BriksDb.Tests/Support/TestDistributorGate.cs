@@ -37,8 +37,7 @@ namespace Qoollo.Tests.Support
             return list.First(x => x.FieldType.FullName == typeof(TRet).ToString()).GetValue(obj) as TRet;
         }
 
-        public void Build(bool autoRestoreEnable = false, 
-            string configFile = Impl.Common.Support.Consts.ConfigFilename)
+        public void Build(string configFile = Impl.Common.Support.Consts.ConfigFilename)
         {            
             var kernel = new StandardKernel(new TestInjectionModule());
 
@@ -51,7 +50,7 @@ namespace Qoollo.Tests.Support
             _dnet = new DistributorNetModule(kernel);
             kernel.Bind<IDistributorNetModule>().ToConstant(_dnet);
 
-            Distributor = new DistributorModule(kernel, autoRestoreEnable);
+            Distributor = new DistributorModule(kernel);
             kernel.Bind<IDistributorModule>().ToConstant(Distributor);
 
             var cache = new DistributorTimeoutCache(new DistributorCacheConfiguration(200000, 200000));

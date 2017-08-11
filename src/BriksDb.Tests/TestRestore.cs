@@ -912,11 +912,13 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1,
+                    autoRestoreEnable: true);
                 CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
                     distrport: storageServer2, restoreStateFilename: file2);
 
-                _distrTest.Build(true);
+                //todo true
+                _distrTest.Build();
 
                 _writer1.Build(storageServer1);
                 _writer2.Build(storageServer2, configFile: config_file2);
@@ -1105,11 +1107,13 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1,
+                    autoRestoreEnable: true);
                 CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
                     filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
 
-                _distrTest.Build(true);
+                //todo true
+                _distrTest.Build();
 
                 _writer1.Build(storageServer1);
                 _writer2.Build(storageServer2, configFile: config_file2);

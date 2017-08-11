@@ -103,14 +103,15 @@ namespace Qoollo.Tests
             int serverPageSize = 1000, bool useHashFile = true,
             bool usePackage = false,
             bool isForceStart = false, int periodRetryMls = 100000, int deleteTimeoutMls= 100000,
-            string restoreStateFilename = Consts.RestoreHelpFile)
+            string restoreStateFilename = Consts.RestoreHelpFile,
+            bool autoRestoreEnable = false)
         {
             using (var writer = new StreamWriter(filename, false))
             {
                 writer.WriteLine(
                     $@"{{ {GetQueue()}, {GetAsync()}, {
                             GetDistrtibutor(distrthreads, writerport, proxyport,
-                                timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls, ping, check)
+                                timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls, ping, check, autoRestoreEnable)
                         }, {
                             GetWriter(distrport, collectorport, isForceStart, periodRetryMls, deleteTimeoutMls,
                                 restoreStateFilename, usePackage)
@@ -141,14 +142,14 @@ namespace Qoollo.Tests
         }
 
         private string GetDistrtibutor(int distrthreads, int portwriter, int portproxy,
-            int timeAliveBeforeDeleteMls, int timeAliveAfterUpdateMls, int ping, int check)
+            int timeAliveBeforeDeleteMls, int timeAliveAfterUpdateMls, int ping, int check, bool autoRestoreEnable)
         {
             return "\n" +
-                   $@"""distributor"": {{ {GetParam("countthreads", distrthreads)}, {GetNet("netwriter", portwriter)}, {
-                           GetNet("netproxy", portproxy)
-                       }, {GetDCache(timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls)}, {
-                           DistributorTimeouts(ping, check)
-                       } }} ";
+                   $@"""distributor"": {{ {GetParam("countthreads", distrthreads)}, {
+                           GetParam("AutoRestoreEnable", autoRestoreEnable)
+                       }, {GetNet("netwriter", portwriter)}, {GetNet("netproxy", portproxy)}, {
+                           GetDCache(timeAliveBeforeDeleteMls, timeAliveAfterUpdateMls)
+                       }, {DistributorTimeouts(ping, check)} }} ";
         }
 
         private string GetDCache(int timeAliveBeforeDeleteMls, int timeAliveAfterUpdateMls)

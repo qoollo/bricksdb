@@ -24,19 +24,18 @@ namespace Qoollo.Impl.DistributorModules.Model
         private bool _autoRestoreEnable;
         private IDistributorNetModule _distributorNet;
 
-        public RestoreWritersModule(StandardKernel kernel, WriterSystemModel writerModel, AsyncTaskModule asyncTask, 
-            bool autoRestoreEnable = false)
+        public RestoreWritersModule(StandardKernel kernel, WriterSystemModel writerModel, AsyncTaskModule asyncTask)
             : base(kernel)
         {
             _writerModel = writerModel;
             _asyncTask = asyncTask;
-            _autoRestoreEnable = autoRestoreEnable;
         }
 
         public override void Start()
         {
             _distributorNet = Kernel.Get<IDistributorNetModule>();
             var config = Kernel.Get<IDistributorConfiguration>();
+            _autoRestoreEnable = config.AutoRestoreEnable;
 
             _asyncTask.AddAsyncTask(
                 new AsyncDataPeriod(config.Timeouts.CheckRestoreMls.PeriodTimeSpan, UpdateStateAndRunRestore,

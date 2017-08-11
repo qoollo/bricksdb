@@ -3,6 +3,7 @@
     public interface IDistributorConfiguration
     {
         int CountThreads { get; }
+        bool AutoRestoreEnable { get; }
 
         NetConfiguration NetProxy { get; }
         NetConfiguration NetWriter { get; }
@@ -13,6 +14,7 @@
     public class DistributorConfiguration : IDistributorConfiguration
     {
         public int CountThreads { get; protected set; }
+        public bool AutoRestoreEnable { get; protected set; }
         public NetConfiguration NetProxy { get; protected set; }
         public NetConfiguration NetWriter { get; protected set; }
         public DistributorCacheConfiguration Cache { get; protected set; }

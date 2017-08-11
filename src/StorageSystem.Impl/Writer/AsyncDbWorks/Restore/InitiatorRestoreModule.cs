@@ -21,16 +21,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         public List<RestoreServer> Servers => _serversController.Servers;
 
-        public InitiatorRestoreModule(StandardKernel kernel, RestoreStateHolder stateHolder,
-            RestoreStateFileLogger saver)
+        public InitiatorRestoreModule(StandardKernel kernel, WriterStateFileLogger saver)
             : base(kernel)
         {
-            _stateHolder = stateHolder;
             _serversController = new RestoreProcessController(saver);
         }
 
         private IWriterModel _model;
-        private readonly RestoreStateHolder _stateHolder;
         private string _tableName;
         private RestoreState _state;
         private readonly RestoreProcessController _serversController;
@@ -51,7 +48,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if (ParametersCheck(state, tableName, servers))
                 return;
 
-            _serversController.SetRestoreDate(state, servers);
+            _serversController.SetRestoreDate(state, RestoreType.Single, servers);
 
             StartRestore();
         }
@@ -61,7 +58,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             if (ParametersCheck(state, tableName, servers))
                 return;
             
-            _serversController.SetRestoreDate(state, servers);
+            _serversController.SetRestoreDate(state, RestoreType.Single, servers);
 
             StartRestore();
         }

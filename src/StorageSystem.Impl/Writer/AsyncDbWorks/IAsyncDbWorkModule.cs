@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using Qoollo.Impl.Common.NetResults.Data;
+using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
@@ -8,14 +10,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 {
     internal interface IAsyncDbWorkModule
     {
-        Dictionary<string, string> FullState { get; }
         bool IsRestoreStarted { get; }
         RestoreState RestoreState { get; }
         List<RestoreServer> Servers { get; }
         TimeoutModule TimeoutModule { get; }
 
-        RestoreState DistributorReceive(RestoreState state);
         string GetAllState();
+        GetRestoreStateResult GetWriterState(SetRestoreStateCommand command);
         List<ServerId> GetFailedServers();
         void LastMessageIncome(ServerId server);
         void PeriodMessageIncome(ServerId server);

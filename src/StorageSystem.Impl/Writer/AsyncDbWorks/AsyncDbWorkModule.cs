@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Ninject;
+using Qoollo.Impl.Common.NetResults.Data;
+using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
@@ -19,47 +21,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public RestoreState RestoreState => _stateHolder.State;
+        public RestoreState RestoreState => _saver.WriterState;
 
         public TimeoutModule TimeoutModule => _timeout;
 
-        internal bool IsNeedRestore => _stateHolder.State != RestoreState.Restored;
+        internal bool IsNeedRestore => _saver.IsNeedRestore();
 
         public bool IsRestoreStarted => _initiatorRestore.IsStart || _broadcastRestore.IsStart;
 
-        public Dictionary<string, string> FullState
+        public AsyncDbWorkModule(StandardKernel kernel): base(kernel)
         {
-            get
-            {
-                var dictionary = new Dictionary<string, string>();
-
-                if (_initiatorRestore.IsStart)
-                {
-                    var server = _initiatorRestore.RestoreServer;
-                    if (server != null)
-                        dictionary.Add(ServerState.RestoreCurrentServer, server.ToString());
-                    else
-                        dictionary.Add(ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString());
-                }
-
-                if (_transferRestore.IsStart)
-                {
-                    var server = _transferRestore.RemoteServer;
-                    if (server != null)
-                        dictionary.Add(ServerState.RestoreTransferServer, server.ToString());
-                    else
-                        dictionary.Add(ServerState.RestoreTransferInProcess, _transferRestore.IsStart.ToString());
-                    if (!string.IsNullOrEmpty(_transferRestore.LastStartedTime))
-                        dictionary.Add(ServerState.RestoreTransferLastStart, _transferRestore.LastStartedTime);
-                }
-                return dictionary;
-            }
-        }
-
-        public AsyncDbWorkModule(StandardKernel kernel, bool needRestore = false)
-            : base(kernel)
-        {
-            _stateHolder = new RestoreStateHolder(needRestore);
         }
 
         private IWriterModel _writerModel;
@@ -69,16 +40,15 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         private TransferRestoreModule _transferRestore;
         private TimeoutModule _timeout;
 
-        private RestoreStateHolder _stateHolder;
-        private RestoreStateFileLogger _saver;
+        private WriterStateFileLogger _saver;
 
         public override void Start()
         {
             _writerModel = Kernel.Get<IWriterModel>();
 
-            _saver = LoadRestoreStateFromFile(Kernel.Get<IWriterConfiguration>().RestoreStateFilename);
+            LoadRestoreStateFromFile(Kernel.Get<IWriterConfiguration>().RestoreStateFilename);
 
-            _initiatorRestore = new InitiatorRestoreModule(Kernel, _stateHolder, _saver);
+            _initiatorRestore = new InitiatorRestoreModule(Kernel, _saver);
             _transferRestore = new TransferRestoreModule(Kernel);
             _timeout = new TimeoutModule(Kernel);
             _broadcastRestore = new BroadcastRestoreModule(Kernel);
@@ -102,8 +72,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         public void UpdateModel()
         {
             _initiatorRestore.UpdateModel(_writerModel.Servers);
-            _stateHolder.ModelUpdate();
 
+            _saver.ModelUpdate();
             _saver.Save();
         }
 
@@ -124,14 +94,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _initiatorRestore.LastMessageIncome(server);
         }
 
-        private RestoreStateFileLogger LoadRestoreStateFromFile(string filename)
+        private bool LoadRestoreStateFromFile(string filename)
         {
-            var saver = new RestoreStateFileLogger(filename);
-            if (!saver.Load())
-                return new RestoreStateFileLogger(filename, _stateHolder);
-            
-            _stateHolder = saver.StateHolder;
-            return saver;
+            _saver = new WriterStateFileLogger(filename);
+            return _saver.Load();
         }
 
         #endregion
@@ -209,7 +175,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                 _saver.SetRestoreDate(type, state, servers);
                 _saver.Save();
 
-                _broadcastRestore.Restore(servers, _stateHolder.State);                
+                _broadcastRestore.Restore(servers, _saver.WriterState);                
             }
         }
 
@@ -218,7 +184,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             if (_initiatorRestore.IsStart)
                 return;
 
-            _initiatorRestore.RestoreFromFile(servers, _stateHolder.State, Consts.AllTables);
+            _initiatorRestore.RestoreFromFile(servers, _saver.WriterState, Consts.AllTables);
         }
 
         private List<RestoreServer> ServersOnDirectRestore(List<ServerId> servers, List<ServerId> failedServers)
@@ -251,18 +217,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             return _initiatorRestore.FailedServers;
         }
 
-        public List<RestoreServer> Servers => _initiatorRestore.Servers;
-
-        public RestoreState DistributorReceive(RestoreState state)
-        {
-            var old = _stateHolder.State;
-            _stateHolder.DistributorSendState(state);
-
-            if (old != _stateHolder.State)
-                _saver.Save();
-
-            return _stateHolder.State;
-        }
+        public List<RestoreServer> Servers => _initiatorRestore.Servers;        
 
         public string GetAllState()
         {
@@ -285,6 +240,17 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             return result;
         }
 
+        private RestoreState DistributorReceive(SetRestoreStateCommand command)
+        {
+            var old = _saver.WriterState;
+            _saver.DistributorSendState(command.State);
+
+            if (old != _saver.WriterState)
+                _saver.Save();
+
+            return _saver.WriterState;
+        }
+
         private string GetCurrentRestoreServer()
         {
             var server = _initiatorRestore.RestoreServer;
@@ -296,6 +262,39 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         private string GetServersList(string start = "\n")
         {
             return Servers.Aggregate(start, (current, server) => current + $"\t{server}\n");
+        }
+
+        private Dictionary<string, string> WriterFullState()
+        {
+            var dictionary = new Dictionary<string, string>();
+
+            if (_initiatorRestore.IsStart)
+            {
+                var server = _initiatorRestore.RestoreServer;
+                if (server != null)
+                    dictionary.Add(ServerState.RestoreCurrentServer, server.ToString());
+                else
+                    dictionary.Add(ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString());
+            }
+
+            if (_transferRestore.IsStart)
+            {
+                var server = _transferRestore.RemoteServer;
+                if (server != null)
+                    dictionary.Add(ServerState.RestoreTransferServer, server.ToString());
+                else
+                    dictionary.Add(ServerState.RestoreTransferInProcess, _transferRestore.IsStart.ToString());
+                if (!string.IsNullOrEmpty(_transferRestore.LastStartedTime))
+                    dictionary.Add(ServerState.RestoreTransferLastStart, _transferRestore.LastStartedTime);
+            }
+            return dictionary;
+        }
+
+        public GetRestoreStateResult GetWriterState(SetRestoreStateCommand command)
+        {
+            var state = DistributorReceive(command);
+            var result = new GetRestoreStateResult(state, WriterFullState(), _saver.RestoreServers);
+            return result;
         }
 
         #endregion

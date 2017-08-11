@@ -17,13 +17,6 @@ namespace Qoollo.Impl.Components
 {
     internal class WriterSystem: ModuleSystemBase
     {
-        private readonly bool _isNeedRestore;        
-
-        public WriterSystem(bool isNeedRestore = false)
-        {
-            _isNeedRestore = isNeedRestore;
-        }
-
         public DistributorModule Distributor { get; private set; }
 
         public DbModuleCollection DbModule { get; private set; }
@@ -51,7 +44,7 @@ namespace Qoollo.Impl.Components
             var model = new WriterModel(kernel, config.WriterConfiguration.NetDistributor.ServerId);
             kernel.Bind<IWriterModel>().ToConstant(model);
 
-            var restore = new AsyncDbWorkModule(kernel, _isNeedRestore);
+            var restore = new AsyncDbWorkModule(kernel);
             kernel.Bind<IAsyncDbWorkModule>().ToConstant(restore);
 
             var distributor = new DistributorModule(kernel);

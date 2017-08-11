@@ -29,6 +29,10 @@ namespace Qoollo.Impl.Common.Server
             CommonServer();
         }
 
+        public RestoreServer(ServerId server): this(server.RemoteHost, server.Port)
+        {
+        }
+
         public RestoreServer(ServerId server, List<HashMapRecord> getHashMap)
             : base(server)
         {

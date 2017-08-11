@@ -15,7 +15,7 @@ namespace Qoollo.Impl.Common
     [KnownType(typeof(OperationCompleteCommand))]
     [KnownType(typeof(ReadOperationCompleteCommand))]
     [KnownType(typeof(GetHashMapCommand))]
-    [KnownType(typeof(SetGetRestoreStateCommand))]    
+    [KnownType(typeof(SetRestoreStateCommand))]    
     [KnownType(typeof(HashFileUpdateCommand))]
     [KnownType(typeof(RestoreFromDistributorCommand))]
     [KnownType(typeof(DeleteCommand))]    

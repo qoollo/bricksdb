@@ -11,28 +11,20 @@ using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 {
-    internal class RestoreStateFileLogger
+    internal class WriterStateFileLogger
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public List<RestoreServer> RestoreServers { get; private set; }
-        public RestoreStateHolder StateHolder { get; private set; }
+        public List<RestoreServer> RestoreServers { get; private set; } = new List<RestoreServer>();
 
-        /// <summary>
-        /// Restore run in this state
-        /// </summary>
+        public RestoreState WriterState => _writerState;
+        private RestoreState _writerState;
+
         public RestoreState RestoreStateRun { get; private set; }
 
         public RestoreType RestoreType { get; private set; }
 
-        public RestoreStateFileLogger(string filename, RestoreStateHolder stateHolder)
-            : this(filename)
-        {
-            Contract.Requires(stateHolder != null);
-            StateHolder = stateHolder;
-        }
-
-        public RestoreStateFileLogger(string filename)
+        public WriterStateFileLogger(string filename)
         {
             Contract.Requires(!string.IsNullOrEmpty(filename));
             _filename = filename;
@@ -52,6 +44,32 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             _lock.ExitWriteLock();
         }
 
+        #region Writer state
+
+        public bool IsNeedRestore()
+        {
+            return RestoreType != RestoreType.None;
+        }
+
+        public void DistributorSendState(RestoreState state)
+        {
+            LocalSendState(state);
+        }
+
+        private void LocalSendState(RestoreState state)
+        {
+            _writerState = state;
+        }
+
+        public void ModelUpdate()
+        {
+            LocalSendState(RestoreState.FullRestoreNeed);
+        }
+
+        #endregion
+
+        #region Save/Load
+
         public void Save()
         {
             _lock.EnterWriteLock();
@@ -69,7 +87,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
                 var load = (RestoreSaveHelper) formatter.Deserialize(stream);
 
                 RestoreServers = load.RestoreServers;
-                StateHolder = new RestoreStateHolder(load.State);
+                _writerState = load.State;
                 RestoreType = load.Mode;
                 RestoreStateRun = load.RunState;
 
@@ -100,20 +118,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             return false;
         }
 
-        public bool IsNeedRestore()
-        {
-            return RestoreType != RestoreType.None;
-            //return StateHolder.State != RestoreState.Restored
-            //       && RestoreServers != null
-            //       && RestoreServers.Count != 0
-            //       || RestoreType == RestoreType.Broadcast;
-        }
-
         private void SaveInner()
         {
             try
             {
-                var save = new RestoreSaveHelper(RestoreType, StateHolder.State, RestoreStateRun, RestoreServers);
+                var save = new RestoreSaveHelper(RestoreType, WriterState, RestoreStateRun, RestoreServers);
                 var formatter = new XmlSerializer(save.GetType());
                 var stream = new FileStream(_filename, FileMode.Create);
                 formatter.Serialize(stream, save);
@@ -142,7 +151,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             _lock.EnterWriteLock();
             File.Delete(_filename);
             _lock.ExitWriteLock();            
-        }        
+        }
+
+        #endregion
+
     }
 
     [Serializable]

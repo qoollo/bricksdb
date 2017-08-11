@@ -16,13 +16,13 @@ namespace Qoollo.Client.WriterGate
 
         internal InjectionModule Module = null;
 
-        public WriterApi(bool isNeedRestore = false)
+        public WriterApi()
         {
             _isStarted = false;
             _isBuild = false;
             _isDispose = false;
 
-            _writerSystem = new WriterSystem(isNeedRestore);
+            _writerSystem = new WriterSystem();
 
             _handler = new WriterHandler(_writerSystem);
         }

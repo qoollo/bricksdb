@@ -56,13 +56,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             }
         }
 
-        public RestoreProcessController(RestoreStateFileLogger saver)
+        public RestoreProcessController(WriterStateFileLogger saver)
         {
             _saver = saver;
             _restoreServers = new List<RestoreServer>();
         }        
 
-        private readonly RestoreStateFileLogger _saver;
+        private readonly WriterStateFileLogger _saver;
         private List<RestoreServer> _restoreServers;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
@@ -114,10 +114,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             _lock.ExitWriteLock();
         }
 
-        public void SetRestoreDate(RestoreState restoreRunState, List<RestoreServer> servers)
+        public void SetRestoreDate(RestoreState restoreRunState, RestoreType type, List<RestoreServer> servers)
         {
             SetServers(servers);
-            _saver.SetRestoreDate(RestoreType.Single, restoreRunState, _restoreServers);
+            _saver.SetRestoreDate(type, restoreRunState, _restoreServers);
             Save();
         }
 

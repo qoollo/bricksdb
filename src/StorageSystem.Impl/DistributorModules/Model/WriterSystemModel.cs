@@ -156,9 +156,14 @@ namespace Qoollo.Impl.DistributorModules.Model
         public List<ServerId> GetAllServers2()
         {
             _lock.EnterReadLock();
-            var ret = new List<ServerId>(_servers);
-            _lock.ExitReadLock();
-            return ret;
+            try
+            {
+                return new List< ServerId > (_servers);
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
         }
 
         public List<ServerId> GetUnavailableServers()

@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
+using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Common.NetResults.Data
 {
     [DataContract]
-    internal class SetGetRestoreStateResult:SuccessResult
+    internal class GetRestoreStateResult:SuccessResult
     {
         [DataMember]
         public Dictionary<string, string> FullState;
@@ -17,10 +14,14 @@ namespace Qoollo.Impl.Common.NetResults.Data
         [DataMember]
         public RestoreState State { get; private set; }
 
-         public SetGetRestoreStateResult(RestoreState state, Dictionary<string, string> fullState)
+        [DataMember]
+        public List<RestoreServer> RestoreServers { get; private set; }
+
+        public GetRestoreStateResult(RestoreState state, Dictionary<string, string> fullState, List<RestoreServer> restoreServers)
          {
              FullState = fullState;
              State = state;
+             RestoreServers = restoreServers;
          }
     }
 }

@@ -74,11 +74,7 @@ namespace Qoollo.Impl.Writer
             RegistrateAsync<DeleteCommand, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue, DeleteCommand,
                 () => new SuccessResult());
 
-            RegistrateSync<SetGetRestoreStateCommand, SetGetRestoreStateResult>(
-                command => new SetGetRestoreStateResult(
-                    _asyncDbWork.DistributorReceive(command.State),
-                    GetAllStateDict()));
-
+            RegistrateSync<SetRestoreStateCommand, GetRestoreStateResult>(_asyncDbWork.GetWriterState);
             RegistrateSync<HashFileUpdateCommand, RemoteResult>(HashFileUpdate);
 
             StartAsync();
@@ -153,19 +149,6 @@ namespace Qoollo.Impl.Writer
         public string GetAllState()
         {
             return _asyncDbWork.GetAllState();
-        }
-
-        private string GetServersList(string start = "\n")
-        {
-            return _asyncDbWork.Servers.Aggregate(start, (current, server) => current + $"\t{server}\n");
-        }
-
-        private Dictionary<string, string> GetAllStateDict()
-        {
-            var ret = _asyncDbWork.FullState;
-            if (_asyncDbWork.RestoreState != RestoreState.Restored)
-                ret.Add(ServerState.RestoreServers, GetServersList());
-            return ret;
         }
 
         public string DisableDelete()

@@ -59,12 +59,12 @@ namespace Qoollo.Impl.DistributorModules.Model
 
             foreach (var writer in servers)
             {
-                var result = _distributorNet.SendToWriter(writer, new SetGetRestoreStateCommand(writer.RestoreState));
+                var result = _distributorNet.SendToWriter(writer, new SetRestoreStateCommand(writer.RestoreState, _writerModel.GetAllServers2()));
 
-                if (result is SetGetRestoreStateResult)
+                if (result is GetRestoreStateResult)
                 {
-                    var command = (SetGetRestoreStateResult)result;
-                    writer.UpdateState(command.State);
+                    var command = (GetRestoreStateResult)result;
+                    //writer.UpdateState(command.State);
                     writer.SetInfoMessageList(command.FullState);
                 }
             }
@@ -113,6 +113,11 @@ namespace Qoollo.Impl.DistributorModules.Model
             var result = _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand(state, restoreDest));
 
             return result.IsError ? result.ToString() : Errors.NoErrors;
+        }
+
+        private string GetServersList(List<RestoreServer> servers, string start = "\n")
+        {
+            return servers.Aggregate(start, (current, server) => current + $"\t{server}\n");
         }
     }
 }

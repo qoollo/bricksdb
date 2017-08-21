@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Globalization;
 using Ninject;
+using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
@@ -15,43 +15,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public ServerId RemoteServer
-        {
-            get
-            {
-                Lock.EnterReadLock();
-                var server = _remoteServer;
-                Lock.ExitReadLock();
-                return server;
-            }
-        }
-
-        public string LastStartedTime
-        {
-            get
-            {
-                try
-                {
-                    Lock.EnterReadLock();
-                    return _lastDateTime;
-                }
-                finally
-                {
-                    Lock.ExitReadLock();
-                }
-            }
-        }
-
         public TransferRestoreModule(StandardKernel kernel): base(kernel)
         {
-            _lastDateTime = string.Empty;
+            _lastDateTime = DateTime.Now;
         }
 
         private IWriterModel _writerModel;
         private IDbModule _db;
         private ServerId _remoteServer;
         private SingleServerRestoreProcess _restore;
-        private string _lastDateTime;
+        private DateTime _lastDateTime;
         private IWriterConfiguration _config;
 
         public override void Start()
@@ -76,7 +49,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
                 IsStartNoLock = true;
                 _remoteServer = remoteServer;
-                _lastDateTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
+                _lastDateTime = DateTime.Now;
             }
             finally
             {
@@ -115,6 +88,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
                 WriterNet.SendToWriter(_remoteServer, new RestoreInProcessCommand(_writerModel.Local));
             }
+        }
+
+        public TransferStateDataContainer GetState()
+        {
+            if (IsStart)
+                return new TransferStateDataContainer(_remoteServer, _lastDateTime);
+            return null;
         }
 
         protected override void Dispose(bool isUserCall)

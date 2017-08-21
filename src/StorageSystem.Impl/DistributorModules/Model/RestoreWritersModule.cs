@@ -65,7 +65,7 @@ namespace Qoollo.Impl.DistributorModules.Model
                 {
                     var command = (GetRestoreStateResult)result;
                     //writer.UpdateState(command.State);
-                    writer.SetInfoMessageList(command.FullState);
+                    writer.UpdateState(command);
                 }
             }
         }

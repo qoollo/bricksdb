@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Common.Server
@@ -97,6 +98,36 @@ namespace Qoollo.Impl.Common.Server
         public void SetInfoMessage(string tag, string message)
         {
             _stateInfo.AddOrUpdate(tag, message, (key, oldValue) => message);
+        }
+
+        //private Dictionary<string, string> WriterFullState()
+        //{
+        //    var dictionary = new Dictionary<string, string>();
+
+        //    if (_initiatorRestore.IsStart)
+        //    {
+        //        var server = _initiatorRestore.RestoreServer;
+        //        if (server != null)
+        //            dictionary.Add(ServerState.RestoreCurrentServer, server.ToString());
+        //        else
+        //            dictionary.Add(ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString());
+        //    }
+
+        //    if (_transferRestore.IsStart)
+        //    {
+        //        var server = _transferRestore.RemoteServer;
+        //        if (server != null)
+        //            dictionary.Add(ServerState.RestoreTransferServer, server.ToString());
+        //        else
+        //            dictionary.Add(ServerState.RestoreTransferInProcess, _transferRestore.IsStart.ToString());
+        //        if (!string.IsNullOrEmpty(_transferRestore.LastStartedTime.ToString()))
+        //            dictionary.Add(ServerState.RestoreTransferLastStart, _transferRestore.LastStartedTime.ToString());
+        //    }
+        //    return dictionary;
+        //}
+
+        internal void UpdateState(GetRestoreStateResult result)
+        {
         }
 
         public void SetInfoMessageList(Dictionary<string, string> info)

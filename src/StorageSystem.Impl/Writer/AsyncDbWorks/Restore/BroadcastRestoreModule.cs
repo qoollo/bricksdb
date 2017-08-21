@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Ninject;
+using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
@@ -20,28 +20,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         private BroadcastRestoreProcess _restoreProcess;
 
-        private string _lastDateTime;
+        private DateTime _lastDateTime;
         private IWriterConfiguration _config;
-
-        public string LastStartedTime
-        {
-            get
-            {
-                try
-                {
-                    Lock.EnterReadLock();
-                    return _lastDateTime;
-                }
-                finally
-                {
-                    Lock.ExitReadLock();
-                }
-            }
-        }
 
         public BroadcastRestoreModule(StandardKernel kernel): base(kernel)
         {
-            _lastDateTime = string.Empty;
+            _lastDateTime = DateTime.Now;
         }
 
         public override void Start()
@@ -62,7 +46,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                     return;
 
                 IsStartNoLock = true;
-                _lastDateTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
+                _lastDateTime = DateTime.Now;
             }
             finally
             {
@@ -111,6 +95,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                     WriterNet.SendToWriter(serverId, new RestoreCompleteCommand(_writerModel.Local));
                 }
             }
+        }
+
+        public BroadcastStateDataContainer GetState()
+        {
+            if (IsStart)
+                return new BroadcastStateDataContainer(_lastDateTime);
+            return null;
         }
 
         protected override void Dispose(bool isUserCall)

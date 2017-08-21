@@ -12,11 +12,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
     {
         bool IsRestoreStarted { get; }
         RestoreState RestoreState { get; }
-        List<RestoreServer> Servers { get; }
         TimeoutModule TimeoutModule { get; }
 
-        string GetAllState();
         GetRestoreStateResult GetWriterState(SetRestoreStateCommand command);
+        GetRestoreStateResult GetWriterState();
         List<ServerId> GetFailedServers();
         void LastMessageIncome(ServerId server);
         void PeriodMessageIncome(ServerId server);

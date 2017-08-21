@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Ninject;
 using Qoollo.Impl.Common.NetResults;
+using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
@@ -231,7 +232,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 AsyncTaskModule.StartTask(AsyncTasksNames.RestoreRemote);
         }
 
-        #endregion        
+        #endregion
+
+        public InitiatorStateDataContainer GetState()
+        {
+            if (IsStart)
+                return new InitiatorStateDataContainer(RestoreServer);
+            return null;
+        }
 
         protected override void Dispose(bool isUserCall)
         {

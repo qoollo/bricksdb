@@ -217,83 +217,25 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             return _initiatorRestore.FailedServers;
         }
 
-        public List<RestoreServer> Servers => _initiatorRestore.Servers;        
-
-        public string GetAllState()
-        {
-            string result = string.Empty;
-
-            result += $"restore state: {Enum.GetName(typeof(RestoreState), RestoreState)}\n";
-            result += $"restore is running: {_initiatorRestore.IsStart}\n";
-
-            if (_initiatorRestore.IsStart)
-            {
-                result += $"current server: {GetCurrentRestoreServer()}\n";
-                result += $"servers:{GetServersList()}\n";
-            }
-
-            result += $"restore transfer is running: {_transferRestore.IsStart}\n";
-
-            if (_transferRestore.IsStart)
-                result += $"transfert server: {_transferRestore.RemoteServer}\n";
-
-            return result;
-        }
-
-        private RestoreState DistributorReceive(SetRestoreStateCommand command)
+        private void DistributorReceive(SetRestoreStateCommand command)
         {
             var old = _saver.WriterState;
             _saver.DistributorSendState(command.State);
 
             if (old != _saver.WriterState)
                 _saver.Save();
-
-            return _saver.WriterState;
-        }
-
-        private string GetCurrentRestoreServer()
-        {
-            var server = _initiatorRestore.RestoreServer;
-            if (server != null)
-                return server.ToString();
-            return string.Empty;
-        }
-
-        private string GetServersList(string start = "\n")
-        {
-            return Servers.Aggregate(start, (current, server) => current + $"\t{server}\n");
-        }
-
-        private Dictionary<string, string> WriterFullState()
-        {
-            var dictionary = new Dictionary<string, string>();
-
-            if (_initiatorRestore.IsStart)
-            {
-                var server = _initiatorRestore.RestoreServer;
-                if (server != null)
-                    dictionary.Add(ServerState.RestoreCurrentServer, server.ToString());
-                else
-                    dictionary.Add(ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString());
-            }
-
-            if (_transferRestore.IsStart)
-            {
-                var server = _transferRestore.RemoteServer;
-                if (server != null)
-                    dictionary.Add(ServerState.RestoreTransferServer, server.ToString());
-                else
-                    dictionary.Add(ServerState.RestoreTransferInProcess, _transferRestore.IsStart.ToString());
-                if (!string.IsNullOrEmpty(_transferRestore.LastStartedTime))
-                    dictionary.Add(ServerState.RestoreTransferLastStart, _transferRestore.LastStartedTime);
-            }
-            return dictionary;
         }
 
         public GetRestoreStateResult GetWriterState(SetRestoreStateCommand command)
         {
-            var state = DistributorReceive(command);
-            var result = new GetRestoreStateResult(state, WriterFullState(), _saver.RestoreServers);
+            DistributorReceive(command);
+            return GetWriterState();
+        }
+
+        public GetRestoreStateResult GetWriterState()
+        {
+            var result = new GetRestoreStateResult(_saver.WriterState, _initiatorRestore.GetState(),
+                _transferRestore.GetState(), _broadcastRestore.GetState(), _saver.RestoreServers);
             return result;
         }
 

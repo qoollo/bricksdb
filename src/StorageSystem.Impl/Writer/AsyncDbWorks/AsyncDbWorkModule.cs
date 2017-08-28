@@ -127,6 +127,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                     $"Attempt to start restore state: {Enum.GetName(typeof(RestoreState), state)}, type: {Enum.GetName(typeof(RestoreType), type)}",
                     "restore");
 
+            if (IsRestoreStarted)
+            {
+                if (_logger.IsWarnEnabled)
+                    _logger.Warn("Cant run restore. Restore in progress", "restore");
+                return;
+            }
+
             if (state == RestoreState.Restored)
             {
                 if (_logger.IsWarnEnabled)
@@ -163,7 +170,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                     return;
 
                 _serversController.SetRestoreDate(state, type, servers);
-                _initiatorRestore.Restore(servers, state, Consts.AllTables);
+                _initiatorRestore.Restore(state, Consts.AllTables);
             }
             if (type == RestoreType.Broadcast)
             {
@@ -180,7 +187,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             if (_initiatorRestore.IsStart)
                 return;
 
-            _initiatorRestore.RestoreFromFile(servers, _serversController.WriterState, Consts.AllTables);
+            _serversController.SetRestoreDate(_serversController.WriterState, RestoreType.Single, servers);
+            _initiatorRestore.RestoreFromFile(_serversController.WriterState, Consts.AllTables);
         }
 
         private List<RestoreServer> ServersOnDirectRestore(List<ServerId> servers, List<ServerId> failedServers)
@@ -221,8 +229,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         public GetRestoreStateResult GetWriterState()
         {
-            var result = new GetRestoreStateResult(_serversController.WriterState, _initiatorRestore.GetState(),
-                _transferRestore.GetState(), _broadcastRestore.GetState(), _serversController.Servers);
+            var result = new GetRestoreStateResult(_initiatorRestore.GetState(), _transferRestore.GetState(),
+                _broadcastRestore.GetState(), _serversController.GetState());
             return result;
         }
 

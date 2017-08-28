@@ -128,6 +128,7 @@ namespace Qoollo.Impl.Common.Server
 
         internal void UpdateState(GetRestoreStateResult result)
         {
+            UpdateState(result.WriterState.State);
         }
 
         public void SetInfoMessageList(Dictionary<string, string> info)

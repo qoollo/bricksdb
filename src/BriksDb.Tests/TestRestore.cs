@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using Qoollo.Client.Request;
@@ -23,35 +22,6 @@ namespace Qoollo.Tests
     [Collection("test collection 1")]
     public class TestRestore : TestBase
     {
-        private void CreateRestoreFile(string filename, string tableName, RestoreState state,
-            List<RestoreServerSave> servers = null)
-        {
-            using (var writer = new StreamWriter(filename))
-            {
-                writer.WriteLine("<?xml version=\"1.0\"?>");
-                writer.WriteLine(
-                    "<RestoreSaveHelper xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" RestoreState=\"{0}\">", 
-                    Enum.GetName(typeof (RestoreState), state));
-
-                if (servers != null)
-                {
-                    writer.WriteLine("<RestoreServers>");
-                    foreach (var server in servers)
-                    {
-                        writer.WriteLine("<RestoreServerSave>");
-                        writer.WriteLine("<IsNeedRestore>{0}</IsNeedRestore>", server.IsNeedRestore.ToString().ToLower());
-                        writer.WriteLine("<IsRestored>{0}</IsRestored>", server.IsRestored.ToString().ToLower());
-                        writer.WriteLine("<IsFailed>{0}</IsFailed>", server.IsFailed.ToString().ToLower());
-                        writer.WriteLine("<Port>{0}</Port>", server.Port);
-                        writer.WriteLine("<Host>{0}</Host>", server.Host);
-                        writer.WriteLine("</RestoreServerSave>");
-                    }
-                    writer.WriteLine("</RestoreServers>");
-                }
-                writer.WriteLine("</RestoreSaveHelper>");
-            }
-        }
-
         private InnerData InnerData(int i)
         {
             var ev = new InnerData(new Transaction(
@@ -350,9 +320,9 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(50)]
-        public void Restore_SelfRestore(int count)
+        public void SelfRestore(int count)
         {
-            var filename = nameof(Restore_SelfRestore);
+            var filename = nameof(SelfRestore);
             using (new FileCleaner(filename))
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
@@ -407,9 +377,9 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(50)]
-        public void Restore_TimeoutDelete(int count)
+        public void TimeoutDelete(int count)
         {
-            var filename = nameof(Restore_TimeoutDelete);
+            var filename = nameof(TimeoutDelete);
             using (new FileCleaner(filename))
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
@@ -464,9 +434,9 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(50)]
-        public void Restore_ThreeServersTwoReplics(int count)
+        public void ThreeServersTwoReplics(int count)
         {
-            var filename = nameof(Restore_ThreeServersTwoReplics);
+            var filename = nameof(ThreeServersTwoReplics);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
@@ -817,87 +787,6 @@ namespace Qoollo.Tests
                 _writer1.Dispose();
                 _writer2.Dispose();
                 _writer3.Dispose();
-            }
-        }
-
-        [Theory]
-        [InlineData(50)]
-        public void Restore_TwoServer_RestoreFromFile(int count)
-        {
-            var filename = nameof(Restore_TwoServer_RestoreFromFile);
-            using (new FileCleaner(filename))
-            using (new FileCleaner(file1))
-            using (new FileCleaner(file2))
-            using (new FileCleaner(file3))
-            {
-                CreateHashFile(filename, 2);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, restoreStateFilename: file1);
-                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
-                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
-
-                _distrTest.Build();
-
-                _writer1.Build(storageServer1);
-                CreateRestoreFile(file2, string.Empty, RestoreState.SimpleRestoreNeed,
-                    new List<RestoreServerSave>
-                    {
-                        new RestoreServerSave(new RestoreServer("localhost", storageServer1)
-                        {IsFailed = false, IsRestored = false, IsNeedRestore = true})
-                    });
-                _writer2.Build(storageServer2, configFile: config_file2);
-
-                _distrTest.Start();
-                _writer1.Start();
-
-                var list = new List<InnerData>();
-                for (int i = 1; i < count + 1; i++)
-                {
-                    var data = InnerData(i);
-                    data.Transaction.Distributor = ServerId(distrServer1);
-
-                    list.Add(data);
-
-                    _distrTest.Input.ProcessAsync(data);
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                foreach (var data in list)
-                {
-                    var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
-                    if (tr.IsError)
-                    {
-                        data.Transaction = new Transaction(data.Transaction);
-                        data.Transaction.ClearError();
-                        _distrTest.Input.ProcessAsync(data);
-                    }
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
-                var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
-
-                if (count > 1)
-                {
-                    Assert.NotEqual(count, mem.Local);
-                    Assert.NotEqual(count, mem.Remote);
-                }
-                Assert.Equal(count, mem.Local + mem.Remote);
-
-                _writer2.Start();
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(4000));
-
-                Assert.Equal(0, mem.Remote);
-                Assert.Equal(0, mem2.Remote);
-                Assert.Equal(count, mem.Local + mem2.Local);
-                Assert.Equal(false, _writer1.Restore.IsNeedRestore);
-                Assert.Equal(false, _writer2.Restore.IsNeedRestore);
-
-                _distrTest.Dispose();
-                _writer1.Dispose();
-                _writer2.Dispose();
             }
         }
 

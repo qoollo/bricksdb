@@ -68,7 +68,7 @@ namespace Qoollo.Impl.Common.NetResults.Data
 
         private string GetServersList(string start = "\n")
         {
-            return _state.RestoreServers.Aggregate(start, (current, server) => current + $"\t{server}\n");
+            return _state.WriterState.RestoreServers.Aggregate(start, (current, server) => current + $"\t{server}\n");
         }
 
         private string Concat(string result, string str)

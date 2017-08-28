@@ -44,33 +44,29 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         #region Restore start
 
-        public void Restore(List<RestoreServer> servers, RestoreState state, string tableName)
+        public void Restore(RestoreState state, string tableName)
         {
-            if (ParametersCheck(state, tableName, servers))
+            if (ParametersCheck(state, tableName))
                 return;
-
-            _serversController.SetRestoreDate(state, RestoreType.Single, servers);
 
             StartRestore();
         }
 
-        public void RestoreFromFile(List<RestoreServer> servers, RestoreState state, string tableName)
+        public void RestoreFromFile(RestoreState state, string tableName)
         {
-            if (ParametersCheck(state, tableName, servers))
+            if (ParametersCheck(state, tableName))
                 return;
-            
-            _serversController.SetRestoreDate(state, RestoreType.Single, servers);
 
             StartRestore();
         }
 
-        private bool ParametersCheck(RestoreState state, string tableName, IReadOnlyCollection<ServerId> servers)
+        private bool ParametersCheck(RestoreState state, string tableName)
         {
             Lock.EnterWriteLock();
 
             try
             {
-                if (IsStartNoLock || servers.Count == 0)
+                if (IsStartNoLock)
                     return true;
 
                 _state = state;
@@ -157,12 +153,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             IsStart = false;            
             _serversController.RemoveCurrentServer();
 
-            if (_serversController.IsAllServersRestored())
-            {
-                //todo
-                //_stateHolder.FinishRestore(_state);
-                _serversController.FinishRestore();
-            }
+            _serversController.FinishRestore();
 
             if (_logger.IsInfoEnabled)
                 _logger.Info("Restore current servers complete");

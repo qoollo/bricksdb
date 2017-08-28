@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 
@@ -95,7 +96,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         #region Servers
 
-        private void SetServers(List<RestoreServer> servers)
+        public void SetServers(List<RestoreServer> servers)
         {
             if (_restoreServers.Count > 0)
             {
@@ -201,7 +202,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             _lock.ExitWriteLock();
         }
 
-        public bool IsAllServersRestored()
+        private bool IsAllServersRestored()
         {
             _lock.EnterReadLock();
             try
@@ -215,6 +216,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         }
 
         #endregion
+
+        #region State
 
         public void DistributorSendState(RestoreState state)
         {
@@ -233,9 +236,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public void FinishRestore()
         {
+            if (!IsAllServersRestored())
+                return;
+
             _lock.EnterWriteLock();
             try
             {
+                _restoreStateHandler.CompleteRestore();
+
                 _restoreServers.Clear();
                 Save();
                 _saver?.RemoveFile();
@@ -246,9 +254,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             }
         }
 
+        #endregion
+
         private void Save()
         {
             _saver?.Save();
+        }
+
+        public WriterStateDataContainer GetState()
+        {
+            return new WriterStateDataContainer(WriterState, Servers);
         }
     }
 }

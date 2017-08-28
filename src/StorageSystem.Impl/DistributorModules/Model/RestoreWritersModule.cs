@@ -59,13 +59,12 @@ namespace Qoollo.Impl.DistributorModules.Model
 
             foreach (var writer in servers)
             {
-                var result = _distributorNet.SendToWriter(writer, new SetRestoreStateCommand(writer.RestoreState, _writerModel.GetAllServers2()));
+                var result = _distributorNet.SendToWriter(writer,
+                    new SetRestoreStateCommand(writer.RestoreState, _writerModel.GetAllServers2()));
 
                 if (result is GetRestoreStateResult)
                 {
-                    var command = (GetRestoreStateResult)result;
-                    //writer.UpdateState(command.State);
-                    writer.UpdateState(command);
+                    writer.UpdateState((GetRestoreStateResult)result);
                 }
             }
         }

@@ -10,12 +10,6 @@ namespace Qoollo.Impl.Common.NetResults.Data
     internal class GetRestoreStateResult : SuccessResult
     {
         [DataMember]
-        public RestoreState State { get; private set; }
-
-        [DataMember]
-        public List<RestoreServer> RestoreServers { get; private set; }
-
-        [DataMember]
         public InitiatorStateDataContainer InitiatorState { get; private set; }
 
         [DataMember]
@@ -24,15 +18,17 @@ namespace Qoollo.Impl.Common.NetResults.Data
         [DataMember]
         public BroadcastStateDataContainer BroadcastState { get; private set; }
 
-        public GetRestoreStateResult(RestoreState state, InitiatorStateDataContainer initiatorState,
+        [DataMember]
+        public WriterStateDataContainer WriterState { get; private set; }
+
+        public GetRestoreStateResult(InitiatorStateDataContainer initiatorState,
             TransferStateDataContainer transferState, BroadcastStateDataContainer broadcastState,
-            List<RestoreServer> restoreServers)
+            WriterStateDataContainer writerState)
         {
-            State = state;
             InitiatorState = initiatorState;
             TransferState = transferState;
             BroadcastState = broadcastState;
-            RestoreServers = restoreServers;
+            WriterState = writerState;
         }
     }
 
@@ -73,6 +69,22 @@ namespace Qoollo.Impl.Common.NetResults.Data
         public BroadcastStateDataContainer(DateTime startedTime)
         {
             StartedTime = startedTime;
+        }
+    }
+
+    [DataContract]
+    internal class WriterStateDataContainer
+    {
+        [DataMember]
+        public RestoreState State { get; private set; }
+
+        [DataMember]
+        public List<RestoreServer> RestoreServers { get; private set; }
+
+        public WriterStateDataContainer(RestoreState state, List<RestoreServer> restoreServers)
+        {
+            State = state;
+            RestoreServers = restoreServers;
         }
     }
 }

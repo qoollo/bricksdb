@@ -22,10 +22,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         public List<RestoreServer> Servers => _serversController.Servers;
 
-        public InitiatorRestoreModule(StandardKernel kernel, WriterStateFileLogger saver)
+        public InitiatorRestoreModule(StandardKernel kernel, RestoreProcessController serversController)
             : base(kernel)
         {
-            _serversController = new RestoreProcessController(saver);
+            _serversController = serversController;
         }
 
         private IWriterModel _model;
@@ -96,11 +96,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         }
 
         #endregion
-
-        public void UpdateModel(List<ServerId> servers)
-        {
-            _serversController.UpdateModel(servers);   
-        }
 
         private void CurrentProcess()
         {

@@ -14,15 +14,13 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
     internal class WriterStateFileLogger
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
         public List<RestoreServer> RestoreServers { get; private set; } = new List<RestoreServer>();
 
-        public RestoreState WriterState => _writerState;
-        private RestoreState _writerState;
-
-        public RestoreState RestoreStateRun { get; private set; }
-
-        public RestoreType RestoreType { get; private set; }
+        public RestoreState WriterState { get; set; }
+        public RestoreState RestoreStateRun { get; set; }
+        public RestoreType RestoreType { get; set; }
 
         public WriterStateFileLogger(string filename)
         {
@@ -31,42 +29,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         }
 
         private readonly string _filename;
-        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
-
-        public void SetRestoreDate(RestoreType type, RestoreState runState, List<RestoreServer> restoreServers)
-        {
-            _lock.EnterWriteLock();
-
-            RestoreStateRun = runState;
-            RestoreType = type;
-            RestoreServers = restoreServers;
-
-            _lock.ExitWriteLock();
-        }
-
-        #region Writer state
-
-        public bool IsNeedRestore()
-        {
-            return RestoreType != RestoreType.None;
-        }
-
-        public void DistributorSendState(RestoreState state)
-        {
-            LocalSendState(state);
-        }
-
-        private void LocalSendState(RestoreState state)
-        {
-            _writerState = state;
-        }
-
-        public void ModelUpdate()
-        {
-            LocalSendState(RestoreState.FullRestoreNeed);
-        }
-
-        #endregion
 
         #region Save/Load
 
@@ -87,7 +49,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
                 var load = (RestoreSaveHelper) formatter.Deserialize(stream);
 
                 RestoreServers = load.RestoreServers;
-                _writerState = load.State;
+                WriterState = load.State;
                 RestoreType = load.Mode;
                 RestoreStateRun = load.RunState;
 
@@ -154,7 +116,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         }
 
         #endregion
-
     }
 
     [Serializable]

@@ -21,11 +21,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
     {
         private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public RestoreState RestoreState => _saver.WriterState;
+        public RestoreState RestoreState => _serversController.WriterState;
 
         public TimeoutModule TimeoutModule => _timeout;
 
-        internal bool IsNeedRestore => _saver.IsNeedRestore();
+        internal bool IsNeedRestore => _serversController.IsNeedRestore();
 
         public bool IsRestoreStarted => _initiatorRestore.IsStart || _broadcastRestore.IsStart;
 
@@ -40,7 +40,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         private TransferRestoreModule _transferRestore;
         private TimeoutModule _timeout;
 
-        private WriterStateFileLogger _saver;
+        private RestoreProcessController _serversController;
 
         public override void Start()
         {
@@ -48,7 +48,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
             LoadRestoreStateFromFile(Kernel.Get<IWriterConfiguration>().RestoreStateFilename);
 
-            _initiatorRestore = new InitiatorRestoreModule(Kernel, _saver);
+            _initiatorRestore = new InitiatorRestoreModule(Kernel, _serversController);
             _transferRestore = new TransferRestoreModule(Kernel);
             _timeout = new TimeoutModule(Kernel);
             _broadcastRestore = new BroadcastRestoreModule(Kernel);
@@ -59,22 +59,19 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
             _timeout.Start();
 
-            if (_saver.IsNeedRestore())
+            if (_serversController.IsNeedRestore())
             {
                 Task.Delay(Consts.StartRestoreTimeout).ContinueWith(task =>
                 {
-                    //Todo broadcast
-                    RestoreFromFile(_saver.RestoreServers);
+                    //Todo broadcast and check old
+                    RestoreFromFile(_serversController.Servers);
                 });
             }
         }
 
         public void UpdateModel()
         {
-            _initiatorRestore.UpdateModel(_writerModel.Servers);
-
-            _saver.ModelUpdate();
-            _saver.Save();
+            _serversController.UpdateModel(_writerModel.Servers);
         }
 
         #region Restore process
@@ -94,10 +91,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _initiatorRestore.LastMessageIncome(server);
         }
 
-        private bool LoadRestoreStateFromFile(string filename)
+        private void LoadRestoreStateFromFile(string filename)
         {
-            _saver = new WriterStateFileLogger(filename);
-            return _saver.Load();
+            var saver = new WriterStateFileLogger(filename);
+            saver.Load();
+            _serversController = new RestoreProcessController(saver);
         }
 
         #endregion
@@ -164,18 +162,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                 if (_initiatorRestore.IsStart)
                     return;
 
+                _serversController.SetRestoreDate(state, type, servers);
                 _initiatorRestore.Restore(servers, state, Consts.AllTables);
-                _saver.Save();
             }
             if (type == RestoreType.Broadcast)
             {
                 if (_broadcastRestore.IsStart)
                     return;
 
-                _saver.SetRestoreDate(type, state, servers);
-                _saver.Save();
-
-                _broadcastRestore.Restore(servers, _saver.WriterState);                
+                _serversController.SetRestoreDate(state, type, servers);
+                _broadcastRestore.Restore(servers, state);                
             }
         }
 
@@ -184,7 +180,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             if (_initiatorRestore.IsStart)
                 return;
 
-            _initiatorRestore.RestoreFromFile(servers, _saver.WriterState, Consts.AllTables);
+            _initiatorRestore.RestoreFromFile(servers, _serversController.WriterState, Consts.AllTables);
         }
 
         private List<RestoreServer> ServersOnDirectRestore(List<ServerId> servers, List<ServerId> failedServers)
@@ -217,25 +213,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             return _initiatorRestore.FailedServers;
         }
 
-        private void DistributorReceive(SetRestoreStateCommand command)
-        {
-            var old = _saver.WriterState;
-            _saver.DistributorSendState(command.State);
-
-            if (old != _saver.WriterState)
-                _saver.Save();
-        }
-
         public GetRestoreStateResult GetWriterState(SetRestoreStateCommand command)
         {
-            DistributorReceive(command);
+            _serversController.DistributorSendState(command.State);
             return GetWriterState();
         }
 
         public GetRestoreStateResult GetWriterState()
         {
-            var result = new GetRestoreStateResult(_saver.WriterState, _initiatorRestore.GetState(),
-                _transferRestore.GetState(), _broadcastRestore.GetState(), _saver.RestoreServers);
+            var result = new GetRestoreStateResult(_serversController.WriterState, _initiatorRestore.GetState(),
+                _transferRestore.GetState(), _broadcastRestore.GetState(), _serversController.Servers);
             return result;
         }
 

@@ -46,12 +46,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         {
             _writerModel = Kernel.Get<IWriterModel>();
 
-            LoadRestoreStateFromFile(Kernel.Get<IWriterConfiguration>().RestoreStateFilename);
+            LoadRestoreStateFromFile(Kernel.Get<IWriterConfiguration>().RestoreStateFilename, _writerModel);
 
             _initiatorRestore = new InitiatorRestoreModule(Kernel, _serversController);
             _transferRestore = new TransferRestoreModule(Kernel);
             _timeout = new TimeoutModule(Kernel);
-            _broadcastRestore = new BroadcastRestoreModule(Kernel);
+            _broadcastRestore = new BroadcastRestoreModule(Kernel, _serversController);
 
             _initiatorRestore.Start();
             _transferRestore.Start();
@@ -87,15 +87,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         }
         
         public void LastMessageIncome(ServerId server)
-        {            
+        {
+            _serversController.ServerRestored(server);
             _initiatorRestore.LastMessageIncome(server);
         }
 
-        private void LoadRestoreStateFromFile(string filename)
+        private void LoadRestoreStateFromFile(string filename, IWriterModel writerModel)
         {
             var saver = new WriterStateFileLogger(filename);
             saver.Load();
-            _serversController = new RestoreProcessController(saver);
+            _serversController = new RestoreProcessController(saver, writerModel);
         }
 
         #endregion

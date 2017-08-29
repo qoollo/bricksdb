@@ -8,6 +8,7 @@ using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Writer.AsyncDbWorks.Processes;
+using Qoollo.Impl.Writer.AsyncDbWorks.Support;
 using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
@@ -22,9 +23,12 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         private DateTime _lastDateTime;
         private IWriterConfiguration _config;
+        private readonly RestoreProcessController _serversController;
 
-        public BroadcastRestoreModule(StandardKernel kernel): base(kernel)
+        public BroadcastRestoreModule(StandardKernel kernel, RestoreProcessController serversController)
+            : base(kernel)
         {
+            _serversController = serversController;
             _lastDateTime = DateTime.Now;
         }
 

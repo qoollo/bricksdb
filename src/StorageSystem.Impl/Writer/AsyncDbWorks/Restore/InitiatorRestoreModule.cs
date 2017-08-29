@@ -179,11 +179,10 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         public void LastMessageIncome(ServerId server)
         {
             if (_logger.IsDebugEnabled)
-                _logger.Debug($"last message income from {server}", "restore");
+                _logger.Debug($"Server: {server} is restored", "restore");
 
             if (server.Equals(RestoreServer))
             {
-                _serversController.ServerRestored(server);
                 CurrentProcess();
             }
         }

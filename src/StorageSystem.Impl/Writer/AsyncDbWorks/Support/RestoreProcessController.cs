@@ -72,7 +72,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         {
             _lock.EnterWriteLock();
 
-            LocalSendState(RestoreState.FullRestoreNeed);
+            LocalSendState(RestoreState.FullRestoreNeed, WriterUpdateState.Force);
 
             _restoreServers.ForEach(x => x.IsFailed = false);
             foreach (var server in servers)
@@ -219,9 +219,17 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         #region State
 
-        public void DistributorSendState(RestoreState state)
+        public void DistributorSendState(RestoreState state, WriterUpdateState updateState)
         {
-            LocalSendState(state);
+            _lock.EnterWriteLock();
+            try
+            {
+                LocalSendState(state, updateState);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
 
         public bool IsNeedRestore()
@@ -229,9 +237,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             return _restoreStateHandler.IsNeedRestore();
         }
 
-        private void LocalSendState(RestoreState state)
+        private void LocalSendState(RestoreState state, WriterUpdateState updateState)
         {
-            _restoreStateHandler.TryUpdateState(state);
+            _restoreStateHandler.TryUpdateState(state, updateState);
         }
 
         public void FinishRestore()
@@ -263,7 +271,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public WriterStateDataContainer GetState()
         {
-            return new WriterStateDataContainer(WriterState, Servers);
+            return new WriterStateDataContainer(WriterState, Servers, _restoreStateHandler.UpdateState);
         }
     }
 }

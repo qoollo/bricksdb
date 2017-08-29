@@ -60,7 +60,8 @@ namespace Qoollo.Impl.DistributorModules.Model
             foreach (var writer in servers)
             {
                 var result = _distributorNet.SendToWriter(writer,
-                    new SetRestoreStateCommand(writer.RestoreState, _writerModel.GetAllServers2()));
+                    new SetRestoreStateCommand(writer.RestoreState, _writerModel.GetAllServers2(),
+                        writer.WriterUpdateState));
 
                 if (result is GetRestoreStateResult)
                 {

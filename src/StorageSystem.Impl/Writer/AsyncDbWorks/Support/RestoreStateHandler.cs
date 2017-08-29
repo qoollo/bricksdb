@@ -8,26 +8,54 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         public RestoreState RequiredRestoreState { get; private set; }
         private RestoreState _currentRestoreRunState;
         private RestoreType _type;
-
-        private bool _canUpdateState;
+        public WriterUpdateState UpdateState { get; private set; }
 
         public RestoreStateHandler(WriterStateFileLogger saver)
         {
             _saver = saver;
-            _canUpdateState = true;
             RequiredRestoreState = RestoreState.Restored;
             _currentRestoreRunState = RestoreState.Restored;
             _type = RestoreType.None;
+            UpdateState = WriterUpdateState.Free;
         }
 
-        public bool TryUpdateState(RestoreState state)
+        public bool TryUpdateState(RestoreState state, WriterUpdateState updateState)
         {
-            if (!_canUpdateState)
+            if(updateState == WriterUpdateState.Force)
+                return TryUpdateState(state);
+
+            switch (UpdateState)
             {
-                _canUpdateState = true;
-                return false;
+                case WriterUpdateState.Free:
+                    switch (updateState)
+                    {
+                        case WriterUpdateState.Free:
+                            return TryUpdateState(state);
+                    }
+                    break;
+                case WriterUpdateState.RestoreInProgress:
+                    switch (updateState)
+                    {
+                        case WriterUpdateState.Free:
+                        case WriterUpdateState.RestoreInProgress:
+                            return TryUpdateState(state);
+                    }
+                    break;
+                case WriterUpdateState.AfterRestore:
+                    switch (updateState)
+                    {
+                        case WriterUpdateState.RestoreInProgress:
+                            UpdateState = WriterUpdateState.Free;
+                            return false;
+                    }
+                    break;
             }
 
+            return false;
+        }
+
+        private bool TryUpdateState(RestoreState state)
+        {
             if (state <= RequiredRestoreState)
                 return false;
             RequiredRestoreState = state;
@@ -38,11 +66,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public void StartRestore(RestoreState runState, RestoreType type)
         {
-            if (!_canUpdateState)
-                return;
-
             _currentRestoreRunState = runState;
             _type = type;
+            UpdateState = WriterUpdateState.RestoreInProgress;
 
             Save();
         }
@@ -58,7 +84,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
                 _currentRestoreRunState = RestoreState.Restored;
 
             _type = RestoreType.None;
-            _canUpdateState = false;
+            UpdateState = WriterUpdateState.AfterRestore;
+
             Save();
         }
 

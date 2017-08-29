@@ -79,12 +79,16 @@ namespace Qoollo.Impl.Common.NetResults.Data
         public RestoreState State { get; private set; }
 
         [DataMember]
+        public WriterUpdateState UpdateState { get; private set; }
+
+        [DataMember]
         public List<RestoreServer> RestoreServers { get; private set; }
 
-        public WriterStateDataContainer(RestoreState state, List<RestoreServer> restoreServers)
+        public WriterStateDataContainer(RestoreState state, List<RestoreServer> restoreServers, WriterUpdateState updateState)
         {
             State = state;
             RestoreServers = restoreServers;
+            UpdateState = updateState;
         }
     }
 }

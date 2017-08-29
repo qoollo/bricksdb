@@ -14,10 +14,14 @@ namespace Qoollo.Impl.Common.NetResults.System.Distributor
         [DataMember]
         public List<ServerId> Servers { get; private set; }
 
-        public SetRestoreStateCommand(RestoreState state, List<ServerId> servers)
+        [DataMember]
+        public WriterUpdateState UpdateState { get; private set; }
+
+        public SetRestoreStateCommand(RestoreState state, List<ServerId> servers, WriterUpdateState updateState)
         {
             State = state;
             Servers = servers;
+            UpdateState = updateState;
         }
     }
 }

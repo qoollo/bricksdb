@@ -223,7 +223,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         public GetRestoreStateResult GetWriterState(SetRestoreStateCommand command)
         {
-            _serversController.DistributorSendState(command.State);
+            _serversController.DistributorSendState(command.State, command.UpdateState);
             return GetWriterState();
         }
 

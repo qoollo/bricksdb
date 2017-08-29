@@ -114,4 +114,17 @@ namespace Qoollo.Impl.Common.Support
         [EnumMember]
         None = 2,
     }
+
+    [DataContract]
+    public enum WriterUpdateState
+    {
+        [DataMember]
+        Free = 0,
+        [DataMember]
+        RestoreInProgress = 1,
+        [DataMember]
+        AfterRestore = 2,
+        [DataMember]
+        Force = 3,
+    }
 }

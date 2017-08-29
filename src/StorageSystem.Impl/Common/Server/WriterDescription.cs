@@ -17,6 +17,8 @@ namespace Qoollo.Impl.Common.Server
 
         public RestoreState RestoreState { get; private set; }
 
+        public WriterUpdateState WriterUpdateState { get; private set; }
+
         public bool IsRestoreInProcess
         {
             get
@@ -47,6 +49,7 @@ namespace Qoollo.Impl.Common.Server
         {
             IsAvailable = true;
             RestoreState = RestoreState.Restored;
+            WriterUpdateState = WriterUpdateState.Free;
         }
 
         private string GetInnerState()
@@ -129,6 +132,7 @@ namespace Qoollo.Impl.Common.Server
         internal void UpdateState(GetRestoreStateResult result)
         {
             UpdateState(result.WriterState.State);
+            WriterUpdateState = result.WriterState.UpdateState;
         }
 
         public void SetInfoMessageList(Dictionary<string, string> info)

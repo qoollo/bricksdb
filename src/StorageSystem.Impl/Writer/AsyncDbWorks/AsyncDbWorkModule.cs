@@ -81,15 +81,24 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _transferRestore.Restore(server, state == RestoreState.FullRestoreNeed, tableName);
         }
 
-        public void PeriodMessageIncome(ServerId server)
+        public void RestoreInProgressMessage(ServerId server)
         {
-            _initiatorRestore.PeriodMessageIncome(server);
+            if (_logger.IsTraceEnabled)
+                _logger.Trace($"Restore in progress message is income. Server: {server}", "restore");
+
+            if(_initiatorRestore.IsStart)
+                _initiatorRestore.RestoreInProgressMessage(server);
         }
         
-        public void LastMessageIncome(ServerId server)
+        public void ServerRestoredMessage(ServerId server)
         {
+            if (_logger.IsDebugEnabled)
+                _logger.Debug($"Restored message is income. Server: {server}", "restore");
+
             _serversController.ServerRestored(server);
-            _initiatorRestore.LastMessageIncome(server);
+
+            if (_initiatorRestore.IsStart)
+                _initiatorRestore.ServerRestoredMessage(server);
         }
 
         private void LoadRestoreStateFromFile(string filename, IWriterModel writerModel)
@@ -107,9 +116,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         {
             var state = comm.RestoreState;
             var type = comm.Type;
-            var destServers = comm.Server == null ? null : new List<ServerId> {comm.Server};
 
-            Restore(state, type, destServers);
+            Restore(state, type, comm.Servers);
         }
 
         public void Restore(RestoreCommand comm)
@@ -150,16 +158,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
             if (destServers != null)
             {
-                RestoreRun(ServersOnDirectRestore(servers, destServers), state, type);
+                RestoreRun(_serversController.ServersOnDirectRestore(servers, destServers), state, type);
             }
 
             if (type == RestoreType.Single)
             {
-                RestoreRun(ConvertRestoreServers(servers), state, type);
+                RestoreRun(_serversController.ConvertRestoreServers(servers), state, type);
             }
             else if (type == RestoreType.Broadcast)
             {
-                RestoreRun(ConvertRestoreServers(_writerModel.Servers), state, type);
+                RestoreRun(_serversController.ConvertRestoreServers(_writerModel.Servers), state, type);
             }
         }
 
@@ -192,27 +200,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
             _initiatorRestore.RestoreFromFile(_serversController.WriterState, Consts.AllTables);
         }
 
-        private List<RestoreServer> ServersOnDirectRestore(List<ServerId> servers, List<ServerId> failedServers)
-        {
-            return servers.Select(x =>
-            {
-                var ret = new RestoreServer(x, _writerModel.GetHashMap(x));
-                if (failedServers.Contains(x))
-                    ret.NeedRestoreInitiate();
-                return ret;
-            }).ToList();
-        }
-
-        private List<RestoreServer> ConvertRestoreServers(IEnumerable<ServerId> servers)
-        {
-            return servers.Select(x =>
-            {
-                var ret = new RestoreServer(x, _writerModel.GetHashMap(x));
-                ret.NeedRestoreInitiate();
-                return ret;
-            }).ToList();
-        }
-
         #endregion
 
         #region Support
@@ -224,7 +211,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
 
         public GetRestoreStateResult GetWriterState(SetRestoreStateCommand command)
         {
-            _serversController.DistributorSendState(command.State, command.UpdateState);
+            _serversController.DistributorSendState(command.State, command.UpdateState, command.Servers);
             return GetWriterState();
         }
 

@@ -59,9 +59,20 @@ namespace Qoollo.Impl.DistributorModules.Model
 
             foreach (var writer in servers)
             {
+                var state = writer.RestoreState;
+                List<ServerId> writerServers = null;
+                switch (state)
+                {
+                    case RestoreState.SimpleRestoreNeed:
+                        writerServers = _writerModel.GetAllServers2();
+                        break;
+                    case RestoreState.FullRestoreNeed:
+                        writerServers = _writerModel.GetAllServersExcept(writer);
+                        break;
+                }
+
                 var result = _distributorNet.SendToWriter(writer,
-                    new SetRestoreStateCommand(writer.RestoreState, _writerModel.GetAllServers2(),
-                        writer.WriterUpdateState));
+                    new SetRestoreStateCommand(state, writerServers, writer.WriterUpdateState));
 
                 if (result is GetRestoreStateResult)
                 {
@@ -84,7 +95,9 @@ namespace Qoollo.Impl.DistributorModules.Model
             var server = servers.FirstOrDefault(x => x.RestoreState == RestoreState.SimpleRestoreNeed);
             if (server != null)
             {
-                _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand(RestoreState.SimpleRestoreNeed));
+                _distributorNet.SendToWriter(server,
+                    new RestoreFromDistributorCommand(RestoreState.SimpleRestoreNeed,
+                        _writerModel.GetAllServersExcept(server)));
             }
         }
 

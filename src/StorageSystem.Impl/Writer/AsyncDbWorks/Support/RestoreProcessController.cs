@@ -225,14 +225,44 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         #endregion
 
+        #region ConvertServers
+
+        public List<RestoreServer> ServersOnDirectRestore(List<ServerId> servers, List<ServerId> failedServers)
+        {
+            return servers.Select(x =>
+            {
+                var ret = new RestoreServer(x, _writerModel.GetHashMap(x));
+                if (failedServers.Contains(x))
+                    ret.NeedRestoreInitiate();
+                return ret;
+            }).ToList();
+        }
+
+        public List<RestoreServer> ConvertRestoreServers(IEnumerable<ServerId> servers)
+        {
+            return servers.Select(x =>
+            {
+                var ret = new RestoreServer(x, _writerModel.GetHashMap(x));
+                ret.NeedRestoreInitiate();
+                return ret;
+            }).ToList();
+        }
+
+        #endregion
+
         #region State
 
-        public bool DistributorSendState(RestoreState state, WriterUpdateState updateState)
+        public bool DistributorSendState(RestoreState state, WriterUpdateState updateState, List<ServerId> servers)
         {
             _lock.EnterWriteLock();
             try
             {
-                return LocalSendState(state, updateState);
+                var ret = LocalSendState(state, updateState);
+                if (ret)
+                {
+                    SetServers(ConvertRestoreServers(servers));
+                }
+                return ret;
             }
             finally
             {

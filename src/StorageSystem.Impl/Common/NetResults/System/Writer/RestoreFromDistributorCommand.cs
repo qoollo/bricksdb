@@ -15,13 +15,20 @@ namespace Qoollo.Impl.Common.NetResults.System.Writer
         public RestoreState RestoreState { get; set; }
 
         [DataMember]
-        public ServerId Server { get; set; } 
+        public List<ServerId> Servers { get; set; } 
 
-        public RestoreFromDistributorCommand(RestoreState state, ServerId server = null, RestoreType type = RestoreType.Single)
+        public RestoreFromDistributorCommand(RestoreState state, ServerId server, RestoreType type = RestoreType.Single)
         {
             Type = type;
             RestoreState = state;
-            Server = server;
+            Servers = new List<ServerId> {server};
+        }
+
+        public RestoreFromDistributorCommand(RestoreState state, List<ServerId> servers, RestoreType type = RestoreType.Single)
+        {
+            Type = type;
+            RestoreState = state;
+            Servers = servers;
         }
     }
 }

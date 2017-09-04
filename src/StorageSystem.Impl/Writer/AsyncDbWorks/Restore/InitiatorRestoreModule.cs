@@ -167,20 +167,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         #region Period events
         
-        public void PeriodMessageIncome(ServerId server)
+        public void RestoreInProgressMessage(ServerId server)
         {
-            if (_logger.IsTraceEnabled)
-                _logger.Trace($"period messge income from {server}", "restore");
+            
 
             if (server.Equals(RestoreServer))
                 AsyncTaskModule.RestartTask(AsyncTasksNames.RestoreRemote);
         }
 
-        public void LastMessageIncome(ServerId server)
+        public void ServerRestoredMessage(ServerId server)
         {
-            if (_logger.IsDebugEnabled)
-                _logger.Debug($"Server: {server} is restored", "restore");
-
             if (server.Equals(RestoreServer))
             {
                 CurrentProcess();

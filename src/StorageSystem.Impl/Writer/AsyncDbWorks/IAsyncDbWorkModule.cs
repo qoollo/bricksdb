@@ -17,8 +17,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         GetRestoreStateResult GetWriterState(SetRestoreStateCommand command);
         GetRestoreStateResult GetWriterState();
         List<ServerId> GetFailedServers();
-        void LastMessageIncome(ServerId server);
-        void PeriodMessageIncome(ServerId server);
+        void ServerRestoredMessage(ServerId server);
+        void RestoreInProgressMessage(ServerId server);
         void Restore(RestoreFromDistributorCommand comm);
         void Restore(RestoreCommand comm);
         void Restore(RestoreState state, RestoreType type, List<ServerId> destServers);

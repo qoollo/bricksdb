@@ -166,6 +166,21 @@ namespace Qoollo.Impl.DistributorModules.Model
             }
         }
 
+        public List<ServerId> GetAllServersExcept(ServerId server)
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                var ret = new List<ServerId>(_servers);
+                ret.Remove(server);
+                return ret;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+
         public List<ServerId> GetUnavailableServers()
         {
             var ret = new List<ServerId>();

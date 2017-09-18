@@ -115,8 +115,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
                     if (s == null)
                         _restoreServers.Add(server);
                 }
-
-                //RemoveServers(servers.Cast<ServerId>().ToList());
             }
             else
                 _restoreServers = servers;
@@ -181,6 +179,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
             if (s != null)
                 s.IsRestored = true;
+            else
+            {
+                var newServer = _writerModel.Servers.FirstOrDefault(x => x.Equals(server));
+                var convertedServer = ConvertRestoreServers(new[] {newServer});
+                convertedServer[0].IsRestored = true;
+
+                SetServers(convertedServer);
+            }
             Save();
 
             _lock.ExitWriteLock();
@@ -272,7 +278,18 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public bool IsNeedRestore()
         {
-            return _restoreStateHandler.IsNeedRestore();
+            try
+            {
+                _lock.EnterReadLock();
+
+                if (!_restoreStateHandler.IsNeedRestore())
+                    return false;
+                return !_restoreServers.TrueForAll(s => s.IsRestored);
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
         }
 
         private bool LocalSendState(RestoreState state, WriterUpdateState updateState)

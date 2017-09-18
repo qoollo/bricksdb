@@ -64,10 +64,10 @@ namespace Qoollo.Impl.DistributorModules.Model
                 switch (state)
                 {
                     case RestoreState.SimpleRestoreNeed:
-                        writerServers = _writerModel.GetAllServers2();
+                        writerServers = _writerModel.GetAllServersExcept(writer);
                         break;
                     case RestoreState.FullRestoreNeed:
-                        writerServers = _writerModel.GetAllServersExcept(writer);
+                        writerServers = _writerModel.GetAllServers2();
                         break;
                 }
 

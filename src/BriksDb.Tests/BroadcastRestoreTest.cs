@@ -231,7 +231,7 @@ namespace Qoollo.Tests
                 Assert.Equal(count * replics, mem.Local + mem.Remote + mem2.Local + mem2.Remote);
 
                 _writer3.Start();
-                Thread.Sleep(TimeSpan.FromMilliseconds(4000));
+                Thread.Sleep(TimeSpan.FromMilliseconds(500));
 
                 _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed, RestoreType.Broadcast);
                 _writer1.Distributor.Restore(RestoreState.SimpleRestoreNeed, RestoreType.Broadcast);
@@ -294,15 +294,19 @@ namespace Qoollo.Tests
                 _writer2.Build(storageServer2, configFile: config_file2);
                 _writer2.Start();
 
+                _distrTest.Distributor.UpdateModel();
+
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
 
-                _writer1.Distributor.UpdateModel();
                 _writer1.Distributor.Restore(RestoreState.FullRestoreNeed, RestoreType.Broadcast);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(2000));
 
                 Assert.NotEqual(0, mem2.Local);
                 Assert.Equal(count, mem.Local + mem2.Local);
+
+                Assert.Equal(true, _writer1.Restore.IsNeedRestore);
+                Assert.Equal(true, _writer2.Restore.IsNeedRestore);
 
                 _distrTest.Dispose();
                 _writer1.Dispose();
@@ -362,8 +366,7 @@ namespace Qoollo.Tests
                 _writer3.Build(storageServer3, "w3", config_file3);
                 _writer3.Start();
 
-                _writer1.Distributor.UpdateModel();
-                _writer2.Distributor.UpdateModel();
+                _distrTest.Distributor.UpdateModel();
 
                 var mem3 = _writer3.Db.GetDbModules.First() as TestDbInMemory;
 
@@ -374,6 +377,10 @@ namespace Qoollo.Tests
 
                 Assert.NotEqual(0, mem3.Local);
                 Assert.Equal(count * replics, mem.Local + mem2.Local + mem3.Local);
+
+                Assert.Equal(true, _writer1.Restore.IsNeedRestore);
+                Assert.Equal(true, _writer2.Restore.IsNeedRestore);
+                Assert.Equal(true, _writer3.Restore.IsNeedRestore);
 
                 _distrTest.Dispose();
                 _writer1.Dispose();

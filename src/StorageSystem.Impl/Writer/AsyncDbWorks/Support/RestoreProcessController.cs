@@ -264,7 +264,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             try
             {
                 var ret = LocalSendState(state, updateState);
-                if (ret)
+                if (ret && servers != null)
                 {
                     SetServers(ConvertRestoreServers(servers));
                 }

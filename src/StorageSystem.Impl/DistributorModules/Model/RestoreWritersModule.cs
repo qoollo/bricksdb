@@ -53,7 +53,7 @@ namespace Qoollo.Impl.DistributorModules.Model
             RestoreServers();
         }
 
-        private void UpdateState()
+        public void UpdateState()
         {
             var servers = _writerModel.GetAllAvailableServers();
 

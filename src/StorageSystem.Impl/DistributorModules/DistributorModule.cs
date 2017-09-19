@@ -309,6 +309,7 @@ namespace Qoollo.Impl.DistributorModules
             _asyncTaskModule.DeleteTask(AsyncTasksNames.UpdateHashFileForWriter);
 
             UpdateWritersAndDistributors();
+            _restoreWriters.UpdateState();
 
             return Errors.NoErrors;
         }

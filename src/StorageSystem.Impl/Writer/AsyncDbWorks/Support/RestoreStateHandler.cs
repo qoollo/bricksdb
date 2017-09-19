@@ -56,7 +56,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         private bool TryUpdateState(RestoreState state)
         {
-            if (state <= RequiredRestoreState)
+            if (state < RequiredRestoreState)
                 return false;
             RequiredRestoreState = state;
 

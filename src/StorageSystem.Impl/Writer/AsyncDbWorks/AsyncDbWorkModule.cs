@@ -78,7 +78,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
         
         public void RestoreIncome(ServerId server, RestoreState state, string tableName)
         {
-            _transferRestore.Restore(server, state == RestoreState.FullRestoreNeed, tableName);
+            _transferRestore.Restore(server, state, tableName);
         }
 
         public void RestoreInProgressMessage(ServerId server)
@@ -90,15 +90,15 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks
                 _initiatorRestore.RestoreInProgressMessage(server);
         }
         
-        public void ServerRestoredMessage(ServerId server)
+        public void ServerRestoredMessage(RestoreCompleteCommand command)
         {
             if (_logger.IsDebugEnabled)
-                _logger.Debug($"Restored message is income. Server: {server}", "restore");
+                _logger.Debug($"Restored message is income. Server: {command.ServerId}", "restore");
 
-            _serversController.ServerRestored(server);
+            _serversController.ServerRestored(command.ServerId, command.State);
 
             if (_initiatorRestore.IsStart)
-                _initiatorRestore.ServerRestoredMessage(server);
+                _initiatorRestore.ServerRestoredMessage(command.ServerId);
         }
 
         private void LoadRestoreStateFromFile(string filename, IWriterModel writerModel)

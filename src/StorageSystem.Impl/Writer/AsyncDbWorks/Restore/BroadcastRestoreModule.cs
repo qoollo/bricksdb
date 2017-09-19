@@ -24,6 +24,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private DateTime _lastDateTime;
         private IWriterConfiguration _config;
         private readonly RestoreProcessController _serversController;
+        private RestoreState _state;
 
         public BroadcastRestoreModule(StandardKernel kernel, RestoreProcessController serversController)
             : base(kernel)
@@ -51,6 +52,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
                 IsStartNoLock = true;
                 _lastDateTime = DateTime.Now;
+                _state = state;
             }
             finally
             {
@@ -96,7 +98,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             {
                 if (!_restoreProcess.FailedServers.Contains(serverId))
                 {
-                    WriterNet.SendToWriter(serverId, new RestoreCompleteCommand(_writerModel.Local));
+                    WriterNet.SendToWriter(serverId, new RestoreCompleteCommand(_writerModel.Local, _state));
                 }
             }
         }

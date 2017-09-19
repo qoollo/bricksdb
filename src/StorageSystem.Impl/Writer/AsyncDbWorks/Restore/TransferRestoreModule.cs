@@ -26,6 +26,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         private SingleServerRestoreProcess _restore;
         private DateTime _lastDateTime;
         private IWriterConfiguration _config;
+        private RestoreState _state;
 
         public override void Start()
         {
@@ -36,7 +37,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             _config = Kernel.Get<IWriterConfiguration>();
         }
 
-        public void Restore(ServerId remoteServer, bool isSystemUpdated, string tableName)
+        public void Restore(ServerId remoteServer, RestoreState state, string tableName)
         {
             Lock.EnterWriteLock();
             try
@@ -50,6 +51,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
                 IsStartNoLock = true;
                 _remoteServer = remoteServer;
                 _lastDateTime = DateTime.Now;
+                _state = state;
             }
             finally
             {
@@ -57,7 +59,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             }            
 
             _restore = new SingleServerRestoreProcess(Kernel, _db, _writerModel, WriterNet, 
-                tableName, _remoteServer, isSystemUpdated, _config.Restore.Transfer.UsePackage);
+                tableName, _remoteServer, state == RestoreState.FullRestoreNeed, 
+                _config.Restore.Transfer.UsePackage);
             _restore.Start();
 
             AsyncTaskModule.AddAsyncTask(
@@ -77,7 +80,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
             {
                 AsyncTaskModule.DeleteTask(AsyncTasksNames.RestoreLocal);
 
-                WriterNet.SendToWriter(_remoteServer, new RestoreCompleteCommand(_writerModel.Local));
+                WriterNet.SendToWriter(_remoteServer, new RestoreCompleteCommand(_writerModel.Local, _state));
                 _restore.Dispose();
                 IsStart = false;
             }

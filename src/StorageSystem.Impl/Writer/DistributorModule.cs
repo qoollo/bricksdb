@@ -65,7 +65,7 @@ namespace Qoollo.Impl.Writer
                 command => _asyncDbWork.RestoreInProgressMessage(command.ServerId), () => new SuccessResult());
 
             RegistrateAsync<RestoreCompleteCommand, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue,
-                command => _asyncDbWork.ServerRestoredMessage(command.ServerId), () => new SuccessResult());
+                command => _asyncDbWork.ServerRestoredMessage(command), () => new SuccessResult());
 
             RegistrateAsync<RestoreCommandWithData, NetCommand, RemoteResult>(_queue.DbDistributorInnerQueue,
                 comm => _asyncDbWork.RestoreIncome(comm.ServerId, comm.RestoreState, comm.TableName),

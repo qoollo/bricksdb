@@ -98,7 +98,7 @@ namespace Qoollo.Tests
             int distrthreads = 4, int countReplics = 2, string hash = "", int distrport = storageServer1, 
             int collectorport = storageServer1, int writerport = distrServer1, int proxyport = distrServer12, 
             int pdistrport = proxyServer, int timeAliveBeforeDeleteMls = 10000, 
-            int timeAliveAfterUpdateMls = 10000, int ping = 200, int check = 2000,
+            int timeAliveAfterUpdateMls = 10000, int ping = 200, int check = 100,
             int transaction= 10000, int support = 10000, 
             int serverPageSize = 1000, bool useHashFile = true,
             bool usePackage = false,

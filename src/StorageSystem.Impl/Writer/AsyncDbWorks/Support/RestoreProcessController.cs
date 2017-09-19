@@ -172,24 +172,32 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             _lock.ExitWriteLock();
         }
 
-        public void ServerRestored(ServerId server)
+        public void ServerRestored(ServerId server, RestoreState state)
         {
             _lock.EnterWriteLock();
 
-            var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
-            if (s != null)
-                s.IsRestored = true;
-            else
+            try
             {
-                var newServer = _writerModel.Servers.FirstOrDefault(x => x.Equals(server));
-                var convertedServer = ConvertRestoreServers(new[] {newServer});
-                convertedServer[0].IsRestored = true;
+                if (!_restoreStateHandler.IsEqualState(state))
+                    return;
 
-                SetServers(convertedServer);
+                var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
+                if (s != null)
+                    s.IsRestored = true;
+                else
+                {
+                    var newServer = _writerModel.Servers.FirstOrDefault(x => x.Equals(server));
+                    var convertedServer = ConvertRestoreServers(new[] {newServer});
+                    convertedServer[0].IsRestored = true;
+
+                    SetServers(convertedServer);
+                }
+                Save();
             }
-            Save();
-
-            _lock.ExitWriteLock();
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
 
         public void RemoveCurrentServer()

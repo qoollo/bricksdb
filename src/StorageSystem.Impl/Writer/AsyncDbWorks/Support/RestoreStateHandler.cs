@@ -94,6 +94,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             return RequiredRestoreState != RestoreState.Restored;
         }
 
+        public bool IsEqualState(RestoreState state)
+        {
+            return state >= RequiredRestoreState;
+        }
+
         private void Save()
         {
             _saver.RestoreType = _type;

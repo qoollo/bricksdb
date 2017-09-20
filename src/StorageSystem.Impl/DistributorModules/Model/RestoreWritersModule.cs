@@ -67,7 +67,7 @@ namespace Qoollo.Impl.DistributorModules.Model
                         writerServers = _writerModel.GetAllServersExcept(writer);
                         break;
                     case RestoreState.FullRestoreNeed:
-                        writerServers = _writerModel.GetAllServers2();
+                        writerServers = _writerModel.GetAllServers();
                         break;
                 }
 

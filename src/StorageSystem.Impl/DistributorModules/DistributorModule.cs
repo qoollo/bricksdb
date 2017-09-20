@@ -126,7 +126,7 @@ namespace Qoollo.Impl.DistributorModules
         {
             try
             {
-                var map = _modelOfDbWriters.GetAllServers2();
+                var map = _modelOfDbWriters.GetAllServers();
                 _distributorNet.PingWriters(map, _modelOfDbWriters.ServerAvailable);
 
                 map = _distributorNet.GetServersByType(typeof(SingleConnectionToProxy));

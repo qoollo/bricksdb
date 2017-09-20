@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
@@ -484,11 +483,11 @@ namespace Qoollo.Tests
 
                 _writer3.Start();
 
-                _writer1.Distributor.UpdateModel();
-                _writer2.Distributor.UpdateModel();
+                _distrTest.Distributor.UpdateModel();
 
                 _writer3.Distributor.Restore(RestoreState.FullRestoreNeed);
                 Thread.Sleep(TimeSpan.FromMilliseconds(3000));
+                Thread.Sleep(TimeSpan.FromMilliseconds(30000000));
 
                 _writer2.Distributor.Restore(RestoreState.FullRestoreNeed);
                 Thread.Sleep(TimeSpan.FromMilliseconds(3000));
@@ -870,8 +869,8 @@ namespace Qoollo.Tests
                 Assert.Equal(0, mem2.Local + mem2.Remote);
 
                 _writer2.Start();
-                _distrTest.Distributor.Restore(new ServerId("localhost", storageServer2),
-                    new ServerId("localhost", storageServer1), RestoreState.SimpleRestoreNeed);
+                _distrTest.Distributor.Restore(ServerId(storageServer2), ServerId(storageServer1),
+                    RestoreState.SimpleRestoreNeed);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 

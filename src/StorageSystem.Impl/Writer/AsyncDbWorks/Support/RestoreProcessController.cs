@@ -165,8 +165,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
         {
             _lock.EnterWriteLock();
 
-            server.IsFailed = false;
-            server.IsCurrentServer = true;
+            var s = _restoreServers.FirstOrDefault(x => x.Equals(server)) ?? server;
+            s.IsFailed = false;
+            s.IsCurrentServer = true;
 
             Save();
             _lock.ExitWriteLock();

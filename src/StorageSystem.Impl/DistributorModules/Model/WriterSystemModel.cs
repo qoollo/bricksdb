@@ -153,7 +153,7 @@ namespace Qoollo.Impl.DistributorModules.Model
             return ret;
         }
 
-        public List<ServerId> GetAllServers2()
+        public List<ServerId> GetAllServers()
         {
             _lock.EnterReadLock();
             try

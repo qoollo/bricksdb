@@ -169,8 +169,6 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
         
         public void RestoreInProgressMessage(ServerId server)
         {
-            
-
             if (server.Equals(RestoreServer))
                 AsyncTaskModule.RestartTask(AsyncTasksNames.RestoreRemote);
         }

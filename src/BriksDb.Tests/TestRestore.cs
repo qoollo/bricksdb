@@ -239,7 +239,6 @@ namespace Qoollo.Tests
                 _writer3.Distributor.Restore(RestoreState.FullRestoreNeed);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(3000));
-                Thread.Sleep(TimeSpan.FromMilliseconds(3000000));
 
                 Assert.Equal(0, mem.Remote);
                 Assert.Equal(0, mem2.Remote);
@@ -487,7 +486,6 @@ namespace Qoollo.Tests
 
                 _writer3.Distributor.Restore(RestoreState.FullRestoreNeed);
                 Thread.Sleep(TimeSpan.FromMilliseconds(3000));
-                Thread.Sleep(TimeSpan.FromMilliseconds(30000000));
 
                 _writer2.Distributor.Restore(RestoreState.FullRestoreNeed);
                 Thread.Sleep(TimeSpan.FromMilliseconds(3000));

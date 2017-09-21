@@ -125,12 +125,11 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             if(_logger.IsTraceEnabled)
                 _logger.Trace($"Connection result = {result}", "restore");
-            
+
             var state = nextServer.Equals(_model.Local)
                 ? RestoreState.SimpleRestoreNeed
                 : _state;
-            var ret = WriterNet.SendToWriter(nextServer,
-                new RestoreCommandWithData(_model.Local, _tableName, state));            
+            var ret = WriterNet.SendToWriter(nextServer, new RestoreCommandWithData(_model.Local, _tableName, state));
 
             if (ret is FailNetResult)
             {
@@ -175,7 +174,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
         public void ServerRestoredMessage(ServerId server)
         {
-            if (server.Equals(RestoreServer))
+            if (_serversController.IsCurrentRestoreServer(server))
             {
                 CurrentProcess();
             }

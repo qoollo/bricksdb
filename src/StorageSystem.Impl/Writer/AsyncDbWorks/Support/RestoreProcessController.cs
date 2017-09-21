@@ -17,7 +17,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
                 _lock.EnterReadLock();
                 try
                 {
-                    return _restoreServers.FirstOrDefault(x => x.IsCurrentServer);
+                    return _restoreServer;
                 }
                 finally
                 {
@@ -25,6 +25,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
                 }
             }
         }
+        private ServerId _restoreServer => _restoreServers.FirstOrDefault(x => x.IsCurrentServer);
+
         public List<ServerId> FailedServers
         {
             get
@@ -179,7 +181,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
             try
             {
-                if (!_restoreStateHandler.IsEqualState(state))
+                if (!_writerModel.Local.Equals(server) && !_restoreStateHandler.IsEqualState(state))
                     return;
 
                 var s = _restoreServers.FirstOrDefault(x => x.Equals(server));
@@ -231,6 +233,19 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             try
             {
                 return _restoreServers.All(x => x.IsServerRestored());
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+
+        public bool IsCurrentRestoreServer(ServerId server)
+        {
+            try
+            {
+                _lock.EnterReadLock();
+                return server.Equals(_restoreServer);
             }
             finally
             {

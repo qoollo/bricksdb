@@ -73,9 +73,9 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             Save();
         }
 
-        public void CompleteRestore()
+        public void CompleteRestore(bool isForceFinish = false)
         {
-            if (_currentRestoreRunState >= RequiredRestoreState)
+            if (_currentRestoreRunState >= RequiredRestoreState || isForceFinish)
             {
                 _currentRestoreRunState = RestoreState.Restored;
                 RequiredRestoreState = RestoreState.Restored;

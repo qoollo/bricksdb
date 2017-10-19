@@ -284,6 +284,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
 
         public bool DistributorSendState(RestoreState state, WriterUpdateState updateState, List<ServerId> servers)
         {
+            FinishRestore(true);
             _lock.EnterWriteLock();
             try
             {
@@ -321,15 +322,15 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Support
             return _restoreStateHandler.TryUpdateState(state, updateState);
         }
 
-        public void FinishRestore()
+        public void FinishRestore(bool isForceFinish = false)
         {
-            if (!IsAllServersRestored())
+            if (!IsAllServersRestored() && _restoreStateHandler.IsNeedRestore())
                 return;
 
             _lock.EnterWriteLock();
             try
             {
-                _restoreStateHandler.CompleteRestore();
+                _restoreStateHandler.CompleteRestore(isForceFinish);
 
                 _restoreServers.Clear();
                 Save();

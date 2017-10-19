@@ -1,14 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
-using Qoollo.Client.Support;
-using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.Common.Data.Support;
-using Qoollo.Impl.Common.Data.TransactionTypes;
-using Qoollo.Impl.Common.HashHelp;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
@@ -32,29 +24,12 @@ namespace Qoollo.Tests
             _proxy.Dispose();
         }
 
-        private InnerData InnerData(int i)
-        {
-            var ev = new InnerData(new Transaction(
-                HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "default")
-            {
-                OperationName = OperationName.Create,
-                OperationType = OperationType.Async
-            })
-            {
-                Data = CommonDataSerializer.Serialize(i),
-                Key = CommonDataSerializer.Serialize(i),
-                Transaction = {Distributor = new ServerId("localhost", distrServer1)}
-            };
-            ev.Transaction.TableName = "Int";
-            return ev;
-        }
-
         [Theory]
         [InlineData(50, false)]
         [InlineData(50, true)]
-        public void Writer_SimpleRestore_TwoServers(int count, bool packageRestore)
+        public void Simple_2Servers(int count, bool packageRestore)
         {
-            var filename = nameof(Writer_SimpleRestore_TwoServers);
+            var filename = nameof(Simple_2Servers);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
@@ -71,8 +46,8 @@ namespace Qoollo.Tests
                 _writer1.Build(storageServer1);
                 _writer2.Build(storageServer2, configFile: config_file2);
 
-                _distrTest.Start();
                 _writer1.Start();
+                _distrTest.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
 
@@ -100,8 +75,12 @@ namespace Qoollo.Tests
                 Assert.Equal(0, mem.Remote);
                 Assert.Equal(0, mem2.Remote);
                 Assert.Equal(count, mem.Local + mem2.Local);
+
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
+
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.SimpleRestoreNeed, _writer2.Restore.RestoreState);
 
                 _distrTest.Dispose();
                 _writer1.Dispose();
@@ -112,9 +91,9 @@ namespace Qoollo.Tests
         [Theory]
         [InlineData(50, false)]
         [InlineData(50, true)]
-        public void Writer_SimpleRestore_ThreeServers_OneBroadcast(int count, bool packageRestore)
+        public void Simple_3Servers_OneBroadcast(int count, bool packageRestore)
         {
-            var filename = nameof(Writer_SimpleRestore_ThreeServers_OneBroadcast);
+            var filename = nameof(Simple_3Servers_OneBroadcast);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
@@ -174,6 +153,10 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(true, _writer2.Restore.IsNeedRestore);
                 Assert.Equal(true, _writer3.Restore.IsNeedRestore);
+
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.SimpleRestoreNeed, _writer2.Restore.RestoreState);
+                Assert.Equal(RestoreState.SimpleRestoreNeed, _writer3.Restore.RestoreState);
 
                 _distrTest.Dispose();
                 _writer1.Dispose();

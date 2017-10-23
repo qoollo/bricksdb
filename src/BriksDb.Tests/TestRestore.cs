@@ -80,6 +80,9 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -156,6 +159,10 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer3.Restore.IsNeedRestore);
+
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer3.Restore.RestoreState);
 
                 _distrTest.Dispose();
                 _writer1.Dispose();
@@ -248,6 +255,10 @@ namespace Qoollo.Tests
                 Assert.Equal(true, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(true, _writer2.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer3.Restore.IsNeedRestore);
+
+                Assert.Equal(RestoreState.FullRestoreNeed, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.FullRestoreNeed, _writer2.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer3.Restore.RestoreState);
 
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -423,6 +434,10 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer3.Restore.RestoreState);
+
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -500,6 +515,10 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer3.Restore.IsNeedRestore);
+
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer3.Restore.RestoreState);
 
                 Assert.NotEqual(localLast, mem.Local);
                 Assert.NotEqual(localLast2, mem2.Local);
@@ -747,6 +766,9 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -817,6 +839,9 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -878,6 +903,9 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -935,6 +963,9 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();

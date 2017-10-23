@@ -73,16 +73,16 @@ namespace Qoollo.Tests.Support
 
         public void Start()
         {
-            WriterModel.Start();
-            _net.Start();
+            WriterModel.Start();            
             Input.Start();
             _mainС.Start();
-            Distributor.Start();
-            _netRc.Start();
+            Distributor.Start();            
             _async.Start();            
             Restore.Start();
 
             Q.Start();
+            _net.Start();
+            _netRc.Start();
         }
 
         public void Dispose()

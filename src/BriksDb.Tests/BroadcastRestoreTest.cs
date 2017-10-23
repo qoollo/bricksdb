@@ -80,7 +80,7 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
                 Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
-                Assert.Equal(RestoreState.SimpleRestoreNeed, _writer2.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
 
                 _distrTest.Dispose();
                 _writer1.Dispose();
@@ -170,9 +170,9 @@ namespace Qoollo.Tests
         [InlineData(50, 1, true)]
         [InlineData(50, 2, false)]
         [InlineData(50, 2, true)]
-        public void Writer_SimpleRestore_ThreeServers_TwoBroadcast(int count, int replics, bool packageRestore)
+        public void Simple_3Servers_TwoBroadcast(int count, int replics, bool packageRestore)
         {
-            var filename = nameof(Writer_SimpleRestore_ThreeServers_TwoBroadcast);
+            var filename = nameof(Simple_3Servers_TwoBroadcast);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
@@ -229,6 +229,10 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer3.Restore.RestoreState);
+
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -239,9 +243,9 @@ namespace Qoollo.Tests
         [Theory]
         [InlineData(50, false)]
         [InlineData(50, true)]
-        public void Writer_FullRestore_TwoServers(int count, bool packageRestore)
+        public void Full_2Servers(int count, bool packageRestore)
         {
-            var filename = nameof(Writer_FullRestore_TwoServers);
+            var filename = nameof(Full_2Servers);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
@@ -290,6 +294,9 @@ namespace Qoollo.Tests
 
                 Assert.Equal(true, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(true, _writer2.Restore.IsNeedRestore);
+
+                Assert.Equal(RestoreState.FullRestoreNeed, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.FullRestoreNeed, _writer2.Restore.RestoreState);
 
                 _distrTest.Dispose();
                 _writer1.Dispose();

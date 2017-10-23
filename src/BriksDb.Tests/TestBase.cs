@@ -21,7 +21,6 @@ using Qoollo.Impl.Proxy;
 using Qoollo.Impl.Proxy.Caches;
 using Qoollo.Impl.Proxy.Interfaces;
 using Qoollo.Impl.Proxy.ProxyNet;
-using Qoollo.Impl.TestSupport;
 using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestModules;

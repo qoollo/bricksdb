@@ -1,9 +1,6 @@
 ﻿using System.Collections.Generic;
-using Qoollo.Impl.Collector.Background;
-using Qoollo.Impl.Collector.Distributor;
-using Qoollo.Impl.Collector.Load;
+using Ninject;
 using Qoollo.Impl.Collector.Merge;
-using Qoollo.Impl.Collector.Model;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Modules;
 
@@ -12,18 +9,10 @@ namespace Qoollo.Impl.Collector
     internal class SearchTaskCommonModule:ControlModule
     {
         private readonly Dictionary<string, SearchTaskModule> _apis; 
-        private readonly DistributorModule _distributor;
-        private readonly IDataLoader _dataLoader;
-        private readonly BackgroundModule _backgroundModule;
-        private readonly CollectorModel _serversModel;
 
-        public SearchTaskCommonModule(IDataLoader dataLoader, DistributorModule distributor,
-            BackgroundModule backgroundModule, CollectorModel serversModel)
+        public SearchTaskCommonModule(StandardKernel kernel)
+            :base(kernel)
         {
-            _dataLoader = dataLoader;
-            _distributor = distributor;
-            _backgroundModule = backgroundModule;
-            _serversModel = serversModel;
             _apis = new Dictionary<string, SearchTaskModule>();
         }
 
@@ -32,11 +21,10 @@ namespace Qoollo.Impl.Collector
             if (_apis.ContainsKey(tableName))
                 return null;
 
-            var merge = new OrderMerge(_dataLoader, scriptParser, _serversModel);
+            var merge = new OrderMerge(Kernel, scriptParser);
+            merge.Start();
 
-            var api = new SearchTaskModule(tableName, merge, _dataLoader, _distributor, 
-                _backgroundModule, scriptParser);
-
+            var api = new SearchTaskModule(Kernel, tableName, merge, scriptParser);
             _apis.Add(tableName, api);
 
             return api;

@@ -1,18 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using Qoollo.Client.Request;
 using Qoollo.Client.Support;
-using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.Common.Data.Support;
-using Qoollo.Impl.Common.Data.TransactionTypes;
-using Qoollo.Impl.Common.HashHelp;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.TestSupport;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestWriter;
 using Xunit;
@@ -23,105 +16,48 @@ namespace Qoollo.Tests
     [Collection("test collection 1")]
     public class TestRestore : TestBase
     {
-        private string file1 = "restoreHelp1.txt";
-        private string file2 = "restoreHelp2.txt";
-        private string file3 = "restoreHelp3.txt";
-        private string file4 = "restoreFile4.txt";
-
-        private void CreateRestoreFile(string filename, string tableName, RestoreState state,
-            List<RestoreServerSave> servers = null)
+        public TestRestore():base()
         {
-            using (var writer = new StreamWriter(filename))
-            {
-                writer.WriteLine("<?xml version=\"1.0\"?>");
-                writer.WriteLine(
-                    "<RestoreSaveHelper xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"  TableName=\"{0}\" RestoreState=\"{1}\">",
-                    string.IsNullOrEmpty(tableName) ? "AllTablesyNameThatMustntBeUsedAsTableName" : tableName,
-                    Enum.GetName(typeof (RestoreState), state));
-
-                if (servers != null)
-                {
-                    writer.WriteLine("<RestoreServers>");
-                    foreach (var server in servers)
-                    {
-                        writer.WriteLine("<RestoreServerSave>");
-                        writer.WriteLine("<IsNeedRestore>{0}</IsNeedRestore>", server.IsNeedRestore.ToString().ToLower());
-                        writer.WriteLine("<IsRestored>{0}</IsRestored>", server.IsRestored.ToString().ToLower());
-                        writer.WriteLine("<IsFailed>{0}</IsFailed>", server.IsFailed.ToString().ToLower());
-                        writer.WriteLine("<Port>{0}</Port>", server.Port);
-                        writer.WriteLine("<Host>{0}</Host>", server.Host);
-                        writer.WriteLine("</RestoreServerSave>");
-                    }
-                    writer.WriteLine("</RestoreServers>");
-                }
-                writer.WriteLine("</RestoreSaveHelper>");
-            }
+            _proxy = TestGate();
+            _proxy.Module = new TestInjectionModule();
+            _proxy.Build();
+            _proxy.Start();
         }
 
-        private InnerData InnerData(int i)
+        protected override void Dispose(bool isUserCall)
         {
-            var ev = new InnerData(new Transaction(
-                HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "default")
-            {
-                OperationName = OperationName.Create,
-                OperationType = OperationType.Async
-            })
-            {
-                Data = CommonDataSerializer.Serialize(i),
-                Key = CommonDataSerializer.Serialize(i),
-                Transaction = {Distributor = new ServerId("localhost", distrServer1)}
-            };
-            ev.Transaction.TableName = "Int";
-            return ev;
+            _proxy.Dispose();
         }
 
         [Theory]
         [InlineData(50)]
-        public void Writer_Restore_TwoServers(int count)
+        public void TwoServers_SimpleRestore(int count)
         {
-            var filename = nameof(Writer_Restore_TwoServers);
+            var filename = nameof(TwoServers_SimpleRestore);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100000, restoreStateFilename: file1);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
 
-                InitInjection.RestoreHelpFileOut = file1;
-                _distrTest.Build(1, distrServer1, distrServer12, filename);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer1.Build(storageServer1, filename, 1);
-                InitInjection.RestoreHelpFileOut = file3;
-                _writer2.Build(storageServer2, filename, 1);
+                _distrTest.Build();
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile:config_file2);
 
                 _distrTest.Start();
                 _writer1.Start();
 
-                var list = new List<InnerData>();
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
+
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var data = InnerData(i);
-                    data.Transaction.Distributor = new ServerId("localhost", distrServer1);
-
-                    list.Add(data);
-
-                    _distrTest.Input.ProcessAsync(data);
+                    if (_proxy.Int.CreateSync(i, i).IsError)
+                        _proxy.Int.CreateSync(i, i);
                 }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                foreach (var data in list)
-                {
-                    var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
-                    if (tr.IsError)
-                    {
-                        data.Transaction = new Transaction(data.Transaction);
-                        data.Transaction.ClearError();
-                        _distrTest.Input.ProcessAsync(data);
-                    }
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
@@ -144,6 +80,9 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -152,9 +91,9 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(50)]
-        public void Writer_Restore_ThreeServers(int count)
+        public void ThreeServers_SimpleRestore(int count)
         {
-            var filename = nameof(Writer_Restore_ThreeServers);
+            var filename = nameof(ThreeServers_SimpleRestore);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
@@ -162,52 +101,32 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100000, restoreStateFilename: file1);
 
-                var proxy = TestProxySystem(proxyServer, 3, 4);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
 
-                InitInjection.RestoreHelpFileOut = file1;
-                _distrTest.Build(1, distrServer1, distrServer12, filename);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer1.Build(storageServer1, filename, 1);
-                InitInjection.RestoreHelpFileOut = file3;
-                _writer2.Build(storageServer2, filename, 1);
-                InitInjection.RestoreHelpFileOut = file4;
-                _writer3.Build(storageServer3, filename, 1);
-
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
+                    filename: config_file3, distrport: storageServer3, restoreStateFilename: file3);
+                
                 #region hell2
 
-                proxy.Build();
-                proxy.Start();
+                _distrTest.Build();
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
+                _writer3.Build(storageServer3, configFile: config_file3);
 
                 _distrTest.Start();
                 _writer1.Start();
 
-                proxy.Distributor.SayIAmHere(ServerId(distrServer12));
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
 
-                Thread.Sleep(TimeSpan.FromMilliseconds(200));
-
-                int counter = 0;
-
-                var api = proxy.CreateApi("Int", false, new IntHashConvertor());
-
-                for (int i = 0; i < count; i++)
+                for (int i = 1; i < count+1; i++)
                 {
-                    bool flag = false;
-
-                    while (!flag && counter < 3)
-                    {
-                        var task = api.CreateSync(i + 1, i + 1);
-                        task.Wait();
-                        flag = true;
-                        if (task.Result.IsError)
-                        {
-                            counter++;
-                            flag = false;
-                        }
-                    }
+                    if (_proxy.Int.CreateSync(i, i).IsError && _proxy.Int.CreateSync(i, i).IsError)
+                        _proxy.Int.CreateSync(i, i);
                 }
 
-                Assert.Equal(2, counter);
 
                 #endregion
 
@@ -227,7 +146,7 @@ namespace Qoollo.Tests
 
                 _writer2.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
-                Thread.Sleep(TimeSpan.FromMilliseconds(4000));
+                Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
                 _writer3.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
@@ -241,23 +160,25 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer3.Restore.RestoreState);
+
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
                 _writer3.Dispose();
-
-                proxy.Dispose();
             }
         }
 
         [Theory]
         [InlineData(50)]
-        public void Writer_RestoreAfterUpdateHashFile_ThreeServers(int count)
+        public void RestoreAfterUpdateHashFile_ThreeServers(int count)
         {
-            var filename = nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers);
-            var filename1 = "1" + nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers);
-            var filename2 = "2" + nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers);
-            var filename3 = "3" + nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers);
+            var filename = nameof(RestoreAfterUpdateHashFile_ThreeServers);
+            var filename1 = "1" + nameof(RestoreAfterUpdateHashFile_ThreeServers);
+            var filename2 = "2" + nameof(RestoreAfterUpdateHashFile_ThreeServers);
+            var filename3 = "3" + nameof(RestoreAfterUpdateHashFile_ThreeServers);
             using (new FileCleaner(filename))
             using (new FileCleaner(filename1))
             using (new FileCleaner(filename2))
@@ -270,35 +191,34 @@ namespace Qoollo.Tests
                 #region hell
 
                 CreateHashFile(filename, 2);
-                CreateHashFile(filename1, 2);
-                CreateHashFile(filename2, 2);
-                CreateHashFile(filename3, 3);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, filename: config_file, restoreStateFilename: file1);
 
-                InitInjection.RestoreHelpFileOut = file1;
-                _distrTest.Build(1, distrServer1, distrServer12, filename);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer1.Build(storageServer1, filename1, 1);
-                InitInjection.RestoreHelpFileOut = file3;
-                _writer2.Build(storageServer2, filename2, 1);
-                InitInjection.RestoreHelpFileOut = file4;
-                _writer3.Build(storageServer3, filename3, 1);
+                CreateHashFile(filename1, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename1, filename: config_file1, restoreStateFilename: file2);
+
+                CreateHashFile(filename2, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename2, filename: config_file2,
+                    distrport: storageServer2, restoreStateFilename: file3);
+
+                CreateHashFile(filename3, 3);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename3, filename: config_file3,
+                    distrport: storageServer3, restoreStateFilename: file4);
+
+                _distrTest.Build(configFile: config_file);
+                _writer1.Build(storageServer1, configFile: config_file1);
+                _writer2.Build(storageServer2, configFile: config_file2);
+                _writer3.Build(storageServer3, configFile: config_file3);
 
                 _distrTest.Start();
                 _writer1.Start();
                 _writer2.Start();
 
-                var list = new List<InnerData>();
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
+
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var data = InnerData(i);
-                    data.Transaction.Distributor = ServerId(distrServer1);
-
-                    list.Add(data);
-
-                    _distrTest.Input.ProcessAsync(data);
+                    _proxy.Int.CreateSync(i, i);
                 }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
                 #endregion
 
@@ -322,12 +242,10 @@ namespace Qoollo.Tests
                 _writer3.Start();
 
                 _distrTest.Distributor.UpdateModel();
-                _writer1.Distributor.UpdateModel();
-                _writer2.Distributor.UpdateModel();
 
                 _writer3.Distributor.Restore(RestoreState.FullRestoreNeed);
 
-                Thread.Sleep(TimeSpan.FromMilliseconds(1400));
+                Thread.Sleep(TimeSpan.FromMilliseconds(3000));
 
                 Assert.Equal(0, mem.Remote);
                 Assert.Equal(0, mem2.Remote);
@@ -337,6 +255,10 @@ namespace Qoollo.Tests
                 Assert.Equal(true, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(true, _writer2.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer3.Restore.IsNeedRestore);
+
+                Assert.Equal(RestoreState.FullRestoreNeed, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.FullRestoreNeed, _writer2.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer3.Restore.RestoreState);
 
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -348,39 +270,34 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(50)]
-        public void Writer_Restore_SelfRestore(int count)
+        public void SelfRestore(int count)
         {
-            var filename = nameof(Writer_Restore_SelfRestore);
+            var filename = nameof(SelfRestore);
             using (new FileCleaner(filename))
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename);
 
-                var factory = new TestInMemoryDbFactory();
-                var storage1 = WriterApi(StorageConfiguration(filename, 1, 200), storageServer1);
+                var factory = new TestInMemoryDbFactory(_kernel);
+                var storage1 = WriterApi();
+                var distr = DistributorApi();
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                distr.Module = new TestInjectionModule();
                 distr.Build();
-
-                _proxy.Start();
                 distr.Start();
 
-                _proxy.Int.SayIAmHere("localhost", distrServer1);
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
 
+                storage1.Module = new TestInjectionModule();
                 storage1.Build();
                 storage1.AddDbModule(factory);
                 storage1.Start();
 
-                Thread.Sleep(500);
-
                 for (int i = 0; i < count; i++)
                 {
-                    var wait = _proxy.Int.CreateSync(i, i);
-
-                    if (wait.IsError)
-                        wait = _proxy.Int.CreateSync(i, i);
-
-                    Assert.Equal(RequestState.Complete, wait.State);
+                    if(_proxy.Int.CreateSync(i, i).IsError)
+                        _proxy.Int.CreateSync(i, i);
                 }
 
                 Assert.Equal(count, factory.Db.Local + factory.Db.Remote);
@@ -394,7 +311,6 @@ namespace Qoollo.Tests
 
                 Assert.Equal(count, factory.Db.Local);
 
-                _proxy.Dispose();
                 distr.Dispose();
                 storage1.Dispose();
             }
@@ -402,25 +318,27 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(50)]
-        public void Writer_Restore_TimeoutDelete(int count)
+        public void TimeoutDelete(int count)
         {
-            var filename = nameof(Writer_Restore_TimeoutDelete);
+            var filename = nameof(TimeoutDelete);
             using (new FileCleaner(filename))
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, isForceStart: true,
+                    deleteTimeoutMls: 1, periodRetryMls: 60);
 
-                var factory = new TestInMemoryDbFactory();
-                var storage1 = WriterApi(StorageConfiguration(filename, 1, 200, 1, 60, true), storageServer1);
+                var factory = new TestInMemoryDbFactory(_kernel);
+                var storage1 = WriterApi();
 
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
+                var distr = DistributorApi();
+                distr.Module = new TestInjectionModule();
                 distr.Build();
-
-                _proxy.Start();
                 distr.Start();
 
-                _proxy.Int.SayIAmHere("localhost", distrServer1);
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
 
+                storage1.Module = new TestInjectionModule();
                 storage1.Build();
                 storage1.AddDbModule(factory);
                 storage1.Start();
@@ -447,7 +365,6 @@ namespace Qoollo.Tests
                 Assert.Equal(count / 2, factory.Db.Local);
                 Assert.Equal(0, factory.Db.Deleted);
 
-                _proxy.Dispose();
                 distr.Dispose();
                 storage1.Dispose();
             }
@@ -455,9 +372,9 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(50)]
-        public void Writer_Restore_ThreeServersTwoReplics(int count)
+        public void ThreeServersTwoReplics(int count)
         {
-            var filename = nameof(Writer_Restore_ThreeServersTwoReplics);
+            var filename = nameof(ThreeServersTwoReplics);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
@@ -465,24 +382,22 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 3);
+                CreateConfigFile(countReplics: 2, hash: filename, check: 100000, restoreStateFilename: file1);
+                CreateConfigFile(countReplics: 2, hash: filename, filename: config_file2,
+                    distrport: storageServer2, restoreStateFilename: file2);
+                CreateConfigFile(countReplics: 2, hash: filename, filename: config_file3,
+                    distrport: storageServer3, restoreStateFilename: file3);
 
-                _proxy.Start();
-                InitInjection.RestoreHelpFileOut = file1;
-                _distrTest.Build(2, distrServer1, distrServer12, filename);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer1.Build(storageServer1, filename, 2);
-                InitInjection.RestoreHelpFileOut = file3;
-                _writer2.Build(storageServer2, filename, 2);
-                InitInjection.RestoreHelpFileOut = file4;
-                _writer3.Build(storageServer3, filename, 2);
+                _distrTest.Build();
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
+                _writer3.Build(storageServer3, configFile: config_file3);
 
                 _distrTest.Start();
                 _writer1.Start();
                 _writer2.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(200));
 
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
@@ -507,7 +422,6 @@ namespace Qoollo.Tests
                 Assert.Equal(count * 2, mem.Local + mem.Remote + mem2.Local + mem2.Remote);
 
                 _writer3.Start();
-
                 _writer3.Distributor.Restore(RestoreState.SimpleRestoreNeed);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(3000));
@@ -520,20 +434,22 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer3.Restore.RestoreState);
+
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
                 _writer3.Dispose();
-
-                _proxy.Dispose();
             }
         }
 
         [Theory]
         [InlineData(50)]
-        public void Writer_Restore_ThreeServersTwoReplics_UpdateModel(int count)
+        public void ThreeServersTwoReplics_UpdateModel(int count)
         {
-            var filename = nameof(Writer_Restore_ThreeServersTwoReplics_UpdateModel);
+            var filename = nameof(ThreeServersTwoReplics_UpdateModel);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
@@ -541,24 +457,22 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 2, hash: filename, restoreStateFilename: file1);
+                CreateConfigFile(countReplics: 2, hash: filename, filename: config_file2,
+                    distrport: storageServer2, restoreStateFilename: file2);
+                CreateConfigFile(countReplics: 2, hash: filename, filename: config_file3,
+                    distrport: storageServer3, restoreStateFilename: file3);
 
-                _proxy.Start();
-                InitInjection.RestoreHelpFileOut = file1;
-                _distrTest.Build(2, distrServer1, distrServer12, filename);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer1.Build(storageServer1, filename, 2);
-                InitInjection.RestoreHelpFileOut = file3;
-                _writer2.Build(storageServer2, filename, 2);
-                InitInjection.RestoreHelpFileOut = file4;
-                _writer3.Build(storageServer3, filename, 2);
+                _distrTest.Build();
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
+                _writer3.Build(storageServer3, configFile: config_file3);
 
                 _distrTest.Start();
                 _writer1.Start();
                 _writer2.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(200));
 
                 for (int i = 0; i < count; i++)
                 {
@@ -583,8 +497,7 @@ namespace Qoollo.Tests
 
                 _writer3.Start();
 
-                _writer1.Distributor.UpdateModel();
-                _writer2.Distributor.UpdateModel();
+                _distrTest.Distributor.UpdateModel();
 
                 _writer3.Distributor.Restore(RestoreState.FullRestoreNeed);
                 Thread.Sleep(TimeSpan.FromMilliseconds(3000));
@@ -603,6 +516,10 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer3.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer3.Restore.RestoreState);
+
                 Assert.NotEqual(localLast, mem.Local);
                 Assert.NotEqual(localLast2, mem2.Local);
 
@@ -610,8 +527,6 @@ namespace Qoollo.Tests
                 _writer1.Dispose();
                 _writer2.Dispose();
                 _writer3.Dispose();
-
-                _proxy.Dispose();
             }
         }
 
@@ -626,17 +541,16 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1);
+                CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
+                    distrport: storageServer2, restoreStateFilename: file2);
 
-                InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename, 1);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer2.Build(storageServer2, filename, 1);
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
 
-                _proxy.Start();
                 _writer1.Start();
 
-                InitInjection.RestoreHelpFileOut = file3;
-                _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(100));
+                _distrTest.Build();
                 _distrTest.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
@@ -646,11 +560,8 @@ namespace Qoollo.Tests
 
                 for (int i = 0; i < count; i++)
                 {
-                    var result = _proxy.Int.CreateSync(i, i);
-                    if (result.IsError)
-                    {
+                    if (_proxy.Int.CreateSync(i, i).IsError)
                         _proxy.Int.CreateSync(i, i);
-                    }
                 }
 
                 Assert.Equal(count, mem.Local + mem.Remote);
@@ -687,16 +598,12 @@ namespace Qoollo.Tests
 
                 for (int i = 0; i < count; i++)
                 {
-                    var result = _proxy.Int.CreateSync(i + 50, i);
-                    if (result.IsError)
-                    {
+                    if (_proxy.Int.CreateSync(i + 50, i).IsError)
                         _proxy.Int.CreateSync(i + 50, i);
-                    }
                 }
 
                 Assert.Equal(count * 2, mem.Local + mem2.Local);
 
-                _proxy.Dispose();
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -720,21 +627,26 @@ namespace Qoollo.Tests
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, filename: config_file, check: 1000, restoreStateFilename: file1);
+
                 CreateHashFile(filename2, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename2, filename: config_file2, restoreStateFilename: file2);
+
                 CreateHashFile(filename3, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename3, filename: config_file3,
+                    distrport: storageServer2, restoreStateFilename: file3);
+
                 CreateHashFile(filename4, 3);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename4, filename: config_file4,
+                    distrport: storageServer3, restoreStateFilename: file4);
 
-                InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename2, 1);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer2.Build(storageServer2, filename3, 1);
+                _writer1.Build(storageServer1, configFile: config_file2);
+                _writer2.Build(storageServer2, configFile: config_file3);
 
-                _proxy.Start();
                 _writer1.Start();
                 _writer2.Start();
 
-                InitInjection.RestoreHelpFileOut = file3;
-                _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(1000));
+                _distrTest.Build(configFile: config_file);
                 _distrTest.Start();
 
                 _proxy.Int.SayIAmHere("localhost", distrServer12);
@@ -750,7 +662,7 @@ namespace Qoollo.Tests
                 Assert.Equal(count, mem.Local + mem2.Local);
                 CreateHashFile(filename, 3);
 
-                _writer3.Build(storageServer3, filename4, 1);
+                _writer3.Build(storageServer3, configFile: config_file4);
                 _writer3.Start();
                 var mem3 = _writer3.Db.GetDbModules.First() as TestDbInMemory;
 
@@ -794,7 +706,6 @@ namespace Qoollo.Tests
                 Assert.Equal(RestoreState.Restored, _writer2.Distributor.GetRestoreRequiredState());
                 Assert.Equal(RestoreState.Restored, _writer3.Distributor.GetRestoreRequiredState());
 
-                _proxy.Dispose();
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -804,131 +715,35 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(50)]
-        public void Writer_Restore_TwoServer_RestoreFromFile(int count)
+        public void TwoServer_RestoreFromDistributor(int count)
         {
-            var filename = nameof(Writer_Restore_TwoServer_RestoreFromFile);
+            var filename = nameof(TwoServer_RestoreFromDistributor);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1,
+                    autoRestoreEnable: true);
+                CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
+                    distrport: storageServer2, restoreStateFilename: file2);
 
-                _distrTest.Build(1, distrServer1, distrServer12, filename);
+                _distrTest.Build();
 
-                InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename, 1);
-                InitInjection.RestoreHelpFileOut = file2;
-                CreateRestoreFile(file2, string.Empty, RestoreState.SimpleRestoreNeed,
-                    new List<RestoreServerSave>
-                    {
-                        new RestoreServerSave(new RestoreServer("localhost", storageServer1)
-                        {IsFailed = false, IsRestored = false, IsNeedRestore = true})
-                    });
-                _writer2.Build(storageServer2, filename, 1);
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distrTest.Start();
                 _writer1.Start();
 
-                var list = new List<InnerData>();
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
+
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var data = InnerData(i);
-                    data.Transaction.Distributor = ServerId(distrServer1);
-
-                    list.Add(data);
-
-                    _distrTest.Input.ProcessAsync(data);
+                    if (_proxy.Int.CreateSync(i, i).IsError)
+                        _proxy.Int.CreateSync(i, i);
                 }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                foreach (var data in list)
-                {
-                    var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
-                    if (tr.IsError)
-                    {
-                        data.Transaction = new Transaction(data.Transaction);
-                        data.Transaction.ClearError();
-                        _distrTest.Input.ProcessAsync(data);
-                    }
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
-                var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
-
-                if (count > 1)
-                {
-                    Assert.NotEqual(count, mem.Local);
-                    Assert.NotEqual(count, mem.Remote);
-                }
-                Assert.Equal(count, mem.Local + mem.Remote);
-
-                _writer2.Start();
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(4000));
-
-                Assert.Equal(0, mem.Remote);
-                Assert.Equal(0, mem2.Remote);
-                Assert.Equal(count, mem.Local + mem2.Local);
-                Assert.Equal(false, _writer1.Restore.IsNeedRestore);
-                Assert.Equal(false, _writer2.Restore.IsNeedRestore);
-
-                _distrTest.Dispose();
-                _writer1.Dispose();
-                _writer2.Dispose();
-            }
-        }
-
-        [Theory]
-        [InlineData(50)]
-        public void Writer_Restore_TwoServer_RestoreFromDistributor(int count)
-        {
-            var filename = nameof(Writer_Restore_TwoServer_RestoreFromDistributor);
-            using (new FileCleaner(filename))
-            using (new FileCleaner(file1))
-            using (new FileCleaner(file2))
-            using (new FileCleaner(file3))
-            {
-                CreateHashFile(filename, 2);
-
-                _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(100), true);
-
-                InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename, 1);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer2.Build(storageServer2, filename, 1);
-
-                _distrTest.Start();
-                _writer1.Start();
-
-                var list = new List<InnerData>();
-                for (int i = 1; i < count + 1; i++)
-                {
-                    var data = InnerData(i);
-                    data.Transaction.Distributor = ServerId(distrServer1);
-
-                    list.Add(data);
-
-                    _distrTest.Input.ProcessAsync(data);
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                foreach (var data in list)
-                {
-                    var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
-                    if (tr.IsError)
-                    {
-                        data.Transaction = new Transaction(data.Transaction);
-                        data.Transaction.ClearError();
-                        _distrTest.Input.ProcessAsync(data);
-                    }
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
@@ -951,6 +766,9 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -959,292 +777,9 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(50)]
-        public void Writer_Restore_TwoServer_RestoreWithDefaultMode(int count)
+        public void TwoServer_RestoreFromDistributor_EnableCommand(int count)
         {
-            var filename = nameof(Writer_Restore_TwoServer_RestoreWithDefaultMode);
-            using (new FileCleaner(filename))
-            using (new FileCleaner(file1))
-            using (new FileCleaner(file2))
-            using (new FileCleaner(file3))
-            {
-                CreateHashFile(filename, 2);
-
-                _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(200));
-
-                InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename, 1);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer2.Build(storageServer2, filename, 1);
-
-                _distrTest.Start();
-                _writer1.Start();
-
-                var list = new List<InnerData>();
-                for (int i = 1; i < count + 1; i++)
-                {
-                    var data = InnerData(i);
-                    data.Transaction.Distributor = ServerId(distrServer1);
-
-                    list.Add(data);
-
-                    _distrTest.Input.ProcessAsync(data);
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
-                var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
-
-                foreach (var data in list)
-                {
-                    var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
-                    if (tr.IsError)
-                    {
-                        data.Transaction = new Transaction(data.Transaction);
-                        data.Transaction.ClearError();
-                        _distrTest.Input.ProcessAsync(data);
-                    }
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));                
-
-                if (count > 1)
-                {
-                    Assert.NotEqual(count, mem.Local);
-                    Assert.NotEqual(count, mem.Remote);
-                }
-                Assert.Equal(count, mem.Local + mem.Remote);
-
-                _writer2.Start();
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-                _writer2.Distributor.Restore();
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                Assert.Equal(0, mem.Remote);
-                Assert.Equal(0, mem2.Remote);
-                Assert.Equal(count, mem.Local + mem2.Local);
-                Assert.Equal(false, _writer1.Restore.IsNeedRestore);
-                Assert.Equal(false, _writer2.Restore.IsNeedRestore);
-
-                _distrTest.Dispose();
-                _writer1.Dispose();
-                _writer2.Dispose();
-            }
-        }
-
-        [Theory]
-        [InlineData(50)]
-        public void Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode(int count)
-        {
-            var filename = nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode);
-            var filename1 = nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode)+"1";
-            var filename2 = nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode)+"2";
-            var filename3 = nameof(Writer_RestoreAfterUpdateHashFile_ThreeServers_RestroeWithDefaultMode)+"3";
-            using (new FileCleaner(filename))
-            using (new FileCleaner(filename1))
-            using (new FileCleaner(filename2))
-            using (new FileCleaner(filename3))
-            using (new FileCleaner(file1))
-            using (new FileCleaner(file2))
-            using (new FileCleaner(file3))
-            using (new FileCleaner(file4))
-            {
-                CreateHashFile(filename, 2);
-                CreateHashFile(filename1, 2);
-                CreateHashFile(filename2, 2);
-                CreateHashFile(filename3, 3);
-
-                InitInjection.RestoreHelpFileOut = file1;
-                _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(2000));
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer1.Build(storageServer1, filename1, 1);
-                InitInjection.RestoreHelpFileOut = file3;
-                _writer2.Build(storageServer2, filename2, 1);
-                InitInjection.RestoreHelpFileOut = file4;
-                _writer3.Build(storageServer3, filename3, 1);
-
-                _distrTest.Start();
-                _writer1.Start();
-                _writer2.Start();
-
-                var list = new List<InnerData>();
-                for (int i = 1; i < count + 1; i++)
-                {
-                    var data = InnerData(i);
-                    data.Transaction.Distributor = ServerId(distrServer1);
-
-                    list.Add(data);
-
-                    _distrTest.Input.ProcessAsync(data);
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
-                var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
-                var mem3 = _writer3.Db.GetDbModules.First() as TestDbInMemory;
-
-                if (count > 1)
-                {
-                    Assert.NotEqual(count, mem.Local);
-                    Assert.NotEqual(count, mem.Remote);
-                    Assert.NotEqual(count, mem2.Local);
-                    Assert.NotEqual(count, mem2.Remote);
-                }
-                Assert.Equal(count, mem.Local + mem2.Local);
-                Assert.Equal(0, mem.Remote);
-                Assert.Equal(0, mem2.Remote);
-
-                CreateHashFile(filename, 3);
-
-                _writer3.Start();
-
-                _distrTest.Distributor.UpdateModel();
-                _writer1.Distributor.UpdateModel();
-                _writer2.Distributor.UpdateModel();
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(3000));
-                _writer3.Distributor.Restore();
-                Thread.Sleep(TimeSpan.FromMilliseconds(1400));
-
-
-                Assert.Equal(0, mem.Remote);
-                Assert.Equal(0, mem2.Remote);
-                Assert.Equal(0, mem3.Remote);
-                Assert.NotEqual(0, mem3.Local);
-                Assert.Equal(count, mem.Local + mem2.Local + mem3.Local);
-                Assert.Equal(true, _writer1.Restore.IsNeedRestore);
-                Assert.Equal(true, _writer2.Restore.IsNeedRestore);
-                Assert.Equal(false, _writer3.Restore.IsNeedRestore);
-
-                _writer1.Dispose();
-                _writer2.Dispose();
-                _writer3.Dispose();
-
-                _distrTest.Dispose();
-            }
-        }
-
-        [Theory]
-        [InlineData(50)]
-        public void Writer_Restore_ThreeServers_DirectServersForRestore(int count)
-        {
-            var filename = nameof(Writer_Restore_ThreeServers_DirectServersForRestore);
-            using (new FileCleaner(filename))
-            using (new FileCleaner(file1))
-            using (new FileCleaner(file2))
-            using (new FileCleaner(file3))
-            using (new FileCleaner(file4))
-            {
-                CreateHashFile(filename, 3);
-
-                var proxy = TestProxySystem(proxyServer, 3, 3);
-
-                InitInjection.RestoreHelpFileOut = file1;
-                _distrTest.Build(1, distrServer1, distrServer12, filename);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer1.Build(storageServer1, filename, 1);
-                InitInjection.RestoreHelpFileOut = file3;
-                _writer2.Build(storageServer2, filename, 1);
-                InitInjection.RestoreHelpFileOut = file4;
-                _writer3.Build(storageServer3, filename, 1);
-
-                #region hell2
-
-                proxy.Build();
-                proxy.Start();
-
-                _distrTest.Start();
-                _writer1.Start();
-
-                proxy.Distributor.SayIAmHere(ServerId(distrServer12));
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(200));
-
-                int counter = 0;
-
-                var api = proxy.CreateApi("Int", false, new IntHashConvertor());
-
-                var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
-                var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
-                var mem3 = _writer3.Db.GetDbModules.First() as TestDbInMemory;
-
-                for (int i = 0; i < count; i++)
-                {
-                    bool flag = false;
-
-                    while (!flag && counter < 3)
-                    {
-                        var task = api.CreateSync(i + 1, i + 1);
-                        task.Wait();
-                        flag = true;
-                        if (task.Result.IsError)
-                        {
-                            counter++;
-                            flag = false;
-                        }
-                    }
-                }
-                Assert.Equal(2, counter);
-
-                #endregion                
-
-                if (count > 1)
-                {
-                    Assert.NotEqual(count, mem.Local);
-                    Assert.NotEqual(count, mem.Remote);
-                }
-                Assert.Equal(count, mem.Local + mem.Remote);
-
-                _writer2.Start();
-                _writer3.Start();
-
-                _writer2.Distributor.Restore(new List<ServerId> { new ServerId("localhost", storageServer1) },
-                    RestoreState.SimpleRestoreNeed);
-                Thread.Sleep(TimeSpan.FromMilliseconds(4000));
-
-                _writer3.Distributor.Restore(new List<ServerId> { new ServerId("localhost", storageServer1) },
-                    RestoreState.SimpleRestoreNeed);
-                Thread.Sleep(TimeSpan.FromMilliseconds(3000));
-
-                Assert.Equal(0, mem.Remote);
-                Assert.Equal(0, mem2.Remote);
-                Assert.Equal(0, mem3.Remote);
-                Assert.Equal(count, mem.Local + mem2.Local + mem3.Local);
-                Assert.Equal(false, _writer1.Restore.IsNeedRestore);
-                Assert.Equal(RestoreState.SimpleRestoreNeed, _writer2.Restore.RestoreState);
-                Assert.Equal(RestoreState.SimpleRestoreNeed, _writer3.Restore.RestoreState);
-
-                _writer2.Distributor.Restore(new List<ServerId> { new ServerId("localhost", storageServer3) },
-                    RestoreState.SimpleRestoreNeed);
-                Thread.Sleep(TimeSpan.FromMilliseconds(4000));
-
-                _writer3.Distributor.Restore(new List<ServerId> { new ServerId("localhost", storageServer2) },
-                    RestoreState.SimpleRestoreNeed);
-                Thread.Sleep(TimeSpan.FromMilliseconds(3000));
-
-                Assert.Equal(0, mem.Remote);
-                Assert.Equal(0, mem2.Remote);
-                Assert.Equal(0, mem3.Remote);
-                Assert.Equal(count, mem.Local + mem2.Local + mem3.Local);
-                Assert.Equal(false, _writer1.Restore.IsNeedRestore);
-                Assert.Equal(false, _writer2.Restore.IsNeedRestore);
-                Assert.Equal(false, _writer3.Restore.IsNeedRestore);
-
-                _distrTest.Dispose();
-                _writer1.Dispose();
-                _writer2.Dispose();
-                _writer3.Dispose();
-
-                proxy.Dispose();
-            }
-        }
-
-        [Theory]
-        [InlineData(50)]
-        public void Writer_Restore_TwoServer_RestoreFromDistributor_EnableCommand(int count)
-        {
-            var filename = nameof(Writer_Restore_TwoServer_RestoreFromDistributor_EnableCommand);
+            var filename = nameof(TwoServer_RestoreFromDistributor_EnableCommand);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
@@ -1252,44 +787,28 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1,
+                    autoRestoreEnable: true);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
 
-                _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(100), true);
+                _distrTest.Build();
 
-                InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename, 1);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer2.Build(storageServer2, filename, 1);
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distrTest.Start();
                 _distrTest.Distributor.AutoRestoreSetMode(false);
 
                 _writer1.Start();
 
-                var list = new List<InnerData>();
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
+
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var data = InnerData(i);
-                    data.Transaction.Distributor = ServerId(distrServer1);
-
-                    list.Add(data);
-
-                    _distrTest.Input.ProcessAsync(data);
+                    if (_proxy.Int.CreateSync(i, i).IsError)
+                        _proxy.Int.CreateSync(i, i);
                 }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                foreach (var data in list)
-                {
-                    var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
-                    if (tr.IsError)
-                    {
-                        data.Transaction = new Transaction(data.Transaction);
-                        data.Transaction.ClearError();
-                        _distrTest.Input.ProcessAsync(data);
-                    }
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
@@ -1320,6 +839,9 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -1328,9 +850,9 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(50)]
-        public void Writer_Restore_TwoServer_RestoreFromDistributorWithCommand(int count)
+        public void TwoServer_RestoreFromDistributorWithCommand(int count)
         {
-            var filename = nameof(Writer_Restore_TwoServer_RestoreFromDistributorWithCommand);
+            var filename = nameof(TwoServer_RestoreFromDistributorWithCommand);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
@@ -1338,42 +860,25 @@ namespace Qoollo.Tests
             using (new FileCleaner(file4))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100, restoreStateFilename: file1);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2);
 
-                _distrTest.Build(1, distrServer1, distrServer12, filename, TimeSpan.FromMilliseconds(100));
+                _distrTest.Build();
 
-                InitInjection.RestoreHelpFileOut = file1;
-                _writer1.Build(storageServer1, filename, 1);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer2.Build(storageServer2, filename, 1);
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distrTest.Start();
                 _writer1.Start();
 
-                var list = new List<InnerData>();
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
+
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var data = InnerData(i);
-                    data.Transaction.Distributor = ServerId(distrServer1);
-
-                    list.Add(data);
-
-                    _distrTest.Input.ProcessAsync(data);
+                    if (_proxy.Int.CreateSync(i, i).IsError)
+                        _proxy.Int.CreateSync(i, i);
                 }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                foreach (var data in list)
-                {
-                    var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
-                    if (tr.IsError)
-                    {
-                        data.Transaction = new Transaction(data.Transaction);
-                        data.Transaction.ClearError();
-                        _distrTest.Input.ProcessAsync(data);
-                    }
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
@@ -1387,8 +892,8 @@ namespace Qoollo.Tests
                 Assert.Equal(0, mem2.Local + mem2.Remote);
 
                 _writer2.Start();
-                _distrTest.Distributor.Restore(new ServerId("localhost", storageServer2),
-                    new ServerId("localhost", storageServer1), RestoreState.SimpleRestoreNeed);
+                _distrTest.Distributor.Restore(ServerId(storageServer2), ServerId(storageServer1),
+                    RestoreState.SimpleRestoreNeed);
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
@@ -1398,6 +903,9 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();
@@ -1406,52 +914,33 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(50)]
-        public void Writer_Restore_TwoServers_Package(int count)
+        public void TwoServers_Package(int count)
         {
-            var filename = nameof(Writer_Restore_TwoServers_Package);
+            var filename = nameof(TwoServers_Package);
             using (new FileCleaner(filename))
             using (new FileCleaner(file1))
             using (new FileCleaner(file2))
             using (new FileCleaner(file3))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename, check: 100000, restoreStateFilename: file1, usePackage: true);
+                CreateConfigFile(distrthreads: 1, countReplics: 1, hash: filename,
+                    filename: config_file2, distrport: storageServer2, restoreStateFilename: file2, usePackage: true);
 
-                InitInjection.RestoreUsePackage = true;
-                InitInjection.RestoreHelpFileOut = file1;
-                _distrTest.Build(1, distrServer1, distrServer12, filename);
-                InitInjection.RestoreHelpFileOut = file2;
-                _writer1.Build(storageServer1, filename, 1);
-                InitInjection.RestoreHelpFileOut = file3;
-                _writer2.Build(storageServer2, filename, 1);
+                _distrTest.Build();
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distrTest.Start();
                 _writer1.Start();
 
-                var list = new List<InnerData>();
+                _proxy.Int.SayIAmHere("localhost", distrServer12);
+
                 for (int i = 1; i < count + 1; i++)
                 {
-                    var data = InnerData(i);
-                    data.Transaction.Distributor = ServerId(distrServer1);
-
-                    list.Add(data);
-
-                    _distrTest.Input.ProcessAsync(data);
+                    if (_proxy.Int.CreateSync(i, i).IsError)
+                        _proxy.Int.CreateSync(i, i);
                 }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
-
-                foreach (var data in list)
-                {
-                    var tr = _distrTest.Main.GetTransactionState(data.Transaction.UserTransaction);
-                    if (tr.IsError)
-                    {
-                        data.Transaction = new Transaction(data.Transaction);
-                        data.Transaction.ClearError();
-                        _distrTest.Input.ProcessAsync(data);
-                    }
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(1000));
 
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
@@ -1474,6 +963,9 @@ namespace Qoollo.Tests
                 Assert.Equal(false, _writer1.Restore.IsNeedRestore);
                 Assert.Equal(false, _writer2.Restore.IsNeedRestore);
 
+                Assert.Equal(RestoreState.Restored, _writer1.Restore.RestoreState);
+                Assert.Equal(RestoreState.Restored, _writer2.Restore.RestoreState);
+                
                 _distrTest.Dispose();
                 _writer1.Dispose();
                 _writer2.Dispose();

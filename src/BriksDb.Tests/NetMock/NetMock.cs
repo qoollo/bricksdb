@@ -10,6 +10,8 @@ namespace Qoollo.Tests.NetMock
         private readonly List<ReceiveWrapperBase> _receivers;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
+        public static NetMock Instance = new NetMock();
+
         public NetMock()
         {
             _receivers = new List<ReceiveWrapperBase>();

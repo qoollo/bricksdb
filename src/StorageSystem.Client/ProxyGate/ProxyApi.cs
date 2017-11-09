@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.ProxyGate.Handlers;
 using Qoollo.Client.Support;
 using Qoollo.Impl.Common.Exceptions;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
-using Qoollo.Impl.Configurations;
-using Consts = Qoollo.Client.Support.Consts;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Client.ProxyGate
 {
@@ -21,43 +17,18 @@ namespace Qoollo.Client.ProxyGate
         private bool _isStarted;
         private bool _isDispose;
 
-        protected ProxyApi(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-            CommonConfiguration commonConfiguration, TimeoutConfiguration timeoutConfiguration)
+        internal InjectionModule Module = null;
+
+        protected ProxyApi()
         {
-            Contract.Requires(netConfiguration != null);
-            Contract.Requires(proxyConfiguration != null);
-            Contract.Requires(commonConfiguration != null);
-            Contract.Requires(timeoutConfiguration != null);
 
             _isStarted = false;
             _isBuild = false;
             _isDispose = false;
 
-            var server = new ServerId(netConfiguration.Host, netConfiguration.Port);
-            var queue = new QueueConfiguration(commonConfiguration.CountThreads, commonConfiguration.QueueSize);
-
-            var connection = new ConnectionConfiguration(netConfiguration.WcfServiceName,
-                netConfiguration.CountConnectionsToSingleServer, netConfiguration.TrimPeriod);
-            var proxyCacheConfiguration = new ProxyCacheConfiguration(proxyConfiguration.ChangeDistributorTimeoutSec);
-            var proxyCacheConfiguration2 = new ProxyCacheConfiguration(proxyConfiguration.SyncOperationsTimeoutSec);
-            var netReceiveConfiguration = new NetReceiverConfiguration(netConfiguration.Port, netConfiguration.Host,
-                netConfiguration.WcfServiceName);
-            var async = new AsyncTasksConfiguration(proxyConfiguration.AsyncUpdateTimeout);
-            var ping = new AsyncTasksConfiguration(proxyConfiguration.AsyncPingTimeout);
-            var timeout = new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout,
-                timeoutConfiguration.SendTimeout);
-
-            _proxySystem = new ProxySystem(server, queue, connection,
-                proxyCacheConfiguration, proxyCacheConfiguration2, netReceiveConfiguration, async, ping, timeout);
+            _proxySystem = new ProxySystem();
 
             _apis = new Dictionary<string, ProxyHandlerBase>();
-        }
-
-        protected ProxyApi(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-            CommonConfiguration commonConfiguration)
-            : this(netConfiguration, proxyConfiguration, commonConfiguration,
-                new TimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout))
-        {
         }
 
         protected IStorage<TKey, TValue> CallApi<TKey, TValue>(string tableName)
@@ -108,7 +79,7 @@ namespace Qoollo.Client.ProxyGate
 
         public void Build()
         {
-            _proxySystem.Build();
+            _proxySystem.Build(Module);
             InnerBuild();
 
             _isBuild = true;

@@ -1,31 +1,34 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.DistributorModules.Caches;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules;
 
 namespace Qoollo.Impl.DistributorModules
 {
-    internal class MainLogicModule : ControlModule
+    internal class MainLogicModule : ControlModule, IMainLogicModule
     {
-        private readonly DistributorModule _distributor;
-        private readonly TransactionModule _transaction;
-        private readonly DistributorTimeoutCache _cache;
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public MainLogicModule(DistributorModule distributor, TransactionModule transaction, DistributorTimeoutCache cache)
+        private IDistributorModule _distributor;
+        private ITransactionModule _transaction;
+        private IDistributorTimeoutCache _cache;
+
+        public MainLogicModule(StandardKernel kernel):base(kernel)
         {            
-            Contract.Requires(distributor != null);
-            Contract.Requires(transaction != null);
-            Contract.Requires(cache != null);
-            _distributor = distributor;
-            _transaction = transaction;
-            _cache = cache;
-        }        
+        }
+
+        public override void Start()
+        {
+            _cache = Kernel.Get<IDistributorTimeoutCache>();
+            _distributor = Kernel.Get<IDistributorModule>();
+            _transaction = Kernel.Get<ITransactionModule>();
+        }
 
         private bool GetCountServers(InnerData data)
         {
@@ -53,7 +56,8 @@ namespace Qoollo.Impl.DistributorModules
 
         public void ProcessWithData(InnerData data, TransactionExecutor executor)
         {
-            Logger.Logger.Instance.Debug(string.Format("Mainlogic: process data = {0}", data.Transaction.DataHash));
+            if(_logger.IsTraceEnabled)
+                _logger.Debug($"Mainlogic: process data = {data.Transaction.OperationName}");
 
             data.DistributorData = new DistributorData();
             CreateTimers(data);
@@ -61,8 +65,8 @@ namespace Qoollo.Impl.DistributorModules
             var dest = _distributor.GetDestination(data, GetCountServers(data));
             if (dest == null)
             {
-                Logger.Logger.Instance.Debug(string.Format("Mainlogic: dont found destination, process data = {0}",
-                    data.Transaction.DataHash));
+                if(_logger.IsTraceEnabled)
+                    _logger.Trace($"Mainlogic: dont found destination, process data = {data.Transaction.DataHash}");
                 data.Transaction.SetError();
                 data.Transaction.AddErrorDescription(Errors.NotAvailableServersForWrite);
             }
@@ -79,8 +83,9 @@ namespace Qoollo.Impl.DistributorModules
             }
             else
             {
-                Logger.Logger.Instance.Trace(string.Format("Mainlogic: process data = {0}, result = {1}",
-                    data.Transaction.DataHash, !data.Transaction.IsError));
+                if (_logger.IsWarnEnabled)
+                    _logger.Warn(
+                        $"Mainlogic: process data = {data.Transaction.DataHash}, result = {data.Transaction.ErrorDescription}");
 
                 WorkWithFailTransaction(data);
 

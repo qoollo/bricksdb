@@ -1,26 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using Qoollo.Client.Support;
-using Qoollo.Impl.Common.HashFile;
-using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
+using Ninject;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Model;
 using Qoollo.Impl.DistributorModules.ParallelWork;
 using Qoollo.Impl.DistributorModules.Transaction;
+using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Tests.NetMock;
+using DistributorCacheConfiguration = Qoollo.Impl.Configurations.DistributorCacheConfiguration;
 
 namespace Qoollo.Tests.Support
 {
     internal class TestDistributorGate
     {
-        private GlobalQueueInner _q;
+        private GlobalQueue _q;
         private DistributorNetModule _dnet;
         public DistributorModule Distributor { get; set; }
         private TransactionModule _tranc;
@@ -39,45 +37,35 @@ namespace Qoollo.Tests.Support
             return list.First(x => x.FieldType.FullName == typeof(TRet).ToString()).GetValue(obj) as TRet;
         }
 
-        public void Build(int countReplics, int distrServer1, int distrServer12, string hashFile,
-            TimeSpan asyncCheck = default(TimeSpan), bool autoRestoreEnable = false)
-        {
-            asyncCheck = asyncCheck == default(TimeSpan) ? TimeSpan.FromMinutes(5) : asyncCheck;
-            _q = new GlobalQueueInner();
-            GlobalQueue.SetQueue(_q);
+        public void Build(string configFile = Impl.Common.Support.Consts.ConfigFilename)
+        {            
+            var kernel = new StandardKernel(new TestInjectionModule());
 
-            var connection = new ConnectionConfiguration("testService", 10);
+            var config = new SettingsModule(kernel, configFile);
+            config.Start();
 
-            var distrconfig = new DistributorHashConfiguration(countReplics);
-            var queueconfig = new QueueConfiguration(1, 100);
-            _dnet = new DistributorNetModule(connection,
-                new ConnectionTimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout));
-            Distributor = new DistributorModule(new AsyncTasksConfiguration(TimeSpan.FromMilliseconds(200)),
-                new AsyncTasksConfiguration(asyncCheck), distrconfig, queueconfig, _dnet,
-                new ServerId("localhost", distrServer1),
-                new ServerId("localhost", distrServer12),
-                new HashMapConfiguration(hashFile,
-                    HashMapCreationMode.ReadFromFile,
-                    1, countReplics, HashFileType.Distributor), autoRestoreEnable);
+            _q = new GlobalQueue(kernel);
+            kernel.Bind<IGlobalQueue>().ToConstant(_q);
 
-            WriterSystemModel = GetPrivtaeField<WriterSystemModel>(Distributor);
-            _dnet.SetDistributor(Distributor);
+            _dnet = new DistributorNetModule(kernel);
+            kernel.Bind<IDistributorNetModule>().ToConstant(_dnet);
 
-            var cache = new DistributorTimeoutCache(
-                new DistributorCacheConfiguration(TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200)));
-            _tranc = new TransactionModule(_dnet, new TransactionConfiguration(4),
-                distrconfig.CountReplics, cache);
-            Main = new MainLogicModule(Distributor, _tranc, cache);
+            Distributor = new DistributorModule(kernel);
+            kernel.Bind<IDistributorModule>().ToConstant(Distributor);
 
-            var netReceive1 = new NetReceiverConfiguration(distrServer1, "localhost", "testService");
-            var netReceive2 = new NetReceiverConfiguration(distrServer12, "localhost", "testService");
-            Input = new InputModuleWithParallel(new QueueConfiguration(2, 100000), Main, _tranc);
-            _receiver = new NetDistributorReceiver(Main, Input, Distributor, netReceive1, netReceive2);
-        }
+            var cache = new DistributorTimeoutCache(new DistributorCacheConfiguration(200000, 200000));
+            kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
 
-        public void Build(int countReplics, string hashFile)
-        {
-            Build(countReplics, 22201, 22202, hashFile);
+            _tranc = new TransactionModule(kernel);
+            kernel.Bind<ITransactionModule>().ToConstant(_tranc);
+
+            Main = new MainLogicModule(kernel);
+            kernel.Bind<IMainLogicModule>().ToConstant(Main);
+
+            Input = new InputModuleWithParallel(kernel);
+            kernel.Bind<IInputModule>().ToConstant(Input);
+
+            _receiver = new NetDistributorReceiver(kernel);
         }
 
         public void Start()
@@ -90,6 +78,8 @@ namespace Qoollo.Tests.Support
             Distributor.Start();
 
             _q.Start();
+
+            WriterSystemModel = GetPrivtaeField<WriterSystemModel>(Distributor);
         }
 
         public void Dispose()

@@ -1,5 +1,5 @@
-﻿using Qoollo.Impl.Configurations;
-using Qoollo.Impl.DistributorModules.ParallelWork;
+﻿using Ninject;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 
 namespace Qoollo.Impl.DistributorModules.DistributorNet
@@ -9,17 +9,17 @@ namespace Qoollo.Impl.DistributorModules.DistributorNet
         private NetDistributorReceiverForDb _distributorReceiverForDb;
         private NetDistributorReceiverForProxy _distributorReceiverForProxy;
 
-        public NetDistributorReceiver(MainLogicModule main, IInputModule input, DistributorModule distributorModule,
-                                      NetReceiverConfiguration receiverConfigurationForDb,
-                                      NetReceiverConfiguration receiverConfigurationForFroxy)
+        public NetDistributorReceiver(StandardKernel kernel): base(kernel)
         {
-            _distributorReceiverForDb = new NetDistributorReceiverForDb(distributorModule, receiverConfigurationForDb);
-            _distributorReceiverForProxy = new NetDistributorReceiverForProxy(main, input, distributorModule,
-                                                                              receiverConfigurationForFroxy);
         }
 
         public override void Start()
         {
+            var config = Kernel.Get<IDistributorConfiguration>();
+
+            _distributorReceiverForDb = new NetDistributorReceiverForDb(Kernel, config.NetWriter);
+            _distributorReceiverForProxy = new NetDistributorReceiverForProxy(Kernel, config.NetProxy);
+
             _distributorReceiverForDb.Start();
             _distributorReceiverForProxy.Start();
         }

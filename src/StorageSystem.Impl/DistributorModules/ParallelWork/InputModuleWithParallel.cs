@@ -1,28 +1,19 @@
-﻿using System.Diagnostics.Contracts;
+﻿using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.Configurations;
-using Qoollo.Impl.DistributorModules.Transaction;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules.ParallelWork;
 
 namespace Qoollo.Impl.DistributorModules.ParallelWork
 {
     internal class InputModuleWithParallel : ParallelWorkModule <InnerData>,IInputModule
     {
-        private readonly MainLogicModule _main;
-        private readonly TransactionModule _transactionModule;
-
-        public InputModuleWithParallel(QueueConfiguration configuration, MainLogicModule main, TransactionModule transactionModule)
-            : base(configuration)
+        public InputModuleWithParallel(StandardKernel kernel): base(kernel)
         {
-            Contract.Requires(main!=null);
-            Contract.Requires(transactionModule!=null);
-            _main = main;
-            _transactionModule = transactionModule;
         }
 
         protected override bool CreateWorker(out SingleParallelWorkBase<InnerData> worker)
         {
-            worker = new OneThreadProcess(_main, _transactionModule);
+            worker = new OneThreadProcess(Kernel);
             return true;
         }
 

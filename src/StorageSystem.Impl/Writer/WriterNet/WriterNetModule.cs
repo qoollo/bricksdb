@@ -1,24 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces;
+using Qoollo.Impl.Writer.Interfaces;
 using Qoollo.Impl.Writer.WriterNet.Interfaces;
 
 namespace Qoollo.Impl.Writer.WriterNet
 {
-    internal class WriterNetModule:NetModule, INetModule
+    internal class WriterNetModule : NetModule, INetModule, IWriterNetModule
     {
-        public WriterNetModule(ConnectionConfiguration connectionConfiguration,
-            ConnectionTimeoutConfiguration connectionTimeout)
-            : base(connectionConfiguration, connectionTimeout)
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
+        public WriterNetModule(StandardKernel kernel)
+            : base(kernel)
         {
         }
 
@@ -26,8 +28,8 @@ namespace Qoollo.Impl.Writer.WriterNet
 
         public bool ConnectToWriter(ServerId server)
         {
-            return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToWriter(id, configuration, time));
+            return ConnectToServer(server, 
+                (id, config) => new SingleConnectionToWriter(Kernel, id, config));
         }
 
         public void PingWriter(List<ServerId> servers)
@@ -38,7 +40,7 @@ namespace Qoollo.Impl.Writer.WriterNet
 
         public RemoteResult SendToWriter(ServerId server, NetCommand command)
         {
-            Logger.Logger.Instance.TraceFormat("SendSync command {0} to {1}", command.GetType(), server);
+            _logger.TraceFormat("SendSync command {0} to {1}", command.GetType(), server);
             var connection = FindServer(server) as SingleConnectionToWriter;
             if (connection == null)
             {
@@ -48,14 +50,14 @@ namespace Qoollo.Impl.Writer.WriterNet
 
             if (connection == null)
             {
-                Logger.Logger.Instance.DebugFormat("WriterNetModule: process server not found  server = {0}", server);
+                _logger.DebugFormat("WriterNetModule: process server not found  server = {0}", server);
                 return new ServerNotFoundResult();
             }
 
             var ret = connection.SendSync(command);
             if (ret is FailNetResult)
             {
-                Logger.Logger.Instance.DebugFormat("WriterNetModule: process fail result  server = {0}", server);
+                _logger.DebugFormat("WriterNetModule: process fail result  server: {0}, result: {1}", server, ret);
                 RemoveConnection(server);
             }
 
@@ -64,9 +66,6 @@ namespace Qoollo.Impl.Writer.WriterNet
 
         public RemoteResult ProcessSync(ServerId server, InnerData data)
         {
-            Logger.Logger.Instance.Debug(string.Format("WriterNetModule: process server = {0}, ev = {1}", server,
-                                                                                      data.Transaction.DataHash));
-
             var connection = FindServer(server) as SingleConnectionToWriter;
 
             if (connection == null)
@@ -77,9 +76,8 @@ namespace Qoollo.Impl.Writer.WriterNet
 
             if (connection == null)
             {
-                Logger.Logger.Instance.Debug(string.Format(
-                    "WriterNetModule: process server not found  server = {0}, ev = {1}", server,
-                                        data.Transaction.DataHash), "restore");
+                if (_logger.IsDebugEnabled)
+                    _logger.Debug($"WriterNetModule: process server not found: {server}", "restore");
 
                 return new ServerNotFoundResult();
             }
@@ -87,6 +85,7 @@ namespace Qoollo.Impl.Writer.WriterNet
 
             if (ret is FailNetResult)
             {
+                _logger.DebugFormat("WriterNetModule: process fail result  server: {0}, result: {1}", server, ret);
                 RemoveConnection(server);
             }
             return ret;
@@ -109,7 +108,10 @@ namespace Qoollo.Impl.Writer.WriterNet
             var ret = connection.ProcessSyncPackage(datas);
 
             if (ret is FailNetResult)
+            {
+                _logger.DebugFormat("WriterNetModule: process fail result  server: {0}, result: {1}", server, ret);
                 RemoveConnection(server);
+            }
 
             return ret;
 
@@ -117,9 +119,6 @@ namespace Qoollo.Impl.Writer.WriterNet
 
         public Task<RemoteResult> ProcessAsync(ServerId server, InnerData data)
         {
-            Logger.Logger.Instance.Debug(string.Format("WriterNetModule: process server = {0}, ev = {1}", server,
-                                                                                      data.Transaction.DataHash));
-
             var connection = FindServer(server) as SingleConnectionToWriter;
 
             if (connection == null)
@@ -130,9 +129,8 @@ namespace Qoollo.Impl.Writer.WriterNet
 
             if (connection == null)
             {
-                Logger.Logger.Instance.Debug(string.Format(
-                    "WriterNetModule: process server not found  server = {0}, ev = {1}", server,
-                    data.Transaction.DataHash), "restore");
+                if (_logger.IsDebugEnabled)
+                    _logger.Debug($"WriterNetModule: process server not found: {server}", "restore");
 
                 var ret = new TaskCompletionSource<RemoteResult>();
                 ret.SetResult(new ServerNotFoundResult());
@@ -161,8 +159,8 @@ namespace Qoollo.Impl.Writer.WriterNet
 
         public bool ConnectToDistributor(ServerId server)
         {
-            return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToDistributor(id, configuration, time));
+            return ConnectToServer(server, 
+                (id, config) => new SingleConnectionToDistributor(Kernel, id, config));
         }
 
         public void PingDistributors(List<ServerId> servers)
@@ -173,7 +171,7 @@ namespace Qoollo.Impl.Writer.WriterNet
         //TODO посмотреть будет ли работать
         public RemoteResult SendToDistributor(NetCommand command)
         {
-            Logger.Logger.Instance.TraceFormat("SendSync command {0}", command.GetType());
+            _logger.TraceFormat("SendSync command {0}", command.GetType());
             var connection = FindServer<SingleConnectionToDistributor>() as SingleConnectionToDistributor;            
 
             if (connection == null)
@@ -188,7 +186,7 @@ namespace Qoollo.Impl.Writer.WriterNet
 
         public RemoteResult SendToDistributor(ServerId server, NetCommand command)
         {
-            Logger.Logger.Instance.TraceFormat("SendSync command {0} to {1}", command.GetType(), server);
+            _logger.TraceFormat("SendSync command {0} to {1}", command.GetType(), server);
             var connection = FindServer(server) as SingleConnectionToDistributor;
             if (connection == null)
             {
@@ -198,14 +196,14 @@ namespace Qoollo.Impl.Writer.WriterNet
 
             if (connection == null)
             {
-                Logger.Logger.Instance.DebugFormat("WriterNetModule: process server not found  server = {0}", server);
+                _logger.DebugFormat("WriterNetModule: process server not found  server = {0}", server);
                 return new ServerNotFoundResult();
             }
 
             var ret = connection.SendSync(command);
             if (ret is FailNetResult)
             {
-                Logger.Logger.Instance.DebugFormat("WriterNetModule: process fail result  server = {0}", server);
+                _logger.DebugFormat("WriterNetModule: process fail result  server: {0}, result: {1}", server, ret);
                 RemoveConnection(server);
             }
 
@@ -214,7 +212,7 @@ namespace Qoollo.Impl.Writer.WriterNet
 
         public void ASendToDistributor(ServerId server, NetCommand command)
         {
-            Logger.Logger.Instance.TraceFormat("SendSync command {0} to {1}", command.GetType(), server);
+            _logger.TraceFormat("SendSync command {0} to {1}", command.GetType(), server);
             var connection = FindServer(server) as SingleConnectionToDistributor;
             if (connection == null)
             {
@@ -224,21 +222,20 @@ namespace Qoollo.Impl.Writer.WriterNet
 
             if (connection == null)
             {
-                Logger.Logger.Instance.DebugFormat("WriterNetModule: process server not found  server = {0}", server);
+                _logger.DebugFormat("WriterNetModule: process server not found  server = {0}", server);
                 return;
             }
 
             var ret = connection.SendASyncResult(command);
             if (ret is FailNetResult)
             {
-                Logger.Logger.Instance.DebugFormat("WriterNetModule: process fail result  server = {0}", server);
+                _logger.DebugFormat("WriterNetModule: process fail result  server: {0}, result: {1}", server, ret);
                 RemoveConnection(server);
             }
         }
 
         public void TransactionAnswer(ServerId server, Transaction transaction)
         {
-            Logger.Logger.Instance.TraceFormat("Transaction command {0} to {1}", transaction.CacheKey, server);
             var connection = FindServer(server) as SingleConnectionToDistributor;
             if (connection == null)
             {
@@ -248,14 +245,14 @@ namespace Qoollo.Impl.Writer.WriterNet
 
             if (connection == null)
             {
-                Logger.Logger.Instance.DebugFormat("WriterNetModule: process server not found  server = {0}", server);
+                _logger.DebugFormat("WriterNetModule: process server not found  server = {0}", server);
                 return;
             }
 
             var ret = connection.TransactionAnswerResult(transaction);
             if (ret is FailNetResult)
             {
-                Logger.Logger.Instance.DebugFormat("WriterNetModule: process fail result  server = {0}", server);
+                _logger.DebugFormat("WriterNetModule: process fail result  server: {0}, result: {1}", server, ret);
                 RemoveConnection(server);
             }
         }

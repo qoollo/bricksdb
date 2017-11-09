@@ -1,236 +1,234 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Qoollo.Impl.Common.HashFile;
+using Ninject;
+using Qoollo.Impl.Common.NetResults.Data;
+using Qoollo.Impl.Common.NetResults.System.Distributor;
+using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
-using Qoollo.Impl.Modules.Async;
-using Qoollo.Impl.TestSupport;
 using Qoollo.Impl.Writer.AsyncDbWorks.Restore;
 using Qoollo.Impl.Writer.AsyncDbWorks.Support;
 using Qoollo.Impl.Writer.AsyncDbWorks.Timeout;
-using Qoollo.Impl.Writer.Db;
-using Qoollo.Impl.Writer.WriterNet;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks
 {
-    internal class AsyncDbWorkModule:ControlModule
-    {        
-        public RestoreState RestoreState
+    internal class AsyncDbWorkModule : ControlModule, IAsyncDbWorkModule
+    {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
+        public RestoreState RestoreState => _serversController.WriterState;
+
+        public TimeoutModule TimeoutModule => _timeout;
+
+        internal bool IsNeedRestore => _serversController.IsNeedRestore();
+
+        public bool IsRestoreStarted => _initiatorRestore.IsStart || _broadcastRestore.IsStart;
+
+        public AsyncDbWorkModule(StandardKernel kernel): base(kernel)
         {
-            get { return _stateHolder.State; }
         }
 
-        public TimeoutModule TimeoutModule { get { return _timeout; } }
+        private IWriterModel _writerModel;
 
-        internal bool IsNeedRestore
-        {
-            get { return _stateHolder.State != RestoreState.Restored; }
-        }
+        private BroadcastRestoreModule _broadcastRestore;
+        private InitiatorRestoreModule _initiatorRestore;
+        private TransferRestoreModule _transferRestore;
+        private TimeoutModule _timeout;
 
-        public bool IsRestoreStarted
-        {
-            get
-            {
-                return _initiatorRestore.IsStart;
-            }
-        }
-
-        public bool IsTransferRestoreStarted
-        {
-            get
-            {
-                return _transferRestore.IsStart;
-            }
-        }
-
-        public Dictionary<string, string> FullState
-        {
-            get
-            {
-                var dictionary = new Dictionary<string, string>();
-
-                if (_initiatorRestore.IsStart)
-                {
-                    var server = _initiatorRestore.RestoreServer;
-                    if (server != null)
-                        dictionary.Add(ServerState.RestoreCurrentServer, server.ToString());
-                    else
-                        dictionary.Add(ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString());
-                }
-
-                if (_transferRestore.IsStart)
-                {
-                    var server = _transferRestore.RemoteServer;
-                    if (server != null)
-                        dictionary.Add(ServerState.RestoreTransferServer, server.ToString());
-                    else
-                        dictionary.Add(ServerState.RestoreTransferInProcess, _transferRestore.IsStart.ToString());
-                    if (!string.IsNullOrEmpty(_transferRestore.LastStartedTime))
-                        dictionary.Add(ServerState.RestoreTransferLastStart, _transferRestore.LastStartedTime);
-                }
-                return dictionary;
-            }
-        }
-
-        public AsyncDbWorkModule(WriterNetModule writerNet, AsyncTaskModule async, DbModuleCollection db,
-            RestoreModuleConfiguration initiatorConfiguration,
-            RestoreModuleConfiguration transferConfiguration,
-            RestoreModuleConfiguration timeoutConfiguration,
-            QueueConfiguration queueConfiguration, ServerId local, bool isNeedRestore = false)
-        {
-            Contract.Requires(initiatorConfiguration != null);
-            Contract.Requires(transferConfiguration != null);
-            Contract.Requires(timeoutConfiguration != null);
-            Contract.Requires(queueConfiguration != null);
-            Contract.Requires(db != null);
-            Contract.Requires(writerNet != null);
-            Contract.Requires(async != null);
-            Contract.Requires(local != null);
-
-            _stateHolder = new RestoreStateHolder(isNeedRestore);
-            _saver = LoadRestoreStateFromFile();
-            _initiatorRestore = new InitiatorRestoreModule(initiatorConfiguration, writerNet, async, _stateHolder,
-                _saver);
-            _transferRestore = new TransferRestoreModule(transferConfiguration, writerNet, async, 
-                db, local, queueConfiguration);
-            _timeout = new TimeoutModule(writerNet, async, queueConfiguration,
-                db,  timeoutConfiguration);
-
-        }
-
-        private readonly InitiatorRestoreModule _initiatorRestore;
-        private readonly TransferRestoreModule _transferRestore;
-        private readonly TimeoutModule _timeout;
-        
-        private List<HashMapRecord> _localHash;
-
-        private RestoreStateHolder _stateHolder;
-        private readonly RestoreStateFileLogger _saver;
-
-        public void SetLocalHash(List<HashMapRecord> localHash)
-        {
-            _localHash = localHash;
-        }
+        private RestoreProcessController _serversController;
 
         public override void Start()
         {
+            _writerModel = Kernel.Get<IWriterModel>();
+
+            LoadRestoreStateFromFile(Kernel.Get<IWriterConfiguration>().RestoreStateFilename, _writerModel);
+
+            _initiatorRestore = new InitiatorRestoreModule(Kernel, _serversController);
+            _transferRestore = new TransferRestoreModule(Kernel);
+            _timeout = new TimeoutModule(Kernel);
+            _broadcastRestore = new BroadcastRestoreModule(Kernel, _serversController);
+
             _initiatorRestore.Start();
             _transferRestore.Start();
+            _broadcastRestore.Start();
+
             _timeout.Start();
 
-            if (_saver.IsNeedRestore())
+            if (_serversController.IsNeedRestore())
             {
                 Task.Delay(Consts.StartRestoreTimeout).ContinueWith(task =>
                 {
-                    RestoreFromFile(_localHash, _saver.RestoreServers, _saver.TableName);
+                    //Todo broadcast and check old
+                    RestoreFromFile(_serversController.Servers);
                 });
             }
         }
 
-        public void UpdateModel(List<ServerId> servers)
-        {            
-            _initiatorRestore.UpdateModel(servers);
-            _stateHolder.LocalSendState(true);
-            _saver.Save();
+        public void UpdateModel()
+        {
+            _serversController.UpdateModel(_writerModel.Servers);
         }
 
         #region Restore process
         
-        public void RestoreIncome(ServerId server, bool isSystemUpdated, List<KeyValuePair<string, string>> hash, string tableName, List<HashMapRecord> localMap)
+        public void RestoreIncome(ServerId server, RestoreState state, string tableName)
         {
-            _transferRestore.RestoreIncome(server, isSystemUpdated, hash, tableName, localMap);
+            _transferRestore.Restore(server, state, tableName);
         }
 
-        public void PeriodMessageIncome(ServerId server)
+        public void RestoreInProgressMessage(ServerId server)
         {
-            _initiatorRestore.PeriodMessageIncome(server);
+            if (_logger.IsTraceEnabled)
+                _logger.Trace($"Restore in progress message is income. Server: {server}", "restore");
+
+            if(_initiatorRestore.IsStart)
+                _initiatorRestore.RestoreInProgressMessage(server);
         }
         
-        public void LastMessageIncome(ServerId server)
-        {            
-            _initiatorRestore.LastMessageIncome(server);
+        public void ServerRestoredMessage(RestoreCompleteCommand command)
+        {
+            if (_logger.IsDebugEnabled)
+                _logger.Debug($"Restored message is income. Server: {command.ServerId}", "restore");
+
+            _serversController.ServerRestored(command.ServerId, command.State);
+
+            if (_initiatorRestore.IsStart)
+                _initiatorRestore.ServerRestoredMessage(command.ServerId);
         }
 
-        private RestoreStateFileLogger LoadRestoreStateFromFile()
+        private void LoadRestoreStateFromFile(string filename, IWriterModel writerModel)
         {
-            var saver = new RestoreStateFileLogger(InitInjection.RestoreHelpFile);
-            if (!saver.Load())
-                return new RestoreStateFileLogger(InitInjection.RestoreHelpFile, _stateHolder);
-            
-            _stateHolder = saver.StateHolder;
-            return saver;
+            var saver = new WriterStateFileLogger(filename);
+            saver.Load();
+            _serversController = new RestoreProcessController(saver, writerModel);
         }
 
         #endregion
 
         #region Restore start 
 
-        public void Restore(List<RestoreServer> servers, RestoreState state)
+        public void Restore(RestoreFromDistributorCommand comm)
         {
-            if (_initiatorRestore.IsStart)
-                return;
+            var state = comm.RestoreState;
+            var type = comm.Type;
 
-            _stateHolder.LocalSendState(state);
-            _initiatorRestore.Restore(_localHash, servers, _stateHolder.State);
-            _saver.Save();
+            Restore(state, type, comm.Servers);
         }
 
-        public void Restore(List<RestoreServer> servers, RestoreState state, string tableName)
+        public void Restore(RestoreCommand comm)
         {
-            if (_initiatorRestore.IsStart)
-                return;
+            var state = comm.RestoreState;
+            var type = comm.Type;
+            var destServers = comm.DirectServers;
 
-            _stateHolder.LocalSendState(state);
-            _initiatorRestore.Restore(_localHash, servers, _stateHolder.State, tableName);
-            _saver.Save();
+            Restore(state, type, destServers);
         }
 
-        private void RestoreFromFile(List<HashMapRecord> local, List<RestoreServer> servers, string tableName)
+        public void Restore(RestoreState state, RestoreType type, List<ServerId> destServers)
+        {
+            if (_logger.IsWarnEnabled)
+                _logger.Warn(
+                    $"Attempt to start restore state: {Enum.GetName(typeof(RestoreState), state)}, type: {Enum.GetName(typeof(RestoreType), type)}",
+                    "restore");
+
+            if (IsRestoreStarted)
+            {
+                if (_logger.IsWarnEnabled)
+                    _logger.Warn("Cant run restore. Restore in progress", "restore");
+                return;
+            }
+
+            if (state == RestoreState.Restored)
+            {
+                if (_logger.IsWarnEnabled)
+                    _logger.Warn(
+                        $"Cant run restore in {Enum.GetName(typeof(RestoreState), RestoreState.Restored)} state",
+                        "restore");
+                return;
+            }
+
+            var servers = state == RestoreState.FullRestoreNeed
+                ? _writerModel.Servers
+                : _writerModel.OtherServers;
+
+            if (destServers != null)
+            {
+                RestoreRun(_serversController.ServersOnDirectRestore(servers, destServers), state, type);
+            }
+
+            if (type == RestoreType.Single)
+            {
+                RestoreRun(_serversController.ConvertRestoreServers(servers), state, type);
+            }
+            else if (type == RestoreType.Broadcast)
+            {
+                RestoreRun(_serversController.ConvertRestoreServers(_writerModel.Servers), state, type);
+            }
+        }
+
+        private void RestoreRun(List<RestoreServer> servers, RestoreState state, RestoreType type)
+        {
+            if (type == RestoreType.Single)
+            {
+                if (_initiatorRestore.IsStart)
+                    return;
+
+                _serversController.SetRestoreDate(state, type, servers);
+                _initiatorRestore.Restore(state, Consts.AllTables);
+            }
+            if (type == RestoreType.Broadcast)
+            {
+                if (_broadcastRestore.IsStart)
+                    return;
+
+                _serversController.SetRestoreDate(state, type, servers);
+                _broadcastRestore.Restore(servers, state);                
+            }
+        }
+
+        private void RestoreFromFile(List<RestoreServer> servers)
         {
             if (_initiatorRestore.IsStart)
                 return;
 
-            _initiatorRestore.RestoreFromFile(local, servers, _stateHolder.State, tableName);
-        }       
+            _serversController.SetRestoreDate(_serversController.WriterState, RestoreType.Single, servers);
+            _initiatorRestore.RestoreFromFile(_serversController.WriterState, Consts.AllTables);
+        }
 
         #endregion
+
+        #region Support
 
         public List<ServerId> GetFailedServers()
         {
             return _initiatorRestore.FailedServers;
         }
 
-        public List<RestoreServer> Servers { get { return _initiatorRestore.Servers; } } 
-
-        public ServerId GetRestoreServer()
+        public GetRestoreStateResult GetWriterState(SetRestoreStateCommand command)
         {
-            return _initiatorRestore.RestoreServer;
+            _serversController.DistributorSendState(command.State, command.UpdateState, command.Servers);
+            return GetWriterState();
         }
 
-        public ServerId GetTransferServer()
+        public GetRestoreStateResult GetWriterState()
         {
-            return _transferRestore.RemoteServer;
+            var result = new GetRestoreStateResult(_initiatorRestore.GetState(), _transferRestore.GetState(),
+                _broadcastRestore.GetState(), _serversController.GetState());
+            return result;
         }
 
-        public RestoreState DistributorReceive(RestoreState state)
-        {
-            var old = _stateHolder.State;
-            _stateHolder.DistributorSendState(state);
-                       
-            if (old != _stateHolder.State)
-                _saver.Save();
-            
-            return _stateHolder.State;
-        }
+        #endregion
 
         protected override void Dispose(bool isUserCall)
         {
             if (isUserCall)
             {                
+                _broadcastRestore.Dispose();
                 _transferRestore.Dispose();
                 _initiatorRestore.Dispose();
                 _timeout.Dispose();

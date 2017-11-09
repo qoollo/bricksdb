@@ -7,6 +7,8 @@ namespace Qoollo.Impl.Sql.Internal
 {
     internal class SqlReader : DbReader<SqlDataReader>
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private SqlCommand _command;
         private readonly RentedElementMonitor<SqlConnection> _connection;
         private SqlDataReader _reader;
@@ -32,7 +34,7 @@ namespace Qoollo.Impl.Sql.Internal
                 }
                 catch (SqlException e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                     return false;
                 }
             }
@@ -72,7 +74,7 @@ namespace Qoollo.Impl.Sql.Internal
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Error(e, "Command = " + _command.CommandText);
+                _logger.Error(e, "Command = " + _command.CommandText);
             }
 
         }

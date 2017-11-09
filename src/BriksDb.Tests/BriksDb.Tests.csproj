@@ -97,6 +97,8 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
+    <Compile Include="BroadcastRestoreTest.cs" />
+    <Compile Include="ConfigTests.cs" />
     <Compile Include="NetMock\INetMock.cs" />
     <Compile Include="NetMock\MockConnection.cs" />
     <Compile Include="NetMock\MockReceive.cs" />

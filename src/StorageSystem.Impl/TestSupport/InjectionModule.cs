@@ -21,6 +21,8 @@ namespace Qoollo.Impl.TestSupport
             BindClientAndServer<ICommonProxyNetReceiver>();
 
             BindClientAndServer<ICommonCommunicationNet>();
+
+            //Bind<IGlobalQueue>().To<GlobalQueue>();
         }
 
         protected virtual void BindClientAndServer<TType>()

@@ -68,6 +68,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Ninject, Version=3.2.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Ninject.3.2.2.0\lib\net45-full\Ninject.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Qoollo.Logger, Version=2.2.5646.31970, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Qoollo.Logger.2.2.0\lib\net45\Qoollo.Logger.dll</HintPath>
@@ -90,16 +94,6 @@
     <Compile Include="CollectorGate\QueryParameter.cs" />
     <Compile Include="CollectorGate\StorageDbReader.cs" />
     <Compile Include="CollectorGate\SystemSearchState.cs" />
-    <Compile Include="Configuration\CollectorConfiguration.cs" />
-    <Compile Include="Configuration\CollectorNetConfiguration.cs" />
-    <Compile Include="Configuration\CommonConfiguration.cs" />
-    <Compile Include="Configuration\StorageNetConfiguration.cs" />
-    <Compile Include="Configuration\DistributorConfiguration.cs" />
-    <Compile Include="Configuration\DistributorNetConfiguration.cs" />
-    <Compile Include="Configuration\StorageConfiguration.cs" />
-    <Compile Include="Configuration\NetConfiguration.cs" />
-    <Compile Include="Configuration\ProxyConfiguration.cs" />
-    <Compile Include="Configuration\TimeoutConfiguration.cs" />
     <Compile Include="DistributorGate\DistributorApi.cs" />
     <Compile Include="DistributorGate\DistributorHandler.cs" />
     <Compile Include="DistributorGate\DistributorHandlerEmpty.cs" />

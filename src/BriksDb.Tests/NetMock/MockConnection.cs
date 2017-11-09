@@ -1,10 +1,7 @@
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
-using Ninject;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Modules.Net.ConnectionBehavior;
-using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Tests.NetMock
 {
@@ -15,7 +12,7 @@ namespace Qoollo.Tests.NetMock
 
         public MockConnection(ServerId server) : base(server)
         {
-            _netMock = InitInjection.Kernel.Get<INetMock>();
+            _netMock = NetMock.Instance;
         }
 
         public override bool Connect()

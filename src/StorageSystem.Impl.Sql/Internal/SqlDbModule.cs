@@ -12,6 +12,8 @@ namespace Qoollo.Impl.Sql.Internal
 {
     internal class SqlDbModule : DbImplModuleWithPool<SqlConnection, SqlConnectionParams, SqlCommand, SqlDataReader>
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public SqlDbModule(SqlConnectionParams connectionParam, int maxCountElementInPool, int trimPeriod)
             : base(connectionParam, maxCountElementInPool, trimPeriod)
         {
@@ -26,23 +28,26 @@ namespace Qoollo.Impl.Sql.Internal
                 try
                 {
                     command.ExecuteNonQuery();
-                    command.Dispose();
                     ret = new SuccessResult();
                 }
                 catch (SqlException e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                     ret = new FailNetResult(e.Message);
                 }
                 catch (IOException e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                     ret = new FailNetResult(e.Message);
                 }
                 catch (InvalidOperationException e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                     ret = new FailNetResult(e.Message);
+                }
+                finally
+                {
+                    command.Dispose();
                 }
             }
 
@@ -68,7 +73,7 @@ namespace Qoollo.Impl.Sql.Internal
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
                 return false;
             }
             return true;
@@ -88,7 +93,7 @@ namespace Qoollo.Impl.Sql.Internal
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
             }
         }
     }

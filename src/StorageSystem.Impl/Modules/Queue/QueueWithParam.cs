@@ -6,20 +6,21 @@ namespace Qoollo.Impl.Modules.Queue
     internal class QueueWithParam<T> : SingleQueue<T>
     {
         private Action<T> _action;
-        private QueueConfiguration _configuration;
+        private readonly SingleQueueConfiguration _configuration;
 
-        public QueueWithParam(string name):base(name)
-        {            
+        public QueueWithParam(string name, SingleQueueConfiguration configuration):base(name)
+        {
+            _configuration = configuration;
         }
 
-        public void Registrate(QueueConfiguration configuration, Action<T> action)
-        {
-            Registrate(configuration.ProcessotCount, configuration.MaxSizeQueue, action);
-        }
+        //public void Registrate(QueueConfiguration configuration, Action<T> action)
+        //{
+        //    Registrate(configuration.ProcessotCount, configuration.MaxSizeQueue, action);
+        //}
 
-        public void RegistrateWithStart(QueueConfiguration configuration, Action<T> action)
+        public void RegistrateWithStart( Action<T> action)
         {
-            Registrate(configuration, action);
+            Registrate(action);
             Start();
         }
 
@@ -28,15 +29,9 @@ namespace Qoollo.Impl.Modules.Queue
             _action = action;
         }
 
-        public void SetConfiguration(QueueConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
-
         public override void Start()
         {
-            if (_configuration != null)
-                Registrate(_configuration, _action);
+            Registrate(_configuration.CountThreads, _configuration.MaxSize, _action);
 
             base.Start();
         }

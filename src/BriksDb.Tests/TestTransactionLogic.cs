@@ -24,9 +24,9 @@ namespace Qoollo.Tests
             public Action<InnerData> DataTimeout;
 
             public TestCache(DistributorCacheConfiguration cacheConfiguration)
-                : base(cacheConfiguration.TimeAliveBeforeDeleteMls)
+                : base(TimeSpan.FromMilliseconds(cacheConfiguration.TimeAliveBeforeDeleteMls))
             {                
-                _aliveTimeout = cacheConfiguration.TimeAliveAfterUpdateMls;
+                _aliveTimeout = TimeSpan.FromMilliseconds(cacheConfiguration.TimeAliveAfterUpdateMls);
             }
 
             public void Update(string key, TestData obj)
@@ -45,8 +45,7 @@ namespace Qoollo.Tests
         public void DistributorData_TestCacheLock_TwoThread_IncrementCounter()
         {
             const string key = "123";
-            var cache = new TestCache(new DistributorCacheConfiguration(TimeSpan.FromMinutes(10),
-                    TimeSpan.FromMinutes(10)));
+            var cache = new TestCache(new DistributorCacheConfiguration(100000, 100000));
 
             var data = new TestData {DistributorData = new DistributorData()};
             cache.AddToCache(key, data);

@@ -20,8 +20,8 @@ namespace Qoollo.Impl.NetInterfaces.Data
                 Security = {Mode = SecurityMode.None},
                 MaxReceivedMessageSize = 2147483647,
                 MaxBufferSize = 2147483647,
-                OpenTimeout = timeoutConfiguration.OpenTimeout,
-                SendTimeout = timeoutConfiguration.SendTimeout,
+                OpenTimeout = TimeSpan.FromMilliseconds(timeoutConfiguration.OpenTimeoutMls),
+                SendTimeout = TimeSpan.FromMilliseconds(timeoutConfiguration.SendTimeoutMls),
             };
             try
             {
@@ -44,11 +44,11 @@ namespace Qoollo.Impl.NetInterfaces.Data
 
         }
 
-        public static ServiceHost CreateServer<T>(object server, NetReceiverConfiguration configuration)
+        public static ServiceHost CreateServer<T>(object server, NetConfiguration configuration)
         {
             var host = new ServiceHost(server,
                 new Uri(string.Format("net.tcp://{0}:{1}/{2}", configuration.Host, configuration.Port,
-                    configuration.Service)));
+                    configuration.ServiceName)));
 
             var binding = new NetTcpBinding
             {

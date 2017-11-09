@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.TransactionTypes;
@@ -6,21 +7,7 @@ using Qoollo.Impl.Configurations;
 
 namespace Qoollo.Impl.Modules.Queue
 {
-    internal static class GlobalQueue
-    {
-        private static GlobalQueueInner _queue = new GlobalQueueInner();
-
-        public static GlobalQueueInner Queue { get { return _queue; } }
-
-        public static void SetQueue(GlobalQueueInner queue)
-        {
-            _queue = queue;
-        }
-
-        public static GlobalQueueInner GetQueue() => _queue;
-    }
-
-    internal class GlobalQueueInner:ControlModule
+    internal class GlobalQueue : ControlModule, IGlobalQueue
     {
         private readonly QueueWithParam<InnerData> _proxyInputWriteAndUpdateQueue;
         public QueueWithParam<InnerData> ProxyInputWriteAndUpdateQueue { get { return _proxyInputWriteAndUpdateQueue; } }
@@ -61,28 +48,33 @@ namespace Qoollo.Impl.Modules.Queue
         private readonly QueueWithParam<InnerData> _dbTimeoutQueue;
         public QueueWithParam<InnerData> DbTimeoutQueue { get { return _dbTimeoutQueue; } }
 
-        public GlobalQueueInner()
+        public string Name { get; }
+
+        public GlobalQueue(StandardKernel kernel, string name = ""):base(kernel)
         {
-            _proxyInputWriteAndUpdateQueue = new QueueWithParam<InnerData>("proxyInputWriteAndUpdateQueue");
-            _proxyInputOtherQueue = new QueueWithParam<InnerData>("proxyInputOtherQueue");
-            _proxyDistributorQueue = new QueueWithParam<NetCommand>("proxyDistributorQueue");
-            _distributorDistributorQueue = new QueueWithParam<NetCommand>("distributorDistributorQueue");
-            _dbInputRollbackQueue = new QueueWithParam<InnerData>("dbInputRollbackQueue");
-            _dbInputProcessQueue = new QueueWithParam<InnerData>("dbInputProcessQueue");
-            _dbDistributorInnerQueue = new QueueWithParam<NetCommand>("dbDistributorInnerQueue");
-            _dbRestoreQueue = new QueueWithParam<InnerData>("dbRestoreQueue");
-            _dbRestorePackageQueue = new QueueWithParam<List<InnerData>>("dbRestorePackageQueue");
-            _transactionQueue = new QueueWithParam<Transaction>("transactionQueue");
-            _transactionAnswerQueue = new QueueWithParam<Transaction>("transactionAnswerQueue");
-            _distributorTransactionCallbackQueue = new QueueWithParam<Transaction>("distributorTransactionCallbackQueue");
-            _dbTimeoutQueue = new QueueWithParam<InnerData>("dbTimeoutQueue");
+            Name = name;
+
+            var configuration = kernel.Get<IQueueConfiguration>();
+
+            _proxyInputWriteAndUpdateQueue = new QueueWithParam<InnerData>("proxyInputWriteAndUpdateQueue", configuration.ProxyInput);
+            _proxyInputOtherQueue = new QueueWithParam<InnerData>("proxyInputOtherQueue", configuration.ProxyInputOther);
+            _proxyDistributorQueue = new QueueWithParam<NetCommand>("proxyDistributorQueue", configuration.ProxyDistributor);
+
+            _distributorDistributorQueue = new QueueWithParam<NetCommand>("distributorDistributorQueue", configuration.DistributorDistributor);
+            _transactionQueue = new QueueWithParam<Transaction>("transactionQueue", configuration.DistributorTransaction);
+            _distributorTransactionCallbackQueue = new QueueWithParam<Transaction>("distributorTransactionCallbackQueue", configuration.DistributorTransactionCallback);
+
+            _dbInputRollbackQueue = new QueueWithParam<InnerData>("dbInputRollbackQueue", configuration.WriterInputRollback);
+            _dbInputProcessQueue = new QueueWithParam<InnerData>("dbInputProcessQueue", configuration.WriterInput);
+            _dbDistributorInnerQueue = new QueueWithParam<NetCommand>("dbDistributorInnerQueue", configuration.WriterDistributor);
+            _dbRestoreQueue = new QueueWithParam<InnerData>("dbRestoreQueue", configuration.WriterRestore);
+            _dbRestorePackageQueue = new QueueWithParam<List<InnerData>>("dbRestorePackageQueue", configuration.WriterRestorePackage);
+            _transactionAnswerQueue = new QueueWithParam<Transaction>("transactionAnswerQueue", configuration.WriterTransactionAnswer);
+            _dbTimeoutQueue = new QueueWithParam<InnerData>("dbTimeoutQueue", configuration.WriterTimeout);
         }
 
         public override void Start()
         {
-            //TODO не трогать!
-            _transactionQueue.SetConfiguration(new QueueConfiguration(1, 10000));
-
             _proxyInputWriteAndUpdateQueue.Start();
             _proxyInputOtherQueue.Start();
             _proxyDistributorQueue.Start();

@@ -1,34 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
-using Qoollo.Impl.Collector.Distributor;
+using Ninject;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Data;
 
 namespace Qoollo.Impl.Collector.CollectorNet
 {
-    internal class CollectorNetModule:NetModule
+    internal class CollectorNetModule : NetModule, ICollectorNetModule
     {
-        private readonly DistributorModule _distributor;
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public CollectorNetModule(ConnectionConfiguration connectionConfiguration,
-            ConnectionTimeoutConfiguration connectionTimeout, DistributorModule distributor)
-            : base(connectionConfiguration, connectionTimeout)
+        private IDistributorModule _distributor;
+
+        public CollectorNetModule(StandardKernel kernel)
+            : base(kernel)
         {
-            _distributor = distributor;
+        }
+
+        public override void Start()
+        {
+            _distributor = Kernel.Get<IDistributorModule>();
+
+            base.Start();
         }
 
         #region Connect to Writer
 
         public bool ConnectToWriter(ServerId server)
         {
-            return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToWriter(id, configuration, time));
+            return ConnectToServer(server, 
+                (id, config) => new SingleConnectionToWriter(Kernel, id, config));
         }
 
         public void PingWriter(List<ServerId> servers, Action<ServerId> serverAvailable)
@@ -48,7 +55,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
 
             if (connection == null)
             {
-                Logger.Logger.Instance.DebugFormat("CollectorNetModule: process server not found  server = {0}", server);
+                _logger.DebugFormat("CollectorNetModule: process server not found  server = {0}", server);
                 _distributor.ServerUnavailable(server);
                 return new Tuple<RemoteResult, SelectSearchResult>(new ServerNotFoundResult(), null);
             }
@@ -56,7 +63,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
             var ret = connection.SelectQuery(description);
             if (ret.Item1 is FailNetResult)
             {
-                Logger.Logger.Instance.DebugFormat("CollectorNetModule: process fail result  server = {0}", server);
+                _logger.DebugFormat("CollectorNetModule: process fail result  server = {0}, result = {1}", server, ret.Item1);
                 _distributor.ServerUnavailable(server);
                 RemoveConnection(server);
             }
@@ -71,7 +78,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
         public bool ConnectToDistributor(ServerId server)
         {
             return ConnectToServer(server,
-                (id, configuration, time) => new SingleConnectionToDistributor(id, configuration, time));
+                (id, config) => new SingleConnectionToDistributor(Kernel, id, config));
         }
 
         public void PingDistributors(List<ServerId> servers)
@@ -91,7 +98,7 @@ namespace Qoollo.Impl.Collector.CollectorNet
 
             if (connection == null)
             {
-                Logger.Logger.Instance.DebugFormat("CollectorNetModule: process server not found  server = {0}", server);
+                _logger.DebugFormat("CollectorNetModule: process server not found  server = {0}", server);
                 _distributor.ServerUnavailable(server);
                 return new ServerNotAvailable(server);
             }
@@ -100,6 +107,11 @@ namespace Qoollo.Impl.Collector.CollectorNet
         }
 
         #endregion
+
+        public new List<ServerId> GetServersByType(Type type)
+        {
+            return base.GetServersByType(type);
+        }
     }
 
 }

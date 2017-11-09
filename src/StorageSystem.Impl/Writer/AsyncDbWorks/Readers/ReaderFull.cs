@@ -1,25 +1,26 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using Qoollo.Impl.Configurations;
+using Ninject;
 using Qoollo.Impl.Modules.Queue;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
 {
     internal abstract class ReaderFull<TType> : ReaderFullBase
-    {        
-        protected ReaderFull(Action<TType> process, QueueConfiguration queueConfiguration,
-            QueueWithParam<TType> queue)
+    {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
+        protected ReaderFull(StandardKernel kernel, Action<TType> process, int packageSize,
+            QueueWithParam<TType> queue):base(kernel)
         {
             Contract.Requires(process != null);
-            Contract.Requires(queueConfiguration != null);
             _process = process;
-            _queueConfiguration = queueConfiguration;
+            _packageSize = packageSize;
             _queue = queue;
         }
 
         private SingleReaderBase _reader;
         private readonly Action<TType> _process;
-        private readonly QueueConfiguration _queueConfiguration;
+        private readonly int _packageSize;
         private readonly QueueWithParam<TType> _queue;
 
         protected abstract SingleReaderBase CreateReader(int countElements);
@@ -30,8 +31,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
         {
             get
             {
-                Logger.Logger.Instance.Trace(
-                    string.Format("remote = {0}, queue = {1}", _reader.IsFinish, _queue.Count), "restore");
+                if(_logger.IsTraceEnabled)
+                    _logger.Trace($"remote = {_reader.IsFinish}, queue = {_queue.Count}", "restore");
                 return _reader.IsFinish && _queue.Count == 0;
             }
         }
@@ -40,21 +41,21 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
         {
             get
             {
-                Logger.Logger.Instance.Trace(string.Format("remote = {0}, queue = {1}", _reader.IsWait, _queue.Count),
-                    "restore");
+                if (_logger.IsTraceEnabled)
+                    _logger.Trace($"remote = {_reader.IsWait}, queue = {_queue.Count}", "restore");
                 return _reader.IsWait && _queue.Count == 0;
             }
         }
 
         public override void Start()
         {
-            _queue.RegistrateWithStart(_queueConfiguration, data =>
+            _queue.RegistrateWithStart(data =>
             {
                 _process(data);
                 _reader.GetAnotherData();
             });
 
-            _reader = CreateReader(_queueConfiguration.MaxSizeQueue);
+            _reader = CreateReader(_packageSize);
             _reader.Start();
         }
 

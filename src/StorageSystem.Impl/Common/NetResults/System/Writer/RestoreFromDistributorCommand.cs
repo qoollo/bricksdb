@@ -9,15 +9,26 @@ namespace Qoollo.Impl.Common.NetResults.System.Writer
     internal class RestoreFromDistributorCommand:NetCommand
     {
         [DataMember]
+        public RestoreType Type { get; set; }
+
+        [DataMember]
         public RestoreState RestoreState { get; set; }
 
         [DataMember]
-        public ServerId Server { get; set; } 
+        public List<ServerId> Servers { get; set; } 
 
-        public RestoreFromDistributorCommand(RestoreState state = RestoreState.Default, ServerId server = null)
+        public RestoreFromDistributorCommand(RestoreState state, ServerId server, RestoreType type = RestoreType.Single)
         {
+            Type = type;
             RestoreState = state;
-            Server = server;
+            Servers = new List<ServerId> {server};
+        }
+
+        public RestoreFromDistributorCommand(RestoreState state, List<ServerId> servers, RestoreType type = RestoreType.Single)
+        {
+            Type = type;
+            RestoreState = state;
+            Servers = servers;
         }
     }
 }

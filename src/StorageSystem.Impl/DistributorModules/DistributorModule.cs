@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Threading;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Commands;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -11,11 +9,11 @@ using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.NetResults.Event;
 using Qoollo.Impl.Common.NetResults.System.Collector;
 using Qoollo.Impl.Common.NetResults.System.Distributor;
-using Qoollo.Impl.Common.NetResults.System.Writer;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.Model;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
@@ -24,75 +22,58 @@ using Qoollo.Impl.NetInterfaces.Data;
 
 namespace Qoollo.Impl.DistributorModules
 {
-    internal class DistributorModule : ControlModule
+    internal class DistributorModule : ControlModule, IDistributorModule
     {
-        public ServerId LocalForDb
-        {
-            get { return _localfordb; }
-        }
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public DistributorModule(
-            AsyncTasksConfiguration asyncPing,
-            AsyncTasksConfiguration asyncCheck,
-            DistributorHashConfiguration configuration,
-            QueueConfiguration queueConfiguration,
-            DistributorNetModule distributorNet,
-            ServerId localfordb,
-            ServerId localforproxy,
-            HashMapConfiguration hashMapConfiguration, bool autoRestoreEnable = false)
-        {
-            Contract.Requires(configuration != null);
-            Contract.Requires(queueConfiguration != null);
-            Contract.Requires(distributorNet != null);
-            Contract.Requires(localfordb != null);
-            Contract.Requires(localforproxy != null);
-            Contract.Requires(asyncPing != null);
-            _asyncPing = asyncPing;
-            _asyncTaskModule = new AsyncTaskModule(queueConfiguration);
+        public ServerId LocalForDb => _localfordb;
 
-            _queueConfiguration = queueConfiguration;
-            _modelOfDbWriters = new WriterSystemModel(configuration, hashMapConfiguration);
+        public DistributorModule(StandardKernel kernel) :base(kernel)
+        {
+            _asyncTaskModule = new AsyncTaskModule(kernel);
+
             _modelOfAnotherDistributors = new DistributorSystemModel();
-            _distributorNet = distributorNet;
-            _localfordb = localfordb;
-            _localforproxy = localforproxy;
-            _autoRestoreEnable = autoRestoreEnable;
-            _asyncCheck = asyncCheck;
-            _queue = GlobalQueue.Queue;
         }
 
-        private readonly WriterSystemModel _modelOfDbWriters;
+        private WriterSystemModel _modelOfDbWriters;
+        private IGlobalQueue _queue;
+        private IDistributorNetModule _distributorNet;
         private readonly DistributorSystemModel _modelOfAnotherDistributors;
-        private readonly QueueConfiguration _queueConfiguration;
-        private readonly DistributorNetModule _distributorNet;
-        private readonly ServerId _localfordb;
-        private readonly ServerId _localforproxy;
-        private readonly GlobalQueueInner _queue;
+        private ServerId _localfordb;
+        private ServerId _localforproxy;
         private readonly AsyncTaskModule _asyncTaskModule;
-        private readonly AsyncTasksConfiguration _asyncPing;
-        private readonly AsyncTasksConfiguration _asyncCheck;
-        private bool _autoRestoreEnable;
-        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private IDistributorConfiguration _config;
+        private RestoreWritersModule _restoreWriters;
 
         public override void Start()
-        {            
+        {
+            _distributorNet = Kernel.Get<IDistributorNetModule>();
+            _queue = Kernel.Get<IGlobalQueue>();
+
+            var commonConfig = Kernel.Get<ICommonConfiguration>();
+            _modelOfDbWriters = new WriterSystemModel(Kernel, commonConfig.CountReplics);
+
+            _config = Kernel.Get<IDistributorConfiguration>();
+            _localfordb = _config.NetWriter.ServerId;
+            _localforproxy = _config.NetProxy.ServerId;
+
             RegistrateCommands();
       
             _modelOfDbWriters.Start();
+            _restoreWriters = new RestoreWritersModule(Kernel, _modelOfDbWriters, _asyncTaskModule);
+            _restoreWriters.Start();
 
             _asyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_asyncPing.TimeoutPeriod, PingProcess, AsyncTasksNames.AsyncPing, -1), false);
+                new AsyncDataPeriod(_config.Timeouts.ServersPingMls.PeriodTimeSpan, PingProcess,
+                    AsyncTasksNames.AsyncPing, -1), false);
 
             _asyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_asyncCheck.TimeoutPeriod, CheckRestore, AsyncTasksNames.CheckRestore, -1), false);
-
-            _asyncTaskModule.AddAsyncTask(
-                new AsyncDataPeriod(_asyncCheck.TimeoutPeriod, DistributerPing, AsyncTasksNames.CheckDistributors, -1),
-                false);
+                new AsyncDataPeriod(_config.Timeouts.DistributorsPingMls.PeriodTimeSpan, DistributerPing,
+                    AsyncTasksNames.CheckDistributors, -1), false);
 
             _asyncTaskModule.Start();
 
-            StartAsync(_queueConfiguration);
+            StartAsync();
         }
 
         private void RegistrateCommands()
@@ -112,7 +93,7 @@ namespace Qoollo.Impl.DistributorModules
 
             RegistrateAsync<NetCommand, NetCommand, RemoteResult>(
                 _queue.DistributorDistributorQueue,
-                command => Logger.Logger.Instance.InfoFormat("Not supported command type = {0}", command.GetType()),
+                command => _logger.InfoFormat("Not supported command type = {0}", command.GetType()),
                 () => new SuccessResult());
 
             RegistrateAsync<Common.Data.TransactionTypes.Transaction,
@@ -136,7 +117,8 @@ namespace Qoollo.Impl.DistributorModules
 
         private void ServerNotAvailableInner(ServerNotAvailableCommand command)
         {
-            Logger.Logger.Instance.Debug("Distributor: Server not available " + command.Server);
+            if (_logger.IsDebugEnabled)
+                _logger.Debug("Distributor: Server not available " + command.Server);
             _modelOfDbWriters.ServerNotAvailable(command.Server);
         }
 
@@ -144,7 +126,7 @@ namespace Qoollo.Impl.DistributorModules
         {
             try
             {
-                var map = _modelOfDbWriters.GetAllServers2();
+                var map = _modelOfDbWriters.GetAllServers();
                 _distributorNet.PingWriters(map, _modelOfDbWriters.ServerAvailable);
 
                 map = _distributorNet.GetServersByType(typeof(SingleConnectionToProxy));
@@ -164,46 +146,6 @@ namespace Qoollo.Impl.DistributorModules
             
         }
 
-        private void CheckRestore(AsyncData data)
-        {
-            CheckRestoreInner(true);
-        }
-
-        private void CheckRestoreInner(bool isRestore = false)
-        {
-            var servers = _modelOfDbWriters.GetAllAvailableServers();
-            servers.ForEach(x =>
-            {
-                var result = _distributorNet.SendToWriter(x, new SetGetRestoreStateCommand(x.RestoreState));
-
-                if (result is SetGetRestoreStateResult)
-                {
-                    var command = ((SetGetRestoreStateResult)result);
-                    x.UpdateState(command.State);
-                    x.SetInfoMessageList(command.FullState);
-                }
-            });
-
-            _lock.EnterReadLock();
-            var autoRestore = isRestore && _autoRestoreEnable;
-            _lock.ExitReadLock();
-
-            if (autoRestore)
-                RestoreWriters(servers);
-        }
-
-
-        private void RestoreWriters(List<WriterDescription> servers)
-        {
-            if (!servers.All(x => x.IsAvailable && !x.IsRestoreInProcess))
-                return;
-            var server = servers.FirstOrDefault(x => x.RestoreState == RestoreState.SimpleRestoreNeed);
-            if (server != null)
-            {
-                _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand());
-            }
-        }
-
         private void DistributerPing(AsyncData data)
         {
             var servers = _modelOfAnotherDistributors.GetDistributorList();
@@ -220,7 +162,7 @@ namespace Qoollo.Impl.DistributorModules
                 {
                     var message = ((InnerFailResult)result).Description;
                     x.SetInfoMessage(ServerState.Update, message);
-                    Logger.Logger.Instance.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
+                    _logger.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
 
                 }
 
@@ -262,7 +204,7 @@ namespace Qoollo.Impl.DistributorModules
                     {
                         var message = ((InnerFailResult)result).Description;
                         x.SetInfoMessage(ServerState.Update, message);
-                        Logger.Logger.Instance.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
+                        _logger.ErrorFormat("Hash update fail. Server: {0}, Message: {1}", x, message);
 
                     }
                 }
@@ -272,7 +214,8 @@ namespace Qoollo.Impl.DistributorModules
 
             if (failedWriters.Count != 0)
             {
-                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(_asyncCheck.TimeoutPeriod,
+                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(
+                    _config.Timeouts.UpdateHashMapMls.PeriodTimeSpan,
                     data =>
                     {
                         var list = UpdateWritersAsync(failedWriters, command);
@@ -292,7 +235,8 @@ namespace Qoollo.Impl.DistributorModules
 
             if (failedDistributors.Count != 0)
             {
-                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(_asyncCheck.TimeoutPeriod,
+                _asyncTaskModule.AddAsyncTask(new AsyncDataPeriod(
+                    _config.Timeouts.UpdateHashMapMls.PeriodTimeSpan,
                     data =>
                     {
                         var list = UpdateDistributorsAsync(failedDistributors, command);
@@ -313,9 +257,6 @@ namespace Qoollo.Impl.DistributorModules
 
         public List<WriterDescription> GetDestination(InnerData data, bool needAllServers)
         {
-            Logger.Logger.Instance.Trace(
-                string.Format("Distributor: Get destination event hash = {0}", data.Transaction.DataHash));
-
             var ret = !needAllServers
                 ? _modelOfDbWriters.GetDestination(data)
                 : _modelOfDbWriters.GetAllAvailableServers();
@@ -332,6 +273,11 @@ namespace Qoollo.Impl.DistributorModules
             Execute<ServerNotAvailableCommand, RemoteResult>(new ServerNotAvailableCommand(server));
         }
 
+        public new TResult Execute<TValue, TResult>(TValue value) where TValue : class
+        {
+            return base.Execute<TValue, TResult>(value);
+        }
+
         public void ProcessTransaction(Common.Data.TransactionTypes.Transaction transaction)
         {
             _queue.TransactionQueue.Add(transaction);            
@@ -345,7 +291,7 @@ namespace Qoollo.Impl.DistributorModules
         {
             mode = mode.ToLower();
             if (mode != "start" && mode != "disable" && mode != "enable" && mode != "run" || string.IsNullOrEmpty(mode))
-                return string.Format("Value {0} is not recognized. Use start, disable, enable, run", mode);
+                return $"Value {mode} is not recognized. Use start, disable, enable, run";
 
             var servers = _modelOfDbWriters.GetAllAvailableServers();
             var command = new DeleteCommand(mode);
@@ -363,17 +309,14 @@ namespace Qoollo.Impl.DistributorModules
             _asyncTaskModule.DeleteTask(AsyncTasksNames.UpdateHashFileForWriter);
 
             UpdateWritersAndDistributors();
+            _restoreWriters.UpdateState();
 
             return Errors.NoErrors;
         }
 
         public string GetServersState()
         {
-            var servers = _modelOfDbWriters.GetAllAvailableServers();
-            if (servers.TrueForAll(x => x.IsAvailable))
-                CheckRestoreInner();
-            return _modelOfDbWriters.Servers.Aggregate(string.Empty,
-                (current, writerDescription) => current + "\n" + writerDescription.StateString);
+            return _restoreWriters.GetServersState();
         }
 
         public List<ServerId> GetDistributors()
@@ -382,25 +325,14 @@ namespace Qoollo.Impl.DistributorModules
         }
 
         public string AutoRestoreSetMode(bool mode)
-        {            
-            _lock.EnterWriteLock();
-            _autoRestoreEnable = mode;
-            _lock.ExitWriteLock();
-
+        {   
+            _restoreWriters.AutoRestoreSetMode(mode);
             return Errors.NoErrors;
         }
 
         public string Restore(ServerId server, ServerId restoreDest, RestoreState state)
         {
-            if (!_modelOfDbWriters.Servers.Contains(server))
-                return "non existed server";
-
-            var firstOrDefault = _modelOfDbWriters.Servers.FirstOrDefault(x => Equals(x, server));
-            if ((state == RestoreState.Default && firstOrDefault.RestoreState == RestoreState.Restored))
-                return string.Format("server {0} is in restore mode. Change restore mode", restoreDest);
-            var result = _distributorNet.SendToWriter(server, new RestoreFromDistributorCommand(state, restoreDest));
-
-            return result.IsError ? result.ToString() : Errors.NoErrors;
+            return _restoreWriters.Restore(server, restoreDest, state);
         }
 
         #endregion

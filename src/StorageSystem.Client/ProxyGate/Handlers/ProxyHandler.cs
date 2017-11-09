@@ -39,7 +39,7 @@ namespace Qoollo.Client.ProxyGate.Handlers
         }
 
         public RequestDescription CreateSync(TKey key, TValue value)
-        {
+        {   
             var utr = _api.CreateSync(key, value);
 
             RequestDescription ret = null;

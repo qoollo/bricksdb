@@ -1,6 +1,5 @@
 using System.Diagnostics.Contracts;
 using Qoollo.Client.CollectorGate;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.WriterGate;
 
 namespace Qoollo.Benchmark.Send
@@ -9,10 +8,7 @@ namespace Qoollo.Benchmark.Send
     {
         public ICollectorApi Api { get { return _api; } }
 
-        public CollectorGate(string tableName, DbFactory dbFactory,
-            CollectorConfiguration collectorConfiguration, CollectorNetConfiguration netConfiguration,
-            CommonConfiguration commonConfiguration, TimeoutConfiguration timeoutConfiguration)
-            : base(collectorConfiguration, netConfiguration, commonConfiguration, timeoutConfiguration)
+        public CollectorGate(string tableName, DbFactory dbFactory)
         {
             Contract.Requires(!string.IsNullOrEmpty(tableName));
             Contract.Requires(_dbFactory != null);

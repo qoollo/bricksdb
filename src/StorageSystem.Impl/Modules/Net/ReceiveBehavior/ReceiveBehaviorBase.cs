@@ -1,11 +1,10 @@
-﻿using System.Runtime.Serialization;
-using Qoollo.Impl.Configurations;
+﻿using Qoollo.Impl.Configurations;
 
 namespace Qoollo.Impl.Modules.Net.ReceiveBehavior
 {
     internal abstract class ReceiveBehaviorBase<TReceive> : IReceiveBehavior<TReceive>
     {
-        protected ReceiveBehaviorBase(NetReceiverConfiguration configuration, object server)
+        protected ReceiveBehaviorBase(NetConfiguration configuration, object server)
         {
         }
 

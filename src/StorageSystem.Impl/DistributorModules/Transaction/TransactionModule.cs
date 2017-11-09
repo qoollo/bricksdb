@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
@@ -8,46 +8,46 @@ using Qoollo.Impl.Common.NetResults.System.Distributor;
 using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
-using Qoollo.Impl.DistributorModules.Caches;
-using Qoollo.Impl.DistributorModules.DistributorNet.Interfaces;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.DistributorModules.Transaction
 {
-    internal class TransactionModule : ControlModule
+    internal class TransactionModule : ControlModule, ITransactionModule
     {
-        public TransactionModule(INetModule net, TransactionConfiguration transactionConfiguration,
-            int countReplics, DistributorTimeoutCache cache)
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
+        public TransactionModule(StandardKernel kernel) :base(kernel)
         {
-            Contract.Requires(net != null);
-            Contract.Requires(transactionConfiguration != null);
-            Contract.Requires(countReplics>0);            
-            Contract.Requires(cache != null);
-
-            _queue = GlobalQueue.Queue;
-
-            _transactionPool = new TransactionPool(transactionConfiguration.ElementsCount, net, countReplics);
-            _countReplics = countReplics;
-            _net = net;
-            _cache = cache;
-            _cache.DataTimeout += DataTimeout;
         }
 
-        private readonly int _countReplics;
-        private readonly DistributorTimeoutCache _cache;
-        private readonly TransactionPool _transactionPool;
-        private readonly INetModule _net;
-        private readonly GlobalQueueInner _queue;
+        private int _countReplics;
+        private IDistributorTimeoutCache _cache;
+        private TransactionPool _transactionPool;
+        private IDistributorNetModule _net;
+        private  IGlobalQueue _queue;
 
         #region ControlModule
 
         public override void Start()
-        {            
+        {
+            var config = Kernel.Get<ICommonConfiguration>();
+            var configDistr = Kernel.Get<IDistributorConfiguration>();
+            _countReplics = config.CountReplics;
+            _transactionPool = new TransactionPool(Kernel, configDistr.CountThreads, config.CountReplics);
+
+            _queue = Kernel.Get<IGlobalQueue>();
+            _net = Kernel.Get<IDistributorNetModule>();
+            _cache = Kernel.Get<IDistributorTimeoutCache>();
+            _cache.DataTimeout += DataTimeout;
+
             RegistrateAsync<Common.Data.TransactionTypes.Transaction, Common.Data.TransactionTypes.Transaction,
                 RemoteResult>(_queue.TransactionQueue, TransactionAnswerIncome,
                     () => new SuccessResult());
+
+            _transactionPool.Start();
             _transactionPool.FillPoolUpTo(_transactionPool.MaxElementCount);
 
             StartAsync();
@@ -63,10 +63,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         private void ExecuteTransaction(InnerData data, TransactionExecutor executor)
         {
-            Logger.Logger.Instance.Debug(string.Format("Transaction process data = {0}", data.Transaction.DataHash));
-
             data.Transaction.StartTransaction();
-
             executor.Commit(data);
         }
 
@@ -170,7 +167,7 @@ namespace Qoollo.Impl.DistributorModules.Transaction
 
         private void DataTimeout(InnerData data)
         {
-            Logger.Logger.Instance.ErrorFormat("Operation timeout with key {0}", data.Transaction.CacheKey);
+            _logger.ErrorFormat("Operation timeout with key {0}", data.Transaction.OperationName);
 
             data.Transaction.SetError();
             data.Transaction.AddErrorDescription(Errors.TimeoutExpired);
@@ -182,8 +179,9 @@ namespace Qoollo.Impl.DistributorModules.Transaction
         {
             data.Transaction.Complete();
 
-            Logger.Logger.Instance.Trace(string.Format("Mainlogic: process data = {0}, result = {1}",
-                data.Transaction.CacheKey, !data.Transaction.IsError));
+            if (_logger.IsInfoEnabled)
+                _logger.Trace(
+                    $"Mainlogic: process data = {data.Transaction.OperationName}, result = {!data.Transaction.IsError} {data.Transaction.ErrorDescription}");
 
             if (data.Transaction.OperationType == OperationType.Sync)
                 ProcessSyncTransaction(data);

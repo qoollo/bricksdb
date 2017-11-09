@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using Qoollo.Client.CollectorGate.Handlers;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.WriterGate;
 using Qoollo.Impl.Common.Exceptions;
-using Qoollo.Impl.Common.HashFile;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Components;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Client.CollectorGate
 {
@@ -20,27 +17,15 @@ namespace Qoollo.Client.CollectorGate
         private bool _isStarted;
         private bool _isDispose;
 
-        protected CollectorApi(CollectorConfiguration collectorConfiguration, CollectorNetConfiguration netConfiguration,
-            CommonConfiguration commonConfiguration, TimeoutConfiguration timeoutConfiguration)
-        {
-            Contract.Requires(collectorConfiguration != null);
-            Contract.Requires(netConfiguration != null);
-            Contract.Requires(commonConfiguration != null);
-            Contract.Requires(timeoutConfiguration != null);
+        internal InjectionModule Module = null;
 
+        protected CollectorApi()
+        {
             _isStarted = false;
             _isBuild = false;
             _isDispose = false;
 
-            _collectorSystem = new CollectorSystem(
-                new DistributorHashConfiguration(collectorConfiguration.CountReplics),
-                new HashMapConfiguration(collectorConfiguration.FileWithHashName, HashMapCreationMode.ReadFromFile, 1,
-                    collectorConfiguration.CountReplics, HashFileType.Collector),
-                new ConnectionConfiguration(netConfiguration.WcfServiceName, netConfiguration.CountConnectionsToSingleServer,
-                    netConfiguration.TrimPeriod),
-                new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout, timeoutConfiguration.SendTimeout),
-                new QueueConfiguration(commonConfiguration.CountThreads, commonConfiguration.QueueSize),
-                collectorConfiguration.PageSize, collectorConfiguration.UseHashFile);
+            _collectorSystem = new CollectorSystem();
 
             _apis = new Dictionary<string, CollectorHandlerTuple>();
         }
@@ -89,7 +74,7 @@ namespace Qoollo.Client.CollectorGate
 
         public void Build()
         {
-            _collectorSystem.Build();
+            _collectorSystem.Build(Module);
             InnerBuild();
 
             _isBuild = true;

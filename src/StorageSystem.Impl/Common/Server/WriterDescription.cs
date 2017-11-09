@@ -2,17 +2,22 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Qoollo.Impl.Common.NetResults.Data;
 using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Common.Server
 {
     public class WriterDescription:ServerId
     {
+        private readonly ConcurrentDictionary<string, string> _stateInfo = new ConcurrentDictionary<string, string>();
+
         public bool IsAvailable { get; private set; }
 
         public bool IsServerRestored { get { return RestoreState == RestoreState.Restored; } }
 
         public RestoreState RestoreState { get; private set; }
+
+        public WriterUpdateState WriterUpdateState { get; private set; }
 
         public bool IsRestoreInProcess
         {
@@ -39,34 +44,13 @@ namespace Qoollo.Impl.Common.Server
             }
         }
 
-        public bool RestoreSendStatus
-        {
-            get
-            {
-                string value;
-                if (_stateInfo.TryGetValue(ServerState.RestoreSendStatus, out value) && value != string.Empty)
-                {
-                    return bool.Parse(value);
-                }
-
-                return false;
-            }
-
-            set { SetInfoMessage(ServerState.RestoreSendStatus, value.ToString()); }
-        }
-
         public WriterDescription(string host,  int port)
             : base(host,  port)
         {
             IsAvailable = true;
             RestoreState = RestoreState.Restored;
+            WriterUpdateState = WriterUpdateState.Free;
         }
-
-        public WriterDescription(ServerId server) : this(server.RemoteHost, server.Port)
-        {            
-        }
-
-        private readonly ConcurrentDictionary<string, string> _stateInfo = new ConcurrentDictionary<string, string>();
 
         private string GetInnerState()
         {
@@ -117,6 +101,38 @@ namespace Qoollo.Impl.Common.Server
         public void SetInfoMessage(string tag, string message)
         {
             _stateInfo.AddOrUpdate(tag, message, (key, oldValue) => message);
+        }
+
+        //private Dictionary<string, string> WriterFullState()
+        //{
+        //    var dictionary = new Dictionary<string, string>();
+
+        //    if (_initiatorRestore.IsStart)
+        //    {
+        //        var server = _initiatorRestore.RestoreServer;
+        //        if (server != null)
+        //            dictionary.Add(ServerState.RestoreCurrentServer, server.ToString());
+        //        else
+        //            dictionary.Add(ServerState.RestoreInProcess, _initiatorRestore.IsStart.ToString());
+        //    }
+
+        //    if (_transferRestore.IsStart)
+        //    {
+        //        var server = _transferRestore.RemoteServer;
+        //        if (server != null)
+        //            dictionary.Add(ServerState.RestoreTransferServer, server.ToString());
+        //        else
+        //            dictionary.Add(ServerState.RestoreTransferInProcess, _transferRestore.IsStart.ToString());
+        //        if (!string.IsNullOrEmpty(_transferRestore.LastStartedTime.ToString()))
+        //            dictionary.Add(ServerState.RestoreTransferLastStart, _transferRestore.LastStartedTime.ToString());
+        //    }
+        //    return dictionary;
+        //}
+
+        internal void UpdateState(GetRestoreStateResult result)
+        {
+            UpdateState(result.WriterState.State);
+            WriterUpdateState = result.WriterState.UpdateState;
         }
 
         public void SetInfoMessageList(Dictionary<string, string> info)

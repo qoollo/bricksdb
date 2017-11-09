@@ -1,33 +1,34 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.HashFile;
-using Qoollo.Impl.Common.HashHelp;
 using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Common.Support;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.Modules;
+using Qoollo.Impl.Modules.HashModule;
 
 namespace Qoollo.Impl.DistributorModules.Model
 {
-    internal class WriterSystemModel
+    internal class WriterSystemModel:ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public List<WriterDescription> Servers { get { return new List<WriterDescription>(_servers); } } 
 
-        public WriterSystemModel(DistributorHashConfiguration configuration, HashMapConfiguration mapConfiguration)
+        public WriterSystemModel(StandardKernel kernel, int countReplics)
+            :base(kernel)
         {
-            Contract.Requires(configuration != null);
-            Contract.Requires(mapConfiguration != null);
-            _configuration = configuration;
+            _countReplics = countReplics;
+
             _lock = new ReaderWriterLockSlim();
             _servers = new List<WriterDescription>();
-            _map = new HashMap(mapConfiguration);
+            _map = new HashMap(kernel, HashFileType.Distributor);
         }
 
         private List<WriterDescription> _servers;
+        private readonly int _countReplics;
         private readonly ReaderWriterLockSlim _lock;
-        private readonly DistributorHashConfiguration _configuration;
         private readonly HashMap _map;
 
         public void ServerNotAvailable(ServerId serverId)
@@ -38,7 +39,7 @@ namespace Qoollo.Impl.DistributorModules.Model
 
             if (server == null)
             {
-                Logger.Logger.Instance.ErrorFormat(
+                _logger.ErrorFormat(
                     "Server {0} is missing in model of this file, but command received that it is unavailable", serverId);
             }
             else
@@ -57,7 +58,7 @@ namespace Qoollo.Impl.DistributorModules.Model
 
             if (server == null)
             {
-                Logger.Logger.Instance.ErrorFormat(
+                _logger.ErrorFormat(
                     "Server {0} is missing in model of this file, but command received that it is unavailable", serverId);
             }
             else
@@ -68,8 +69,9 @@ namespace Qoollo.Impl.DistributorModules.Model
             _lock.ExitWriteLock();
         }
 
-        public void Start()
+        public override void Start()
         {
+            _map.Start();
             _map.CreateMap();
             _servers = _map.Servers;
         }
@@ -104,7 +106,7 @@ namespace Qoollo.Impl.DistributorModules.Model
             if (equal)
                 return;
 
-            HashFileUpdater.UpdateFile(_map.FileName);
+            HashFileUpdater.UpdateFile(_map.Filename);
             _map.CreateNewMapWithFile(map);
             _map.CreateAvailableMap();
         }
@@ -112,36 +114,15 @@ namespace Qoollo.Impl.DistributorModules.Model
         public List<WriterDescription> GetDestination(InnerData ev)
         {
             _lock.EnterReadLock();
-            var ret = new List<WriterDescription>();
-            if (_servers.Count(x=>x.IsAvailable)>=_configuration.CountReplics)
+            try
             {
-                string current = ev.Transaction.DataHash;
-                for (int i = 0; i < _configuration.CountReplics; i++)
-                {
-                    var find =
-                        _map.AvailableMap.FirstOrDefault(
-                            x => HashComparer.Compare(current, x.End) <= 0 && !ret.Contains(x.ServerId));
-
-                    if (find == null && _map.AvailableMap.Count > 0)
-                    {
-                        current = Consts.StartHashInRing;
-                        find =
-                        _map.AvailableMap.FirstOrDefault(
-                            x => HashComparer.Compare(current, x.End) <= 0 && !ret.Contains(x.ServerId));
-                    }
-
-                    if (find == null)
-                    {
-                        Logger.Logger.Instance.Error(Errors.NotEnoughServers);
-                        ret.Clear();
-                        break;
-                    }
-                    current = find.End;
-                    ret.Add(find.ServerId);
-                }                
+                return HashLogic.GetDestination(_countReplics, ev.Transaction.DataHash,
+                    _map.AvailableMap);
             }
-            _lock.ExitReadLock();
-            return ret;
+            finally
+            {
+                _lock.ExitReadLock();
+            }
         }
 
         public List<WriterDescription> GetAllAvailableServers()
@@ -172,12 +153,32 @@ namespace Qoollo.Impl.DistributorModules.Model
             return ret;
         }
 
-        public List<ServerId> GetAllServers2()
+        public List<ServerId> GetAllServers()
         {
             _lock.EnterReadLock();
-            var ret = new List<ServerId>(_servers);
-            _lock.ExitReadLock();
-            return ret;
+            try
+            {
+                return new List< ServerId > (_servers);
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+
+        public List<ServerId> GetAllServersExcept(ServerId server)
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                var ret = new List<ServerId>(_servers);
+                ret.Remove(server);
+                return ret;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
         }
 
         public List<ServerId> GetUnavailableServers()

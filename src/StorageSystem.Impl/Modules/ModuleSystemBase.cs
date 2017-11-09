@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Ninject.Modules;
+using Qoollo.Impl.Common.Support;
 
 namespace Qoollo.Impl.Modules
 {
@@ -8,7 +10,7 @@ namespace Qoollo.Impl.Modules
         protected List<ControlModule> Modules = new List<ControlModule>();
         protected List<ControlModule> ModulesForDispose = new List<ControlModule>();
 
-        public abstract void Build();
+        public abstract void Build(NinjectModule module = null, string configFile = Consts.ConfigFilename);
 
         public virtual void Start()
         {

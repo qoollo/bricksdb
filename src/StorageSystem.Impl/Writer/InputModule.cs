@@ -1,46 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
-using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.NetInterfaces.Data;
 using Qoollo.Impl.NetInterfaces.Writer;
+using Qoollo.Impl.Writer.Interfaces;
 using Qoollo.Impl.Writer.PerfCounters;
 
 namespace Qoollo.Impl.Writer
 {
-    internal class InputModule:ControlModule,IRemoteNet
+    internal class InputModule : ControlModule, IRemoteNet, IInputModule
     {
-        private readonly QueueConfiguration _queueConfiguration;
-        private readonly MainLogicModule _mainLogicModule;
-        private readonly GlobalQueueInner _queue;
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public InputModule(MainLogicModule mainLogic, QueueConfiguration queueConfiguration)
+        private IMainLogicModule _mainLogicModule;
+        private IGlobalQueue _queue;
+
+        public InputModule(StandardKernel kernel):base(kernel)
         {
-            Contract.Requires(queueConfiguration!=null);
-            Contract.Requires(mainLogic!=null);
-            _queueConfiguration = queueConfiguration;
-            _mainLogicModule = mainLogic;
-            _queue = GlobalQueue.Queue;
         }
 
         public override void Start()
         {
-            _queue.DbInputRollbackQueue.Registrate(_queueConfiguration, RollbackProcess);
-            _queue.DbInputProcessQueue.Registrate(_queueConfiguration, ProcessQueue);
+            _mainLogicModule = Kernel.Get<IMainLogicModule>();
+            _queue = Kernel.Get<IGlobalQueue>();
+
+            _queue.DbInputRollbackQueue.Registrate(RollbackProcess);
+            _queue.DbInputProcessQueue.Registrate(ProcessQueue);
         }
 
         #region Rollback
 
         private void RollbackProcess(InnerData data)
         {
-            Logger.Logger.Instance.DebugFormat("Rollback type {0}, hash {1}", data.Transaction.OperationName,
-                data.Transaction.DataHash);
+            _logger.TraceFormat("Rollback type {0}", data.Transaction.OperationName);
 
             _mainLogicModule.Rollback(data);
         }        
@@ -70,7 +68,6 @@ namespace Qoollo.Impl.Writer
         private RemoteResult ProcessData(InnerData data)
         {
             WriterCounters.Instance.TransactionCount.Increment();
-            Logger.Logger.Instance.DebugFormat("Create hash {0}", data.Transaction.DataHash);
             var timer = WriterCounters.Instance.AverageTimer.StartNew();
 
             var ret = _mainLogicModule.Process(data);

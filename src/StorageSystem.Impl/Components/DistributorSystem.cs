@@ -1,101 +1,66 @@
-﻿using System.Diagnostics.Contracts;
-using Qoollo.Impl.Common.Server;
-using Qoollo.Impl.Configurations;
+﻿using Ninject;
+using Ninject.Modules;
+using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.DistributorModules;
 using Qoollo.Impl.DistributorModules.Caches;
 using Qoollo.Impl.DistributorModules.DistributorNet;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Impl.DistributorModules.ParallelWork;
 using Qoollo.Impl.DistributorModules.Transaction;
 using Qoollo.Impl.Modules;
+using Qoollo.Impl.Modules.Config;
 using Qoollo.Impl.Modules.Queue;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Impl.Components
 {
     internal class DistributorSystem : ModuleSystemBase
     {
-        private readonly DistributorHashConfiguration _distributorHashConfiguration;
-        private readonly QueueConfiguration _queueConfiguration;
-        private readonly ConnectionConfiguration _connectionConfiguration;
-        private readonly DistributorCacheConfiguration _cacheConfiguration;
-        private readonly NetReceiverConfiguration _receiverConfigurationForDb;
-        private readonly NetReceiverConfiguration _receiverConfigurationForProxy;
-        private readonly TransactionConfiguration _transactionConfiguration;
-        private readonly HashMapConfiguration _hashMapConfiguration;
-        private readonly AsyncTasksConfiguration _pingConfig;
-        private readonly AsyncTasksConfiguration _checkConfig;
-        private readonly ServerId _localfordb;
-        private readonly ServerId _localforproxy;
-        private readonly ConnectionTimeoutConfiguration _connectionTimeoutConfiguration;
-
-        public DistributorSystem(ServerId localfordb, ServerId localforproxy,
-            DistributorHashConfiguration distributorHashConfiguration,
-            QueueConfiguration queueConfiguration,
-            ConnectionConfiguration connectionConfiguration,
-            DistributorCacheConfiguration cacheConfiguration,
-            NetReceiverConfiguration receiverConfigurationForDb,
-            NetReceiverConfiguration receiverConfigurationForProxy,
-            TransactionConfiguration transactionConfiguration,
-            HashMapConfiguration hashMapConfiguration, AsyncTasksConfiguration pingConfig,
-            AsyncTasksConfiguration checkConfig, ConnectionTimeoutConfiguration connectionTimeoutConfiguration)
-        {
-            Contract.Requires(distributorHashConfiguration != null);
-            Contract.Requires(_queueConfiguration != null);
-            Contract.Requires(connectionConfiguration != null);
-            Contract.Requires(cacheConfiguration != null);
-            Contract.Requires(receiverConfigurationForDb != null);
-            Contract.Requires(receiverConfigurationForProxy != null);
-            Contract.Requires(transactionConfiguration != null);
-            Contract.Requires(localfordb != null);
-            Contract.Requires(localforproxy != null);
-            Contract.Requires(hashMapConfiguration != null);
-            Contract.Requires(pingConfig != null);
-            Contract.Requires(checkConfig != null);
-            _pingConfig = pingConfig;
-            _checkConfig = checkConfig;
-            _connectionTimeoutConfiguration = connectionTimeoutConfiguration;
-            _distributorHashConfiguration = distributorHashConfiguration;
-            _hashMapConfiguration = hashMapConfiguration;
-            _queueConfiguration = queueConfiguration;
-            _connectionConfiguration = connectionConfiguration;
-            _cacheConfiguration = cacheConfiguration;
-            _receiverConfigurationForDb = receiverConfigurationForDb;
-            _receiverConfigurationForProxy = receiverConfigurationForProxy;
-            _transactionConfiguration = transactionConfiguration;
-            _localfordb = localfordb;
-            _localforproxy = localforproxy;
-        }
 
         public DistributorModule Distributor { get; private set; }
 
-        protected virtual DistributorNetModule CreateNetModule(ConnectionConfiguration connectionConfiguration)
+        protected virtual DistributorNetModule CreateNetModule(StandardKernel kernel)
         {
-            return new DistributorNetModule(_connectionConfiguration, _connectionTimeoutConfiguration);
+            return new DistributorNetModule(kernel);
         }
 
-        public override void Build()
+        public override void Build(NinjectModule module = null, string configFile = Consts.ConfigFilename)
         {
-            var q = new GlobalQueueInner();
-            GlobalQueue.SetQueue(q);
+            module = module ?? new InjectionModule();
+            Kernel = new StandardKernel(module);
 
-            var cache = new DistributorTimeoutCache(_cacheConfiguration);
-            var net = CreateNetModule(_connectionConfiguration);
-            var distributor = new DistributorModule(_pingConfig, _checkConfig, _distributorHashConfiguration,
-                new QueueConfiguration(1, 1000), net, _localfordb, _localforproxy, _hashMapConfiguration);
+            var config = new SettingsModule(Kernel, configFile);
+            config.Start();
+
+            var q = new GlobalQueue(Kernel);
+            Kernel.Bind<IGlobalQueue>().ToConstant(q);
+
+            var cache = new DistributorTimeoutCache(config.DistributorConfiguration.Cache);
+            Kernel.Bind<IDistributorTimeoutCache>().ToConstant(cache);
+
+            var net = CreateNetModule(Kernel);
+            Kernel.Bind<IDistributorNetModule>().ToConstant(net);
+
+            var distributor = new DistributorModule(Kernel);
+            Kernel.Bind<IDistributorModule>().ToConstant(distributor);
 
             Distributor = distributor;
 
-            net.SetDistributor(distributor);
-            var transaction = new TransactionModule(net, _transactionConfiguration,
-                _distributorHashConfiguration.CountReplics, cache);
-            var main = new MainLogicModule(distributor, transaction, cache);
-            
-            var input = new InputModuleWithParallel(_queueConfiguration, main, transaction);
-            var receive = new NetDistributorReceiver(main, input, distributor, _receiverConfigurationForDb,
-                _receiverConfigurationForProxy);
+            var transaction = new TransactionModule(Kernel);
+            Kernel.Bind<ITransactionModule>().ToConstant(transaction);
 
+            var main = new MainLogicModule(Kernel);
+            Kernel.Bind<IMainLogicModule>().ToConstant(main);
+            
+            var input = new InputModuleWithParallel(Kernel);
+            Kernel.Bind<IInputModule>().ToConstant(input);
+
+            var receive = new NetDistributorReceiver(Kernel);
+
+            AddModule(cache);
             AddModule(receive);            
-            AddModule(input);
             AddModule(transaction);
+            AddModule(input);
             AddModule(main);
             AddModule(net);
             AddModule(distributor);
@@ -110,5 +75,7 @@ namespace Qoollo.Impl.Components
             AddModuleDispose(distributor);            
             AddModuleDispose(net);            
         }
+
+        internal StandardKernel Kernel { get; set; }
     }
 }

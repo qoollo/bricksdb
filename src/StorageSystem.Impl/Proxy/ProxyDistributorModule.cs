@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Commands;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -13,46 +15,44 @@ using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
-using Qoollo.Impl.Proxy.Caches;
+using Qoollo.Impl.Proxy.Interfaces;
 using Qoollo.Impl.Proxy.Model;
-using Qoollo.Impl.Proxy.ProxyNet;
 
 namespace Qoollo.Impl.Proxy
 {
-    internal class ProxyDistributorModule : ControlModule
+    internal class ProxyDistributorModule : ControlModule, IProxyDistributorModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly DistributorSystemModel _distributorSystemModel;
-        private readonly QueueConfiguration _queueConfiguration;
-        private readonly AsyncTasksConfiguration _asynGetData;
-        private readonly AsyncTasksConfiguration _asynPing;
-        private readonly ProxyNetModule _net;
         private readonly AsyncTaskModule _async;
-        private readonly ServerId _local;
-        private readonly GlobalQueueInner _queue;
-        private readonly AsyncProxyCache _asyncProxyCache;
+        private ServerId _local;
+        private IProxyNetModule _net;
+        private IGlobalQueue _queue;
+        private IAsyncProxyCache _transactionCache;
+        private IProxyConfiguration _config;
 
-        public ServerId ProxyServerId { get { return _local; } }
+        public ServerId ProxyServerId => _local;
 
-        public ProxyDistributorModule(AsyncProxyCache asyncProxyCache, ProxyNetModule net,
-                                      QueueConfiguration queueConfiguration, ServerId local,
-                                      AsyncTasksConfiguration asyncGetData, AsyncTasksConfiguration asyncPing)
+        public ProxyDistributorModule(StandardKernel kernel)
+            : base(kernel)
         {
-            _asyncProxyCache = asyncProxyCache;
-            _asynPing = asyncPing;
-            _queueConfiguration = queueConfiguration;
             _distributorSystemModel = new DistributorSystemModel();
-            _asynGetData = asyncGetData;
-            _net = net;
-            _local = local;            
-            _async = new AsyncTaskModule(queueConfiguration);
-            _queue = GlobalQueue.Queue;
+            _async = new AsyncTaskModule(kernel);
         }
 
         public override void Start()
         {
+            _config = Kernel.Get<IProxyConfiguration>();
+            _local = _config.NetDistributor.ServerId;
+
+            _queue = Kernel.Get<IGlobalQueue>();
+            _transactionCache = Kernel.Get<IAsyncProxyCache>();
+            _net = Kernel.Get<IProxyNetModule>();
+
             _async.Start();
             StartAsyncTasks();
-            _queue.ProxyDistributorQueue.Registrate(_queueConfiguration, Process);
+            _queue.ProxyDistributorQueue.Registrate(Process);
         }
 
         public RemoteResult ProcessNetCommand(NetCommand command)
@@ -86,29 +86,29 @@ namespace Qoollo.Impl.Proxy
 
         private void CompleteOperation(Transaction transaction)
         {
-            var data = _asyncProxyCache.Get(transaction.CacheKey);
+            var data = _transactionCache.Get(transaction.CacheKey);
             if (data != null)
             {
-                _asyncProxyCache.Remove(transaction.CacheKey);
+                _transactionCache.Remove(transaction.CacheKey);
                 data.UserSupportCallback.SetResult(transaction.UserTransaction);
             }
             else
             {
-                Logger.Logger.Instance.Debug("Complete operation message income, but timeout");
+                _logger.Debug("Complete operation message income, but timeout");
             }
         }
 
         private void CompleteOperation(InnerData obj)
         {
-            var data = _asyncProxyCache.Get(obj.Transaction.CacheKey);
+            var data = _transactionCache.Get(obj.Transaction.CacheKey);
             if (data != null)
             {
-                _asyncProxyCache.Remove(obj.Transaction.CacheKey);
+                _transactionCache.Remove(obj.Transaction.CacheKey);
                 data.InnerSupportCallback.SetResult(obj);
             }
             else
             {
-                Logger.Logger.Instance.Info("Complete read operation message income, but timeout");
+                _logger.Debug("Complete read operation message income, but timeout");
             }
         }
 
@@ -119,13 +119,13 @@ namespace Qoollo.Impl.Proxy
         private void StartAsyncTasks()
         {
             _async.AddAsyncTask(
-                new AsyncDataPeriod(_asynGetData.TimeoutPeriod, TakeInfoFromAllDistributor, 
-                    AsyncTasksNames.GetInfo, -1), false);
+                new AsyncDataPeriod(_config.Timeouts.DistributorUpdateInfoMls.PeriodTimeSpan,
+                    TakeInfoFromAllDistributor, AsyncTasksNames.GetInfo, -1), false);
 
             _async.AddAsyncTask(
-                new AsyncDataPeriod(_asynPing.TimeoutPeriod, PingProcess, AsyncTasksNames.AsyncPing, -1),
-                false);
-            
+                new AsyncDataPeriod(_config.Timeouts.ServersPingMls.PeriodTimeSpan, PingProcess,
+                    AsyncTasksNames.AsyncPing, -1), false);
+
         }
 
         private void PingProcess(AsyncData data)

@@ -16,7 +16,7 @@ namespace Qoollo.Impl.Common
     [KnownType(typeof(InnerServerError))]
     [KnownType(typeof(InnerFailResult))]
     [KnownType(typeof(HashMapResult))]
-    [KnownType(typeof(SetGetRestoreStateResult))]    
+    [KnownType(typeof(GetRestoreStateResult))]    
     [KnownType(typeof(PackageResult))]    
     public abstract class RemoteResult
     {

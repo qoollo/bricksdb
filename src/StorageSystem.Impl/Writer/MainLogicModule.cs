@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
@@ -8,34 +8,36 @@ using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Modules;
-using Qoollo.Impl.Modules.Queue;
 using Qoollo.Impl.NetInterfaces.Data;
-using Qoollo.Impl.Writer.Db;
+using Qoollo.Impl.Writer.Interfaces;
 using Qoollo.Impl.Writer.PerfCounters;
 
 namespace Qoollo.Impl.Writer
 {
-    internal class MainLogicModule:ControlModule
+    internal class MainLogicModule : ControlModule, IMainLogicModule
     {
-        private readonly DbModule _db;
-        private readonly DistributorModule _distributor;        
-        private readonly GlobalQueueInner _queue;
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
 
-        public MainLogicModule(DistributorModule distributor, DbModule db)
+        private IDbModule _db;
+        private IDistributorModule _distributor;
+        private IWriterModel _model;
+
+        public MainLogicModule(StandardKernel kernel) :base(kernel)
         {
-            Contract.Requires(distributor != null);
-            Contract.Requires(db != null);
+        }
 
-            _db = db;
-            _distributor = distributor;
-            _queue = GlobalQueue.Queue;
+        public override void Start()
+        {
+            _db = Kernel.Get<IDbModule>();
+            _distributor = Kernel.Get<IDistributorModule>();
+            _model = Kernel.Get<IWriterModel>();
         }
 
         #region Process
 
         public RemoteResult Process(InnerData data)
         {
-            Logger.Logger.Instance.TraceFormat("Process hash = {0}", data.Transaction.CacheKey);
+            _logger.TraceFormat("Process operation = {0}", data.Transaction.OperationName);
             RemoteResult ret = null;
             var local = GetLocal(data);
 
@@ -83,7 +85,7 @@ namespace Qoollo.Impl.Writer
 
         public void Rollback(InnerData data)
         {
-            Logger.Logger.Instance.DebugFormat("Rollback hash = {0}", data.Transaction.CacheKey);
+            _logger.TraceFormat("Rollback operation = {0}", data.Transaction.OperationName);
             var local = GetLocal(data);
 
             switch (data.Transaction.OperationName)
@@ -123,7 +125,7 @@ namespace Qoollo.Impl.Writer
 
         private bool GetLocal(InnerData data)
         {
-            return  _distributor.IsMine(data.Transaction.DataHash);
+            return  _model.IsMine(data.Transaction.DataHash);
         }
 
         private RemoteResult CheckResult(InnerData data, RemoteResult result)
@@ -136,7 +138,6 @@ namespace Qoollo.Impl.Writer
                 data.Transaction.AddErrorDescription(result.Description);
             }
             _distributor.Execute<Transaction, RemoteResult>(data.Transaction);
-            //_queue.TransactionAnswerQueue.Add(data.Transaction);
 
             if (data.Transaction.OperationType == OperationType.Sync)
                 return result;

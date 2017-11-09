@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Qoollo.Impl.Collector.Load;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Tasks;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Server;

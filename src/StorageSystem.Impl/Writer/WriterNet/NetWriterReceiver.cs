@@ -1,4 +1,5 @@
-﻿using Qoollo.Impl.Configurations;
+﻿using Ninject;
+using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules;
 
 namespace Qoollo.Impl.Writer.WriterNet
@@ -8,18 +9,17 @@ namespace Qoollo.Impl.Writer.WriterNet
         private NetWriterReceiverForWrite _writerReceiverForWrite;
         private NetWriterReceiverForCollector _writerReceiverForCollector;
 
-        public NetWriterReceiver(InputModule inputModule, DistributorModule distributor,
-            NetReceiverConfiguration receiverConfigurationForWrite,
-            NetReceiverConfiguration receiverConfigurationForCollector)
+        public NetWriterReceiver(StandardKernel kernel):base(kernel)
         {
-            _writerReceiverForWrite = new NetWriterReceiverForWrite(inputModule, distributor,
-                receiverConfigurationForWrite);
-            _writerReceiverForCollector = new NetWriterReceiverForCollector(inputModule, distributor,
-                receiverConfigurationForCollector);
         }
 
         public override void Start()
         {
+            var config = Kernel.Get<IWriterConfiguration>();
+
+            _writerReceiverForWrite = new NetWriterReceiverForWrite(Kernel, config.NetDistributor);
+            _writerReceiverForCollector = new NetWriterReceiverForCollector(Kernel, config.NetCollector);
+
             _writerReceiverForWrite.Start();
             _writerReceiverForCollector.Start();
         }

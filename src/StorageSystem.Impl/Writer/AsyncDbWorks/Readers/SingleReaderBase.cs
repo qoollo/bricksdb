@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Modules;
@@ -8,12 +9,16 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
 {
     internal abstract class SingleReaderBase:ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly Thread _thread;
         private bool _isFinish;
         private bool _isWait;
         private readonly AutoResetEvent _reset;
 
-        public bool IsFinish { get { return _isFinish; } }
+        private bool _isDisposed = false;
+
+        public bool IsFinish => _isFinish;
 
         public bool IsWait
         {
@@ -30,7 +35,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
 
         private readonly object _lock = new object();
 
-        protected SingleReaderBase()
+        protected SingleReaderBase(StandardKernel kernel):base(kernel)
         {            
             _isFinish = false;
             _isWait = false;
@@ -45,7 +50,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
 
         public void GetAnotherData()
         {
-            _reset.Set();
+            if(!_isDisposed)
+                _reset.Set();
         }
 
         private void ThreadProcess()
@@ -61,10 +67,14 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
                     var result = Read();
                     if (result is FailNetResult)
                     {
-                        Logger.Logger.Instance.Debug("Thread process exit", "restore");
+                        if(_logger.IsDebugEnabled)
+                            _logger.Debug("Thread process exit", "restore");
                         break;
                     }
-                    Logger.Logger.Instance.Debug("Thread process wait", "restore");
+
+                    if (_logger.IsDebugEnabled)
+                        _logger.Debug("Thread process wait", "restore");
+
                     lock (_lock)
                     {
                         _isWait = true;
@@ -76,7 +86,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e,"in restore");
+                if (_logger.IsWarnEnabled)
+                    _logger.Warn(e, "in restore");
                 //todo dispose
             }
             
@@ -89,6 +100,7 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Readers
         {
             if (isUserCall)
             {
+                _isDisposed = true;
                 _reset.Dispose();
                 if (_thread.ThreadState == ThreadState.Running && !_thread.Join(500))
                     _thread.Abort();

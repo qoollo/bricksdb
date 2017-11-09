@@ -16,6 +16,7 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Qoollo.Impl.Sql")]
 [assembly: InternalsVisibleTo("Qoollo.Impl.Postgre")]
 [assembly: InternalsVisibleTo("Qoollo.Impl.Sqlite")]
+[assembly: InternalsVisibleTo("Qoollo.Tests")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 

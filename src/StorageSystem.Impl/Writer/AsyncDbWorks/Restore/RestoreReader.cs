@@ -1,27 +1,34 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Writer.AsyncDbWorks.Readers;
 using Qoollo.Impl.Writer.AsyncDbWorks.Support;
 using Qoollo.Impl.Writer.Db;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 {
     internal class RestoreReader : SingleReaderBase
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly AsyncDbHolder _holder;        
         private readonly string _tableName;        
         private readonly RestoreDataContainer _restoreData;
 
-        public RestoreReader(string tableName, DbModuleCollection db, RestoreDataContainer restoreData)
+        public RestoreReader(StandardKernel kernel, string tableName, IDbModule db, RestoreDataContainer restoreData)
+            :base(kernel)
         {
             Contract.Requires(db != null);
             Contract.Requires(restoreData != null);
 
-            _tableName = tableName;            
-            _holder = new AsyncDbHolder(db.GetDbModules);
+            _tableName = tableName;
+
+            var dbcollection = db as DbModuleCollection;
+            _holder = new AsyncDbHolder(dbcollection.GetDbModules);
 
             _restoreData = restoreData;
             _restoreData.StartNewDb();
@@ -45,7 +52,8 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Restore
 
             if (ret is FailNetResult)
             {
-                Logger.Logger.Instance.Info("Finish restore table " + db.TableName);
+                if(_logger.IsInfoEnabled)
+                    _logger.Info("Finish restore table " + db.TableName);
 
                 if (_holder.HasAnother)
                 {

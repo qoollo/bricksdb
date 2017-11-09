@@ -21,10 +21,10 @@ namespace Qoollo.Impl.Modules.Net.ConnectionBehavior
                 new StableElementsDynamicConnectionPool<TConnection>(
                     factory: NetConnector.Connect<TConnection>(server, configuration.ServiceName, timeoutConfiguration),
                     maxAsyncQueryCount: 1,
-                    maxElementCount: configuration.MaxElementCount,
+                    maxElementCount: configuration.CountConnections,
                     trimPeriod: configuration.TrimPeriod, 
-                    name: "Connection pool to " + server,
-                    minCount: configuration.MaxElementCount);
+                    name: "Connection pool: " + server,
+                    minCount: configuration.CountConnections);
         }
 
         public override bool Connect()

@@ -1,30 +1,32 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Threading;
-using Qoollo.Impl.DistributorModules.DistributorNet.Interfaces;
-using Qoollo.Impl.Modules.Queue;
+using Ninject;
+using Qoollo.Impl.DistributorModules.Interfaces;
 using Qoollo.Turbo.ObjectPools;
 
 namespace Qoollo.Impl.DistributorModules.Transaction
 {
     internal class TransactionPool : DynamicPoolManager<TransactionExecutor>
     {
-        private readonly INetModule _net;
+        private readonly StandardKernel _kernel;
         private readonly int _countReplics;
-        private readonly GlobalQueueInner _queue;
 
-        public TransactionPool(int maxElemCount, INetModule net, int countReplics)
+        public TransactionPool(StandardKernel kernel, int maxElemCount, int countReplics)
             : base(maxElemCount)
         {
-            Contract.Requires(_net!=null);
             Contract.Requires(countReplics>0);
-            _net = net;
+            _kernel = kernel;
             _countReplics = countReplics;
-            _queue = GlobalQueue.Queue;
+        }
+
+        public void Start()
+        {
         }
 
         protected override bool CreateElement(out TransactionExecutor elem, int timeout, CancellationToken token)
         {
-            elem = new TransactionExecutor(_net, _countReplics, _queue);
+            var net = _kernel.Get<IDistributorNetModule>();
+            elem = new TransactionExecutor(net, _countReplics, _kernel);
             return true;
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using Ninject;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Modules.Db.Exceptions;
 
@@ -6,11 +7,13 @@ namespace Qoollo.Impl.Modules.Db.Impl
 {
     public abstract class DbReader<TReader>:ControlModule
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         public abstract TReader Reader { get; }
 
         public bool IsFail;
 
-        protected DbReader()
+        protected DbReader():base(null)
         {
             IsFail = false;
         }
@@ -24,7 +27,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
                 IsFail = true;
             }
         }
@@ -40,7 +43,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");                
+                _logger.Warn(e, "");                
                 throw new ReaderIsFailException(e.Message);
             }
         }
@@ -56,7 +59,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
                 throw new ReaderIsFailException(e.Message);
             }
         }        
@@ -74,7 +77,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
                 throw new ReaderIsFailException(e.Message);
             }
         }
@@ -90,7 +93,7 @@ namespace Qoollo.Impl.Modules.Db.Impl
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn(e, "");
+                _logger.Warn(e, "");
                 throw new ReaderIsFailException(e.Message);
             }
         }

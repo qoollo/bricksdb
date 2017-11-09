@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
@@ -25,6 +23,8 @@ namespace Qoollo.Impl.Writer.Db
         where TConnection : class
         where TCommand: IDisposable
     {
+        private readonly Qoollo.Logger.Logger _logger = Logger.Logger.Instance.GetThisClassLogger();
+
         private readonly IHashCalculater _hashCalculater;
         private readonly IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader> _userCommandCreator;
         private readonly IMetaDataCommandCreator<TCommand, TReader> _metaDataCommandCreator;
@@ -38,6 +38,7 @@ namespace Qoollo.Impl.Writer.Db
             IUserCommandCreator<TCommand, TConnection, TKey, TValue, TReader> userCommandCreator,
             IMetaDataCommandCreator<TCommand, TReader> metaDataCommandCreator,
             DbImplModule<TCommand, TConnection, TReader> implModule)
+            :base(null)
         {
             Contract.Requires(hashCalc != null);
             Contract.Requires(userCommandCreator != null);
@@ -131,7 +132,7 @@ namespace Qoollo.Impl.Writer.Db
                 }
                 catch (Exception e)
                 {
-                    Logger.Logger.Instance.Warn(e, "");
+                    _logger.Warn(e, "");
                 }
 
                 timer.Complete();
@@ -277,7 +278,7 @@ namespace Qoollo.Impl.Writer.Db
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn("Custom operation error: " + e);
+                _logger.Warn(e, "Custom operation error");
                 ret = new InnerFailResult(e.Message);
             }
             connection.Dispose();
@@ -330,7 +331,7 @@ namespace Qoollo.Impl.Writer.Db
                 }
                 catch (Exception e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                     ret.Data = null;
 
                     ret.Transaction.SetError();
@@ -404,7 +405,7 @@ namespace Qoollo.Impl.Writer.Db
             }
             catch (Exception e)
             {
-                Logger.Logger.Instance.Warn("Custom operation error: " + e);
+                _logger.Warn(e, "Custom operation error");
                 ret = new InnerFailResult(e.Message);
             }
             connection.Dispose();
@@ -438,7 +439,7 @@ namespace Qoollo.Impl.Writer.Db
 
         #region Restore
 
-        internal override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
+        public override RemoteResult AsyncProcess(RestoreDataContainer restoreData)
         {
             var script = _metaDataCommandCreator.ReadWithDeleteAndLocal(restoreData.IsDeleted, restoreData.Local);
             
@@ -459,7 +460,7 @@ namespace Qoollo.Impl.Writer.Db
                 {                                        
                     try
                     {
-                        Logger.Logger.Instance.DebugFormat("Start thread {0}", j1);
+                        _logger.DebugFormat("Start thread {0}", j1);
 
                         int start = j1*ids.Count/threadsCount;
                         int end = (j1+1)*ids.Count/threadsCount;
@@ -473,10 +474,10 @@ namespace Qoollo.Impl.Writer.Db
                     }
                     catch (Exception e)
                     {
-                        Logger.Logger.Instance.ErrorFormat("Fail in thread = {0}", e);
+                        _logger.ErrorFormat("Fail in thread = {0}", e);
                         throw;
                     }
-                    Logger.Logger.Instance.DebugFormat("Finish thread {0}", j1);
+                    _logger.DebugFormat("Finish thread {0}", j1);
                 });
 
                 threads[j] = task;
@@ -503,7 +504,7 @@ namespace Qoollo.Impl.Writer.Db
                 {
                     try
                     {
-                        Logger.Logger.Instance.DebugFormat("Start thread {0}", j1);
+                        _logger.DebugFormat("Start thread {0}", j1);
 
                         int start = j1 * ids.Count / threadsCount;
                         int end = (j1 + 1) * ids.Count / threadsCount;
@@ -514,10 +515,10 @@ namespace Qoollo.Impl.Writer.Db
                     }
                     catch (Exception e)
                     {
-                        Logger.Logger.Instance.ErrorFormat("Fail in thread = {0}", e);
+                        _logger.ErrorFormat("Fail in thread = {0}", e);
                         throw;
                     }
-                    Logger.Logger.Instance.DebugFormat("Finish thread {0}", j1);
+                    _logger.DebugFormat("Finish thread {0}", j1);
                 });
 
                 threads[j] = task;
@@ -570,7 +571,7 @@ namespace Qoollo.Impl.Writer.Db
                 }
                 catch (Exception e)
                 {
-                    Logger.Logger.Instance.Error(e, "");
+                    _logger.Error(e, "");
                 }
                 return new List<InnerData>();
             }
@@ -613,7 +614,7 @@ namespace Qoollo.Impl.Writer.Db
                 foreach (var searchData in result.Data)
                 {
                     var meta = _metaDataCommandCreator.ReadMetaFromSearchData(searchData);
-
+                    
                     WriterCounters.Instance.RestoreCheckPerSec.OperationFinished();
                     WriterCounters.Instance.RestoreCheckCount.Increment();
                     if (restoreData.IsMine(meta))

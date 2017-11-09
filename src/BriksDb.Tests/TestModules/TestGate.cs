@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Qoollo.Client.Configuration;
-using Qoollo.Client.ProxyGate;
+﻿using Qoollo.Client.ProxyGate;
 using Qoollo.Tests.Support;
 
 namespace Qoollo.Tests.TestModules
@@ -12,18 +6,6 @@ namespace Qoollo.Tests.TestModules
     public class TestGate : ProxyApi
     {
         //private IStorage<int, DataWithBuffer> _data;
-
-        public TestGate(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-            CommonConfiguration commonConfiguration, TimeoutConfiguration timeoutConfiguration)
-            : base(netConfiguration, proxyConfiguration, commonConfiguration, timeoutConfiguration)
-        {
-        }
-
-        public TestGate(NetConfiguration netConfiguration, ProxyConfiguration proxyConfiguration,
-            CommonConfiguration commonConfiguration)
-            : base(netConfiguration, proxyConfiguration, commonConfiguration)
-        {
-        }
 
         //public IStorage<int, DataWithBuffer> Test
         //{

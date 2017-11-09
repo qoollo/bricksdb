@@ -14,6 +14,7 @@ namespace Qoollo.Impl.Common.Support
         public static string GetInfo = "getInfo";
         public static string RestoreRemote = "restoreRemote";
         public static string RestoreLocal = "restoreLocal";
+        public static string RestoreBroadcast = nameof(RestoreBroadcast);
         public static string AsyncPing = "asyncPing";
         public static string CheckRestore = "checkRestore";
         public static string CheckDistributors = "checkDistributors";
@@ -45,7 +46,7 @@ namespace Qoollo.Impl.Common.Support
     internal static class Errors
     {
         public static string NotAvailableServersForWrite = "Need more available servers to store data";
-        public static string NotAvailableServersInSystem = "There is no Distributor in systme";
+        public static string NotAvailableServersInSystem = "There is no Distributor in system";
         public static string ServerWithResultNotAvailable = "Servers with operation result is unavailable";
         public static string NoErrorAddWriterServer = "No error";
         public static string ServerIsNotAvailable = "Servers is unavailable";
@@ -88,19 +89,42 @@ namespace Qoollo.Impl.Common.Support
         public static string Page = "pageSize";
         
         public static string AllTables = "AllTablesyNameThatMustntBeUsedAsTableName";
-        public static string RestoreHelpFile = "RestoreHelp.txt";
+        public const string RestoreHelpFile = "RestoreHelp.txt";
+        public const string ConfigFilename = "briks_config.txt";
     }
 
     [DataContract]
     public enum RestoreState
     {
-        [EnumMemberAttribute]
+        [EnumMember]
         Restored = 0,        
-        [EnumMemberAttribute]
+        [EnumMember]
         SimpleRestoreNeed = 1,
-        [EnumMemberAttribute]
+        [EnumMember]
         FullRestoreNeed = 2,
-        [EnumMemberAttribute]
-        Default = 3
+    }
+
+    [DataContract]
+    public enum RestoreType
+    {
+        [EnumMember]
+        Single = 0,
+        [EnumMember]
+        Broadcast = 1,
+        [EnumMember]
+        None = 2,
+    }
+
+    [DataContract]
+    public enum WriterUpdateState
+    {
+        [DataMember]
+        Free = 0,
+        [DataMember]
+        RestoreInProgress = 1,
+        [DataMember]
+        AfterRestore = 2,
+        [DataMember]
+        Force = 3,
     }
 }

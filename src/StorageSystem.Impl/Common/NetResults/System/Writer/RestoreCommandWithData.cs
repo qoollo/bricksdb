@@ -14,20 +14,15 @@ namespace Qoollo.Impl.Common.NetResults.System.Writer
         public ServerId ServerId { get; private set; }
 
         [DataMember]
-        public List<KeyValuePair<string, string>> Hash { get; private set; }        
-
-        [DataMember]
         public RestoreState RestoreState { get; private set; }
 
         [DataMember]
         public string TableName { get; private set; }
 
-        public RestoreCommandWithData(ServerId serverId, List<HashMapRecord> hash, string tableName,
-            RestoreState state)
+        public RestoreCommandWithData(ServerId serverId, string tableName, RestoreState state)
         {
             TableName = tableName;
             ServerId = new ServerId(serverId);
-            Hash = hash.Select(x => new KeyValuePair<string, string>(x.Begin, x.End)).ToList();
             RestoreState = state;
         }
 

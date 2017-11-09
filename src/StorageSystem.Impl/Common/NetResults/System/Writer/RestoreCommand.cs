@@ -9,18 +9,15 @@ namespace Qoollo.Impl.Common.NetResults.System.Writer
     internal class RestoreCommand:NetCommand
     {
         [DataMember]
-        public ServerId RestoreServer { get; private set; }
-        [DataMember]
         public RestoreState RestoreState { get; private set; }
         [DataMember]
-        public string TableName { get; set; }        
-        public List<ServerId> FailedServers { get; set; } 
+        public RestoreType Type { get; set; }
+        public List<ServerId> DirectServers { get; set; } 
 
-        public RestoreCommand(ServerId server, string tableName, RestoreState state)
+        public RestoreCommand(RestoreState state, RestoreType type = RestoreType.Single)
         {
-            RestoreServer = server;
-            TableName = tableName;
             RestoreState = state;
+            Type = type;
         }
     }
 }

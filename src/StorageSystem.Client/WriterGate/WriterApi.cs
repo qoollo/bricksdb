@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
-using Qoollo.Client.Configuration;
 using Qoollo.Client.Request;
-using Qoollo.Client.Support;
-using Qoollo.Impl.Common.HashFile;
-using Qoollo.Impl.Common.Server;
 using Qoollo.Impl.Components;
-using Qoollo.Impl.Configurations;
+using Qoollo.Impl.TestSupport;
 
 namespace Qoollo.Client.WriterGate
 {
@@ -19,57 +14,17 @@ namespace Qoollo.Client.WriterGate
         private bool _isStarted;
         private bool _isDispose;
 
-        public WriterApi(StorageNetConfiguration netConfiguration,
-            StorageConfiguration storageConfiguration, CommonConfiguration commonConfiguration,
-            TimeoutConfiguration timeoutConfiguration, bool isNeedRestore = false,
-            CommonConfiguration restoreConfiguration = null)
-        {
-            Contract.Requires(netConfiguration != null);
-            Contract.Requires(storageConfiguration != null);
-            Contract.Requires(commonConfiguration != null);
-            Contract.Requires(timeoutConfiguration != null);
+        internal InjectionModule Module = null;
 
+        public WriterApi()
+        {
             _isStarted = false;
             _isBuild = false;
             _isDispose = false;
 
-            var server = new ServerId(netConfiguration.Host, netConfiguration.PortForDitributor);
-            var queue = new QueueConfiguration(commonConfiguration.CountThreads, commonConfiguration.QueueSize);
-            var queueRestore = restoreConfiguration == null
-                ? new QueueConfiguration(1, 1000)
-                : new QueueConfiguration(restoreConfiguration.CountThreads, restoreConfiguration.QueueSize);
-            var netReceiveConfiguration = new NetReceiverConfiguration(netConfiguration.PortForDitributor,
-                netConfiguration.Host,
-                netConfiguration.WcfServiceName);
-            var netReceiveConfiguration2 = new NetReceiverConfiguration(netConfiguration.PortForCollector,
-                netConfiguration.Host,
-                netConfiguration.WcfServiceName);
-            var connection = new ConnectionConfiguration(netConfiguration.WcfServiceName,
-                netConfiguration.CountConnectionsToSingleServer, netConfiguration.TrimPeriod);
-            var hashMap = new HashMapConfiguration(storageConfiguration.FileWithHashName,
-                HashMapCreationMode.ReadFromFile, 1,
-                storageConfiguration.CountReplics, HashFileType.Writer);
-            var restoreTransfer = new RestoreModuleConfiguration(1, storageConfiguration.TimeoutSendAnswerInRestore);
-            var restoreInitiator = new RestoreModuleConfiguration(storageConfiguration.CountRetryWaitAnswerInRestore,
-                storageConfiguration.TimeoutWaitAnswerInRestore);
-            var restoreTimeout = new RestoreModuleConfiguration(-1, storageConfiguration.PeriodStartDelete,
-                storageConfiguration.IsForceDelete, storageConfiguration.PeriodDeleteAfterRestore);
-
-            var timeout = new ConnectionTimeoutConfiguration(timeoutConfiguration.OpenTimeout,
-                timeoutConfiguration.SendTimeout);
-
-            _writerSystem = new WriterSystem(server, queue, netReceiveConfiguration,
-                netReceiveConfiguration2, hashMap,
-                connection, restoreTransfer, restoreInitiator, timeout, restoreTimeout, isNeedRestore, queueRestore);
+            _writerSystem = new WriterSystem();
 
             _handler = new WriterHandler(_writerSystem);
-        }
-
-        public WriterApi(StorageNetConfiguration netConfiguration, StorageConfiguration storageConfiguration,
-            CommonConfiguration commonConfiguration, bool isNeedRestore = false)
-            : this(netConfiguration, storageConfiguration, commonConfiguration,
-                new TimeoutConfiguration(Consts.OpenTimeout, Consts.SendTimeout), isNeedRestore)
-        {
         }
 
         public IWriterApi Api
@@ -99,7 +54,13 @@ namespace Qoollo.Client.WriterGate
 
         public void Build()
         {
-            _writerSystem.Build();
+            _writerSystem.Build(Module);
+            _isBuild = true;
+        }
+
+        internal void Build(string configFile)
+        {
+            _writerSystem.Build(Module, configFile);
             _isBuild = true;
         }
 

@@ -8,6 +8,7 @@ using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Data.Support;
 using Qoollo.Impl.Common.Data.TransactionTypes;
 using Qoollo.Impl.Common.HashHelp;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestProxy;
 using Qoollo.Tests.TestWriter;
@@ -16,22 +17,22 @@ using Xunit;
 namespace Qoollo.Tests
 {
     [Collection("test collection 1")]
-    public class TestWriterModules:TestBase
+    public class TestWriterModules : TestBase
     {
         private readonly TestProxySystem _proxyTest;
         private readonly TestDistributorGate _distributor1;
         private readonly IntHashConvertor _provider;
 
-        public TestWriterModules():base()
+        public TestWriterModules() : base()
         {
-            _proxyTest = TestProxySystem(proxyServer, 20, 40);
-            _proxyTest.Build();
+            _proxyTest = TestProxySystem();
+            _proxyTest.Build(new TestInjectionModule());
 
             _writer1 = new TestWriterGate();
             _writer2 = new TestWriterGate();
             _distributor1 = new TestDistributorGate();
 
-             _provider = new IntHashConvertor();
+            _provider = new IntHashConvertor();
         }
 
         private InnerData InnerData(int i)
@@ -58,10 +59,11 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                _writer1.Build(storageServer1, filename, 1);
+                _writer1.Build(storageServer1);
 
-                var d = TestHelper.OpenDistributorHostForDb(ServerId(distrServer1), ConnectionConfiguration);
+                var d = TestHelper.OpenDistributorHostForDb(_kernel, ServerId(distrServer1));
                 _writer1.Start();
 
                 for (int i = 0; i < count; i++)
@@ -90,11 +92,12 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                _writer1.Build(storageServer1, filename, 1);
+                _writer1.Build(storageServer1);
                 _writer1.Start();
 
-                var s = TestHelper.OpenDistributorHostForDb(ServerId(distrServer1), ConnectionConfiguration);
+                var s = TestHelper.OpenDistributorHostForDb(_kernel, ServerId(distrServer1));
 
                 for (int i = 1; i < count + 1; i++)
                 {
@@ -119,12 +122,13 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                _writer1.Build(storageServer1, filename, 1);
+                _writer1.Build(storageServer1);
                 _writer1.Start();
 
-                var s = TestHelper.OpenDistributorHostForDb(ServerId(distrServer1), ConnectionConfiguration);
-                var s2 = TestHelper.OpenDistributorHostForDb(ServerId(distrServer2), ConnectionConfiguration);
+                var s = TestHelper.OpenDistributorHostForDb(_kernel, ServerId(distrServer1));
+                var s2 = TestHelper.OpenDistributorHostForDb(_kernel, ServerId(distrServer2));
 
                 for (int i = 1; i < count + 1; i++)
                 {
@@ -159,9 +163,10 @@ namespace Qoollo.Tests
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                _distributor1.Build(1, distrServer1, distrServer12, filename);
-                _writer1.Build(storageServer1, filename, 1);
+                _distributor1.Build();
+                _writer1.Build(storageServer1);
 
                 _distributor1.Start();
                 _writer1.Start();
@@ -170,7 +175,8 @@ namespace Qoollo.Tests
                 for (int i = 1; i < count + 1; i++)
                 {
                     var data =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
+                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
+                            "")
                         {
                             OperationName = OperationName.Create,
                             OperationType = OperationType.Async
@@ -178,7 +184,7 @@ namespace Qoollo.Tests
                         {
                             Data = CommonDataSerializer.Serialize(i),
                             Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { TableName = "Int" }
+                            Transaction = {TableName = "Int"}
                         };
                     list.Add(data);
                 }
@@ -206,17 +212,20 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(100)]
-        public void Writer_ProcessDataFromDistributor_SendResultBack_TwoWriters(int count)
+        public void ProcessDataFromDistributor_SendResultBack_TwoWriters(int count)
         {
-            var filename = nameof(Writer_ProcessDataFromDistributor_SendResultBack_TwoWriters);
+            var filename = nameof(ProcessDataFromDistributor_SendResultBack_TwoWriters);
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
+                    distrport: storageServer2);
 
-                _distributor1.Build(1, distrServer1, distrServer12, filename);
+                _distributor1.Build();
 
-                _writer1.Build(storageServer1, filename, 1);
-                _writer2.Build(storageServer2, filename, 1);
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
 
                 _distributor1.Start();
 
@@ -227,7 +236,8 @@ namespace Qoollo.Tests
                 for (int i = 1; i < count + 1; i++)
                 {
                     var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
+                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
+                            "")
                         {
                             OperationName = OperationName.Create,
                             OperationType = OperationType.Async
@@ -235,7 +245,7 @@ namespace Qoollo.Tests
                         {
                             Data = CommonDataSerializer.Serialize(i),
                             Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { TableName = "Int" }
+                            Transaction = {TableName = "Int"}
                         };
 
                     list.Add(ev);
@@ -268,19 +278,23 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(100)]
-        public void Writer_ProcessDataFromDistributor_SendResultBack_TwoWritersAndTwoReplics(int count)
+        public void ProcessDataFromDistributor_SendResultBack_TwoWritersAndTwoReplics(int count)
         {
-            var filename = nameof(Writer_ProcessDataFromDistributor_SendResultBack_TwoWritersAndTwoReplics);
+            var filename = nameof(ProcessDataFromDistributor_SendResultBack_TwoWritersAndTwoReplics);
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 2, hash: filename);
 
-                _distributor1.Build(2, distrServer1, distrServer12, filename);
-
-                _writer1.Build(storageServer1, filename, 1);
-                _writer2.Build(storageServer2, filename, 1);
-
+                _distributor1.Build();
                 _distributor1.Start();
+
+                CreateConfigFile(countReplics: 1, hash: filename);
+                CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
+                    distrport: storageServer2);
+
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
 
                 _writer1.Start();
                 _writer2.Start();
@@ -289,7 +303,8 @@ namespace Qoollo.Tests
                 for (int i = 1; i < count + 1; i++)
                 {
                     var ev =
-                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)), "")
+                        new InnerData(new Transaction(HashConvertor.GetString(i.ToString(CultureInfo.InvariantCulture)),
+                            "")
                         {
                             OperationName = OperationName.Create,
                             OperationType = OperationType.Async
@@ -297,7 +312,7 @@ namespace Qoollo.Tests
                         {
                             Data = CommonDataSerializer.Serialize(i),
                             Key = CommonDataSerializer.Serialize(i),
-                            Transaction = { TableName = "Int" }
+                            Transaction = {TableName = "Int"}
                         };
 
                     list.Add(ev);
@@ -331,27 +346,29 @@ namespace Qoollo.Tests
 
         [Theory]
         [InlineData(100)]
-        public void Writer_ProcessDataFromDistributor_CRUD_TwoWriters(int count)
+        public void ProcessDataFromDistributor_CRUD_TwoWriters(int count)
         {
-            var filename = nameof(Writer_ProcessDataFromDistributor_CRUD_TwoWriters);
+            var filename = nameof(ProcessDataFromDistributor_CRUD_TwoWriters);
             using (new FileCleaner(filename))
             {
                 CreateHashFile(filename, 2);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                CreateConfigFile(countReplics: 1, hash: filename, filename: config_file2,
+                    distrport: storageServer2, check: 30000);
 
                 #region hell
 
-                var distributor = DistributorSystem(DistributorCacheConfiguration(20000, 20000), filename, 1,
-                    distrServer12, distrServer1, 30000);
+                var distributor = DistributorSystem();
 
-                _writer1.Build(storageServer1, filename, 2);
-                _writer2.Build(storageServer2, filename, 2);
+                _writer1.Build(storageServer1);
+                _writer2.Build(storageServer2, configFile: config_file2);
 
                 var mem = _writer1.Db.GetDbModules.First() as TestDbInMemory;
                 var mem2 = _writer2.Db.GetDbModules.First() as TestDbInMemory;
 
                 _proxyTest.Start();
 
-                distributor.Build();
+                distributor.Build(new TestInjectionModule());
                 distributor.Start();
 
                 _writer1.Start();
@@ -397,7 +414,7 @@ namespace Qoollo.Tests
                 distributor.Dispose();
                 _proxyTest.Dispose();
             }
-            
+
         }
     }
 }

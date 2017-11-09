@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using Qoollo.Impl.Collector.Interfaces;
 using Qoollo.Impl.Collector.Load;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common.Data.DataTypes;

@@ -69,6 +69,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Ninject, Version=3.2.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
       <HintPath>..\packages\Ninject.3.2.2.0\lib\net45-full\Ninject.dll</HintPath>
       <Private>True</Private>
@@ -100,20 +105,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Collector\Background\BackgroundModule.cs" />
+    <Compile Include="Collector\BackgroundModule.cs" />
     <Compile Include="Collector\CollectorNet\CollectorNetModule.cs" />
+    <Compile Include="Collector\Interfaces\IBackgroundModule.cs" />
+    <Compile Include="Collector\Interfaces\ICollectorNetModule.cs" />
     <Compile Include="Collector\CollectorNet\SingleConnectionToWriter.cs" />
     <Compile Include="Collector\CollectorNet\SingleConnectionToDistributor.cs" />
     <Compile Include="Collector\Comparer\DateTimeComparer.cs" />
     <Compile Include="Collector\Comparer\Int64Comparer.cs" />
     <Compile Include="Collector\Comparer\IntComparer.cs" />
+    <Compile Include="Collector\Interfaces\IDistributorModule.cs" />
     <Compile Include="Collector\Load\DataLoader.cs" />
     <Compile Include="Collector\Distributor\DistributorModule.cs" />
-    <Compile Include="Collector\Load\IDataLoader.cs" />
+    <Compile Include="Collector\Interfaces\IDataLoader.cs" />
     <Compile Include="Collector\Comparer\DataComparer.cs" />
     <Compile Include="Collector\Merge\MergeBase.cs" />
     <Compile Include="Collector\Merge\OrderMerge.cs" />
     <Compile Include="Collector\Model\CollectorModel.cs" />
+    <Compile Include="Collector\Interfaces\ICollectorModel.cs" />
     <Compile Include="Collector\Parser\IUserCommandsHandler.cs" />
     <Compile Include="Collector\Parser\FieldDescription.cs" />
     <Compile Include="Collector\Parser\ScriptParser.cs" />
@@ -144,10 +153,11 @@
     <Compile Include="Common\HashHelp\HashConvertor.cs" />
     <Compile Include="Common\HashHelp\IHashCalculater.cs" />
     <Compile Include="Common\IStorageInner.cs" />
-    <Compile Include="Common\NetResults\Data\SetGetRestoreStateResult.cs" />
+    <Compile Include="Common\NetResults\Data\GetRestoreStateResult.cs" />
+    <Compile Include="Common\NetResults\Data\WriterStatePrinter.cs" />
     <Compile Include="Common\NetResults\System\Distributor\DeleteCommand.cs" />
     <Compile Include="Common\NetResults\System\Distributor\HashFileUpdateCommand.cs" />
-    <Compile Include="Common\NetResults\System\Distributor\SetGetRestoreStateCommand.cs" />
+    <Compile Include="Common\NetResults\System\Distributor\SetRestoreStateCommand.cs" />
     <Compile Include="Common\NetResults\System\Writer\PackageResult.cs" />
     <Compile Include="Common\NetResults\System\Writer\RestoreFromDistributorCommand.cs" />
     <Compile Include="Common\Server\RestoreServer.cs" />
@@ -160,27 +170,64 @@
     <Compile Include="Common\Commands\ServerNotAvailableCommand.cs" />
     <Compile Include="Common\Support\delegate.cs" />
     <Compile Include="Components\CollectorSystem.cs" />
+    <Compile Include="Configurations\ConnectionTimeoutConfiguration.cs" />
+    <Compile Include="Configurations\IAsyncTaskConfiguration.cs" />
+    <Compile Include="Configurations\ICollectorConfiguration.cs" />
+    <Compile Include="Configurations\ICommonConfiguration.cs" />
+    <Compile Include="Configurations\IDistributorConfiguration.cs" />
+    <Compile Include="Configurations\IProxyConfiguration.cs" />
+    <Compile Include="Configurations\IQueueConfiguration.cs" />
+    <Compile Include="Configurations\IWriterConfiguration.cs" />
+    <Compile Include="Configurations\NetConfiguration.cs" />
+    <Compile Include="Configurations\TimeoutConfiguration.cs" />
+    <Compile Include="DistributorModules\Interfaces\IDistributorTimeoutCache.cs" />
+    <Compile Include="DistributorModules\Interfaces\IMainLogicModule.cs" />
+    <Compile Include="DistributorModules\Interfaces\IDistributorModule.cs" />
+    <Compile Include="DistributorModules\Interfaces\IDistributorNetModule.cs" />
+    <Compile Include="DistributorModules\Interfaces\ITransactionModule.cs" />
+    <Compile Include="DistributorModules\Model\RestoreWritersModule.cs" />
+    <Compile Include="Modules\Config\SettingsModule.cs" />
+    <Compile Include="Modules\Config\SettingsReader.cs" />
+    <Compile Include="Modules\Interfaces\ICacheModule.cs" />
+    <Compile Include="Modules\Interfaces\IAsyncTaskModule.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\ConnectionBehaviorBase.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\IConnectionBehavior.cs" />
     <Compile Include="Modules\Net\ConnectionBehavior\WpfConnection.cs" />
     <Compile Include="Modules\Net\ReceiveBehavior\IReceiveBehavior.cs" />
     <Compile Include="Modules\Net\ReceiveBehavior\NetReceiveBehavior.cs" />
     <Compile Include="Modules\Net\ReceiveBehavior\ReceiveBehaviorBase.cs" />
+    <Compile Include="Modules\HashModule\HashLogic.cs" />
+    <Compile Include="Modules\Queue\IGlobalQueue.cs" />
     <Compile Include="PerfCounters\PoolsProfiling.cs" />
-    <Compile Include="TestSupport\InitInjection.cs" />
+    <Compile Include="Proxy\Interfaces\IProxyInputModuleCommon.cs" />
+    <Compile Include="Proxy\Interfaces\IProxyCache.cs" />
+    <Compile Include="Proxy\Interfaces\IAsyncProxyCache.cs" />
+    <Compile Include="Proxy\Interfaces\IProxyDistributorModule.cs" />
+    <Compile Include="Proxy\Interfaces\IProxyMainLogicModule.cs" />
+    <Compile Include="Proxy\Interfaces\IProxyNetModule.cs" />
     <Compile Include="TestSupport\InjectionModule.cs" />
+    <Compile Include="Writer\AsyncDbWorks\IAsyncDbWorkModule.cs" />
+    <Compile Include="Writer\AsyncDbWorks\Processes\BroadcastRestoreProcess.cs" />
+    <Compile Include="Writer\AsyncDbWorks\Processes\ProcessBase.cs" />
     <Compile Include="Writer\AsyncDbWorks\Readers\ReaderFullBase.cs" />
-    <Compile Include="Writer\AsyncDbWorks\Restore\RestoreProcess.cs" />
+    <Compile Include="Writer\AsyncDbWorks\Processes\SingleServerRestoreProcess.cs" />
+    <Compile Include="Writer\AsyncDbWorks\Restore\BroadcastRestoreModule.cs" />
     <Compile Include="Writer\AsyncDbWorks\Support\AsyncDbHolder.cs" />
     <Compile Include="Common\Server\RestoreServerSave.cs" />
+    <Compile Include="Writer\AsyncDbWorks\Support\RestoreStateHandler.cs" />
     <Compile Include="Writer\AsyncDbWorks\Support\RestoreProcessController.cs" />
-    <Compile Include="Writer\AsyncDbWorks\Support\RestoreStateFileLogger.cs" />
+    <Compile Include="Writer\AsyncDbWorks\Support\WriterStateFileLogger.cs" />
     <Compile Include="Writer\Db\DbLogicCreateAndUpdateHelper.cs" />
     <Compile Include="Writer\Db\RestoreDataContainer.cs" />
+    <Compile Include="Writer\Interfaces\IInputModule.cs" />
+    <Compile Include="Writer\Interfaces\IMainLogicModule.cs" />
+    <Compile Include="Writer\Interfaces\IDbModule.cs" />
+    <Compile Include="Writer\Interfaces\IDistributorModule.cs" />
+    <Compile Include="Writer\Interfaces\IWriterModel.cs" />
+    <Compile Include="Writer\Interfaces\IWriterNetModule.cs" />
     <Compile Include="Writer\WriterNet\NetWriterReceiverForCollector.cs" />
     <Compile Include="Writer\WriterNet\NetWriterReceiverForWrite.cs" />
     <Compile Include="Writer\Db\Commands\UserCommandCreatorBase.cs" />
-    <Compile Include="Writer\AsyncDbWorks\Support\RestoreStateHolder.cs" />
     <Compile Include="Writer\Db\DbModuleCollection.cs" />
     <Compile Include="Writer\Db\SelectDescriptionForGeneric.cs" />
     <Compile Include="Modules\Net\NetLogHelper.cs" />
@@ -192,7 +239,6 @@
     <Compile Include="Components\WriterSystem.cs" />
     <Compile Include="Components\DistributorSystem.cs" />
     <Compile Include="Components\ProxySystem.cs" />
-    <Compile Include="Configurations\ConnectionTimeoutConfiguration.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\RestoreReader.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\RestoreReaderFull.cs" />
     <Compile Include="Writer\AsyncDbWorks\Timeout\TimeoutReader.cs" />
@@ -203,8 +249,6 @@
     <Compile Include="Modules\Db\Impl\DbImplModuleWithPool.cs" />
     <Compile Include="Writer\Db\Commands\IMetaDataCommandCreator.cs" />
     <Compile Include="Modules\Db\Impl\DbReader.cs" />
-    <Compile Include="Configurations\ConnectionConfiguration.cs" />
-    <Compile Include="Configurations\QueueConfiguration.cs" />
     <Compile Include="Modules\ControlModule.cs" />
     <Compile Include="Modules\ParallelWork\ParallelWorkModule.cs" />
     <Compile Include="Modules\ParallelWork\SingleParallelWorkBase.cs" />
@@ -236,14 +280,6 @@
     <Compile Include="Common\RemoteResult.cs" />
     <Compile Include="Common\NetResults\SuccessResult.cs" />
     <Compile Include="Modules\ModuleSystemBase.cs" />
-    <Compile Include="Configurations\AsyncTasksConfiguration.cs" />
-    <Compile Include="Configurations\DistributorCacheConfiguration.cs" />
-    <Compile Include="Configurations\DistributorHashConfiguration.cs" />
-    <Compile Include="Configurations\HashMapConfiguration.cs" />
-    <Compile Include="Configurations\NetReceiverConfiguration.cs" />
-    <Compile Include="Configurations\ProxyCacheConfiguration.cs" />
-    <Compile Include="Configurations\RestoreModuleConfiguration.cs" />
-    <Compile Include="Configurations\TransactionConfiguration.cs" />
     <Compile Include="Common\NetResults\System\Writer\RestoreCommand.cs" />
     <Compile Include="Common\NetResults\System\Writer\RestoreCommandWithData.cs" />
     <Compile Include="Common\NetResults\System\Writer\RestoreCompleteCommand.cs" />
@@ -253,7 +289,7 @@
     <Compile Include="Writer\WriterNet\WriterNetModule.cs" />
     <Compile Include="Writer\Db\DbModule.cs" />
     <Compile Include="Writer\MainLogicModule.cs" />
-    <Compile Include="Writer\Model\WriterModel.cs" />
+    <Compile Include="Writer\WriterModel.cs" />
     <Compile Include="Writer\PerfCounters\PerfCounters.cs" />
     <Compile Include="Writer\AsyncDbWorks\Restore\InitiatorRestoreModule.cs" />
     <Compile Include="Writer\AsyncDbWorks\CommonAsyncWorkModule.cs" />
@@ -275,11 +311,9 @@
     <Compile Include="Writer\WriterNet\NetWriterReceiver.cs" />
     <Compile Include="Writer\InputModule.cs" />
     <Compile Include="Writer\DistributorModule.cs" />
-    <Compile Include="DistributorModules\Caches\DistributorCache.cs" />
     <Compile Include="NetInterfaces\Distributor\ICommonNetReceiverForProxy.cs" />
-    <Compile Include="DistributorModules\DistributorNet\Interfaces\INetModule.cs" />
     <Compile Include="DistributorModules\Caches\DistributorTimeoutCache.cs" />
-    <Compile Include="DistributorModules\ParallelWork\IInputModule.cs" />
+    <Compile Include="DistributorModules\Interfaces\IInputModule.cs" />
     <Compile Include="DistributorModules\ParallelWork\InputModuleWithParallel.cs" />
     <Compile Include="DistributorModules\ParallelWork\OneThreadProcess.cs" />
     <Compile Include="DistributorModules\PerfCounters\PerfCounters.cs" />
@@ -308,7 +342,6 @@
     <Compile Include="Proxy\ProxyDistributorModule.cs" />
     <Compile Include="Proxy\Caches\ProxyCache.cs" />
     <Compile Include="NetInterfaces\Proxy\ICommonProxyNetReceiver.cs" />
-    <Compile Include="Proxy\ProxyNet\IProxyNetModule.cs" />
     <Compile Include="NetInterfaces\Distributor\IProxyRemoteNet.cs" />
     <Compile Include="Proxy\ProxyNet\ProxyNetModule.cs" />
     <Compile Include="Proxy\ProxyNet\ProxyNetReceiver.cs" />

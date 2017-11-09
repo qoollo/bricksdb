@@ -1,4 +1,5 @@
 ﻿using System;
+using Ninject;
 using Qoollo.Impl.Collector.Parser;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.NetResults.Event;
@@ -14,8 +15,9 @@ namespace Qoollo.Impl.Collector.CollectorNet
     internal class SingleConnectionToWriter : SingleConnection<ICommonNetReceiverWriterForCollector>,
         ICommonNetReceiverWriterForCollector, ISingleConnection
     {
-        public SingleConnectionToWriter(ServerId server, ConnectionConfiguration configuration,
-            ConnectionTimeoutConfiguration timeoutConfiguration) : base(server, configuration, timeoutConfiguration)
+        public SingleConnectionToWriter(StandardKernel kernel, ServerId server,
+            ICommonConfiguration config)
+            : base(kernel, server, config)
         {
         }
 

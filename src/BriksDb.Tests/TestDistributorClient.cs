@@ -2,6 +2,7 @@
 using System.Threading;
 using Qoollo.Client.Request;
 using Qoollo.Impl.Common.Support;
+using Qoollo.Tests.NetMock;
 using Qoollo.Tests.Support;
 using Qoollo.Tests.TestWriter;
 using Xunit;
@@ -21,21 +22,25 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
+                
+                var proxy = TestGate();
+                var distr = DistributorApi();
+                var storage = WriterApi();
 
-                var proxy = TestGate(proxyServer, 600);
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
-                var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
-
+                proxy.Module = new TestInjectionModule();
                 proxy.Build();
                 proxy.Start();
 
+                distr.Module = new TestInjectionModule();
                 distr.Build();
                 distr.Start();
 
-                proxy.Int.SayIAmHere("localhost", distrServer1);
+                proxy.Int.SayIAmHere("localhost", distrServer12);
 
+                storage.Module = new TestInjectionModule();
                 storage.Build();
-                storage.AddDbModule(new TestInMemoryDbFactory());
+                storage.AddDbModule(new TestInMemoryDbFactory(_kernel));
                 storage.Start();
 
                 for (int i = 0; i < count; i++)
@@ -83,21 +88,25 @@ namespace Qoollo.Tests
             using (new FileCleaner(Consts.RestoreHelpFile))
             {
                 CreateHashFile(filename, 1);
+                CreateConfigFile(countReplics: 1, hash: filename);
 
-                var proxy = TestGate(proxyServer, 600);
-                var distr = DistributorApi(DistributorConfiguration(filename, 1), distrServer1, distrServer12);
-                var storage = WriterApi(StorageConfiguration(filename, 1), storageServer1);
+                var proxy = TestGate();
+                var distr = DistributorApi();
+                var storage = WriterApi();
 
+                proxy.Module = new TestInjectionModule();
                 proxy.Build();
                 proxy.Start();
 
+                distr.Module = new TestInjectionModule();
                 distr.Build();
                 distr.Start();
 
-                proxy.Int.SayIAmHere("localhost", distrServer1);
+                proxy.Int.SayIAmHere("localhost", distrServer12);
 
+                storage.Module = new TestInjectionModule();
                 storage.Build();
-                storage.AddDbModule(new TestInMemoryDbFactory());
+                storage.AddDbModule(new TestInMemoryDbFactory(_kernel));
                 storage.Start();
 
                 for (int i = 0; i < count; i++)

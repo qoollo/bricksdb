@@ -1,29 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.ServiceModel;
 using System.Threading.Tasks;
+using Ninject;
 using Qoollo.Impl.Common;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.NetResults;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Net;
 using Qoollo.Impl.NetInterfaces.Writer;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.WriterNet
 {
     internal class NetWriterReceiverForWrite: NetReceiveModule<ICommonNetReceiverWriterForWrite>, ICommonNetReceiverWriterForWrite
     {
-        private readonly InputModule _inputModule;
-        private readonly DistributorModule _distributor;
+        private IInputModule _inputModule;
+        private IDistributorModule _distributor;
 
-        public NetWriterReceiverForWrite(InputModule inputModule, DistributorModule distributor, NetReceiverConfiguration receiverConfiguration)
-            :base(receiverConfiguration)
+        public NetWriterReceiverForWrite(StandardKernel kernel, NetConfiguration receiverConfiguration)
+            :base(kernel, receiverConfiguration)
         {
-            Contract.Requires(inputModule!=null);
-            Contract.Requires(distributor!=null);
-            _distributor = distributor;
-            _inputModule = inputModule;
+        }
+
+        public override void Start()
+        {
+            _inputModule = Kernel.Get<IInputModule>();
+            _distributor = Kernel.Get<IDistributorModule>();
+
+            base.Start();
         }
 
         [OperationBehavior(TransactionScopeRequired = true)]

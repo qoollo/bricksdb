@@ -1,47 +1,49 @@
 ﻿using System;
+using Ninject;
 using Qoollo.Impl.Common.Data.DataTypes;
 using Qoollo.Impl.Common.Support;
 using Qoollo.Impl.Configurations;
 using Qoollo.Impl.Modules.Async;
 using Qoollo.Impl.Modules.Queue;
-using Qoollo.Impl.Writer.Db;
-using Qoollo.Impl.Writer.WriterNet;
+using Qoollo.Impl.Writer.Interfaces;
 
 namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
 {
     internal class TimeoutModule:CommonAsyncWorkModule
     {
-        private readonly RestoreModuleConfiguration _configuration;
         private TimeoutReaderFull _reader;
-        private readonly QueueConfiguration _queueConfiguration;
-        private readonly DbModuleCollection _db;
-        private readonly QueueWithParam<InnerData> _queue;
-        private readonly TimeSpan _deleteTimeout;
+        private IDbModule _db;
+        private QueueWithParam<InnerData> _queue;
+        private TimeSpan _deleteTimeout;
+        private IWriterConfiguration _config;
 
-        public TimeoutModule(WriterNetModule net, AsyncTaskModule asyncTaskModule,
-            QueueConfiguration queueConfiguration, DbModuleCollection db,
-            RestoreModuleConfiguration configuration)
-            : base(net, asyncTaskModule)
+        public TimeoutModule(StandardKernel kernel)
+            : base(kernel)
         {
-            _configuration = configuration;
-            _queueConfiguration = queueConfiguration;
-            _db = db;
-            _queue = GlobalQueue.Queue.DbTimeoutQueue;
-            _deleteTimeout = configuration.DeleteTimeout;
+        }
 
-            if (_configuration.IsForceStart)
+        public override void Start()
+        {
+            base.Start();
+
+            _config = Kernel.Get<IWriterConfiguration>();
+            _queue = Kernel.Get<IGlobalQueue>().DbTimeoutQueue;
+            _db = Kernel.Get<IDbModule>();
+
+            _deleteTimeout = TimeSpan.FromMilliseconds(_config.Restore.TimeoutDelete.DeleteTimeoutMls);
+
+            if (_config.Restore.TimeoutDelete.ForceStart)
                 AsyncTaskModule.AddAsyncTask(
-                    new AsyncDataPeriod(_configuration.PeriodRetry, PeriodMessage,
-                        AsyncTasksNames.TimeoutDelete, -1), _configuration.IsForceStart);
-
+                    new AsyncDataPeriod(_config.Restore.TimeoutDelete.PeriodRetryMls, PeriodMessage,
+                        AsyncTasksNames.TimeoutDelete, -1), true);
         }
 
         public void Enable(bool forceStart = false)
         {
             AsyncTaskModule.DeleteTask(AsyncTasksNames.TimeoutDelete);
             AsyncTaskModule.AddAsyncTask(
-                            new AsyncDataPeriod(_configuration.PeriodRetry, PeriodMessage,
-                                AsyncTasksNames.TimeoutDelete, -1), forceStart);
+                new AsyncDataPeriod(_config.Restore.TimeoutDelete.PeriodRetryMls, PeriodMessage,
+                    AsyncTasksNames.TimeoutDelete, -1), forceStart);
         }
 
         public void Disable()
@@ -68,13 +70,15 @@ namespace Qoollo.Impl.Writer.AsyncDbWorks.Timeout
         {
             if (_reader == null)
             {
-                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, _queue);
+                _reader = new TimeoutReaderFull(Kernel, IsMine, Process,
+                    _config.Restore.TimeoutDelete.PackageSizeTimeout, _db, _queue);
                 _reader.Start();
             }
             else if (_reader.IsComplete)
             {
                 _reader.Dispose();
-                _reader = new TimeoutReaderFull(IsMine, Process, _queueConfiguration, _db, _queue);
+                _reader = new TimeoutReaderFull(Kernel, IsMine, Process,
+                    _config.Restore.TimeoutDelete.PackageSizeTimeout, _db, _queue);
                 _reader.Start();
             }
         }

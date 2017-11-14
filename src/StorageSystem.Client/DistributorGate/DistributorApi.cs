@@ -44,6 +44,12 @@ namespace Qoollo.Client.DistributorGate
             _isBuild = true;
         }
 
+        public void Build(string configFile)
+        {
+            _distributorSystem.Build(Module, configFile);
+            _isBuild = true;
+        }
+
         public void Start()
         {
             if (_isBuild)

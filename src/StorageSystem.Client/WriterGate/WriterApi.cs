@@ -58,7 +58,7 @@ namespace Qoollo.Client.WriterGate
             _isBuild = true;
         }
 
-        internal void Build(string configFile)
+        public void Build(string configFile)
         {
             _writerSystem.Build(Module, configFile);
             _isBuild = true;

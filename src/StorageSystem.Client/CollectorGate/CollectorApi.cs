@@ -80,6 +80,14 @@ namespace Qoollo.Client.CollectorGate
             _isBuild = true;
         }
 
+        public void Build(string configFile)
+        {
+            _collectorSystem.Build(Module, configFile);
+            InnerBuild();
+
+            _isBuild = true;
+        }
+
         public void Start()
         {
             if (_isBuild)

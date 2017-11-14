@@ -85,6 +85,14 @@ namespace Qoollo.Client.ProxyGate
             _isBuild = true;
         }
 
+        public void Build(string configFile)
+        {
+            _proxySystem.Build(Module, configFile);
+            InnerBuild();
+
+            _isBuild = true;
+        }
+
         public void Start()
         {
             if (_isBuild)

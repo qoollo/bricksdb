@@ -22,7 +22,23 @@ namespace Qoollo.Client.Support
             RestoreState state;
             if (Enum.TryParse(Enum.GetName(typeof (RestoreMode), mode), out state))
                 return state;
-            throw new InitializationException(string.Format("Cannot convert {0} to inner type", mode));
+            throw new InitializationException($"Cannot convert {mode} to inner type");
+        }
+
+        public static Qoollo.Impl.Common.Support.RestoreType Convert(RestoreType type)
+        {
+            Qoollo.Impl.Common.Support.RestoreType resultType;
+            if (Enum.TryParse(Enum.GetName(typeof(Qoollo.Impl.Common.Support.RestoreType), type), out resultType))
+                return resultType;
+            throw new InitializationException($"Cannot convert {type} to inner type");
         }
     }
+
+    public enum RestoreType
+    {
+        Single = 0,
+        Broadcast = 1,
+        None = 2,
+    }
+
 }

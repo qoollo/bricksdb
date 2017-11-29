@@ -10,7 +10,10 @@ namespace Qoollo.Client.WriterGate
 
         RequestDescription Restore(RestoreMode mode);
 
-        RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode);
+        RequestDescription Restore(RestoreMode mode, RestoreType type);
+
+        RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode, RestoreType type);
+
 
         bool IsRestoreCompleted();
 

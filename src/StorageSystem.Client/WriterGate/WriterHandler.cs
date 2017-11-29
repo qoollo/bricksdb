@@ -28,11 +28,20 @@ namespace Qoollo.Client.WriterGate
             return new RequestDescription(result);
         }
 
-        public RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode)
+        public RequestDescription Restore(RestoreMode mode, RestoreType type)
+        {
+            var result = _writer.Distributor.Restore(RestoreModeConverter.Convert(mode),
+                RestoreModeConverter.Convert(type));
+            return new RequestDescription(result);
+        }
+
+        public RequestDescription Restore(List<ServerAddress> servers, RestoreMode mode, RestoreType type)
         {
             var list = new List<ServerId>();
             servers.ForEach(x => list.Add(new ServerId(x.Host, x.Port)));
-            var result = _writer.Distributor.Restore(list, RestoreModeConverter.Convert(mode));
+
+            var result = _writer.Distributor.Restore(list, RestoreModeConverter.Convert(mode),
+                RestoreModeConverter.Convert(type));
             return new RequestDescription(result);
         }
 
